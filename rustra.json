@@ -1,0 +1,14 @@
+{
+  "schema": "generated/schema.json",
+  "output": "generated",
+  "positional": false,
+  "codegen": {
+    "rustManifest": "native/Cargo.toml",
+    "rustPackage": "yeoyu-core",
+    "rustBinary": "export-schema"
+  },
+  "reactNative": {
+    "moduleDir": "modules/rustra-jsi",
+    "rustManifest": "native/Cargo.toml"
+  }
+}

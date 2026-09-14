@@ -1,0 +1,58 @@
+{
+  "name": "yeoyu",
+  "version": "0.0.1",
+  "private": true,
+  "packageManager": "bun@1.4.1",
+  "scripts": {
+    "android": "react-native run-android",
+    "ios": "react-native run-ios",
+    "start": "react-native start",
+    "test": "bun test tests",
+    "typecheck": "tsc --noEmit",
+    "codegen": "bun .deps/rustra-main/packages/cli/src/index.ts codegen --config rustra.json"
+  },
+  "dependencies": {
+    "@rustra/generated-react-native": "workspace:*",
+    "@rustra/react-native": "file:.deps/rustra-main/packages/react-native",
+    "@rustra/types": "file:.deps/rustra-main/packages/types",
+    "react": "19.2.3",
+    "react-native": "0.87.1",
+    "react-native-safe-area-context": "^5.5.2",
+    "react-native-svg": "15.15.5",
+    "react-native-url-polyfill": "4.0.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.25.2",
+    "@babel/preset-env": "^7.25.3",
+    "@babel/runtime": "^7.25.0",
+    "@react-native-community/cli": "20.2.0",
+    "@react-native-community/cli-platform-android": "20.2.0",
+    "@react-native-community/cli-platform-ios": "20.2.0",
+    "@react-native/babel-preset": "0.87.1",
+    "@react-native/metro-config": "0.87.1",
+    "@react-native/typescript-config": "0.87.1",
+    "@types/bun": "^1.2.0",
+    "@types/react": "^19.2.0",
+    "@types/react-test-renderer": "^19.1.0",
+    "prettier": "2.8.8",
+    "react-test-renderer": "19.2.3",
+    "typescript": "^6.0.3"
+  },
+  "engines": {
+    "node": ">= 22.11.0"
+  },
+  "overrides": {
+    "@rustra/types": "file:.deps/rustra-main/packages/types"
+  },
+  "codegenConfig": {
+    "name": "BrowserSurfaceSpec",
+    "type": "components",
+    "jsSrcsDir": "modules/browser-surface/src",
+    "android": {
+      "javaPackageName": "dev.browser"
+    }
+  },
+  "workspaces": [
+    "modules/rustra-jsi"
+  ]
+}

@@ -1,0 +1,38 @@
+buildscript {
+    ext {
+        buildToolsVersion = "37.0.0"
+        minSdkVersion = 26
+        compileSdkVersion = 37
+        targetSdkVersion = 36
+        ndkVersion = "27.1.12297006"
+        kotlinVersion = "2.4.10"
+    }
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath("com.android.tools.build:gradle")
+        classpath("com.facebook.react:react-native-gradle-plugin")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
+    }
+}
+
+apply plugin: "com.facebook.react.rootproject"
+
+allprojects { repositories { maven { url "https://maven.mozilla.org/maven2/" } } }
+
+// Keep the generated Rust library's native ABIs aligned with the host build.
+subprojects { sub ->
+    if (sub.name == 'rustra-jsi') {
+        sub.afterEvaluate {
+            // Preserve generated artifacts while replacing only the unsafe Kotlin installer.
+            sub.android.sourceSets.main.java.setSrcDirs([
+                rootProject.file('compat/rustra-jsi/src/main/java')
+            ])
+            sub.android.defaultConfig.ndk.abiFilters.clear()
+            sub.android.defaultConfig.ndk.abiFilters.addAll(
+                (rootProject.findProperty('reactNativeArchitectures') ?: 'arm64-v8a').split(',') as List)
+        }
+    }
+}

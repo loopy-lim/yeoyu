@@ -1,0 +1,91 @@
+{
+  "schemaVersion": 1,
+  "schemaHash": "7ffb08530575d95c2e5cb03cdbc509a11e1750f155ffc66fd891ac8c02f6e274",
+  "generatorVersion": "0.8.0",
+  "files": [
+    {
+      "path": "../modules/rustra-jsi/android/build-rust-android.sh",
+      "sha256": "b5d4893e3f51ec9222efb6b02245e61602b8d0f80c581dd5da3bd2ebc1317a29"
+    },
+    {
+      "path": "../modules/rustra-jsi/android/build.gradle",
+      "sha256": "4ff3ed628580471bf713447305e9af289e323114d7d4da48919555273f1660c7"
+    },
+    {
+      "path": "../modules/rustra-jsi/android/CMakeLists.txt",
+      "sha256": "2ad3c4842a64ebd1535ba72184066b3ecc7b9f6e0ffa5993862b9916399a8854"
+    },
+    {
+      "path": "../modules/rustra-jsi/android/src/main/AndroidManifest.xml",
+      "sha256": "29a5250621c15524c26a69d3f3f62199b1a2946cce7a0b738acf299f9ca6e547"
+    },
+    {
+      "path": "../modules/rustra-jsi/android/src/main/java/dev/rustra/bridge/RustraBridgeModule.kt",
+      "sha256": "45dc70c38559e8f9ac1b50ce5f21fe8fe81327535018669cc5ca8a86f5364e26"
+    },
+    {
+      "path": "../modules/rustra-jsi/android/src/main/java/dev/rustra/bridge/RustraBridgePackage.kt",
+      "sha256": "92feda53ca4718d0e2980440003af58b43d22262e72d2e883cce713f232e8e07"
+    },
+    {
+      "path": "../modules/rustra-jsi/generated/rustra-generated-codecs.cpp",
+      "sha256": "f5c4f84d2812cdaa2dddee87bda1b67fd629b0c2352661788c21d077fdd89fae"
+    },
+    {
+      "path": "../modules/rustra-jsi/generated/rustra-generated-codecs.hpp",
+      "sha256": "0aa9c0a4c5852ff55358267ae9f65e855b0af47438a72ae891b67b57a7b421a7"
+    },
+    {
+      "path": "../modules/rustra-jsi/ios/build-rust-ios.sh",
+      "sha256": "a2b57cfaa359a887354abcf99b6cd572f17822126d280318aee77d0ee1cc1c99"
+    },
+    {
+      "path": "../modules/rustra-jsi/ios/RustraBridge.cpp",
+      "sha256": "c1976b169699047ba51a3777bb16ddda2c52279220af72ee6f24e48b10893798"
+    },
+    {
+      "path": "../modules/rustra-jsi/ios/RustraBridgeModule.mm",
+      "sha256": "f19d84598dbdfdce63845af9ec3076df61e84a577ab34fb1a8f6ef7ac163d785"
+    },
+    {
+      "path": "../modules/rustra-jsi/package.json",
+      "sha256": "fd1040dc80a43215c7290c062638da529381ba233863218b408bbac7aa9dedd5"
+    },
+    {
+      "path": "../modules/rustra-jsi/react-native.config.js",
+      "sha256": "d86b7c9c1a00caea8b0b06d07e719d790c83212a285303a730d9b6805cec8d3b"
+    },
+    {
+      "path": "../modules/rustra-jsi/RustraBridge.podspec",
+      "sha256": "845ef6ec87da87b2cdfd1ea81323fed77a375861a859714951075ce5350d0a1f"
+    },
+    {
+      "path": "../modules/rustra-jsi/src/index.ts",
+      "sha256": "ff47f63762759f76cbb71017c5b129de4900761895a42e31b5a6c0c3750076ff"
+    },
+    {
+      "path": "commands.ts",
+      "sha256": "ad0599605fb73e7c85fa02d7a15c5678929aa17026b1c0dedd0057cffcceadc5"
+    },
+    {
+      "path": "contract.ts",
+      "sha256": "8c6a19e96be27fab2e27001d815128bdd27ac3f77af37a919f327c7c70126f9e"
+    },
+    {
+      "path": "react-native.ts",
+      "sha256": "ab71eed28455e6acb0c2a169782122e0708435743d97d648247cb13df4c181a6"
+    },
+    {
+      "path": "rkyv-codecs.ts",
+      "sha256": "0b72e03dac852c8edb3577fffec1818c66073089fcf4564280077a94e9583204"
+    },
+    {
+      "path": "rkyv-registry.ts",
+      "sha256": "5259185fcd28cb6bf8a5509f364a968d8593ce39a76cca83558c4f3663a128c6"
+    },
+    {
+      "path": "types.ts",
+      "sha256": "0dee5415877e93de6da883c241452d5028002fe22b9b28c918fb16716011679d"
+    }
+  ]
+}

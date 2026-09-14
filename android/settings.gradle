@@ -1,0 +1,9 @@
+pluginManagement { includeBuild("../node_modules/@react-native/gradle-plugin") }
+plugins { id("com.facebook.react.settings") }
+extensions.configure(com.facebook.react.ReactSettingsExtension){ ex -> ex.autolinkLibrariesFromCommand() }
+rootProject.name = 'Yeoyu'
+include ':app'
+includeBuild('../node_modules/@react-native/gradle-plugin')
+
+include ':rustra-jsi'
+project(':rustra-jsi').projectDir = new File(rootProject.projectDir, '../modules/rustra-jsi/android')

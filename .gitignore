@@ -1,0 +1,32 @@
+# JS / Metro
+node_modules/
+/dist/
+
+# Vendored dependencies and tool state (scripts/bootstrap.sh)
+/.deps/
+.cache/
+.superpowers/
+
+# Cargo builds to the workspace target at the repo root
+/target/
+
+# Android builds
+android/.gradle/
+android/build/
+android/app/build/
+android/app/.cxx/
+android/app/debug.keystore
+android/local.properties
+modules/*/android/build/
+modules/*/android/src/main/jniLibs/
+modules/rustra-jsi/build/
+modules/rustra-jsi/android/src/main/cpp/libs/
+modules/rustra-jsi/android/.cxx/
+
+# Kotlin/Native build caches
+android/.kotlin/
+
+*.log
+
+# Local Python acceptance helpers
+__pycache__/

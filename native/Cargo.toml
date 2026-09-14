@@ -1,0 +1,16 @@
+[package]
+name = "yeoyu-core"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[lib]
+crate-type = ["rlib", "cdylib", "staticlib"]
+
+[dependencies]
+rustra = { path = "../.deps/rustra-main/crates/rustra" }
+schemars = { version = "0.8", features = ["derive", "preserve_order"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["preserve_order"] }
+
+url = "2.5.8"

@@ -1,0 +1,23 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Private lifetime fixture</title>
+<style>body{font:20px system-ui;max-width:48rem;margin:2rem auto;padding:1rem}button,input{font:inherit;min-height:48px;margin:8px;padding:8px;max-width:90%}pre{white-space:pre-wrap;overflow-wrap:anywhere}</style>
+<h1>Private lifetime fixture</h1>
+<p>Use the isolated Acceptance app and localhost fixture server. Use only synthetic markers. This page never uploads the marker or clears unrelated storage.</p>
+<label>Marker <input id="marker" value="yeoyu-private-fixture" autocomplete="off"></label>
+<p><button id="write">Write this context</button><button id="read">Read this context</button><button id="clear">Clear fixture keys</button></p>
+<p><button id="popup">Open same-origin popup</button><a href="/maturity-download">Download fixture file</a></p>
+<label>Unsaved input <input id="draft" placeholder="한글 입력 유지 검사" autocomplete="off"></label>
+<pre id="result" role="status">No operation yet.</pre>
+<script>
+const key='yeoyu-private-lifetime';
+const db = new Promise((resolve,reject)=>{const request=indexedDB.open(key,1);request.onupgradeneeded=()=>request.result.createObjectStore('markers');request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);});
+async function indexed(mode,value){const database=await db;return new Promise((resolve,reject)=>{const transaction=database.transaction('markers',mode==='read'?'readonly':'readwrite');const store=transaction.objectStore('markers');const request=mode==='read'?store.get('marker'):mode==='clear'?store.delete('marker'):store.put(value,'marker');let result;request.onsuccess=()=>{result=request.result};transaction.oncomplete=()=>resolve(result??null);transaction.onerror=()=>reject(transaction.error);});}
+async function read(){document.querySelector('#result').textContent=JSON.stringify({cookie:document.cookie.split('; ').find(v=>v.startsWith(key+'='))??null,localStorage:localStorage.getItem(key),sessionStorage:sessionStorage.getItem(key),indexedDB:await indexed('read'),hasOpener:!!opener},null,2);}
+const perform=action=>async()=>{try{await action();await read();}catch{document.querySelector('#result').textContent='Storage operation failed in this context.';}};
+document.querySelector('#write').onclick=perform(async()=>{const value=document.querySelector('#marker').value;if(!/^yeoyu-private-[a-zA-Z0-9_-]{1,80}$/.test(value))throw Error('synthetic marker required');document.cookie=key+'='+encodeURIComponent(value)+'; Path=/; SameSite=Lax';localStorage.setItem(key,value);sessionStorage.setItem(key,value);await indexed('write',value);});
+document.querySelector('#read').onclick=perform(async()=>{});
+document.querySelector('#clear').onclick=perform(async()=>{document.cookie=key+'=; Max-Age=0; Path=/';localStorage.removeItem(key);sessionStorage.removeItem(key);await indexed('clear');});
+document.querySelector('#popup').onclick=()=>window.open('/private-lifetime.html','_blank');
+</script>

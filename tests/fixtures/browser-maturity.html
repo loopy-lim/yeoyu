@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Browser maturity checks</title>
+<style>
+body{font:20px system-ui;padding:28px;color:#17304d;background:#edf3fa}
+button,label{display:block;margin:12px 0;padding:12px;background:white;border:1px solid #8294ad;border-radius:10px}
+button,input,select{font:inherit}pre{white-space:pre-wrap}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}details{margin:14px 0}input,select{max-width:100%}
+</style>
+<h1>Browser maturity checks</h1>
+<nav><a href="#inputs">Inputs</a> · <a href="#storage">Storage</a> · <a href="#external">Links & downloads</a> · <a href="/session.html">Session restore fixture</a></nav>
+<details><summary>Permission lifecycle checks</summary>
+<button id="permissions">Request location and notifications together</button>
+<button id="navigate">Request location, then navigate after 2 seconds</button>
+</details>
+<h2 id="inputs">Standard inputs</h2>
+<div class="grid">
+<label>Standard select <select id="choice"><option value="a">Alpha</option><optgroup label="Other"><option value="blocked" disabled>Disabled</option><option value="b">Beta</option><option value="c">Gamma</option></optgroup></select></label>
+<label>Multiple <select id="multiple" multiple><option value="a" selected>Alpha</option><option value="b">Beta</option><option value="c" disabled selected>Kept disabled</option><option value="d">Delta</option></select></label>
+<label>Date <input id="date" type="date" min="2026-09-01" max="2026-09-30" step="2" value="2026-09-11"></label>
+<label>Color <input id="color" type="color" value="#17304d"></label>
+<label>Time <input id="time" type="time" min="09:00:00" max="18:00:00" step="0.5" value="09:00:00.500"></label>
+<label>Local date and time <input id="datetime" type="datetime-local" step="any" value="2026-09-12T09:00:00.123"></label>
+<label>Month <input id="month" type="month" min="2026-01" max="2027-12" value="2026-09"></label>
+<label>Week <input id="week" type="week" min="2026-W01" max="2026-W52" value="2026-W37"></label>
+<label>Night shift <input id="overnight" type="time" min="22:00" max="02:00" value="23:00"></label>
+</div>
+<button id="update-choice">Change options after 3 seconds (open select now)</button>
+<h2 id="storage">Storage and page state</h2>
+<div class="grid"><button id="write-storage">Write fixture cookie and storage</button><button id="read-storage">Read fixture cookie and storage</button></div>
+<label>Unsaved text <input id="form-text" autocomplete="off" placeholder="Type a value before releasing inactive pages"></label>
+<label>Upload test file <input id="upload" type="file" multiple></label>
+<button id="read-file">Read the selected file after changing tabs</button>
+<h2 id="external">Links and downloads</h2>
+<p><a href="/next.html">Navigation B (long press for menu)</a> · <a href="mailto:fixture@example.test">Email app</a> · <a href="tel:12345">Dialer</a></p>
+<p><a href="/maturity-download">Download fixture text</a> · <a href="/maturity-slow-download">Slow download to cancel</a></p>
+<button id="post-download">Download original POST response</button>
+<pre id="result">Ready. Only use fixture data in the separate acceptance app for deletion tests.</pre>
+<script>
+function report(kind,value){
+  const record={kind,value};
+  document.querySelector('#result').textContent+='\n'+JSON.stringify(record);
+  fetch('/receipt',{method:'POST',body:JSON.stringify(record)});
+}
+function locationRequest(){
+  navigator.geolocation.getCurrentPosition(
+    ()=>report('maturity-location','allowed'),
+    error=>report('maturity-location',{denied:error.code===1,code:error.code}),
+    {timeout:15000}
+  );
+}
+document.querySelector('#permissions').onclick=()=>{
+  locationRequest();
+  Notification.requestPermission().then(value=>report('maturity-notifications',value));
+};
+document.querySelector('#navigate').onclick=()=>{
+  locationRequest();
+  setTimeout(()=>location.href='/next.html',2000);
+};
+for(const id of ['choice','multiple','date','color','time','datetime','month','week','overnight'])
+  document.getElementById(id).onchange=event=>report('maturity-'+id,{value:event.target.value,selected:event.target.selectedOptions?[...event.target.selectedOptions].map(item=>item.value):undefined,valid:event.target.validity.valid});
+document.querySelector('#update-choice').onclick=()=>setTimeout(()=>{
+  document.querySelector('#choice').innerHTML='<option value="updated-a">Updated Alpha</option><option value="updated-b">Updated Beta</option>';
+  report('maturity-choice-updated',true);
+},3000);
+function readStorage(){
+  report('maturity-storage',{cookie:document.cookie.split('; ').find(value=>value.startsWith('maturity='))??null,local:localStorage.getItem('maturity'),session:sessionStorage.getItem('maturity')});
+}
+document.querySelector('#write-storage').onclick=()=>{
+  document.cookie='maturity=fixture; Path=/; SameSite=Lax';localStorage.setItem('maturity','fixture');sessionStorage.setItem('maturity','fixture');readStorage();
+};
+document.querySelector('#read-storage').onclick=readStorage;
+document.querySelector('#read-file').onclick=async()=>{
+  const files=[...document.querySelector('#upload').files];
+  report('maturity-upload',await Promise.all(files.map(async file=>({name:file.name,size:file.size,head:(await file.slice(0,32).text())}))));
+};
+document.querySelector('#post-download').onclick=()=>{
+  const form=document.createElement('form');form.method='POST';form.action='/download';
+  const token=document.createElement('input');token.name='token';token.value='body-only';form.append(token);document.body.append(form);form.submit();
+};
+report('maturity-loaded',{path:location.pathname,ua:navigator.userAgent,width:innerWidth});
+readStorage();
+</script>
+</html>

@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lifecycle fixture</title>
+<style>body{font:24px system-ui;background:#e8f1fb;color:#17304d;margin:0;overflow-anchor:none}header{position:sticky;top:0;background:white;padding:16px;z-index:1}button,a{font:inherit;margin:8px;padding:12px;display:inline-block}section{height:600px;padding:30px;border-top:1px solid #8294ad}pre{white-space:pre-wrap;font-size:16px}</style>
+<header><strong id="page"></strong><a id="next">Next lifecycle page</a><button id="scroll">Scroll to marker</button><button id="report">Report page state</button><pre id="state"></pre></header>
+<section>Top: this fixture has no editable form fields.</section><section>Middle marker: preserve this scroll position.</section><section>Lower marker</section><section>End marker</section>
+<script>
+const query=new URLSearchParams(location.search), page=query.get('page')||'a', run=query.get('run')||'acceptance';
+const created=Date.now(); document.title=`Lifecycle ${page.toUpperCase()}`;document.querySelector('#page').textContent=document.title;
+document.querySelector('#next').href=`?page=${page==='a'?'b':page==='b'?'c':'a'}&run=${encodeURIComponent(run)}`;
+// Reporting can change line wrapping in the sticky header. Scroll anchoring is
+// disabled above so rendering a measurement cannot move the measured page.
+function report(kind){const value={run,page,scrollY,historyLength:history.length,created,href:location.href};document.querySelector('#state').textContent=JSON.stringify(value);fetch('/receipt',{method:'POST',body:JSON.stringify({kind,value})});}
+document.querySelector('#scroll').onclick=()=>{window.scrollTo(0,1100);setTimeout(()=>report('lifecycle-scroll-command'),150)};
+document.querySelector('#report').onclick=()=>report('lifecycle-checkpoint');
+let timer;addEventListener('scroll',()=>{clearTimeout(timer);timer=setTimeout(()=>report('lifecycle-scroll'),300)});
+addEventListener('pageshow',()=>setTimeout(()=>report('lifecycle-pageshow'),1000));
+report('lifecycle-loaded');
+</script></html>

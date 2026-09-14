@@ -1,0 +1,4 @@
+[workspace]
+members = ["native"]
+exclude = [".deps/rustra-main", ".deps/rustra-main/crates/*"]
+resolver = "3"

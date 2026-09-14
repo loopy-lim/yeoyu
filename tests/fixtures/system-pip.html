@@ -1,0 +1,69 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>System PiP check</title>
+<style>
+  body { margin: 20px; background: #142036; color: white; font: 20px system-ui; }
+  button { padding: 16px; margin: 4px; font: inherit; }
+  video { display: block; width: 100%; max-height: 50vh; margin-top: 16px; }
+  video:fullscreen { width: 100vw; height: 100vh; max-height: none; margin: 0; background: black; }
+  pre { white-space: pre-wrap; font-size: 18px; }
+</style>
+<h1>System PiP check</h1>
+<button id="marker">Change page marker</button>
+<button id="play">Play test video</button>
+<button id="receipt">Record state</button>
+<button id="fullscreen">Fullscreen video</button>
+<button id="history">Push page history</button>
+<button id="file" onclick="document.querySelector('input').click()">Choose a file</button>
+<input type="file" hidden>
+<video controls loop playsinline src="sample.mp4"></video>
+<pre id="state"></pre>
+<script>
+  const video = document.querySelector('video');
+  const pageId = String(performance.timeOrigin);
+  let marker = 0;
+  function snapshot(kind) {
+    return { kind: 'system-pip-' + kind, pageId, marker,
+      at: Date.now(), width: innerWidth, height: innerHeight, scrollY,
+      devicePixelRatio, visualViewport: window.visualViewport ? {
+        width: visualViewport.width, height: visualViewport.height,
+        offsetLeft: visualViewport.offsetLeft, offsetTop: visualViewport.offsetTop, scale: visualViewport.scale,
+      } : null,
+      time: video.currentTime, paused: video.paused, ended: video.ended,
+      visibility: document.visibilityState, readyState: video.readyState,
+      fullscreen: document.fullscreenElement === video,
+      historyLength: history.length, historyMarker: history.state?.marker ?? null,
+      videoRect: video.getBoundingClientRect().toJSON() };
+  }
+  function record(kind) {
+    document.querySelector('#state').textContent = JSON.stringify(snapshot('display'), null, 2);
+    fetch('/receipt', { method: 'POST', body: JSON.stringify(snapshot(kind)), keepalive: true }).catch(() => {});
+  }
+  document.querySelector('#marker').onclick = () => { marker++; record('marker'); };
+  document.querySelector('#play').onclick = () => video.play().catch(error => record('play-error-' + error.name));
+  document.querySelector('#receipt').onclick = () => record('manual');
+  document.querySelector('#fullscreen').onclick = () => video.requestFullscreen().catch(error => record('fullscreen-error-' + error.name));
+  document.querySelector('#history').onclick = () => { history.pushState({ marker: 'fullscreen-back-check' }, '', '#history'); record('history'); };
+  for (const event of ['play', 'playing', 'pause', 'ended', 'error', 'seeking'])
+    video.addEventListener(event, () => record(event));
+  // Leave time to enter PiP, then let the current loop finish without seeking.
+  if (new URL(location.href).searchParams.get('finishAfter') === '20') {
+    video.addEventListener('playing', () => {
+      record('end-scheduled');
+      setTimeout(() => {
+        if (!Number.isFinite(video.duration) || video.duration <= 0) return;
+        video.loop = false;
+        record('end-loop-disabled');
+      }, 20_000);
+    }, { once: true });
+  }
+  document.addEventListener('visibilitychange', () => record('visibility'));
+  document.addEventListener('fullscreenchange', () => record('fullscreen'));
+  window.addEventListener('resize', () => record('resize'));
+  window.addEventListener('popstate', () => record('back'));
+  window.addEventListener('pageshow', () => record('pageshow'));
+  window.addEventListener('pagehide', () => record('pagehide'));
+  setInterval(() => { if (!video.paused) record('tick'); }, 2000);
+  record('load');
+</script>
