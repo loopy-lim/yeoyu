@@ -106,4 +106,4 @@ Yeoyu is inspired by spatial browser workflows, but it is not affiliated with or
 
 ## License
 
-This repository does not currently grant an open-source license. The source is publicly viewable, but reuse, modification, and redistribution are not licensed unless a license is added later.
+Yeoyu is licensed under the [Apache License 2.0](LICENSE).

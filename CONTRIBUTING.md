@@ -40,6 +40,8 @@ Include:
 
 Generated contracts must match `rustra.json`. If a generated file changes, include the source/schema change that produced it.
 
+By submitting a contribution, you agree that it is licensed under the [Apache License 2.0](LICENSE) unless you explicitly state otherwise.
+
 ## Public-data rule
 
 Do not commit secrets, signing keys, account identifiers, browsing history, private URLs, local filesystem paths, device serials, raw device dumps, or unsanitized logs. Use `example.com` or repository-owned fixtures in screenshots and tests.
