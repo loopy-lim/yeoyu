@@ -7,10 +7,17 @@ import com.facebook.react.bridge.*
 import com.facebook.react.modules.core.DeviceEventManagerModule
 import org.json.JSONArray
 import org.json.JSONObject
+import java.util.Locale
 
 /** Platform storage and configuration only; all snapshot validation/mutation remains in Rust. */
 class BrowserModule(context:ReactApplicationContext):ReactContextBaseJavaModule(context) {
  override fun getName()="BrowserRuntime"
+ @ReactMethod fun getDeviceLanguage(promise:Promise) {
+  promise.resolve(Locale.getDefault().toLanguageTag())
+ }
+ @ReactMethod fun setAppLanguage(language:String) {
+  BrowserAppStrings.setLanguage(language)
+ }
  override fun initialize() {
   GeckoSessionRegistry.emit={name,payload -> if(reactApplicationContext.hasActiveReactInstance())
    reactApplicationContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java).emit(name,payload)}
@@ -28,6 +35,7 @@ class BrowserModule(context:ReactApplicationContext):ReactContextBaseJavaModule(
  }
  private fun pictureInPicture(): BrowserPictureInPicture =
   (reactApplicationContext.currentActivity as? com.workspacebrowser.MainActivity)?.browserPip
+   ?: com.workspacebrowser.MainActivity.current?.browserPip
    ?: throw IllegalStateException("No active browser window")
  @ReactMethod fun getPictureInPictureState(promise:Promise) = onUi(promise) {
   promise.resolve(pictureInPicture().status())
@@ -82,6 +90,7 @@ class BrowserModule(context:ReactApplicationContext):ReactContextBaseJavaModule(
   promise.resolve(GeckoSessionRegistry.diagnostics())
  }
  @ReactMethod fun clearBrowserData(host:String?,category:String,promise:Promise) = onUi(promise) {
+  BrowserWebNotifications.dismissAll()
   GeckoSessionRegistry.clearBrowsingData(reactApplicationContext,host,category) { complete(promise,it) }
  }
  @ReactMethod fun releaseInactiveTabs(promise:Promise) = onUi(promise) {
@@ -92,6 +101,33 @@ class BrowserModule(context:ReactApplicationContext):ReactContextBaseJavaModule(
  }
  @ReactMethod fun pendingExternalLinks(promise:Promise) {
   try { promise.resolve(PendingExternalLinks.pendingJson()) } catch(failure:Exception) { promise.reject("EXTERNAL_LINK",failure) }
+ }
+ @ReactMethod fun pendingShortcutCommands(promise:Promise) {
+  try { promise.resolve(PendingShortcuts.drainJson()) } catch(failure:Exception) { promise.reject("SHORTCUT",failure) }
+ }
+ /** OS-level windows (tablet free-form). tabId=null opens a fresh tab window. */
+ @ReactMethod fun openInNewWindow(tabId:String?,promise:Promise) = onUi(promise) {
+  val activity=reactApplicationContext.currentActivity ?: throw IllegalStateException("No active browser window")
+  if(!BrowserWindowCoordinator.launch(activity,tabId?.takeIf{it.isNotBlank()})) promise.reject("WINDOW","A new window could not be opened") else promise.resolve(null)
+ }
+ @ReactMethod fun bindWindowTab(tabId:String,promise:Promise) = onUi(promise) {
+  val activity=reactApplicationContext.currentActivity
+  if(activity != null) BrowserWindowCoordinator.bind(activity,tabId)
+  promise.resolve(null)
+ }
+ @ReactMethod fun closeWindowForTab(tabId:String,promise:Promise) = onUi(promise) {
+  promise.resolve(BrowserWindowCoordinator.closeForTab(tabId))
+ }
+ @ReactMethod fun closeWindow(promise:Promise) = onUi(promise) {
+  reactApplicationContext.currentActivity?.finish()
+  promise.resolve(null)
+ }
+ @ReactMethod fun windowTabs(promise:Promise) {
+  try { promise.resolve(BrowserWindowCoordinator.tabsJson()) } catch(failure:Exception) { promise.reject("WINDOW",failure) }
+ }
+ @ReactMethod fun windowMission(promise:Promise) {
+  val activity=reactApplicationContext.currentActivity
+  promise.resolve(activity?.let{BrowserWindowCoordinator.missionOf(it)})
  }
  @ReactMethod fun acknowledgeExternalLink(id:String,promise:Promise) {
   try { PendingExternalLinks.acknowledge(id); promise.resolve(null) } catch(failure:Exception) { promise.reject("EXTERNAL_LINK",failure) }
@@ -105,6 +141,16 @@ class BrowserModule(context:ReactApplicationContext):ReactContextBaseJavaModule(
  @ReactMethod fun requestDefaultBrowser(promise:Promise) = onUi(promise) {
   val activity=reactApplicationContext.currentActivity ?: throw IllegalStateException("No active browser window")
   DefaultBrowserCoordinator.request(activity) { promise.resolve(it) }
+ }
+ @ReactMethod fun setAppearance(mode:String,resolvedMode:String,chromeColor:String,promise:Promise) = onUi(promise) {
+  BrowserAppearance.apply(reactApplicationContext.currentActivity as? androidx.appcompat.app.AppCompatActivity,mode,resolvedMode,chromeColor)
+  promise.resolve(null)
+ }
+ @ReactMethod fun getDownloadHistoryStatus(promise:Promise) {
+  try { promise.resolve(DownloadCoordinator.historyStatus(reactApplicationContext)) } catch(failure:Exception) { promise.reject("DOWNLOAD_HISTORY",failure) }
+ }
+ @ReactMethod fun recoverDownloadHistory(promise:Promise) {
+  try { promise.resolve(DownloadCoordinator.recoverHistory(reactApplicationContext)) } catch(failure:Exception) { promise.reject("DOWNLOAD_HISTORY",failure) }
  }
  @ReactMethod fun listDownloads(promise:Promise) {
   try { promise.resolve(DownloadCoordinator.list(reactApplicationContext)) } catch(failure:Exception) { promise.reject("DOWNLOAD",failure) }
@@ -185,7 +231,12 @@ class BrowserModule(context:ReactApplicationContext):ReactContextBaseJavaModule(
    SnapshotPersistence({ key -> prefs.getString(key,null) }) { changes ->
     val edit=prefs.edit()
     changes.forEach { (key,value) -> if(value==null) edit.remove(key) else edit.putString(key,value) }
-    edit.commit()
+    // apply(): this runs on the RN native-modules queue; a synchronous commit
+    // here would stall every later JS→native call behind a disk flush. The
+    // in-memory preference view still updates immediately, so the Boolean
+    // contract reports the write as accepted.
+    edit.apply()
+    true
    }.save(json)
    promise.resolve(null)
   } catch(_:Exception) { promise.reject("STORAGE","Snapshot write failed; previous data has been retained") }
@@ -208,8 +259,9 @@ class BrowserModule(context:ReactApplicationContext):ReactContextBaseJavaModule(
   promise.resolve(reactApplicationContext.getSharedPreferences("browser-ui",0).getString("preferences",null))
  }
  @ReactMethod fun saveUiPreferences(json:String,promise:Promise) {
-  if(reactApplicationContext.getSharedPreferences("browser-ui",0).edit().putString("preferences",json).commit())promise.resolve(null)
-  else promise.reject("STORAGE","UI preferences write failed")
+  // apply(), like the snapshot path: small writes must not block the bridge queue.
+  reactApplicationContext.getSharedPreferences("browser-ui",0).edit().putString("preferences",json).apply()
+  promise.resolve(null)
  }
  @ReactMethod fun setFullscreen(enabled:Boolean) {
   UiThreadUtil.runOnUiThread {
@@ -220,8 +272,8 @@ class BrowserModule(context:ReactApplicationContext):ReactContextBaseJavaModule(
   promise.resolve(reactApplicationContext.getSharedPreferences("browser-favicons",0).getString(host,null))
  }
  @ReactMethod fun saveFavicon(host:String,data:String,promise:Promise) {
-  if(reactApplicationContext.getSharedPreferences("browser-favicons",0).edit().putString(host,data).commit())promise.resolve(null)
-  else promise.reject("STORAGE","Favicon write failed")
+  reactApplicationContext.getSharedPreferences("browser-favicons",0).edit().putString(host,data).apply()
+  promise.resolve(null)
  }
  @ReactMethod fun clearFavicon(host:String) {
   reactApplicationContext.getSharedPreferences("browser-favicons",0).edit().remove(host).apply()
@@ -251,7 +303,7 @@ class BrowserModule(context:ReactApplicationContext):ReactContextBaseJavaModule(
  @ReactMethod fun setBoosts(json:String) {
   val list=JSONArray(json)
   val map=(0 until list.length()).mapNotNull { val v=list.getJSONObject(it)
-   val host=v.getString("host").lowercase().removePrefix("www.")
+   val host=v.getString("host").lowercase()
    if(host.isEmpty()) null else host to v.getString("css") }.toMap()
   UiThreadUtil.runOnUiThread { GeckoSessionRegistry.setBoosts(map) }
  }
@@ -266,8 +318,8 @@ class BrowserModule(context:ReactApplicationContext):ReactContextBaseJavaModule(
   UiThreadUtil.runOnUiThread { GeckoSessionRegistry.setSitePermissionRules(rules) }
  }
  /** Resolves a pending permission request raised via BrowserPermissionRequest. */
- @ReactMethod fun resolvePermission(requestId:Int, allow:Boolean) {
-  UiThreadUtil.runOnUiThread { GeckoSessionRegistry.resolvePermission(requestId,allow) }
+ @ReactMethod fun resolvePermission(requestId:Int, allow:Boolean, rememberDenial:Boolean) {
+  UiThreadUtil.runOnUiThread { GeckoSessionRegistry.resolvePermission(requestId,allow,rememberDenial) }
  }
  /** Freezes the tab's last composited frame over the surface so focus
   *  transitions to chrome inputs don't blink the page. */
@@ -282,10 +334,10 @@ class BrowserModule(context:ReactApplicationContext):ReactContextBaseJavaModule(
    "microphone"->arrayOf(android.Manifest.permission.RECORD_AUDIO)
    "geolocation"->arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION,android.Manifest.permission.ACCESS_COARSE_LOCATION)
    "notifications"->if(Build.VERSION.SDK_INT >= 33) arrayOf(android.Manifest.permission.POST_NOTIFICATIONS) else emptyArray()
-   else->emptyArray()
+   else->{ promise.resolve(false); return }
   }
   if(wanted.isEmpty()) { promise.resolve(true); return }
-  if(wanted.all { androidx.core.content.ContextCompat.checkSelfPermission(reactApplicationContext,it) == android.content.pm.PackageManager.PERMISSION_GRANTED }) {
+  if(requestedAndroidPermissionsHeld(wanted) { androidx.core.content.ContextCompat.checkSelfPermission(reactApplicationContext,it) == android.content.pm.PackageManager.PERMISSION_GRANTED }) {
    promise.resolve(true); return
   }
   val activity=reactApplicationContext.currentActivity
@@ -296,15 +348,35 @@ class BrowserModule(context:ReactApplicationContext):ReactContextBaseJavaModule(
   promise.resolve(reactApplicationContext.getSharedPreferences("browser-history",0).getString("entries",null))
  }
  @ReactMethod fun saveHistory(json:String,promise:Promise) {
-  if(reactApplicationContext.getSharedPreferences("browser-history",0).edit().putString("entries",json).commit())promise.resolve(null)
-  else promise.reject("STORAGE","History write failed")
+  reactApplicationContext.getSharedPreferences("browser-history",0).edit().putString("entries",json).apply()
+  promise.resolve(null)
+ }
+ @ReactMethod fun getAndroidPermissionStatus(promise:Promise) {
+  fun held(permission:String)=androidx.core.content.ContextCompat.checkSelfPermission(reactApplicationContext,permission)==android.content.pm.PackageManager.PERMISSION_GRANTED
+  promise.resolve(JSONObject().apply {
+   put("camera",if(held(android.Manifest.permission.CAMERA)) "allowed" else "not-allowed")
+   put("microphone",if(held(android.Manifest.permission.RECORD_AUDIO)) "allowed" else "not-allowed")
+   put("geolocation",when { held(android.Manifest.permission.ACCESS_FINE_LOCATION)->"allowed"; held(android.Manifest.permission.ACCESS_COARSE_LOCATION)->"approximate"; else->"not-allowed" })
+   put("notifications",if(androidx.core.app.NotificationManagerCompat.from(reactApplicationContext).areNotificationsEnabled()) "allowed" else "not-allowed")
+  }.toString())
+ }
+ @ReactMethod fun openAndroidPermissionSettings(promise:Promise) = onUi(promise) {
+  val activity=reactApplicationContext.currentActivity ?: throw IllegalStateException("No active browser window")
+  activity.startActivity(android.content.Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,android.net.Uri.parse("package:${reactApplicationContext.packageName}")))
+  promise.resolve(null)
+ }
+ @ReactMethod fun resetSitePermission(origin:String?,kind:String?,promise:Promise) = onUi(promise) {
+  BrowserPermissionRevocation.reset(GeckoSessionRegistry.extensionRuntime(reactApplicationContext),origin,kind) {
+   if(it.isSuccess && (kind==null || kind=="notifications")) BrowserWebNotifications.dismissForOrigin(origin)
+   complete(promise,it)
+  }
  }
  @ReactMethod fun readSitePermissions(promise:Promise) {
   promise.resolve(reactApplicationContext.getSharedPreferences("browser-site-permissions",0).getString("rules",null))
  }
  @ReactMethod fun saveSitePermissions(json:String,promise:Promise) {
-  if(reactApplicationContext.getSharedPreferences("browser-site-permissions",0).edit().putString("rules",json).commit())promise.resolve(null)
-  else promise.reject("STORAGE","Site permission write failed")
+  reactApplicationContext.getSharedPreferences("browser-site-permissions",0).edit().putString("rules",json).apply()
+  promise.resolve(null)
  }
  override fun invalidate() {
   val retiringEmitter = GeckoSessionRegistry.emit
@@ -312,6 +384,7 @@ class BrowserModule(context:ReactApplicationContext):ReactContextBaseJavaModule(
    // Complete requests while their JS bridge still owns the registry. A
    // delayed cleanup must not tear down a replacement React instance.
    if (GeckoSessionRegistry.emit === retiringEmitter) {
+    BrowserExtensionHost.closeUi()
     ExternalPictureInPicture.shutdown()
     InputRouter.engine.reset()
     GeckoSessionRegistry.cancelPendingRequests()

@@ -14,7 +14,7 @@
 ![사이드바를 펼친 여유](docs/images/expanded.png)
 
 > [!WARNING]
-> 여유는 제품 출시본이나 보안 감사를 마친 브라우저가 아닌 POC입니다. 공개 APK도 아직 배포하지 않습니다. 시험하기 전에 중요한 브라우징 데이터를 백업하세요.
+> 여유는 제품 출시본이나 보안 감사를 마친 브라우저가 아닌 POC입니다. 배포 파일과 검증 범위는 [GitHub Releases](https://github.com/loopy-lim/yeoyu/releases)에서 확인하세요. 시험하기 전에 중요한 브라우징 데이터를 백업하세요.
 
 ## 무엇을 실험하나요?
 
@@ -22,6 +22,8 @@
 - **태블릿 우선 인터랙션** — 펼치고 접는 사이드바, 가로·세로 분할, 터치 드래그, 마우스 메뉴, 편집 가능한 키보드 단축키.
 - **Android 웹 통합** — GeckoView 세션, 사이트 권한, 파일 선택, 다운로드, 외부 링크, 팝업, 미디어 세션, Android PIP.
 - **로컬 상태 소유권** — workspace·tab·bookmark·keymap 규칙은 Rust가, 화면과 조정은 React Native가 담당합니다.
+- **권한과 화면 설정** — 기기 접근 미리 허용, 사이트별 선택 기억, 조용한 자동 재생 기본값, 한국어·영어 UI, 화면 폭에 맞춘 설정.
+- **Android 창과 확장 프로그램** — 별도 창, 호환되는 Mozilla 확장 검색·설치, 백그라운드 미디어 제어.
 - **프라이버시 실험** — 비공개 탭, 추적 보호 설정, 범위를 제한한 가져오기·내보내기, 보수적인 탭 해제 정책.
 
 <p>
@@ -100,7 +102,7 @@ Android unit test와 로컬 서명 테스트 APK는 CI에서 별도로 확인합
 
 ## 현재 상태
 
-여유는 현재 Android POC로만 실행됩니다. iOS browser-surface interface는 있지만 실행 가능한 iOS 앱은 없습니다. 동기화, 확장 프로그램, 저장되는 split group, 분리된 계정 profile, 자동 archive는 구현하지 않았습니다.
+여유는 현재 Android POC로만 실행됩니다. iOS browser-surface interface는 있지만 실행 가능한 iOS 앱은 없습니다. 동기화, 저장되는 split group, 분리된 계정 profile, 자동 archive는 구현하지 않았습니다. 확장 프로그램은 호환되는 Mozilla 부가기능을 대상으로 하며 Chrome CRX나 모든 Firefox API를 지원하지는 않습니다.
 
 여유는 공간 중심 브라우징 workflow에서 영감을 받았지만 The Browser Company, Arc, Mozilla, Google과 제휴하거나 승인을 받은 프로젝트가 아닙니다. GeckoView와 다른 외부 구성요소의 라이선스·상표는 각 권리자에게 있습니다.
 

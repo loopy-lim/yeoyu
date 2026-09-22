@@ -5,7 +5,7 @@
   "commands": [
     {
       "name": "bookmarkCreate",
-      "commandId": 19,
+      "commandId": 20,
       "inputType": "BookmarkCreateInput",
       "outputType": "Snapshot",
       "inputSchema": {
@@ -302,7 +302,7 @@
     },
     {
       "name": "bookmarkFolderCreate",
-      "commandId": 23,
+      "commandId": 24,
       "inputType": "BookmarkFolderCreateInput",
       "outputType": "Snapshot",
       "inputSchema": {
@@ -591,7 +591,7 @@
     },
     {
       "name": "bookmarkFolderRemove",
-      "commandId": 25,
+      "commandId": 26,
       "inputType": "BookmarkFolderIdInput",
       "outputType": "Snapshot",
       "inputSchema": {
@@ -880,7 +880,7 @@
     },
     {
       "name": "bookmarkFolderRename",
-      "commandId": 24,
+      "commandId": 25,
       "inputType": "BookmarkFolderRenameInput",
       "outputType": "Snapshot",
       "inputSchema": {
@@ -1173,7 +1173,7 @@
     },
     {
       "name": "bookmarkMove",
-      "commandId": 22,
+      "commandId": 23,
       "inputType": "BookmarkMoveInput",
       "outputType": "Snapshot",
       "inputSchema": {
@@ -1468,7 +1468,7 @@
     },
     {
       "name": "bookmarkOpen",
-      "commandId": 28,
+      "commandId": 29,
       "inputType": "BookmarkOpenInput",
       "outputType": "Snapshot",
       "inputSchema": {
@@ -1766,7 +1766,7 @@
     },
     {
       "name": "bookmarkRemove",
-      "commandId": 21,
+      "commandId": 22,
       "inputType": "BookmarkIdInput",
       "outputType": "Snapshot",
       "inputSchema": {
@@ -2055,7 +2055,7 @@
     },
     {
       "name": "bookmarkSetFolder",
-      "commandId": 26,
+      "commandId": 27,
       "inputType": "BookmarkSetFolderInput",
       "outputType": "Snapshot",
       "inputSchema": {
@@ -2348,7 +2348,7 @@
     },
     {
       "name": "bookmarkUpdate",
-      "commandId": 20,
+      "commandId": 21,
       "inputType": "BookmarkUpdateInput",
       "outputType": "Snapshot",
       "inputSchema": {
@@ -2891,6 +2891,64 @@
             }
           }
         },
+        "KeyBinding": {
+          "type": "object",
+          "required": [
+            "alt",
+            "command",
+            "ctrl",
+            "key",
+            "meta",
+            "shift"
+          ],
+          "properties": {
+            "key": {
+              "type": "string"
+            },
+            "meta": {
+              "type": "boolean"
+            },
+            "ctrl": {
+              "type": "boolean"
+            },
+            "alt": {
+              "type": "boolean"
+            },
+            "shift": {
+              "type": "boolean"
+            },
+            "command": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "keymapDefaults",
+      "commandId": 19,
+      "inputType": "BrowserSnapshotInput",
+      "outputType": "KeymapSetInput",
+      "inputSchema": {
+        "title": "BrowserSnapshotInput",
+        "type": "object"
+      },
+      "outputSchema": {
+        "title": "KeymapSetInput",
+        "type": "object",
+        "required": [
+          "bindings"
+        ],
+        "properties": {
+          "bindings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/KeyBinding"
+            }
+          }
+        }
+      },
+      "definitions": {
         "KeyBinding": {
           "type": "object",
           "required": [
@@ -5268,7 +5326,7 @@
     },
     {
       "name": "tabReset",
-      "commandId": 27,
+      "commandId": 28,
       "inputType": "TabIdInput",
       "outputType": "Snapshot",
       "inputSchema": {

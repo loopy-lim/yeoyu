@@ -13,4 +13,10 @@
         <item name="android:backgroundDimEnabled">false</item>
     </style>
 
+    <!-- Extension action bubble: grow from center, quick fade out. -->
+    <style name="ExtensionPopup" parent="@android:style/Animation.Dialog">
+        <item name="android:windowEnterAnimation">@anim/extension_popup_in</item>
+        <item name="android:windowExitAnimation">@anim/extension_popup_out</item>
+    </style>
+
 </resources>

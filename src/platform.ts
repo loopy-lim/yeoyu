@@ -1,9 +1,18 @@
 import { NativeModules } from "react-native";
 export interface BrowserRuntime {
+  getDeviceLanguage?(): Promise<string>;
+  setAppLanguage?(language: "system" | "ko" | "en"): void;
   goHome(): Promise<void>;
   exitContentFullscreen(id: string): void;
-  prepareColdSpaceTransition?(previousTabId: string, nextTabId: string, nextUrl: string): Promise<void>;
-  prepareSpaceTransition?(previousTabId: string | null, nextTabId: string | null): Promise<void>;
+  prepareColdSpaceTransition?(
+    previousTabId: string,
+    nextTabId: string,
+    nextUrl: string
+  ): Promise<void>;
+  prepareSpaceTransition?(
+    previousTabId: string | null,
+    nextTabId: string | null
+  ): Promise<void>;
   prepareTabTransition?(
     previousTabId: string | null,
     nextTabId: string | null,
@@ -36,10 +45,24 @@ export interface BrowserRuntime {
   releaseInactiveTabs(): Promise<string>;
   retryTab(tabId: string): Promise<void>;
   pendingExternalLinks(): Promise<string>;
+  pendingShortcutCommands?(): Promise<string>;
+  openInNewWindow?(tabId: string | null): Promise<void>;
+  bindWindowTab?(tabId: string): Promise<void>;
+  closeWindowForTab?(tabId: string): Promise<boolean>;
+  closeWindow?(): Promise<void>;
+  windowTabs?(): Promise<string>;
+  windowMission?(): Promise<string>;
   acknowledgeExternalLink(id: string): Promise<void>;
   rejectExternalLink(id: string): Promise<void>;
   getDefaultBrowserStatus(): Promise<string>;
   requestDefaultBrowser(): Promise<string>;
+  setAppearance?(
+    colorMode: string,
+    resolvedMode: string,
+    chromeColor: string
+  ): Promise<void>;
+  getDownloadHistoryStatus(): Promise<string>;
+  recoverDownloadHistory(): Promise<string>;
   listDownloads(): Promise<string>;
   cancelDownload(id: string): Promise<boolean>;
   openDownload(id: string): Promise<void>;
@@ -70,7 +93,7 @@ export interface BrowserRuntime {
   haptic(kind: "tick" | "click"): void;
   setBoosts(json: string): void;
   setSitePermissionRules(json: string): void;
-  resolvePermission(requestId: number, allow: boolean): void;
+  resolvePermission(requestId: number, allow: boolean, rememberDenial: boolean): void;
   captureRendering(tabId: string): void;
   requestAndroidPermission(
     kind: "geolocation" | "notifications" | "camera" | "microphone"
@@ -80,6 +103,12 @@ export interface BrowserRuntime {
   clearFavicon(host: string): void;
   readHistory(): Promise<string | null>;
   saveHistory(json: string): Promise<void>;
+  getAndroidPermissionStatus?(): Promise<string>;
+  openAndroidPermissionSettings?(): Promise<void>;
+  resetSitePermission?(
+    origin: string | null,
+    kind: import("./uiPreferences").PermissionKind | null
+  ): Promise<void>;
   readSitePermissions(): Promise<string | null>;
   saveSitePermissions(json: string): Promise<void>;
   readUiPreferences(): Promise<string | null>;

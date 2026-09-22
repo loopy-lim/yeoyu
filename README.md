@@ -14,7 +14,7 @@ An experimental Android tablet browser built for spacious, keyboard-friendly bro
 ![Yeoyu with an expanded sidebar](docs/images/expanded.png)
 
 > [!WARNING]
-> Yeoyu is a proof of concept, not a production-ready or security-audited browser. There is no public APK release yet. Back up important browsing data before experimenting.
+> Yeoyu is a proof of concept, not a production-ready or security-audited browser. Check [GitHub Releases](https://github.com/loopy-lim/yeoyu/releases) for downloadable builds and their validation scope. Back up important browsing data before experimenting.
 
 ## What it explores
 
@@ -22,6 +22,8 @@ An experimental Android tablet browser built for spacious, keyboard-friendly bro
 - **Tablet-first interaction** — an expandable sidebar, horizontal and vertical split views, touch drag and drop, mouse menus, and editable keyboard shortcuts.
 - **Android web integration** — GeckoView sessions, site permissions, file pickers, downloads, external links, popups, media sessions, and Android picture-in-picture.
 - **Local state ownership** — workspace, tab, bookmark, and keymap rules live in Rust; React Native owns presentation and orchestration.
+- **Permissions and appearance** — device access preparation, remembered site choices, quiet autoplay defaults, Korean/English UI, and responsive settings.
+- **Android windows and extensions** — separate windows, Mozilla-compatible extension discovery and installation, and background media controls.
 - **Privacy experiments** — private tabs, tracking-protection settings, bounded import/export, and conservative tab-release rules.
 
 <p>
@@ -100,7 +102,7 @@ Android unit tests and a local signed test APK are exercised separately in CI. A
 
 ## Project status
 
-Yeoyu currently runs only as an Android proof of concept. The repository includes an iOS browser-surface interface, but no runnable iOS application. Sync, extensions, saved split groups, isolated account profiles, and automatic archiving are not implemented.
+Yeoyu currently runs only as an Android proof of concept. The repository includes an iOS browser-surface interface, but no runnable iOS application. Sync, saved split groups, isolated account profiles, and automatic archiving are not implemented. Extension support targets compatible Mozilla add-ons; Chrome CRX and every Firefox API are not supported.
 
 Yeoyu is inspired by spatial browser workflows, but it is not affiliated with or endorsed by The Browser Company, Arc, Mozilla, or Google. GeckoView and other third-party components remain subject to their respective licenses and trademarks.
 

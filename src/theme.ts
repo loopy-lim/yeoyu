@@ -1,7 +1,9 @@
 // Design tokens for the yeoyu chrome. Every color role, gap, radius, size,
 // and duration in the UI derives from here, so the two appearances stay
-// consistent and the acceptance gates (docs/architecture.md,
+// consistent and the acceptance gates (docs/reference/design-gates.md,
 // scripts/contrast-check.ts) have a single source of truth.
+
+import { resolveColorMode, type ResolvedColorMode, type UiPreferences } from "./uiPreferences";
 
 export type Appearance = "lavender" | "warm";
 
@@ -70,7 +72,7 @@ export const motion = {
 } as const;
 
 // Opacity treatments. disabled 0.38 is intentionally below usable contrast —
-// disabled chrome must read as inert at a glance (docs/architecture.md).
+// disabled chrome must read as inert at a glance (docs/reference/design-gates.md).
 export const alpha = { pressed: 0.58, disabled: 0.38 } as const;
 
 export interface Theme {
@@ -147,7 +149,7 @@ export const themes: Record<Appearance, Theme> = {
     ringShadow: "#79667d",
     ink: "#43384a",
     inkMuted: "#5b4d60",
-    inkFaint: "#67556c",
+    inkFaint: "#65536a",
     icon: "#574d5c",
     cardBorder: "#cfc1d5",
     hairline: "#e7dfe9",
@@ -173,7 +175,7 @@ export const themes: Record<Appearance, Theme> = {
     ringShadow: "#8a6a66",
     ink: "#4a3a3c",
     inkMuted: "#63504d",
-    inkFaint: "#705550",
+    inkFaint: "#6d524d",
     icon: "#5f4b48",
     cardBorder: "#d9c2c4",
     hairline: "#ecdfdc",
@@ -185,6 +187,50 @@ export const themes: Record<Appearance, Theme> = {
     noticeInk: "#fffafa",
     dropBorder: "#a1706a",
     dropFill: "rgba(191,151,148,0.22)",
+  },
+};
+
+// Dark roles use bright ink on low-luminance surfaces. Raised and translucent
+// controls stay dark too: reusing the light white-alpha fills washes out ink.
+const sharedDark = {
+  fieldOnChrome: "rgba(255,255,255,0.04)",
+  pill: "rgba(255,255,255,0.06)",
+  favChip: "rgba(255,255,255,0.04)",
+  pinnedRow: "rgba(255,255,255,0.03)",
+  railIconTile: "rgba(255,255,255,0.05)",
+  manageTile: "rgba(255,255,255,0.05)",
+  ghost: "rgba(39,34,43,0.98)",
+  scrim: "rgba(0,0,0,0.58)",
+  noticeBg: "rgba(238,231,243,0.96)",
+  noticeInk: "#302735",
+  errorBg: "#49272e",
+  errorInk: "#ffccd2",
+};
+
+export const darkThemes: Record<Appearance, Theme> = {
+  lavender: {
+    ...sharedDark,
+    chrome: "#211c26", sidebar: "#28212e", canvas: "#1d1922",
+    surface: "#25212a", surfaceElevated: "#302936", white: "#2d2633",
+    sunken: "#2d2633", sunkenStrong: "#3a3042",
+    accent: "#b49cbe", accentStrong: "#c4add0", paneFocus: "#77647f",
+    ringShadow: "#100d13", ink: "#f3edf6", inkMuted: "#d6c9dc",
+    inkFaint: "#c5b7cd", icon: "#dacfe0", cardBorder: "#55445f",
+    hairline: "#4b3d54", hairlineOnChrome: "#53425c",
+    tileBorder: "rgba(213,194,225,0.24)", switchOff: "#67576f",
+    dropBorder: "#bc9fce", dropFill: "rgba(180,151,191,0.16)",
+  },
+  warm: {
+    ...sharedDark,
+    chrome: "#261d1e", sidebar: "#2e2324", canvas: "#211a1b",
+    surface: "#2a2223", surfaceElevated: "#352a2b", white: "#322829",
+    sunken: "#322829", sunkenStrong: "#413133",
+    accent: "#c29c93", accentStrong: "#d3aea4", paneFocus: "#826760",
+    ringShadow: "#140e0f", ink: "#f7eeeb", inkMuted: "#dfcdc7",
+    inkFaint: "#cfbab3", icon: "#e3d0c9", cardBorder: "#604845",
+    hairline: "#54413e", hairlineOnChrome: "#5e4844",
+    tileBorder: "rgba(228,198,185,0.24)", switchOff: "#725b55",
+    dropBorder: "#d0a99d", dropFill: "rgba(191,151,148,0.16)",
   },
 };
 
@@ -347,48 +393,50 @@ const renderColor = ({ h, s, l, alpha }: ParsedColor) => {
   return `rgba(${r},${g},${b},${alpha})`;
 };
 
-const retintOne = (color: string, hue: number) => {
+const retintOne = (color: string, hue: number, saturationScale = 1) => {
   const parsed = parseColor(color);
   if (!parsed) return color;
   if (parsed.alpha !== null) {
     // Low-alpha fills carry no gate duty; a pure hue slide is enough.
-    return renderColor({ ...parsed, h: hue });
+    return renderColor({ ...parsed, h: hue, s: parsed.s * saturationScale });
   }
   // Tone-preserving retint: after the hue slide, walk the lightness axis
-  // until the WCAG luminance matches the original. Every foreground/
-  // background pair then keeps its exact base-theme contrast ratio, so the
-  // gates hold for any space tint by construction (themeGates.ts verifies).
+  // until the WCAG luminance matches the original. Opaque colors stay near their base luminance; 8-bit quantization
+  // can slightly change contrast. Translucent fills still need composited checks.
   const { h, s, l } = parsed;
+  const saturation = s * saturationScale;
   const target = luminance(hslToHex(h, s, l));
   let lo = 0;
   let hi = 1;
   for (let i = 0; i < 24; i++) {
     const mid = (lo + hi) / 2;
-    if (luminance(hslToHex(hue, s, mid)) < target) lo = mid;
+    if (luminance(hslToHex(hue, saturation, mid)) < target) lo = mid;
     else hi = mid;
   }
   const pick =
-    Math.abs(luminance(hslToHex(hue, s, lo)) - target) <=
-    Math.abs(luminance(hslToHex(hue, s, hi)) - target)
+    Math.abs(luminance(hslToHex(hue, saturation, lo)) - target) <=
+    Math.abs(luminance(hslToHex(hue, saturation, hi)) - target)
       ? lo
       : hi;
-  return hslToHex(hue, s, pick);
+  return hslToHex(hue, saturation, pick);
 };
 
 // Space tinting: slide the hue of the chrome surfaces, ink, and accents
 // toward the space color while preserving each color's WCAG luminance, so
-// contrast ratios — and therefore every gate — match the base appearance
-// exactly. Semantic overlays (scrim, notices, errors) and white-alpha fills
+// opaque contrast ratios remain close to the base appearance. Semantic overlays (scrim, notices, errors) and white-alpha fills
 // stay untouched.
-export const retintTheme = (base: Theme, color: string): Theme => {
+export const retintTheme = (base: Theme, color: string, saturationScale = 1): Theme => {
   if (!HEX6_RE.test(color)) return base;
   const hue = hexToHsl(color)[0];
-  const shift = (c: string) => retintOne(c, hue);
+  const shift = (c: string) => retintOne(c, hue, saturationScale);
   return {
     ...base,
     chrome: shift(base.chrome),
     sidebar: shift(base.sidebar),
     canvas: shift(base.canvas),
+    surface: shift(base.surface),
+    surfaceElevated: shift(base.surfaceElevated),
+    white: shift(base.white),
     sunken: shift(base.sunken),
     sunkenStrong: shift(base.sunkenStrong),
     cardBorder: shift(base.cardBorder),
@@ -400,6 +448,7 @@ export const retintTheme = (base: Theme, color: string): Theme => {
     dropFill: shift(base.dropFill),
     accent: shift(base.accent),
     accentStrong: shift(base.accentStrong),
+    paneFocus: shift(base.paneFocus),
     ringShadow: shift(base.ringShadow),
     ink: shift(base.ink),
     inkMuted: shift(base.inkMuted),
@@ -407,3 +456,20 @@ export const retintTheme = (base: Theme, color: string): Theme => {
     icon: shift(base.icon),
   };
 };
+
+/** A color seed chooses hue/chroma while retaining the base palette's tone targets. */
+export function resolveTheme(
+  preferences: Pick<UiPreferences, "appearance" | "colorMode" | "colorSource" | "customColor">,
+  spaceColor = "",
+  systemScheme?: ResolvedColorMode | null
+): Theme {
+  const palettes = resolveColorMode(preferences.colorMode, systemScheme) === "dark" ? darkThemes : themes;
+  const base = palettes[preferences.appearance];
+  if (preferences.colorSource === "appearance") return base;
+  if (preferences.colorSource === "custom") {
+    const color = preferences.customColor ?? "";
+    if (!HEX6_RE.test(color)) return base;
+    return retintTheme(base, color, hexToHsl(color)[1]);
+  }
+  return retintTheme(base, spaceColor);
+}

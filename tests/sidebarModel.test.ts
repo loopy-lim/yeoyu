@@ -88,6 +88,19 @@ test("moving a favorite translates insertion slots after removing its old positi
   expect(favoriteMoveIndex(tabs, "missing", 0)).toBeNull();
 });
 
+test("favorite reordering translates visible slots while split members stay at their saved positions", () => {
+  const tabs = [
+    { id: "paired", favorite: true },
+    { id: "a", favorite: true },
+    { id: "b", favorite: true },
+    { id: "new" },
+  ];
+  expect(favoriteMoveIndex(tabs, "b", 0, ["a", "b"])).toBe(1);
+  expect(favoriteMoveIndex(tabs, "a", 2, ["a", "b"])).toBe(2);
+  expect(favoriteMoveIndex(tabs, "new", 1, ["a", "b"])).toBe(2);
+  expect(favoriteMoveIndex(tabs, "new", 0, [])).toBe(3);
+});
+
 test("sidebar address exposes the domain while retaining non-web destinations", () => {
   expect(sidebarAddressLabel("https://www.example.com/path?q=private")).toBe(
     "example.com"

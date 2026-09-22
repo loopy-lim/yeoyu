@@ -23,13 +23,22 @@ object PendingExternalLinks {
 
     fun receive(context: Context, intent: Intent?, deliveryId: String) {
         initialize(context)
-        if (intent?.action != Intent.ACTION_VIEW) return
-        val url = ExternalLinkPolicy.webUri(intent.dataString)
+        val url = when (intent?.action) {
+            Intent.ACTION_VIEW -> intent.dataString?.let(ExternalLinkPolicy::webUri)
+            // Share-sheet handoff: take the first web address inside the shared
+            // text through the same single trust boundary as links.
+            Intent.ACTION_SEND -> sharedUrl(intent.getStringExtra(Intent.EXTRA_TEXT))
+            else -> null
+        }
         if (url == null) {
-            main.post { GeckoSessionRegistry.emit?.invoke("BrowserExternalLinkFailed", Arguments.createMap().apply {
-                putString("requestId", deliveryId); putString("code", "UNSAFE_WEB_ADDRESS")
-                putString("error", "External link rejected: only HTTP(S) addresses without credentials are allowed.")
-            }) }
+            // A VIEW with an unusable address is reported; a share without any
+            // web address (plain text, images) is not a link and is ignored.
+            if (intent?.action == Intent.ACTION_VIEW) {
+                main.post { GeckoSessionRegistry.emit?.invoke("BrowserExternalLinkFailed", Arguments.createMap().apply {
+                    putString("requestId", deliveryId); putString("code", "UNSAFE_WEB_ADDRESS")
+                    putString("error", "External link rejected: only HTTP(S) addresses without credentials are allowed.")
+                }) }
+            }
             return
         }
         worker.execute {
@@ -44,6 +53,12 @@ object PendingExternalLinks {
             }
         }
     }
+
+    private fun sharedUrl(text: String?): String? =
+        text?.split(Regex("\\s+"))?.firstNotNullOfOrNull { candidate ->
+            val trimmed = candidate.trim { it in ",.;!?)'\"、。" }
+            ExternalLinkPolicy.webUri(trimmed)
+        }
 
     private fun store(): PendingLinkQueue = queue ?: PendingLinkQueue(
         File(checkNotNull(app) { "External links are not initialized" }.filesDir, "browser-incoming-links-v1"),

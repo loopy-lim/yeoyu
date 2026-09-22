@@ -1,3 +1,4 @@
+import { parseKeymap } from "./keyboardEditor";
 import type { KeyBinding } from "../generated/types";
 /** Optional user preset for devices whose OS reserves Meta chords. Rust validates/saves it. */
 export function withCtrlAlternatives(bindings: KeyBinding[]): KeyBinding[] {
@@ -21,7 +22,5 @@ export function withCtrlAlternatives(bindings: KeyBinding[]): KeyBinding[] {
 }
 
 export function withCtrlAlternativesFromDraft(draft: string): KeyBinding[] {
-  const parsed: unknown = JSON.parse(draft);
-  if (!Array.isArray(parsed)) throw new Error("Keymap JSON must be an array");
-  return withCtrlAlternatives(parsed as KeyBinding[]);
+  return withCtrlAlternatives(parseKeymap(draft));
 }

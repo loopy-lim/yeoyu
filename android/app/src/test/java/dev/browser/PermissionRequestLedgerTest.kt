@@ -19,6 +19,7 @@ class PermissionRequestLedgerTest {
         assertNotNull(resolution)
         assertEquals("camera callback", resolution!!.value)
         assertFalse(resolution.allow)
+        assertFalse(resolution.current)
     }
 
     @Test fun ownerCancellationReturnsOnlyThatDocumentsRequestsAndMakesThemUnresolvable() {
@@ -44,5 +45,18 @@ class PermissionRequestLedgerTest {
 
         assertEquals(listOf(10, 11), ledger.cancelAll().map { it.id })
         assertTrue(ledger.cancelAll().isEmpty())
+    }
+
+    @Test fun dismissingOneCapabilityCancelsOnlyMatchingRequestsFromThatDocumentOwner() {
+        val first = Any()
+        val second = Any()
+        val ledger = PermissionRequestLedger<String>()
+        ledger.add(1, first, 1, "camera")
+        ledger.add(2, first, 1, "location")
+        ledger.add(3, second, 1, "camera")
+        assertEquals(listOf(1), ledger.cancelMatching(first) { it == "camera" }.map { it.id })
+        assertNull(ledger.resolve(1, true, { true }, { 1 }))
+        assertTrue(ledger.resolve(2, true, { true }, { 1 })!!.allow)
+        assertTrue(ledger.resolve(3, true, { true }, { 1 })!!.allow)
     }
 }

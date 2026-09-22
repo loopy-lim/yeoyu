@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { BrowserToolsStore, updateSitePreference, ExternalLinkDrain, retainLiveTabs, parseBrowserTools, parseExternalLinks, type BrowserToolsConfig } from "../src/browserWorkflows";
+import { BrowserToolsStore, resetSitePreferences, updateSitePreference, ExternalLinkDrain, retainLiveTabs, parseBrowserTools, parseExternalLinks, type BrowserToolsConfig } from "../src/browserWorkflows";
 
 test("a failed acknowledgement retries persistence without opening another tab", async () => {
   const pending = [{ id: "one", url: "https://a.example/" }];
@@ -139,6 +139,41 @@ function deferred() {
 const initialTools: BrowserToolsConfig = {
   schema: 1, automaticMemorySaving: false, restoreSessions: true, trackingProtection: "engine-default", textScale: 1, sites: [],
 };
+
+test("returning every site preference to its default removes the exception", () => {
+  let config = updateSitePreference("https://a.example", { desktop: false, keepAlive: true, trackingProtection: false })(initialTools);
+  config = updateSitePreference("https://a.example", { desktop: true, trackingProtection: null })(config);
+  expect(config.sites).toHaveLength(1);
+  config = updateSitePreference("https://a.example", { keepAlive: false })(config);
+  expect(config.sites).toEqual([]);
+  expect(updateSitePreference("https://a.example", { desktop: true })(initialTools).sites).toEqual([]);
+});
+
+test("loading compacts legacy default rows but preserves explicit protection choices", () => {
+  const config = parseBrowserTools(JSON.stringify({ ...initialTools, sites: [
+    { origin: "https://default.example", desktop: true, trackingProtection: null, keepAlive: false },
+    { origin: "https://protected.example", desktop: true, trackingProtection: true },
+  ] }));
+  expect(config.sites).toEqual([{ origin: "https://protected.example", desktop: true, trackingProtection: true }]);
+  expect(() => parseBrowserTools(JSON.stringify({ ...initialTools, sites: [
+    { origin: "https://a.example", desktop: true, trackingProtection: null },
+    { origin: "https://a.example", desktop: false, trackingProtection: null },
+  ] }))).toThrow("Invalid site settings");
+});
+
+test("site resets preserve global settings and other origins across queued saves", async () => {
+  let committed = { ...initialTools, textScale: 1.4 };
+  const store = new BrowserToolsStore(async () => {}, (next) => { committed = next; }, async () => committed);
+  store.initialize(committed);
+  await Promise.all([
+    store.save(updateSitePreference("https://a.example", { desktop: false })),
+    store.save(updateSitePreference("https://a.example:8443", { keepAlive: true })),
+    store.save(resetSitePreferences("https://a.example")),
+  ]);
+  expect(committed.sites.map(({ origin }) => origin)).toEqual(["https://a.example:8443"]);
+  await store.save(resetSitePreferences());
+  expect(committed).toEqual({ ...initialTools, textScale: 1.4 });
+});
 
 test("reopened settings enqueue a delta after durable restore-off without re-enabling restoration", async () => {
   const firstWrite = deferred();

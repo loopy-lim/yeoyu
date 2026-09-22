@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Responsive viewport</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 16px sans-serif; background: #f3f6fb; color: #142136; }
+  h1, pre { margin: 16px; }
+  pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+  #fluid { width: 50vw; height: 40px; background: #2066b0; }
+  #fixed { width: 100px; height: 24px; background: #994419; }
+  #grid { display: grid; grid-template-columns: 1fr; gap: 8px; padding: 8px; }
+  #grid div { min-width: 0; padding: 16px; background: #d6e5f8; }
+  @media (min-width: 600px) { #grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 1000px) { #grid { grid-template-columns: repeat(3, 1fr); } }
+</style>
+<h1>Responsive viewport</h1>
+<div id="fluid"></div><div id="fixed"></div>
+<div id="grid"><div>A</div><div>B</div><div>C</div></div>
+<pre id="readout"></pre>
+<script>
+  const run = new URLSearchParams(location.search).get('run') || 'manual';
+  let timer;
+  function measure(event) {
+    const value = {
+      run, event, innerWidth, innerHeight, clientWidth: document.documentElement.clientWidth,
+      devicePixelRatio, screenWidth: screen.width,
+      visualWidth: visualViewport.width, scale: visualViewport.scale,
+      fluidWidth: document.querySelector('#fluid').getBoundingClientRect().width,
+      fixedWidth: document.querySelector('#fixed').getBoundingClientRect().width,
+      columns: getComputedStyle(document.querySelector('#grid')).gridTemplateColumns.split(' ').length,
+      prefersDark: matchMedia('(prefers-color-scheme: dark)').matches,
+      min600: matchMedia('(min-width: 600px)').matches,
+      min1000: matchMedia('(min-width: 1000px)').matches,
+    };
+    document.querySelector('#readout').textContent = JSON.stringify(value, null, 2);
+    fetch('/receipt', { method: 'POST', body: JSON.stringify({ kind: 'responsive-viewport', value }) });
+  }
+  function schedule(event) { clearTimeout(timer); timer = setTimeout(() => measure(event), 180); }
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => schedule('color-mode'));
+  addEventListener('resize', () => schedule('resize'));
+  visualViewport.addEventListener('resize', () => schedule('visual-resize'));
+  addEventListener('load', () => schedule('load'));
+</script>
+</html>

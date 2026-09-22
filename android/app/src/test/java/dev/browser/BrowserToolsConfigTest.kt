@@ -33,6 +33,19 @@ class BrowserToolsConfigTest {
         assertThrows(IllegalArgumentException::class.java) { BrowserToolsConfig.parse(config.toJson().replace("\"automaticMemorySaving\":true", "\"automaticMemorySaving\":\"true\"")) }
     }
 
+    @Test fun defaultSiteRowsAreRemovedWithoutDroppingExplicitOverrides() {
+        val config = BrowserToolsConfig.parse("""{"schema":1,"restoreSessions":false,"trackingProtection":"standard","textScale":1,"sites":[{"origin":"https://default.example","desktop":true,"trackingProtection":null,"keepAlive":false},{"origin":"https://kept.example","desktop":true,"trackingProtection":true}]}""")
+        assertEquals(1, config.sites.size)
+        assertNull(config.siteFor("https://default.example"))
+        assertEquals(true, config.siteFor("https://kept.example")?.trackingProtection)
+    }
+
+    @Test fun duplicateOriginsRemainInvalidEvenWhenOneRowContainsOnlyDefaults() {
+        assertThrows(IllegalArgumentException::class.java) {
+            BrowserToolsConfig.parse("""{"schema":1,"restoreSessions":false,"trackingProtection":"standard","textScale":1,"sites":[{"origin":"https://example.com","desktop":true,"trackingProtection":null},{"origin":"https://example.com:443","desktop":false,"trackingProtection":null}]}""")
+        }
+    }
+
     @Test fun malformedOrOverBroadConfigurationIsRejectedWithoutDefaults() {
         val bad = listOf(
             "{}",

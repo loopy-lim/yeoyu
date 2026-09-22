@@ -279,7 +279,7 @@ static void complex_encode_ref_KeyBinding(jsi::Runtime& rt, const jsi::Value& va
 }
 static jsi::Value complex_decode_ref_KeyBinding(jsi::Runtime& rt, rc::Reader& r, size_t _depth) { if (_depth > 32) throw std::runtime_error("complex value depth exceeds 32"); return [&]() -> jsi::Value { auto _cx0 = jsi::Object(rt); _cx0.setProperty(rt, "key", [&]() -> jsi::Value { auto _s = r.read_string_view(); return jsi::String::createFromUtf8(rt, _s.data, _s.size); }()); _cx0.setProperty(rt, "meta", jsi::Value(r.read_bool())); _cx0.setProperty(rt, "ctrl", jsi::Value(r.read_bool())); _cx0.setProperty(rt, "alt", jsi::Value(r.read_bool())); _cx0.setProperty(rt, "shift", jsi::Value(r.read_bool())); _cx0.setProperty(rt, "command", [&]() -> jsi::Value { auto _s = r.read_string_view(); return jsi::String::createFromUtf8(rt, _s.data, _s.size); }()); return _cx0; }(); }
 static void encode_bookmarkCreate(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
-  w.push_u8(19); w.push_u8(0); // cmd_id = 19 LE
+  w.push_u8(20); w.push_u8(0); // cmd_id = 20 LE
   auto argsObj = args.asObject(rt);
   { auto _v = argsObj.getProperty(rt, "title").getString(rt).utf8(rt); w.push_string(_v); }
   { auto _v = argsObj.getProperty(rt, "url").getString(rt).utf8(rt); w.push_string(_v); }
@@ -289,7 +289,7 @@ static void encode_bookmarkCreate(jsi::Runtime& rt, const jsi::Value& args, rc::
 // (Tier 1 positional) 개별 인자 → 직접 인코딩. argsObj 경유 대비 JSI 프로퍼티 조회 3회 제거.
 static void encode_pos_bookmarkCreate(jsi::Runtime& rt, const jsi::Value* argv, size_t argc, rc::Writer& w) {
   if (argc != 3) throw jsi::JSError(rt, "rustra: bookmarkCreate expects 3 positional argument(s), got " + std::to_string(argc));
-  w.push_u8(19); w.push_u8(0); // cmd_id = 19 LE
+  w.push_u8(20); w.push_u8(0); // cmd_id = 20 LE
   { auto _s = argv[0].asString(rt).utf8(rt); w.push_string(_s); }
   { auto _s = argv[1].asString(rt).utf8(rt); w.push_string(_s); }
   { auto _s = argv[2].asString(rt).utf8(rt); w.push_string(_s); }
@@ -357,7 +357,7 @@ static jsi::Value decode_bookmarkCreate(jsi::Runtime& rt, rc::Reader& r) {
 }
 
 static void encode_bookmarkFolderCreate(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
-  w.push_u8(23); w.push_u8(0); // cmd_id = 23 LE
+  w.push_u8(24); w.push_u8(0); // cmd_id = 24 LE
   auto argsObj = args.asObject(rt);
   { auto _v = argsObj.getProperty(rt, "title").getString(rt).utf8(rt); w.push_string(_v); }
 }
@@ -365,7 +365,7 @@ static void encode_bookmarkFolderCreate(jsi::Runtime& rt, const jsi::Value& args
 // (Tier 1 positional) 개별 인자 → 직접 인코딩. argsObj 경유 대비 JSI 프로퍼티 조회 1회 제거.
 static void encode_pos_bookmarkFolderCreate(jsi::Runtime& rt, const jsi::Value* argv, size_t argc, rc::Writer& w) {
   if (argc != 1) throw jsi::JSError(rt, "rustra: bookmarkFolderCreate expects 1 positional argument(s), got " + std::to_string(argc));
-  w.push_u8(23); w.push_u8(0); // cmd_id = 23 LE
+  w.push_u8(24); w.push_u8(0); // cmd_id = 24 LE
   { auto _s = argv[0].asString(rt).utf8(rt); w.push_string(_s); }
 }
 
@@ -431,7 +431,7 @@ static jsi::Value decode_bookmarkFolderCreate(jsi::Runtime& rt, rc::Reader& r) {
 }
 
 static void encode_bookmarkFolderRemove(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
-  w.push_u8(25); w.push_u8(0); // cmd_id = 25 LE
+  w.push_u8(26); w.push_u8(0); // cmd_id = 26 LE
   auto argsObj = args.asObject(rt);
   { auto _v = argsObj.getProperty(rt, "folderId").getString(rt).utf8(rt); w.push_string(_v); }
 }
@@ -439,7 +439,7 @@ static void encode_bookmarkFolderRemove(jsi::Runtime& rt, const jsi::Value& args
 // (Tier 1 positional) 개별 인자 → 직접 인코딩. argsObj 경유 대비 JSI 프로퍼티 조회 1회 제거.
 static void encode_pos_bookmarkFolderRemove(jsi::Runtime& rt, const jsi::Value* argv, size_t argc, rc::Writer& w) {
   if (argc != 1) throw jsi::JSError(rt, "rustra: bookmarkFolderRemove expects 1 positional argument(s), got " + std::to_string(argc));
-  w.push_u8(25); w.push_u8(0); // cmd_id = 25 LE
+  w.push_u8(26); w.push_u8(0); // cmd_id = 26 LE
   { auto _s = argv[0].asString(rt).utf8(rt); w.push_string(_s); }
 }
 
@@ -505,7 +505,7 @@ static jsi::Value decode_bookmarkFolderRemove(jsi::Runtime& rt, rc::Reader& r) {
 }
 
 static void encode_bookmarkFolderRename(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
-  w.push_u8(24); w.push_u8(0); // cmd_id = 24 LE
+  w.push_u8(25); w.push_u8(0); // cmd_id = 25 LE
   auto argsObj = args.asObject(rt);
   { auto _v = argsObj.getProperty(rt, "folderId").getString(rt).utf8(rt); w.push_string(_v); }
   { auto _v = argsObj.getProperty(rt, "title").getString(rt).utf8(rt); w.push_string(_v); }
@@ -514,7 +514,7 @@ static void encode_bookmarkFolderRename(jsi::Runtime& rt, const jsi::Value& args
 // (Tier 1 positional) 개별 인자 → 직접 인코딩. argsObj 경유 대비 JSI 프로퍼티 조회 2회 제거.
 static void encode_pos_bookmarkFolderRename(jsi::Runtime& rt, const jsi::Value* argv, size_t argc, rc::Writer& w) {
   if (argc != 2) throw jsi::JSError(rt, "rustra: bookmarkFolderRename expects 2 positional argument(s), got " + std::to_string(argc));
-  w.push_u8(24); w.push_u8(0); // cmd_id = 24 LE
+  w.push_u8(25); w.push_u8(0); // cmd_id = 25 LE
   { auto _s = argv[0].asString(rt).utf8(rt); w.push_string(_s); }
   { auto _s = argv[1].asString(rt).utf8(rt); w.push_string(_s); }
 }
@@ -581,7 +581,7 @@ static jsi::Value decode_bookmarkFolderRename(jsi::Runtime& rt, rc::Reader& r) {
 }
 
 static void encode_bookmarkMove(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
-  w.push_u8(22); w.push_u8(0); // cmd_id = 22 LE
+  w.push_u8(23); w.push_u8(0); // cmd_id = 23 LE
   auto argsObj = args.asObject(rt);
   { auto _v = argsObj.getProperty(rt, "bookmarkId").getString(rt).utf8(rt); w.push_string(_v); }
   w.push_uvar(rustra_u64(rt, argsObj.getProperty(rt, "index"), "index"));
@@ -590,7 +590,7 @@ static void encode_bookmarkMove(jsi::Runtime& rt, const jsi::Value& args, rc::Wr
 // (Tier 1 positional) 개별 인자 → 직접 인코딩. argsObj 경유 대비 JSI 프로퍼티 조회 2회 제거.
 static void encode_pos_bookmarkMove(jsi::Runtime& rt, const jsi::Value* argv, size_t argc, rc::Writer& w) {
   if (argc != 2) throw jsi::JSError(rt, "rustra: bookmarkMove expects 2 positional argument(s), got " + std::to_string(argc));
-  w.push_u8(22); w.push_u8(0); // cmd_id = 22 LE
+  w.push_u8(23); w.push_u8(0); // cmd_id = 23 LE
   { auto _s = argv[0].asString(rt).utf8(rt); w.push_string(_s); }
   w.push_uvar(rustra_u64(rt, argv[1], "index"));
 }
@@ -657,7 +657,7 @@ static jsi::Value decode_bookmarkMove(jsi::Runtime& rt, rc::Reader& r) {
 }
 
 static void encode_bookmarkOpen(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
-  w.push_u8(28); w.push_u8(0); // cmd_id = 28 LE
+  w.push_u8(29); w.push_u8(0); // cmd_id = 29 LE
   auto argsObj = args.asObject(rt);
   { auto _v = argsObj.getProperty(rt, "bookmarkId").getString(rt).utf8(rt); w.push_string(_v); }
   { auto _v = argsObj.getProperty(rt, "reuseTabId").getString(rt).utf8(rt); w.push_string(_v); }
@@ -667,7 +667,7 @@ static void encode_bookmarkOpen(jsi::Runtime& rt, const jsi::Value& args, rc::Wr
 // (Tier 1 positional) 개별 인자 → 직접 인코딩. argsObj 경유 대비 JSI 프로퍼티 조회 3회 제거.
 static void encode_pos_bookmarkOpen(jsi::Runtime& rt, const jsi::Value* argv, size_t argc, rc::Writer& w) {
   if (argc != 3) throw jsi::JSError(rt, "rustra: bookmarkOpen expects 3 positional argument(s), got " + std::to_string(argc));
-  w.push_u8(28); w.push_u8(0); // cmd_id = 28 LE
+  w.push_u8(29); w.push_u8(0); // cmd_id = 29 LE
   { auto _s = argv[0].asString(rt).utf8(rt); w.push_string(_s); }
   { auto _s = argv[1].asString(rt).utf8(rt); w.push_string(_s); }
   w.push_bool(argv[2].asBool());
@@ -735,7 +735,7 @@ static jsi::Value decode_bookmarkOpen(jsi::Runtime& rt, rc::Reader& r) {
 }
 
 static void encode_bookmarkRemove(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
-  w.push_u8(21); w.push_u8(0); // cmd_id = 21 LE
+  w.push_u8(22); w.push_u8(0); // cmd_id = 22 LE
   auto argsObj = args.asObject(rt);
   { auto _v = argsObj.getProperty(rt, "bookmarkId").getString(rt).utf8(rt); w.push_string(_v); }
 }
@@ -743,7 +743,7 @@ static void encode_bookmarkRemove(jsi::Runtime& rt, const jsi::Value& args, rc::
 // (Tier 1 positional) 개별 인자 → 직접 인코딩. argsObj 경유 대비 JSI 프로퍼티 조회 1회 제거.
 static void encode_pos_bookmarkRemove(jsi::Runtime& rt, const jsi::Value* argv, size_t argc, rc::Writer& w) {
   if (argc != 1) throw jsi::JSError(rt, "rustra: bookmarkRemove expects 1 positional argument(s), got " + std::to_string(argc));
-  w.push_u8(21); w.push_u8(0); // cmd_id = 21 LE
+  w.push_u8(22); w.push_u8(0); // cmd_id = 22 LE
   { auto _s = argv[0].asString(rt).utf8(rt); w.push_string(_s); }
 }
 
@@ -809,7 +809,7 @@ static jsi::Value decode_bookmarkRemove(jsi::Runtime& rt, rc::Reader& r) {
 }
 
 static void encode_bookmarkSetFolder(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
-  w.push_u8(26); w.push_u8(0); // cmd_id = 26 LE
+  w.push_u8(27); w.push_u8(0); // cmd_id = 27 LE
   auto argsObj = args.asObject(rt);
   { auto _v = argsObj.getProperty(rt, "bookmarkId").getString(rt).utf8(rt); w.push_string(_v); }
   { auto _v = argsObj.getProperty(rt, "folderId").getString(rt).utf8(rt); w.push_string(_v); }
@@ -818,7 +818,7 @@ static void encode_bookmarkSetFolder(jsi::Runtime& rt, const jsi::Value& args, r
 // (Tier 1 positional) 개별 인자 → 직접 인코딩. argsObj 경유 대비 JSI 프로퍼티 조회 2회 제거.
 static void encode_pos_bookmarkSetFolder(jsi::Runtime& rt, const jsi::Value* argv, size_t argc, rc::Writer& w) {
   if (argc != 2) throw jsi::JSError(rt, "rustra: bookmarkSetFolder expects 2 positional argument(s), got " + std::to_string(argc));
-  w.push_u8(26); w.push_u8(0); // cmd_id = 26 LE
+  w.push_u8(27); w.push_u8(0); // cmd_id = 27 LE
   { auto _s = argv[0].asString(rt).utf8(rt); w.push_string(_s); }
   { auto _s = argv[1].asString(rt).utf8(rt); w.push_string(_s); }
 }
@@ -885,7 +885,7 @@ static jsi::Value decode_bookmarkSetFolder(jsi::Runtime& rt, rc::Reader& r) {
 }
 
 static void encode_bookmarkUpdate(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
-  w.push_u8(20); w.push_u8(0); // cmd_id = 20 LE
+  w.push_u8(21); w.push_u8(0); // cmd_id = 21 LE
   auto argsObj = args.asObject(rt);
   { auto _v = argsObj.getProperty(rt, "bookmarkId").getString(rt).utf8(rt); w.push_string(_v); }
   { auto _v = argsObj.getProperty(rt, "title").getString(rt).utf8(rt); w.push_string(_v); }
@@ -895,7 +895,7 @@ static void encode_bookmarkUpdate(jsi::Runtime& rt, const jsi::Value& args, rc::
 // (Tier 1 positional) 개별 인자 → 직접 인코딩. argsObj 경유 대비 JSI 프로퍼티 조회 3회 제거.
 static void encode_pos_bookmarkUpdate(jsi::Runtime& rt, const jsi::Value* argv, size_t argc, rc::Writer& w) {
   if (argc != 3) throw jsi::JSError(rt, "rustra: bookmarkUpdate expects 3 positional argument(s), got " + std::to_string(argc));
-  w.push_u8(20); w.push_u8(0); // cmd_id = 20 LE
+  w.push_u8(21); w.push_u8(0); // cmd_id = 21 LE
   { auto _s = argv[0].asString(rt).utf8(rt); w.push_string(_s); }
   { auto _s = argv[1].asString(rt).utf8(rt); w.push_string(_s); }
   { auto _s = argv[2].asString(rt).utf8(rt); w.push_string(_s); }
@@ -1025,6 +1025,26 @@ static jsi::Value decode_browserSnapshot(jsi::Runtime& rt, rc::Reader& r) {
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
     resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "keyBindings"), _arr); }
   resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "keymapVersion"), (double)r.read_uvar());
+  return std::move(resultObj);
+}
+
+static void encode_keymapDefaults(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
+  w.push_u8(19); w.push_u8(0); // cmd_id = 19 LE
+  auto argsObj = args.asObject(rt);
+}
+
+static jsi::Value decode_keymapDefaults(jsi::Runtime& rt, rc::Reader& r) {
+  auto resultObj = jsi::Object(rt);
+  { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
+    for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "key"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "meta"), r.read_bool());
+      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "ctrl"), r.read_bool());
+      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "alt"), r.read_bool());
+      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "shift"), r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "command"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
+    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "bindings"), _arr); }
   return std::move(resultObj);
 }
 
@@ -1634,7 +1654,7 @@ static jsi::Value decode_tabOpenExternal(jsi::Runtime& rt, rc::Reader& r) {
 }
 
 static void encode_tabReset(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
-  w.push_u8(27); w.push_u8(0); // cmd_id = 27 LE
+  w.push_u8(28); w.push_u8(0); // cmd_id = 28 LE
   auto argsObj = args.asObject(rt);
   { auto _v = argsObj.getProperty(rt, "tabId").getString(rt).utf8(rt); w.push_string(_v); }
 }
@@ -1642,7 +1662,7 @@ static void encode_tabReset(jsi::Runtime& rt, const jsi::Value& args, rc::Writer
 // (Tier 1 positional) 개별 인자 → 직접 인코딩. argsObj 경유 대비 JSI 프로퍼티 조회 1회 제거.
 static void encode_pos_tabReset(jsi::Runtime& rt, const jsi::Value* argv, size_t argc, rc::Writer& w) {
   if (argc != 1) throw jsi::JSError(rt, "rustra: tabReset expects 1 positional argument(s), got " + std::to_string(argc));
-  w.push_u8(27); w.push_u8(0); // cmd_id = 27 LE
+  w.push_u8(28); w.push_u8(0); // cmd_id = 28 LE
   { auto _s = argv[0].asString(rt).utf8(rt); w.push_string(_s); }
 }
 
@@ -2287,6 +2307,7 @@ bool encode_by_name(Runtime& rt, const std::string& name, const Value& args, rc:
   if (name == "bookmarkSetFolder") { encode_bookmarkSetFolder(rt, args, w); return true; }
   if (name == "bookmarkUpdate") { encode_bookmarkUpdate(rt, args, w); return true; }
   if (name == "browserSnapshot") { encode_browserSnapshot(rt, args, w); return true; }
+  if (name == "keymapDefaults") { encode_keymapDefaults(rt, args, w); return true; }
   if (name == "keymapSet") { encode_keymapSet(rt, args, w); return true; }
   if (name == "snapshotRestore") { encode_snapshotRestore(rt, args, w); return true; }
   if (name == "tabActivate") { encode_tabActivate(rt, args, w); return true; }
@@ -2319,6 +2340,7 @@ Value decode_by_name(Runtime& rt, const std::string& name, rc::Reader& r) {
   if (name == "bookmarkSetFolder") return decode_bookmarkSetFolder(rt, r);
   if (name == "bookmarkUpdate") return decode_bookmarkUpdate(rt, r);
   if (name == "browserSnapshot") return decode_browserSnapshot(rt, r);
+  if (name == "keymapDefaults") return decode_keymapDefaults(rt, r);
   if (name == "keymapSet") return decode_keymapSet(rt, r);
   if (name == "snapshotRestore") return decode_snapshotRestore(rt, r);
   if (name == "tabActivate") return decode_tabActivate(rt, r);
@@ -2342,16 +2364,17 @@ Value decode_by_name(Runtime& rt, const std::string& name, rc::Reader& r) {
 
 bool encode_by_id(Runtime& rt, uint16_t cmd_id, const Value& args, rc::Writer& w) {
   switch (cmd_id) {
-    case 19: encode_bookmarkCreate(rt, args, w); return true;
-    case 23: encode_bookmarkFolderCreate(rt, args, w); return true;
-    case 25: encode_bookmarkFolderRemove(rt, args, w); return true;
-    case 24: encode_bookmarkFolderRename(rt, args, w); return true;
-    case 22: encode_bookmarkMove(rt, args, w); return true;
-    case 28: encode_bookmarkOpen(rt, args, w); return true;
-    case 21: encode_bookmarkRemove(rt, args, w); return true;
-    case 26: encode_bookmarkSetFolder(rt, args, w); return true;
-    case 20: encode_bookmarkUpdate(rt, args, w); return true;
+    case 20: encode_bookmarkCreate(rt, args, w); return true;
+    case 24: encode_bookmarkFolderCreate(rt, args, w); return true;
+    case 26: encode_bookmarkFolderRemove(rt, args, w); return true;
+    case 25: encode_bookmarkFolderRename(rt, args, w); return true;
+    case 23: encode_bookmarkMove(rt, args, w); return true;
+    case 29: encode_bookmarkOpen(rt, args, w); return true;
+    case 22: encode_bookmarkRemove(rt, args, w); return true;
+    case 27: encode_bookmarkSetFolder(rt, args, w); return true;
+    case 21: encode_bookmarkUpdate(rt, args, w); return true;
     case 1: encode_browserSnapshot(rt, args, w); return true;
+    case 19: encode_keymapDefaults(rt, args, w); return true;
     case 18: encode_keymapSet(rt, args, w); return true;
     case 17: encode_snapshotRestore(rt, args, w); return true;
     case 9: encode_tabActivate(rt, args, w); return true;
@@ -2360,7 +2383,7 @@ bool encode_by_id(Runtime& rt, uint16_t cmd_id, const Value& args, rc::Writer& w
     case 14: encode_tabMove(rt, args, w); return true;
     case 11: encode_tabNavigated(rt, args, w); return true;
     case 8: encode_tabOpenExternal(rt, args, w); return true;
-    case 27: encode_tabReset(rt, args, w); return true;
+    case 28: encode_tabReset(rt, args, w); return true;
     case 12: encode_tabSetFavorite(rt, args, w); return true;
     case 13: encode_tabSetPinned(rt, args, w); return true;
     case 15: encode_tabSetWorkspace(rt, args, w); return true;
@@ -2376,16 +2399,17 @@ bool encode_by_id(Runtime& rt, uint16_t cmd_id, const Value& args, rc::Writer& w
 
 Value decode_by_id(Runtime& rt, uint16_t cmd_id, rc::Reader& r) {
   switch (cmd_id) {
-    case 19: return decode_bookmarkCreate(rt, r);
-    case 23: return decode_bookmarkFolderCreate(rt, r);
-    case 25: return decode_bookmarkFolderRemove(rt, r);
-    case 24: return decode_bookmarkFolderRename(rt, r);
-    case 22: return decode_bookmarkMove(rt, r);
-    case 28: return decode_bookmarkOpen(rt, r);
-    case 21: return decode_bookmarkRemove(rt, r);
-    case 26: return decode_bookmarkSetFolder(rt, r);
-    case 20: return decode_bookmarkUpdate(rt, r);
+    case 20: return decode_bookmarkCreate(rt, r);
+    case 24: return decode_bookmarkFolderCreate(rt, r);
+    case 26: return decode_bookmarkFolderRemove(rt, r);
+    case 25: return decode_bookmarkFolderRename(rt, r);
+    case 23: return decode_bookmarkMove(rt, r);
+    case 29: return decode_bookmarkOpen(rt, r);
+    case 22: return decode_bookmarkRemove(rt, r);
+    case 27: return decode_bookmarkSetFolder(rt, r);
+    case 21: return decode_bookmarkUpdate(rt, r);
     case 1: return decode_browserSnapshot(rt, r);
+    case 19: return decode_keymapDefaults(rt, r);
     case 18: return decode_keymapSet(rt, r);
     case 17: return decode_snapshotRestore(rt, r);
     case 9: return decode_tabActivate(rt, r);
@@ -2394,7 +2418,7 @@ Value decode_by_id(Runtime& rt, uint16_t cmd_id, rc::Reader& r) {
     case 14: return decode_tabMove(rt, r);
     case 11: return decode_tabNavigated(rt, r);
     case 8: return decode_tabOpenExternal(rt, r);
-    case 27: return decode_tabReset(rt, r);
+    case 28: return decode_tabReset(rt, r);
     case 12: return decode_tabSetFavorite(rt, r);
     case 13: return decode_tabSetPinned(rt, r);
     case 15: return decode_tabSetWorkspace(rt, r);
@@ -2419,6 +2443,7 @@ bool has_static_codec(const std::string& name) {
   if (name == "bookmarkSetFolder") return true;
   if (name == "bookmarkUpdate") return true;
   if (name == "browserSnapshot") return true;
+  if (name == "keymapDefaults") return true;
   if (name == "keymapSet") return true;
   if (name == "snapshotRestore") return true;
   if (name == "tabActivate") return true;
@@ -2442,16 +2467,17 @@ bool has_static_codec(const std::string& name) {
 
 bool has_static_codec_id(uint16_t cmd_id) {
   switch (cmd_id) {
-    case 19: return true;
-    case 23: return true;
-    case 25: return true;
-    case 24: return true;
-    case 22: return true;
-    case 28: return true;
-    case 21: return true;
-    case 26: return true;
     case 20: return true;
+    case 24: return true;
+    case 26: return true;
+    case 25: return true;
+    case 23: return true;
+    case 29: return true;
+    case 22: return true;
+    case 27: return true;
+    case 21: return true;
     case 1: return true;
+    case 19: return true;
     case 18: return true;
     case 17: return true;
     case 9: return true;
@@ -2460,7 +2486,7 @@ bool has_static_codec_id(uint16_t cmd_id) {
     case 14: return true;
     case 11: return true;
     case 8: return true;
-    case 27: return true;
+    case 28: return true;
     case 12: return true;
     case 13: return true;
     case 15: return true;
@@ -2476,15 +2502,15 @@ bool has_static_codec_id(uint16_t cmd_id) {
 
 /// (Tier 1) positional 인자를 직접 인코딩 가능한 cmd_id 집합 — JS 폴백 판별용.
 bool has_pos_codec(uint16_t cmd_id) {
-  if (cmd_id == 19) return true;
-  if (cmd_id == 23) return true;
-  if (cmd_id == 25) return true;
-  if (cmd_id == 24) return true;
-  if (cmd_id == 22) return true;
-  if (cmd_id == 28) return true;
-  if (cmd_id == 21) return true;
-  if (cmd_id == 26) return true;
   if (cmd_id == 20) return true;
+  if (cmd_id == 24) return true;
+  if (cmd_id == 26) return true;
+  if (cmd_id == 25) return true;
+  if (cmd_id == 23) return true;
+  if (cmd_id == 29) return true;
+  if (cmd_id == 22) return true;
+  if (cmd_id == 27) return true;
+  if (cmd_id == 21) return true;
   if (cmd_id == 17) return true;
   if (cmd_id == 9) return true;
   if (cmd_id == 10) return true;
@@ -2492,7 +2518,7 @@ bool has_pos_codec(uint16_t cmd_id) {
   if (cmd_id == 14) return true;
   if (cmd_id == 11) return true;
   if (cmd_id == 8) return true;
-  if (cmd_id == 27) return true;
+  if (cmd_id == 28) return true;
   if (cmd_id == 12) return true;
   if (cmd_id == 13) return true;
   if (cmd_id == 15) return true;
@@ -2506,15 +2532,15 @@ bool has_pos_codec(uint16_t cmd_id) {
 /// (Tier 1) 개별 Value 인자 → postcard 바이트. 명령별 코덱이 argc를 정확히 검증한다.
 void encode_pos_by_id(jsi::Runtime& rt, uint16_t cmd_id, const jsi::Value* argv, size_t argc, rc::Writer& w) {
   switch (cmd_id) {
-    case 19: encode_pos_bookmarkCreate(rt, argv, argc, w); return;
-    case 23: encode_pos_bookmarkFolderCreate(rt, argv, argc, w); return;
-    case 25: encode_pos_bookmarkFolderRemove(rt, argv, argc, w); return;
-    case 24: encode_pos_bookmarkFolderRename(rt, argv, argc, w); return;
-    case 22: encode_pos_bookmarkMove(rt, argv, argc, w); return;
-    case 28: encode_pos_bookmarkOpen(rt, argv, argc, w); return;
-    case 21: encode_pos_bookmarkRemove(rt, argv, argc, w); return;
-    case 26: encode_pos_bookmarkSetFolder(rt, argv, argc, w); return;
-    case 20: encode_pos_bookmarkUpdate(rt, argv, argc, w); return;
+    case 20: encode_pos_bookmarkCreate(rt, argv, argc, w); return;
+    case 24: encode_pos_bookmarkFolderCreate(rt, argv, argc, w); return;
+    case 26: encode_pos_bookmarkFolderRemove(rt, argv, argc, w); return;
+    case 25: encode_pos_bookmarkFolderRename(rt, argv, argc, w); return;
+    case 23: encode_pos_bookmarkMove(rt, argv, argc, w); return;
+    case 29: encode_pos_bookmarkOpen(rt, argv, argc, w); return;
+    case 22: encode_pos_bookmarkRemove(rt, argv, argc, w); return;
+    case 27: encode_pos_bookmarkSetFolder(rt, argv, argc, w); return;
+    case 21: encode_pos_bookmarkUpdate(rt, argv, argc, w); return;
     case 17: encode_pos_snapshotRestore(rt, argv, argc, w); return;
     case 9: encode_pos_tabActivate(rt, argv, argc, w); return;
     case 10: encode_pos_tabClose(rt, argv, argc, w); return;
@@ -2522,7 +2548,7 @@ void encode_pos_by_id(jsi::Runtime& rt, uint16_t cmd_id, const jsi::Value* argv,
     case 14: encode_pos_tabMove(rt, argv, argc, w); return;
     case 11: encode_pos_tabNavigated(rt, argv, argc, w); return;
     case 8: encode_pos_tabOpenExternal(rt, argv, argc, w); return;
-    case 27: encode_pos_tabReset(rt, argv, argc, w); return;
+    case 28: encode_pos_tabReset(rt, argv, argc, w); return;
     case 12: encode_pos_tabSetFavorite(rt, argv, argc, w); return;
     case 13: encode_pos_tabSetPinned(rt, argv, argc, w); return;
     case 15: encode_pos_tabSetWorkspace(rt, argv, argc, w); return;

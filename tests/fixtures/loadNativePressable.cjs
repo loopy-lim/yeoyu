@@ -106,7 +106,7 @@ module.exports.loadAppDropHandlers = (bindings) => {
   const fragment =
     clear +
     slice("  const measurePanes =", "  // Drag ghost follows") +
-    slice("  const moveDrag =", "  const cancelDrag =");
+    slice("  const renderDrag =", "  const cancelDrag =");
   const code = transformSync(fragment, {
     filename,
     babelrc: false,

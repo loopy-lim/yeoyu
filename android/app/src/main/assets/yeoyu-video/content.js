@@ -161,7 +161,7 @@
     observedDocuments.delete(doc);
     try {
       mediaEvents.forEach(type => doc.removeEventListener(type, changed, true));
-      doc.removeEventListener('scroll', changed, true);
+      doc.removeEventListener('scroll', geometryChanged, true);
       doc.removeEventListener('load', frameLoaded, true);
     } catch (_) { /* Removed or navigated iframe wrappers may already be dead. */ }
   }
@@ -170,13 +170,14 @@
     for (const doc of documents) if (!observedDocuments.has(doc)) {
       try {
         mediaEvents.forEach(type => doc.addEventListener(type, changed, true));
-        doc.addEventListener('scroll', changed, true);
+        doc.addEventListener('scroll', geometryChanged, true);
         doc.addEventListener('load', frameLoaded, true); observedDocuments.add(doc);
       } catch (_) { forgetDocument(doc); }
     }
   }
   function discover() {
-    const candidates = [], documents = new Set();
+    const documents = new Set();
+    let best = null;
     anyPlaying = false;
     function visit(win, frames) {
       if (frames.length > 8) return;
@@ -189,7 +190,10 @@
             anyPlaying ||= playing;
             const candidate = { video: node, win, frames, token: videoToken(node) };
             const rect = picture(candidate);
-            if (rect) candidates.push({ candidate, rect, playing });
+            if (rect && (!best || Number(playing) > Number(best.playing) ||
+              (playing === best.playing && rect.width * rect.height > best.rect.width * best.rect.height))) {
+              best = { candidate, rect, playing };
+            }
           } else if (node.contentWindow) {
             const child = node.contentWindow;
             // Reading document is the same-origin check. No page message can supply geometry.
@@ -200,18 +204,27 @@
       } catch (_) { /* Restricted, navigated or cross-origin frame: no usable geometry. */ }
     }
     visit(window, []); refreshDocuments(documents);
-    candidates.sort((a, b) => Number(b.playing) - Number(a.playing) || b.rect.width * b.rect.height - a.rect.width * a.rect.height);
-    selected = candidates[0]?.candidate || null;
-    return selected;
+    selected = best?.candidate || null;
+    return best;
   }
   function snapshot(reason) {
     const vp = viewport(window);
-    const candidate = watch ? watch.candidate : discover();
+    let candidate = watch ? watch.candidate : null;
     let rect = null;
-    if (!reason && pageAlive && safeViewport(vp) && candidate) {
-      try { rect = picture(candidate); } catch (_) { /* Document changed during measurement. */ }
+    if (!reason && pageAlive) {
+      if (watch) {
+        if (safeViewport(vp) && candidate) {
+          try { rect = picture(candidate); } catch (_) { /* Document changed during measurement. */ }
+        }
+      } else {
+        // Discovery measures each current candidate once. Reuse its winning
+        // picture only within this synchronous snapshot, never across frames.
+        const measured = discover();
+        candidate = measured?.candidate || null;
+        if (safeViewport(vp)) rect = measured?.rect || null;
+      }
     }
-    return { type: 'video-region', observerRevision: '20260913-natural-ended-1', documentToken, videoToken: watch ? watch.videoToken : candidate?.token || null,
+    return { type: 'video-region', observerRevision: '20260916-coalesced-geometry-1', documentToken, videoToken: watch ? watch.videoToken : candidate?.token || null,
       viewport: vp, rect, playing: !!rect && !candidate.video.paused && !candidate.video.ended,
       videoWidth: rect ? candidate.video.videoWidth : 0, videoHeight: rect ? candidate.video.videoHeight : 0,
       ...(!rect ? { reason: reason || 'unavailable-region' } : {}), ...(watch ? { watchId: watch.watchId } : {}) };
@@ -286,6 +299,10 @@
   }
   function publish(force, requestId, reason, diagnostics = false) {
     if (!port || (!pageAlive && !reason)) return;
+    // A fresh request, media lifecycle event or heartbeat supersedes queued
+    // geometry work. Active watches schedule their next frame below.
+    if (raf !== null) cancelAnimationFrame(raf);
+    raf = null;
     const message = snapshot(reason);
     const signature = JSON.stringify(message);
     if (force || signature !== lastSignature) {
@@ -297,6 +314,7 @@
     if (pageAlive && (watch || anyPlaying)) {
       if (heartbeat === null) heartbeat = setInterval(() => publish(true), HEARTBEAT_MS);
     } else if (heartbeat !== null) { clearInterval(heartbeat); heartbeat = null; }
+    if (pageAlive && watch) scheduleFrame();
   }
   function stopWork() {
     generation++;
@@ -305,13 +323,20 @@
     raf = heartbeat = null; watch = null;
   }
   function changed() { if (pageAlive && port) publish(true); }
+  function scheduleFrame() {
+    if (raf !== null || !pageAlive || !port) return;
+    const epoch = generation;
+    raf = requestAnimationFrame(() => animate(epoch));
+  }
+  function geometryChanged() { scheduleFrame(); }
   function frameLoaded(event) {
     if (event.target && ['IFRAME', 'FRAME'].includes(event.target.tagName)) changed();
   }
   function animate(epoch) {
-    if (epoch !== generation || !watch || !port || !pageAlive) return;
+    if (epoch !== generation) return;
+    raf = null;
+    if (!port || !pageAlive) return;
     publish(false);
-    if (epoch === generation && watch && port && pageAlive) raf = requestAnimationFrame(() => animate(epoch));
   }
   function receive(message) {
     if (!message || !pageAlive) return;
@@ -328,7 +353,6 @@
         const candidate = selected?.token === message.videoToken ? selected : null;
         stopWork(); watch = { candidate, videoToken: message.videoToken, watchId: message.watchId };
         lastSignature = ''; publish(true);
-        const epoch = generation; raf = requestAnimationFrame(() => animate(epoch));
       }
     }
   }
@@ -375,11 +399,11 @@
       beginDocumentEpoch(); pageAlive = true; attempts = 0; connect();
     }
   });
-  window.addEventListener('resize', changed);
+  window.addEventListener('resize', geometryChanged);
   document.addEventListener('DOMContentLoaded', changed);
   if (window.visualViewport) {
-    window.visualViewport.addEventListener('resize', changed);
-    window.visualViewport.addEventListener('scroll', changed);
+    window.visualViewport.addEventListener('resize', geometryChanged);
+    window.visualViewport.addEventListener('scroll', geometryChanged);
   }
   connect();
 })();

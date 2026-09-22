@@ -158,6 +158,20 @@ test("an initially open pair and a settled ratio edit use numeric shares without
   expect(animations.length).toBe(0);
 });
 
+test("each settled ratio edit commits numeric geometry once and retains the latest ratio for close", async () => {
+  await render({ layout: pair });
+  for (const ratio of [0.6, 0.7, 0.7, 0.65]) {
+    const count = commits.length;
+    await render({ layout: { ...pair, ratio } });
+    expect(commits.length).toBe(count + 1);
+    expectFinal(ratio);
+  }
+  expect(animations.length).toBe(0);
+  await render({ layout: null });
+  expectAnimated();
+  expect(last().layout?.ratio).toBe(0.65);
+});
+
 test("closing remains animated and retires only after the selected survivor settles", async () => {
   await render({ layout: pair, selected: "b" });
   await render({ layout: null, selected: "b" });

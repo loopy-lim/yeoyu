@@ -10,16 +10,19 @@ import {
   type ListRenderItemInfo,
 } from "react-native";
 import { Favicon } from "./Favicon";
+import { josaRo } from "../i18n";
 import { ActionMenu, type MenuAnchor, type MenuItem } from "./ActionMenu";
 import { ChromeIcon } from "../chrome/ChromeIcon";
 import type { HistoryEntry } from "../history";
 import {
   PERMISSION_KINDS,
-  PERMISSION_LABELS,
+  validateBoostDrafts,
   type PermissionKind,
 } from "../uiPreferences";
 import { font, radius, size, space, type Theme } from "../theme";
 import { useTheme } from "../themeContext";
+import { permissionSupportsOnce } from "../permissionRequests";
+import { useI18n } from "../i18nContext";
 
 const makeStyles = (t: Theme) => ({
   overlay: {
@@ -49,8 +52,8 @@ const makeStyles = (t: Theme) => ({
   title: { color: t.ink, fontSize: font.title, fontWeight: "700" as const },
   closeIcon: { color: t.icon, fontSize: font.icon },
   closeButton: {
-    width: 32,
-    height: 32,
+    width: 48,
+    height: 48,
     borderRadius: radius.control,
     alignItems: "center" as const,
     justifyContent: "center" as const,
@@ -67,10 +70,10 @@ const makeStyles = (t: Theme) => ({
   rowActive: { backgroundColor: t.sunkenStrong },
   rowTitle: {
     color: t.ink,
-    fontSize: font.bodyPlus,
-    fontWeight: "700" as const,
+    fontSize: 14,
+    fontWeight: "600" as const,
   },
-  rowMeta: { color: t.inkFaint, fontSize: font.micro, marginTop: 1 },
+  rowMeta: { color: t.inkMuted, fontSize: 13, lineHeight: 19, marginTop: 2 },
   section: {
     marginTop: space.lg,
     color: t.inkFaint,
@@ -110,6 +113,17 @@ const makeStyles = (t: Theme) => ({
     borderBottomColor: t.hairline,
   },
   grow: { flex: 1 },
+  permissionScroll: { flexGrow: 0 },
+  permissionContent: { gap: 16 },
+  permissionOrigin: { color: t.ink, fontSize: 16, lineHeight: 24, fontWeight: "600" as const },
+  permissionSite: { padding: 16, borderRadius: radius.card, backgroundColor: t.sunken, gap: 8 },
+  permissionDescription: { color: t.inkMuted, fontSize: 14, lineHeight: 21 },
+  permissionActions: { gap: 8 },
+  permissionButton: { minHeight: 48, padding: 14, borderRadius: radius.field, justifyContent: "center" as const, alignItems: "center" as const, borderWidth: 1, borderColor: t.hairline },
+  permissionPrimary: { backgroundColor: t.ink, borderColor: t.ink },
+  permissionPrimaryText: { color: t.surfaceElevated, fontSize: 15, lineHeight: 22, fontWeight: "600" as const },
+  permissionButtonText: { color: t.ink, fontSize: 15, lineHeight: 22, fontWeight: "600" as const },
+  permissionPressed: { opacity: 0.65 },
 });
 const cache = new WeakMap<Theme, ReturnType<typeof makeStyles>>();
 const useStyles = () => {
@@ -169,19 +183,25 @@ export function SpaceSwitcherDialog({
   onClose: () => void;
 }) {
   const { t, styles } = useStyles();
+  const { tr } = useI18n();
   return (
     <>
       <View style={styles.dialog}>
         <DialogHeader
-          title={<Text style={[styles.title, { flex: 1 }]}>Spaces</Text>}
-          closeLabel="Close spaces"
+          title={<Text style={[styles.title, { flex: 1 }]}>{tr("dialog.spaces")}</Text>}
+          closeLabel={tr("dialog.closeSpaces")}
           onClose={onClose}
         />
         {workspaces.map((workspace) => (
           <Pressable
             key={workspace.id}
             accessibilityRole="button"
-            accessibilityLabel={`Switch to ${workspace.name}`}
+            accessibilityLabel={
+              tr("dialog.switchSpace", {
+                name: workspace.name,
+                ro: josaRo(workspace.name),
+              })
+            }
             style={[
               styles.row,
               workspace.id === activeWorkspaceId && styles.rowActive,
@@ -199,19 +219,17 @@ export function SpaceSwitcherDialog({
             </View>
             <Text style={styles.rowMeta}>{counts[workspace.id] ?? 0}</Text>
             {workspace.id === activeWorkspaceId && (
-              <Text style={{ color: t.accentStrong, fontSize: font.bodyPlus }}>
-                ✓
-              </Text>
+              <ChromeIcon name="check" size={16} color={t.accentStrong} />
             )}
           </Pressable>
         ))}
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="New space"
+          accessibilityLabel={tr("dialog.newSpace")}
           style={styles.row}
           onPress={onCreate}
         >
-          <Text style={styles.rowTitle}>＋ New space</Text>
+          <Text style={styles.rowTitle}>＋ {tr("dialog.newSpace")}</Text>
         </Pressable>
       </View>
     </>
@@ -241,6 +259,7 @@ export function TabContextMenuDialog({
   onReset,
   onCopyLink,
   onEdit,
+  onOpenInNewWindow,
 }: {
   tab: TabMenuTab | null;
   workspaces: { id: string; name: string }[];
@@ -256,56 +275,66 @@ export function TabContextMenuDialog({
   onSplit?: () => void;
   onReset?: () => void;
   onCopyLink?: () => void;
+  /** Absent for private tabs and the focused pane. */
+  onOpenInNewWindow?: () => void;
   onEdit?: () => void;
 }) {
+  const { tr } = useI18n();
   if (!tab) return null;
   const items: MenuItem[] = [];
   if (onCopyLink)
     items.push({
       id: "copy",
-      label: "Copy link",
-      icon: "copy",
+      label: tr("chrome.copyLink"),
+      icon: "link",
       onPress: onCopyLink,
       shortcut: "⌘⇧C",
     });
   if (onEdit)
     items.push({
       id: "edit",
-      label: "Edit saved page",
+      label: tr("chrome.editSaved"),
       icon: "edit",
       onPress: onEdit,
     });
   if (onReset && (tab.favorite || tab.pinned))
     items.push({
       id: "reset",
-      label: "Back to saved page",
+      label: tr("chrome.savedPage"),
       icon: "reload",
       onPress: onReset,
     });
   if (onSplit)
     items.push({
       id: "split",
-      label: "Open in Split View",
+      label: tr("chrome.openSplit"),
       icon: "split",
       onPress: onSplit,
     });
   items.push({
     id: "duplicate",
-    label: "Duplicate",
+    label: tr("chrome.duplicateTab"),
     icon: "copy",
     onPress: onDuplicate,
   });
+  if (onOpenInNewWindow)
+    items.push({
+      id: "window",
+      label: tr("window.open"),
+      icon: "external",
+      onPress: onOpenInNewWindow,
+    });
   if (onToggleFavorite)
     items.push({
       id: "favorite",
-      label: tab.favorite ? "Remove from Favorites" : "Move to Favorites",
+      label: tr(tab.favorite ? "dialog.removeFavorite" : "dialog.moveFavorite"),
       icon: "star",
       onPress: onToggleFavorite,
     });
   if (onTogglePin)
     items.push({
       id: "pin",
-      label: tab.pinned ? "Remove pin" : "Pin to this Space",
+      label: tr(tab.pinned ? "chrome.removePin" : "dialog.pinTab"),
       icon: "pin",
       onPress: onTogglePin,
       shortcut: "⌘D",
@@ -314,21 +343,24 @@ export function TabContextMenuDialog({
     if (workspace.id === tab.workspaceId) continue;
     items.push({
       id: `move-${workspace.id}`,
-      label: `Move to ${workspace.name}`,
+      label: tr("dialog.moveSpace", {
+        name: workspace.name,
+        ro: josaRo(workspace.name),
+      }),
       icon: "space",
       onPress: () => onMoveToWorkspace(workspace.id),
     });
   }
   items.push({
     id: "close-others",
-    label: "Close other tabs",
-    icon: "close",
+    label: tr("dialog.closeOtherTabs"),
+    icon: "closeOthers",
     onPress: onCloseOthers,
   });
   if (onCloseTab)
     items.push({
       id: "close",
-      label: "Close tab",
+      label: tr("chrome.closeTab"),
       icon: "close",
       onPress: onCloseTab,
       shortcut: "⌘W",
@@ -352,11 +384,12 @@ const HistoryRow = memo(function HistoryRow({
   onOpen: (url: string) => void;
 }) {
   const { styles } = useStyles();
+  const { tr } = useI18n();
   const open = useCallback(() => onOpen(entry.url), [entry.url, onOpen]);
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`Open ${entry.title}`}
+      accessibilityLabel={tr("dialog.openHistoryEntry", { title: entry.title })}
       style={styles.historyRow}
       onPress={open}
     >
@@ -396,6 +429,7 @@ export function HistoryDialog({
   onClose: () => void;
 }) {
   const { styles } = useStyles();
+  const { tr } = useI18n();
   const open = useCallback(
     (url: string) => {
       onClose();
@@ -413,17 +447,17 @@ export function HistoryDialog({
     <>
       <View style={[styles.dialog, { maxWidth: 560 }]}>
         <DialogHeader
-          title={<Text style={[styles.title, { flex: 1 }]}>History</Text>}
-          closeLabel="Close history"
+          title={<Text style={[styles.title, { flex: 1 }]}>{tr("dialog.history")}</Text>}
+          closeLabel={tr("dialog.closeHistory")}
           onClose={onClose}
         >
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Clear history"
+            accessibilityLabel={tr("dialog.clearHistory")}
             style={[styles.row, { minHeight: 34 }]}
             onPress={onClear}
           >
-            <Text style={styles.rowTitle}>Clear</Text>
+            <Text style={styles.rowTitle}>{tr("common.clear")}</Text>
           </Pressable>
         </DialogHeader>
         <FlatList
@@ -435,7 +469,7 @@ export function HistoryDialog({
           maxToRenderPerBatch={12}
           keyExtractor={historyKey}
           ListEmptyComponent={
-            <Text style={styles.emptyState}>No history yet.</Text>
+            <Text style={styles.emptyState}>{tr("dialog.noHistory")}</Text>
           }
           renderItem={renderEntry}
         />
@@ -460,7 +494,15 @@ export function BoostsDialog({
   onClose: () => void;
 }) {
   const { t, styles } = useStyles();
+  const { tr } = useI18n();
   const [draft, setDraft] = useState<BoostDraft[]>(boosts);
+  const validation = validateBoostDrafts(draft);
+  const hostError = (index: number) => {
+    const code = validation.errors[index]?.hostCode;
+    if (code === "duplicate") return tr("dialog.boostDuplicate", { host: validation.boosts[index].host.replace(/^www\./, "") });
+    if (code === "invalid") return tr("dialog.boostHostInvalid");
+    return tr("dialog.boostHostRequired");
+  };
   const update = (index: number, patch: Partial<BoostDraft>) =>
     setDraft((current) =>
       current.map((boost, i) => (i === index ? { ...boost, ...patch } : boost))
@@ -469,20 +511,19 @@ export function BoostsDialog({
     <>
       <View style={[styles.dialog, { maxWidth: 600 }]}>
         <DialogHeader
-          title={<Text style={[styles.title, { flex: 1 }]}>Site boosts</Text>}
-          closeLabel="Close site boosts"
+          title={<Text style={[styles.title, { flex: 1 }]}>{tr("dialog.siteBoosts")}</Text>}
+          closeLabel={tr("dialog.closeBoosts")}
           onClose={onClose}
         />
         <Text style={styles.rowMeta}>
-          CSS is injected into matching sites on every load. Hosts are bare
-          names like example.com.
+          {tr("dialog.boostHelp")}
         </Text>
         <ScrollView style={{ maxHeight: 420 }}>
           {draft.map((boost, index) => (
             <View key={index} style={styles.boostForm}>
               <View style={{ flexDirection: "row", gap: space.md }}>
                 <TextInput
-                  accessibilityLabel={`Boost ${index} host`}
+                  accessibilityLabel={tr("dialog.boostHost", { number: index + 1 })}
                   value={boost.host}
                   onChangeText={(host) => update(index, { host })}
                   placeholder="example.com"
@@ -493,7 +534,7 @@ export function BoostsDialog({
                   disableFullscreenUI
                 />
                 <Switch
-                  accessibilityLabel={`Boost ${index} enabled`}
+                  accessibilityLabel={tr("dialog.boostEnabled", { number: index + 1 })}
                   value={boost.enabled}
                   onValueChange={(enabled) => update(index, { enabled })}
                   trackColor={{ false: t.switchOff, true: t.accent }}
@@ -501,7 +542,7 @@ export function BoostsDialog({
                 />
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityLabel={`Remove boost ${index}`}
+                  accessibilityLabel={tr("dialog.removeBoost", { number: index + 1 })}
                   style={styles.closeButton}
                   onPress={() =>
                     setDraft((current) => current.filter((_, i) => i !== index))
@@ -514,8 +555,10 @@ export function BoostsDialog({
                   />
                 </Pressable>
               </View>
+              {!!validation.errors[index]?.host && <Text accessibilityRole="alert" style={[styles.rowMeta, { color: t.errorInk }]}>{hostError(index)}</Text>}
+              {!validation.errors[index]?.host && <Text style={styles.rowMeta}>{tr("dialog.boostHostValue", { host: validation.boosts[index].host })}</Text>}
               <TextInput
-                accessibilityLabel={`Boost ${index} CSS`}
+                accessibilityLabel={tr("dialog.boostCss", { number: index + 1 })}
                 value={boost.css}
                 onChangeText={(css) => update(index, { css })}
                 placeholder={"body { background: #222; }"}
@@ -526,17 +569,18 @@ export function BoostsDialog({
                 style={styles.inputMultiline}
                 disableFullscreenUI
               />
+              {!!validation.errors[index]?.css && <Text accessibilityRole="alert" style={[styles.rowMeta, { color: t.errorInk }]}>{tr("dialog.boostCssRequired")}</Text>}
             </View>
           ))}
           {draft.length === 0 && (
             <Text style={styles.emptyState}>
-              No boosts yet. Add one to restyle a site.
+              {tr("dialog.noBoosts")}
             </Text>
           )}
         </ScrollView>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Add site boost"
+          accessibilityLabel={tr("dialog.addBoost")}
           style={styles.row}
           onPress={() =>
             setDraft((current) => [
@@ -545,29 +589,22 @@ export function BoostsDialog({
             ])
           }
         >
-          <Text style={styles.rowTitle}>＋ Add site boost</Text>
+          <Text style={styles.rowTitle}>＋ {tr("dialog.addBoost")}</Text>
         </Pressable>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Save site boosts"
-          style={styles.row}
-          onPress={() =>
-            onSave(
-              draft.filter((boost) => boost.host.trim() && boost.css.trim())
-            )
-          }
+          accessibilityLabel={tr("dialog.saveBoosts")}
+          accessibilityState={{ disabled: !validation.valid }}
+          disabled={!validation.valid}
+          style={[styles.row, !validation.valid && { opacity: 0.5 }]}
+          onPress={() => { if (validation.valid) onSave(validation.boosts); }}
         >
-          <Text style={styles.rowTitle}>Save boosts</Text>
+          <Text style={styles.rowTitle}>{tr("dialog.saveBoosts")}</Text>
         </Pressable>
       </View>
     </>
   );
 }
-
-const kindLabel = (kind: string) =>
-  (PERMISSION_KINDS as string[]).includes(kind)
-    ? PERMISSION_LABELS[kind as PermissionKind]
-    : kind;
 
 export interface PermissionRequestInfo {
   ephemeral?: boolean;
@@ -575,9 +612,8 @@ export interface PermissionRequestInfo {
   kinds: string[];
 }
 
-// A site asking for a device capability. The answer is per-site: "always"
-// stores a rule, "once" grants just this request, and dismissing denies
-// without storing anything.
+// Gecko remembers content grants. Only camera/microphone callbacks support
+// one-request permission; saved media rules can still grant later requests.
 export function PermissionDialog({
   request,
   onDecide,
@@ -588,45 +624,46 @@ export function PermissionDialog({
   onDismiss: () => void;
 }) {
   const { styles } = useStyles();
-  return (
-    <View style={[styles.dialog, { maxWidth: 420 }]}>
-      <DialogHeader
-        title={
-          <Text numberOfLines={1} style={[styles.title, { flex: 1 }]}>
-            {request.origin.replace(/^https?:\/\//, "")}
-          </Text>
-        }
-        closeLabel="Dismiss permission request"
-        onClose={onDismiss}
-      />
-      <Text style={styles.rowMeta}>
-        This site wants to use{" "}
-        {request.kinds.map(kindLabel).join(" and ") || "a capability"}.
+  const { tr } = useI18n();
+  const persistentStorage = request.kinds.includes("persistent-storage");
+  const oneTimePermission = permissionSupportsOnce(request.kinds);
+  const privateMedia = !!request.ephemeral && oneTimePermission;
+  const allowLabel = tr(persistentStorage ? "permission.allowStorage" : privateMedia ? "permission.allowOnce" : request.ephemeral ? "permission.allowPrivate" : "permission.allowSite");
+  const blockLabel = tr(request.ephemeral ? privateMedia ? "permission.denyOnce" : "permission.blockPrivate" : "permission.blockSite");
+  const kinds = request.kinds.map((kind) =>
+    (PERMISSION_KINDS as string[]).includes(kind)
+      ? tr(`consent.kind.${kind as PermissionKind}`)
+      : kind
+  ).join(tr("permission.and")) || tr("permission.capability");
+  return <View style={[styles.dialog, { maxWidth: 460 }]} accessibilityViewIsModal>
+    <DialogHeader title={<Text style={[styles.title, { flex: 1 }]}>{tr("permission.title")}</Text>}
+      closeLabel={tr("permission.dismiss")} onClose={onDismiss} />
+    <ScrollView style={styles.permissionScroll} contentContainerStyle={styles.permissionContent} keyboardShouldPersistTaps="handled">
+      <View style={styles.permissionSite}>
+        <Text selectable style={styles.permissionOrigin}>{request.origin}</Text>
+        <Text style={styles.permissionDescription}>{tr("permission.wants", { kinds })}</Text>
+      </View>
+      <Text style={styles.permissionDescription}>
+        {tr(persistentStorage ? "permission.storageWarning" : privateMedia ? "permission.onceHelp" : request.ephemeral ? "permission.privateScope" : "permission.savedScope")}
       </Text>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Allow this site once"
-        style={styles.row}
-        onPress={() => onDecide("once")}
-      >
-        <Text style={styles.rowTitle}>Allow once</Text>
-      </Pressable>
-      {!request.ephemeral && <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Always allow this site"
-        style={styles.row}
-        onPress={() => onDecide("always")}
-      >
-        <Text style={styles.rowTitle}>Always allow</Text>
-      </Pressable>}
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={request.ephemeral ? "Deny this request" : "Block this site"}
-        style={styles.row}
-        onPress={() => onDecide("block")}
-      >
-        <Text style={styles.rowTitle}>{request.ephemeral ? "Deny once" : "Block"}</Text>
-      </Pressable>
-    </View>
-  );
+      <View style={styles.permissionActions}>
+        <Pressable accessibilityRole="button" accessibilityLabel={allowLabel}
+          style={({ pressed }) => [styles.permissionButton, styles.permissionPrimary, pressed && styles.permissionPressed]}
+          onPress={() => onDecide(privateMedia ? "once" : "always")}>
+          <Text style={styles.permissionPrimaryText}>{allowLabel}</Text>
+        </Pressable>
+        {!request.ephemeral && oneTimePermission && <Pressable accessibilityRole="button" accessibilityLabel={tr("permission.allowOnce")}
+          style={({ pressed }) => [styles.permissionButton, pressed && styles.permissionPressed]}
+          onPress={() => onDecide("once")}>
+          <Text style={styles.permissionButtonText}>{tr("permission.allowOnce")}</Text>
+        </Pressable>}
+        <Pressable accessibilityRole="button" accessibilityLabel={blockLabel}
+          style={({ pressed }) => [styles.permissionButton, pressed && styles.permissionPressed]}
+          onPress={() => onDecide("block")}>
+          <Text style={styles.permissionButtonText}>{blockLabel}</Text>
+        </Pressable>
+      </View>
+      <Text style={styles.permissionDescription}>{tr("permission.dismissHelp")}</Text>
+    </ScrollView>
+  </View>;
 }

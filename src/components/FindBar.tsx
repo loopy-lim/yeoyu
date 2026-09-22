@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 import { font, radius, size, space } from "../theme";
 import { useTheme } from "../themeContext";
+import { useI18n } from "../i18nContext";
 
 // Round 28dp hit target for the strip's glyph buttons; pressed opacity is
 // applied per-Pressable.
@@ -27,6 +28,7 @@ export function FindBar({
   result: { current: number; total: number } | null;
 }) {
   const t = useTheme();
+  const { tr } = useI18n();
   const [query, setQuery] = useState("");
   const input = useRef<React.ComponentRef<typeof TextInput>>(null);
   useEffect(() => {
@@ -59,14 +61,14 @@ export function FindBar({
     >
       <TextInput
         ref={input}
-        accessibilityLabel="Find in page"
+        accessibilityLabel={tr("find.inPage")}
         value={query}
         onChangeText={setQuery}
         onSubmitEditing={() => onStep(false)}
         autoCapitalize="none"
         autoCorrect={false}
         disableFullscreenUI
-        placeholder="Find in page"
+        placeholder={tr("find.inPage")}
         placeholderTextColor={t.inkFaint}
         style={{
           width: 200,
@@ -83,14 +85,15 @@ export function FindBar({
       </Text>
       {(
         [
-          ["Previous match", "‹", true],
-          ["Next match", "›", false],
+          ["find.previous", "‹", true],
+          ["find.next", "›", false],
         ] as const
       ).map(([label, symbol, backward]) => (
         <Pressable
           key={label}
           accessibilityRole="button"
-          accessibilityLabel={label}
+          accessibilityLabel={tr(label)}
+          hitSlop={8}
           onPress={() => onStep(backward)}
           style={({ pressed }) => [
             roundButton,
@@ -104,7 +107,8 @@ export function FindBar({
       ))}
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel="Close find"
+        accessibilityLabel={tr("find.close")}
+        hitSlop={8}
         onPress={onClose}
         style={({ pressed }) => [
           roundButton,

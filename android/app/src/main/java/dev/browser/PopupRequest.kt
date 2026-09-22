@@ -1,10 +1,12 @@
 package dev.browser
 
 /** One Gecko result and one adoption acknowledgement, completed at most once.
- * Main-thread caller owns timeout scheduling and verifies the session is open. */
+ * Gecko must receive an unopened child so it can attach native window info.
+ * Main-thread caller owns timeout scheduling and verifies the later open. */
 internal class PopupRequest<T : Any>(
     private val completeResult: (T?) -> Unit,
     private val closeChild: (T) -> Unit,
+    private val isOpen: (T) -> Boolean,
 ) {
     var child: T? = null
         private set
@@ -13,6 +15,7 @@ internal class PopupRequest<T : Any>(
 
     fun adopt(session: T, acknowledge: (String?) -> Unit): Boolean {
         if (finished || child != null) return false
+        check(!isOpen(session)) { "New windows require an unopened session" }
         child = session
         reply = acknowledge
         completeResult(session)

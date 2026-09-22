@@ -6,6 +6,11 @@ import { easing } from "./motion";
 
 type SplitInSpace = { layout: SplitLayout; space: string };
 
+function sameSplitPair(stored: SplitInSpace | null, live: SplitLayout | null, space: string) {
+  return !!stored && !!live && stored.space === space &&
+    stored.layout.first === live.first && stored.layout.second === live.second;
+}
+
 /** One JS progress drives sidebar width, toolbar height, and both chrome layers. */
 export function useSidebarMotion(collapsed: boolean, reduced: boolean) {
   const [progress] = useState(() => new Animated.Value(collapsed ? 0 : 1));
@@ -168,7 +173,9 @@ export function useSplitMotion(
       firstFraction.setValue(fraction);
       setExitFinished(!open);
       setSettledLayout((current) => {
-        if (current?.layout === live && current?.space === space) return current;
+        // Direct ratio edits keep numeric geometry in their first commit. The
+        // retained ref above still tracks the latest ratio for a later close.
+        if (sameSplitPair(current, live, space)) return current;
         return live ? { layout: live, space } : null;
       });
       return;
@@ -221,10 +228,7 @@ export function useSplitMotion(
   return {
     progress,
     firstFraction,
-    settled:
-      !!live &&
-      settledLayout?.layout === live &&
-      settledLayout.space === space,
+    settled: sameSplitPair(settledLayout, live, space),
     layout: live ?? (mayRetain ? old!.layout : null),
   };
 }

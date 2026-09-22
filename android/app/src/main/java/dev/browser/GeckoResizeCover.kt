@@ -29,7 +29,7 @@ internal class GeckoResizeCover(
     fun resize(width: Int, height: Int, oldWidth: Int, oldHeight: Int) {
         if (oldWidth <= 0 || oldHeight <= 0 || width <= 0 || height <= 0 ||
             !host.isAttachedToWindow || !host.isShown || gecko.parent !== host ||
-            gecko.session?.isOpen != true) {
+            gecko.session?.isOpen != true || GeckoSessionRegistry.isMediaPlaying(host.tabId, gecko.session)) {
             clear()
             return
         }
@@ -100,7 +100,8 @@ internal class GeckoResizeCover(
     fun clear() = releaseCover(resetEpisode = true)
 
     private fun ownsSurface(): Boolean = host.isAttachedToWindow && host.isShown &&
-        gecko.parent === host && host.tabId == tabId && gecko.session === session && session?.isOpen == true
+        gecko.parent === host && host.tabId == tabId && gecko.session === session && session?.isOpen == true &&
+        !GeckoSessionRegistry.isMediaPlaying(host.tabId, session)
 
     private fun capture(): Bitmap? {
         val texture = gecko.textureForCapture() ?: return null

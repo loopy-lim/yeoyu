@@ -32,14 +32,32 @@ describe("portable bookmarks", () => {
   });
 });
 
-test("presentation archive excludes site rules, boosts and account settings", () => {
-  const raw = portablePresentation({ ...defaultUiPreferences, boosts: [{host: "private-canary.example", css: "secret", enabled: true}] });
+test("presentation archive excludes site rules, boosts and device language", () => {
+  const raw = portablePresentation({ ...defaultUiPreferences, language: "ko", boosts: [{host: "private-canary.example", css: "secret", enabled: true}] });
   expect(raw).not.toContain("canary");
   expect(raw).not.toContain("boosts");
+  expect(raw).not.toContain("language");
   expect(parsePresentation(raw)?.appearance).toBe("lavender");
   expect(parsePresentation(null)).toBeNull();
   expect(() => parsePresentation('{"schema":2}')).toThrow();
   expect(() => parsePresentation(raw.replace('"sidebarWidth":240', '"sidebarWidth":9999'))).toThrow();
+});
+
+test("presentation archives round-trip every mode and preserve normalized custom color", () => {
+  for (const colorMode of ["system", "light", "dark"] as const) {
+    const restored = parsePresentation(portablePresentation({ ...defaultUiPreferences, colorMode, colorSource: "custom", customColor: "#aabbcc" }));
+    expect(restored?.colorMode).toBe(colorMode);
+    expect(restored?.colorSource).toBe("custom");
+    expect(restored?.customColor).toBe("#aabbcc");
+  }
+});
+
+test("legacy presentation imports follow system and explicit malformed modes are rejected", () => {
+  const presentation = JSON.parse(portablePresentation(defaultUiPreferences));
+  delete presentation.colorMode;
+  expect(parsePresentation(JSON.stringify(presentation))?.colorMode).toBe("system");
+  for (const colorMode of [null, "auto", "DARK", 1, false])
+    expect(() => parsePresentation(JSON.stringify({ ...presentation, colorMode }))).toThrow();
 });
 
 test("portable HTML rejects malformed authorities and credentials atomically", () => {

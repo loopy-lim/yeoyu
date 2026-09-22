@@ -4,6 +4,7 @@ import { useStyles } from "../chrome/appStyles";
 import { ChromeIcon } from "../chrome/ChromeIcon";
 import type { PictureInPictureState } from "../hooks/usePictureInPicture";
 import { useTheme } from "../themeContext";
+import { useI18n } from "../i18nContext";
 
 interface Props {
   state: PictureInPictureState;
@@ -27,6 +28,7 @@ export function PictureInPictureSettings({
   onOpenSettings,
 }: Props) {
   const theme = useTheme();
+  const { tr } = useI18n();
   const s = useStyles(theme);
   const toggleDisabled = !hydrated || !state.supported;
   const enterDisabled =
@@ -36,7 +38,7 @@ export function PictureInPictureSettings({
     <>
       <Pressable
         accessibilityRole="switch"
-        accessibilityLabel="Automatic picture-in-picture"
+        accessibilityLabel={tr("pip.automatic")}
         accessibilityState={{ checked: enabled, disabled: toggleDisabled }}
         disabled={toggleDisabled}
         style={({ pressed }) => [
@@ -47,10 +49,9 @@ export function PictureInPictureSettings({
         onPress={onToggle}
       >
         <View style={s.settingsToggleCopy}>
-          <Text style={s.optionTitle}>Automatic picture-in-picture</Text>
+          <Text style={s.optionTitle}>{tr("pip.automatic")}</Text>
           <Text style={s.optionDescription}>
-            Keep playing video in a floating window when switching tabs. If
-            unavailable, picture-in-picture opens when you go Home.
+            {tr("pip.automaticHelp")}
           </Text>
         </View>
         <View
@@ -68,20 +69,20 @@ export function PictureInPictureSettings({
       </Pressable>
       {!state.supported && (
         <Text style={s.optionDescription}>
-          Picture-in-picture is not available on this device.
+          {tr("pip.unsupported")}
         </Text>
       )}
       {state.supported && !state.allowed && (
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Android PiP settings"
+          accessibilityLabel={tr("pip.androidSettings")}
           style={({ pressed }) => [s.settingsAction, pressed && s.pressed]}
           onPress={onOpenSettings}
         >
           <View style={s.settingsToggleCopy}>
-            <Text style={s.optionTitle}>Android PiP settings</Text>
+            <Text style={s.optionTitle}>{tr("pip.androidSettings")}</Text>
             <Text style={s.optionDescription}>
-              Allow picture-in-picture for Yeoyu in Android settings
+              {tr("pip.androidHelp")}
             </Text>
           </View>
           <ChromeIcon name="external" />
@@ -89,7 +90,7 @@ export function PictureInPictureSettings({
       )}
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel="Open picture-in-picture"
+        accessibilityLabel={tr("pip.open")}
         accessibilityState={{ disabled: enterDisabled }}
         disabled={enterDisabled}
         style={({ pressed }) => [
@@ -100,11 +101,11 @@ export function PictureInPictureSettings({
         onPress={onEnter}
       >
         <View style={s.settingsToggleCopy}>
-          <Text style={s.optionTitle}>Open picture-in-picture</Text>
+          <Text style={s.optionTitle}>{tr("pip.open")}</Text>
           <Text style={s.optionDescription}>
             {hasTab
-              ? "Show the current tab in a small window now"
-              : "Open a tab to use picture-in-picture"}
+              ? tr("pip.openNow")
+              : tr("pip.openTab")}
           </Text>
         </View>
         <ChromeIcon name="external" />

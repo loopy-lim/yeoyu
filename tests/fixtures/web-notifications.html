@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Website notifications fixture</title>
+<style>body{font:18px system-ui;margin:32px;max-width:800px}button{font:inherit;margin:6px;padding:12px}pre{white-space:pre-wrap}</style>
+<h1>Website notifications</h1>
+<p>Serve on localhost or HTTPS. This page exercises live-runtime website notifications; it does not subscribe to remote push.</p>
+<button id="permission">Request notification permission</button>
+<button id="show">Show document notification</button>
+<button id="replace">Replace same tag</button>
+<button id="close">Close document notification</button>
+<button id="worker">Show service-worker notification</button>
+<pre id="log" aria-live="polite"></pre>
+<script>
+let current;
+const log = message => {
+  document.querySelector('#log').textContent += `${new Date().toISOString()} ${message}\n`;
+  fetch('/receipt', {method:'POST',body:JSON.stringify({kind:'website-notification',message})}).catch(()=>{});
+};
+const show = title => {
+  current = new Notification(title, { body: 'Website notification body', tag: 'yeoyu-fixture', requireInteraction: true });
+  current.onshow = () => log(`shown: ${title}`);
+  current.onclick = () => log(`clicked: ${title}`);
+  current.onclose = () => log(`closed: ${title}`);
+  current.onerror = () => log(`failed: ${title}`);
+};
+const run = work => Promise.resolve().then(work).catch(error => log(String(error)));
+document.querySelector('#permission').onclick = () => run(async () => log(`permission: ${await Notification.requestPermission()}`));
+document.querySelector('#show').onclick = () => run(() => show('First website notification'));
+document.querySelector('#replace').onclick = () => run(() => show('Replacement website notification'));
+document.querySelector('#close').onclick = () => current?.close();
+document.querySelector('#worker').onclick = () => run(async () => {
+  await navigator.serviceWorker.register('./web-notifications-worker.js');
+  const registration = await navigator.serviceWorker.ready;
+  await registration.showNotification('Service-worker notification', {
+    body: 'Tap to open a same-origin page', tag: 'yeoyu-worker-fixture',
+    actions: [{ action: 'open', title: 'Open page' }, { action: 'dismiss', title: 'Dismiss' }],
+  });
+  log('worker show requested');
+});
+if (location.search.includes('notification=clicked')) log('service worker opened this window');
+</script>
+</html>

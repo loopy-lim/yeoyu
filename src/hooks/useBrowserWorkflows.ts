@@ -31,6 +31,7 @@ export function useBrowserWorkflows(options: {
   onError(message: string): void;
   onNotice(message: string): void;
   onExternalTab(snapshot: Snapshot): void;
+  onCommand(command: string): void;
 }) {
   const callbacks = useRef(options);
   useLayoutEffect(() => { callbacks.current = options; }, [options]);
@@ -44,6 +45,7 @@ export function useBrowserWorkflows(options: {
   ));
   const [security, setSecurity] = useState<Record<string, BrowserSecurity>>({});
   const [context, setContext] = useState<BrowserContentRequest | null>(null);
+  const contextRequest = useRef<BrowserContentRequest | null>(null);
   const [startupAttempt, retryStartup] = useState(0);
   const [links] = useState(() => new ExternalLinkDrain({
     pending: async () => parseExternalLinks(await platform.pendingExternalLinks()),
@@ -79,6 +81,22 @@ export function useBrowserWorkflows(options: {
   useEffect(() => {
     if (!ready) return;
     let live = true;
+    // Launcher shortcuts queue natively through the cold-start gap; one drain
+    // per React mount replays them as browser commands. Warm taps deliver
+    // live as BrowserCommand events instead.
+    void Promise.resolve()
+      .then(() => platform.pendingShortcutCommands?.() ?? "[]")
+      .then((json) => {
+        if (!live) return;
+        for (const command of JSON.parse(json) as string[]) callbacks.current.onCommand(command);
+      })
+      .catch(() => {});
+    return () => { live = false; };
+  }, [ready]);
+
+  useEffect(() => {
+    if (!ready) return;
+    let live = true;
     const report = (error: unknown) => { if (live) callbacks.current.onError(String(error)); };
     const drain = () => { void links.run().catch(report); };
     const valid = (id: string) => controller.snapshot?.tabs.some((tab) => tab.id === id && !tab.suspended) === true;
@@ -93,7 +111,7 @@ export function useBrowserWorkflows(options: {
         settings.acceptTextScale(event.textScale);
       }),
       DeviceEventEmitter.addListener("BrowserContentContextMenu", (event: BrowserContentRequest) => {
-        if (valid(event.tabId)) setContext(event);
+        if (valid(event.tabId)) { contextRequest.current = event; setContext(event); }
       }),
       DeviceEventEmitter.addListener("BrowserSessionBlocked", (event: { tabId: string; reason: string }) => {
         if (valid(event.tabId)) callbacks.current.onError(`Page recovery paused: ${event.reason}. Use Reload to try again.`);
@@ -112,13 +130,26 @@ export function useBrowserWorkflows(options: {
 
   const selectContext = useCallback(async (requestId: string, target: "link" | "image", action: ContentAction) => {
     try {
+      const request = contextRequest.current;
+      if (!request || request.requestId !== requestId) throw new Error("This page action has expired");
+      const before = controller.snapshot;
+      const source = before?.tabs.find((tab) => tab.id === request.tabId && !tab.suspended);
+      if (!source || !before) throw new Error("The source tab is no longer available");
       const url = await platform.consumeContentContext(requestId, target);
-      if (action === "open") callbacks.current.onExternalTab(await controller.createTab(url));
+      if (action === "open") {
+        const live = controller.snapshot?.tabs.find((tab) => tab.id === source.id && !tab.suspended);
+        if (!live || !!live.private !== !!source.private) throw new Error("The source tab is no longer available");
+        callbacks.current.onExternalTab(await controller.createTab(url,
+          source.favorite ? before.activeWorkspaceId : source.workspaceId, { private: !!source.private }));
+      }
       else if (action === "copy") { platform.copyToClipboard(url); callbacks.current.onNotice("Link copied"); }
       else await platform.shareUrl(url);
     } catch (error) { callbacks.current.onError(String(error)); }
-    finally { setContext((old) => old?.requestId === requestId ? null : old); }
+    finally {
+      if (contextRequest.current?.requestId === requestId) contextRequest.current = null;
+      setContext((old) => old?.requestId === requestId ? null : old);
+    }
   }, []);
 
-  return { ready, startupError, retryStartup: () => retryStartup((v) => v + 1), config, saveConfig, security, context, selectContext, closeContext: () => setContext(null) };
+  return { ready, startupError, retryStartup: () => retryStartup((v) => v + 1), config, saveConfig, security, context, selectContext, closeContext: () => { contextRequest.current = null; setContext(null); } };
 }

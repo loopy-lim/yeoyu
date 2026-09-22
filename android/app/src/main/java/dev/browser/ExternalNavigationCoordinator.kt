@@ -18,7 +18,7 @@ object ExternalNavigationCoordinator {
     private val guard = ExternalLaunchGuard()
     private val contexts = ContentContextLedger()
     private var contextExpiry: Runnable? = null
-    private val engineSchemes = setOf("http", "https", "about", "data", "blob", "javascript", "file", "content", "resource", "chrome")
+    private val engineSchemes = setOf("http", "https", "about", "data", "blob", "javascript", "file", "content", "resource", "chrome", "moz-extension")
 
     fun onLoadRequest(app: Context, tabId: String, session: GeckoSession,
         request: GeckoSession.NavigationDelegate.LoadRequest, isCurrent: () -> Boolean,

@@ -9,6 +9,7 @@ import {
 import { ChromeIcon, type IconName } from "../chrome/ChromeIcon";
 import { menuPosition, type MenuAnchor } from "../menuLayout";
 import { useTheme } from "../themeContext";
+import { useI18n } from "../i18nContext";
 
 export type { MenuAnchor } from "../menuLayout";
 export interface MenuItem {
@@ -33,6 +34,7 @@ export function ActionMenu({
   onClose: () => void;
 }) {
   const t = useTheme();
+  const { tr } = useI18n();
   const window = useWindowDimensions();
   const [height, setHeight] = useState(44 + items.length * 40);
   const position = menuPosition(anchor, window, 280, height);
@@ -77,9 +79,9 @@ export function ActionMenu({
         </Text>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={`Close ${title} menu`}
+          accessibilityLabel={tr("dialog.closeMenu", { title })}
           onPress={onClose}
-          hitSlop={4}
+          hitSlop={8}
           style={{
             width: 32,
             height: 32,

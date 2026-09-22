@@ -8,7 +8,9 @@ import org.json.JSONObject
 internal data class BrowserSiteConfig(val origin: String, val desktop: Boolean, val trackingProtection: Boolean?, val keepAlive: Boolean = false)
 
 internal data class BrowserToolsConfig(
-    val restoreSessions: Boolean = false,
+    // Fresh installs keep page state across process death by default; the
+    // Settings toggle still opts out, and stored configs always win.
+    val restoreSessions: Boolean = true,
     // New installs default to Standard (ETP DEFAULT). A stored "engine-default"
     // still means OFF — the mapping must keep honoring an explicit old choice.
     val trackingProtection: String = "standard",
@@ -61,7 +63,10 @@ internal data class BrowserToolsConfig(
                 }
                 require(sites.map { it.origin }.distinct().size == sites.size)
                 val automatic = if (objectValue.has("automaticMemorySaving")) { require(objectValue.get("automaticMemorySaving") is Boolean); objectValue.getBoolean("automaticMemorySaving") } else false
-                return BrowserToolsConfig(objectValue.getBoolean("restoreSessions"), protection, scale, sites, automatic)
+                // Default-only legacy rows consume the same bounded exception budget.
+                // Validate duplicates first, then omit rows whose behavior is inherited.
+                val exceptions = sites.filterNot { it.desktop && it.trackingProtection == null && !it.keepAlive }
+                return BrowserToolsConfig(objectValue.getBoolean("restoreSessions"), protection, scale, exceptions, automatic)
             } catch (_: Exception) {
                 throw IllegalArgumentException("Browser settings are invalid or use an unsupported version")
             }

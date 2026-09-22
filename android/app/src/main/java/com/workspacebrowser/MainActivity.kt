@@ -6,15 +6,25 @@ import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnable
 import com.facebook.react.defaults.DefaultReactActivityDelegate
 
 class MainActivity : ReactActivity() {
+  companion object {
+    /** Live main browser even while a secondary OS window is the resumed
+     *  activity; bridge calls that need the Arc chrome fall back to it. */
+    @Volatile var current: MainActivity? = null
+  }
   val browserPip by lazy { dev.browser.BrowserPictureInPicture(this, ::launchPictureInPictureReturn) }
   private var externalDeliveryId: String? = null
   private var browserFullscreenPreference: Boolean? = null
   override fun onCreate(savedInstanceState: android.os.Bundle?) {
+    dev.browser.BrowserAppearance.restore(this)
     super.onCreate(savedInstanceState)
+    current = this
     dev.browser.PendingExternalLinks.initialize(applicationContext)
     dev.browser.DownloadCoordinator.initialize(applicationContext)
     externalDeliveryId = savedInstanceState?.getString("yeoyu.externalDeliveryId") ?: java.util.UUID.randomUUID().toString()
-    dev.browser.PendingExternalLinks.receive(applicationContext, intent, checkNotNull(externalDeliveryId))
+    if (!dev.browser.BrowserWebNotifications.handleIntent(intent))
+      dev.browser.PendingExternalLinks.receive(applicationContext, intent, checkNotNull(externalDeliveryId))
+    // Activity recreation re-delivers the launch intent; only fresh starts may queue it.
+    if (savedInstanceState == null) dev.browser.PendingShortcuts.receive(intent)
     // Fabric owns the React surface; this native ancestor only intercepts raw
     // pre-IME keys and leaves layout/content ownership with that surface.
     val content = findViewById<android.view.ViewGroup>(android.R.id.content)
@@ -31,7 +41,24 @@ class MainActivity : ReactActivity() {
     ))
     browserPip.attach(gateway)
     dev.browser.ExternalPictureInPicture.attachBrowser(this)
+    attachPredictiveBackBridge()
     refreshBrowserFullscreen()
+  }
+
+  /** Predictive back: with android:enableOnBackInvokedCallback the system
+   *  bypasses the legacy Activity.onBackPressed that ReactActivity relies on.
+   *  This bridge re-enters that chain from the androidx dispatcher; disabling
+   *  first lets the unconsumed fallthrough finish the activity instead of
+   *  looping. Registered on 33+ only, where the new dispatch path is live —
+   *  pre-33 keeps the system's legacy key dispatch exactly as before. */
+  private fun attachPredictiveBackBridge() {
+    if (android.os.Build.VERSION.SDK_INT < 33) return
+    onBackPressedDispatcher.addCallback(this, object : androidx.activity.OnBackPressedCallback(true) {
+      override fun handleOnBackPressed() {
+        isEnabled = false
+        try { onBackPressed() } finally { isEnabled = true }
+      }
+    })
   }
 
   override fun onNewIntent(intent: android.content.Intent) {
@@ -41,7 +68,9 @@ class MainActivity : ReactActivity() {
     super.onNewIntent(intent)
     setIntent(intent)
     externalDeliveryId = java.util.UUID.randomUUID().toString()
-    dev.browser.PendingExternalLinks.receive(applicationContext, intent, checkNotNull(externalDeliveryId))
+    if (!dev.browser.BrowserWebNotifications.handleIntent(intent))
+      dev.browser.PendingExternalLinks.receive(applicationContext, intent, checkNotNull(externalDeliveryId))
+    dev.browser.PendingShortcuts.receive(intent)
   }
 
   private fun launchPictureInPictureReturn(intent: android.content.Intent) {
@@ -77,6 +106,12 @@ class MainActivity : ReactActivity() {
     dev.browser.ImmersiveMode.set(window, dev.browser.browserImmersiveEnabled(
       preference, dev.browser.GeckoSessionRegistry.hasContentFullscreen()
     ))
+    dev.browser.BrowserAppearance.refreshSystemBars(this)
+  }
+
+  override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
+    super.onConfigurationChanged(newConfig)
+    dev.browser.BrowserAppearance.refreshSystemBars(this)
   }
 
   override fun onSaveInstanceState(outState: android.os.Bundle) {
@@ -138,6 +173,7 @@ class MainActivity : ReactActivity() {
   }
 
   override fun onDestroy() {
+    if (current === this) current = null
     dev.browser.SpaceTransitionCover.activityStopped(this, destroyed = true)
     dev.browser.ExternalPictureInPicture.browserDestroyed(this)
     browserPip.destroy()
@@ -160,18 +196,22 @@ class MainActivity : ReactActivity() {
 
   override fun onResume() {
     super.onResume()
+    dev.browser.BrowserWebNotifications.onHostResumed()
     dev.browser.ExternalPictureInPicture.browserResumed(this)
     browserPip.onResume()
     refreshBrowserFullscreen()
   }
 
   override fun onStop() {
+    dev.browser.BrowserWebNotifications.onHostStopped()
     browserPip.onStop()
     dev.browser.ExternalPictureInPicture.browserStopped(this)
+    dev.browser.GeckoSessionRegistry.flushSessionsForBackground()
     super.onStop()
   }
 
   override fun onUserLeaveHint() {
+    dev.browser.BrowserMediaCoordinator.onUserLeaveHint(this)
     browserPip.onUserLeaveHint()
     super.onUserLeaveHint()
   }
@@ -179,6 +219,7 @@ class MainActivity : ReactActivity() {
   override fun onPictureInPictureModeChanged(active: Boolean, configuration: android.content.res.Configuration) {
     browserPip.onModeChanged(active)
     super.onPictureInPictureModeChanged(active, configuration)
+    dev.browser.BrowserMediaCoordinator.onPictureInPictureChanged(active)
     if (!active) refreshBrowserFullscreen()
   }
 

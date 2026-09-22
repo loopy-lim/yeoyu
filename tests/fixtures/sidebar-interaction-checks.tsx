@@ -2,6 +2,7 @@ import { afterEach, expect, mock, test } from "bun:test";
 import React, { useState } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
 import { latestAnimation, resetAnimations } from "../chromeTestHarness";
+import { FrameCoalescer } from "../../src/chrome/FrameCoalescer";
 const native = await import("react-native");
 const { Pressable } = require("./loadNativePressable.cjs");
 mock.module("react-native", () => ({ ...native, Pressable }));
@@ -302,7 +303,13 @@ function dropBoundary(active: boolean) {
     sidebarDropEpoch = { current: 0 };
   let preview: any = { tabId: "a", zone: null, reorderIndex: null };
   const favorite = mock(() => Promise.resolve());
+  const dragFrames = new FrameCoalescer<{x: number; y: number}>(() => {}, {
+    request: () => 1,
+    cancel: () => {},
+  });
   const handlers = loadAppDropHandlers({
+    dragFrames,
+    useLayoutEffect: (effect: () => void) => effect(),
     ...refs,
     ...bounds,
     sidebarRowRefs,
@@ -316,7 +323,7 @@ function dropBoundary(active: boolean) {
     setDrag: (update: any) => {
       preview = typeof update === "function" ? update(preview) : update;
     },
-    favoriteTabs: [{ id: "a" }],
+    sidebar: { favorites: [{ id: "a" }] },
     favoriteLayouts: { current: new Map([["a", box]]) },
     favoriteDropIndex: () => 1,
     favoriteScrollOffset: { current: 0 },
@@ -352,6 +359,7 @@ function dropBoundary(active: boolean) {
     favorite,
     box,
     getPreview: () => preview,
+    flushDragFrame: () => dragFrames.flush(),
   };
 }
 
@@ -401,7 +409,20 @@ test("actual App move and release ignore stale sidebar rectangles when rail is a
   d.pinnedSectionBounds.current = d.box;
   d.ordinarySectionBounds.current = d.box;
   d.moveDrag(20, 20);
+  d.flushDragFrame();
   expect(d.getPreview().reorderIndex).toBeNull();
   d.finishDrag(20, 20);
   expect(d.favorite).not.toHaveBeenCalled();
+});
+
+test("actual App queued drag preview observes sidebar deactivation before its frame", () => {
+  const d = dropBoundary(true);
+  d.favoritesRowBounds.current = d.box;
+  d.moveDrag(20, 20);
+  d.flushDragFrame();
+  expect(d.getPreview().reorderIndex).toBe(1);
+  d.moveDrag(25, 25);
+  d.sidebarDropActive.current = false;
+  d.flushDragFrame();
+  expect(d.getPreview().reorderIndex).toBeNull();
 });

@@ -74,6 +74,11 @@ class BrowserSurfaceView(val reactContext:ThemedReactContext):FrameLayout(reactC
  }
  fun bind() { if(tabId.isNotEmpty()) GeckoSessionRegistry.attach(this,tabId,initialUrl) }
  fun release() { resizeCover.clear(); coverGesture.invalidate(); GeckoSessionRegistry.detach(this) }
+ internal fun mediaPlaybackChanged(session:GeckoSession,playing:Boolean) {
+  // Media may start after a resize captured its old picture. Retire that still
+  // immediately and apply the latest child bounds, keeping gesture ownership.
+  if(playing && gecko.session===session) resizeCover.clear()
+ }
  override fun onSizeChanged(w:Int,h:Int,oldw:Int,oldh:Int) {
   super.onSizeChanged(w,h,oldw,oldh)
   resizeCover.resize(w,h,oldw,oldh)

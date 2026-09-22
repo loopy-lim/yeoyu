@@ -17,6 +17,7 @@ import {
 } from "react-native";
 import { Favicon } from "./Favicon";
 import { ChromeIcon } from "../chrome/ChromeIcon";
+import { josaRo } from "../i18n";
 import {
   normalizeInput,
   suggest,
@@ -28,6 +29,7 @@ import type { HistoryEntry } from "../history";
 import { platform } from "../platform";
 import { font, radius, space } from "../theme";
 import { useTheme } from "../themeContext";
+import { useI18n } from "../i18nContext";
 
 interface Props {
   engine: SearchEngineId;
@@ -59,6 +61,7 @@ export const AddressBox = forwardRef<
   Props
 >((props, ref) => {
   const t = useTheme();
+  const { tr } = useI18n();
   const [query, setQuery] = useState(props.value ?? "");
   const [focused, setFocused] = useState(false);
   const [highlight, setHighlight] = useState(-1);
@@ -162,7 +165,8 @@ export const AddressBox = forwardRef<
         <ChromeIcon name="search" size={18} color={t.inkMuted} />
         <TextInput
           ref={setRefs}
-          accessibilityLabel="Address"
+          accessibilityLabel={tr("address.label")}
+          maxFontSizeMultiplier={1.35}
           style={{
             height: 48,
             flex: 1,
@@ -184,7 +188,7 @@ export const AddressBox = forwardRef<
           returnKeyType="go"
           showSoftInputOnFocus={props.softInput !== false}
           selectTextOnFocus
-          placeholder={props.placeholder ?? "Search or enter URL"}
+          placeholder={props.placeholder ?? tr("address.placeholder")}
           placeholderTextColor={t.inkMuted}
           onSubmitEditing={() =>
             select(highlight >= 0 ? results[highlight] : undefined)
@@ -207,7 +211,7 @@ export const AddressBox = forwardRef<
               <Pressable
                 key={command ? command.id : `${page!.source}:${page!.url}`}
                 accessibilityRole="button"
-                accessibilityLabel={command ? title : `Go to ${title}`}
+                accessibilityLabel={command ? title : tr("address.go", { title, ro: josaRo(title) })}
                 accessibilityState={{ selected: highlight === index }}
                 onPress={() => select(result)}
                 style={({ pressed }) => ({
@@ -235,6 +239,7 @@ export const AddressBox = forwardRef<
                 <View style={{ flex: 1 }}>
                   <Text
                     numberOfLines={1}
+                    maxFontSizeMultiplier={1.35}
                     style={{ color: t.ink, fontSize: font.bodyPlus }}
                   >
                     {title}
@@ -242,9 +247,10 @@ export const AddressBox = forwardRef<
                   {page && (
                     <Text
                       numberOfLines={1}
+                      maxFontSizeMultiplier={1.35}
                       style={{ color: t.inkMuted, fontSize: 11 }}
                     >
-                      {page.tabId ? "Switch to tab" : page.url}
+                      {page.tabId ? tr("address.switchTab") : page.url}
                     </Text>
                   )}
                 </View>

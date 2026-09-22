@@ -3,6 +3,7 @@ import { SitePermissions } from "../src/permissions";
 import {
   PermissionRequests,
   answerPermission,
+  permissionSupportsOnce,
 } from "../src/permissionRequests";
 
 const request = (requestId: number) => ({
@@ -172,5 +173,106 @@ test("private permissions never persist allow or block decisions", async () => {
     });
     expect(saved).toEqual([]);
     expect(replies).toEqual([choice !== "block"]);
+  }
+});
+
+test("only media requests support a one-request site grant", () => {
+  expect(permissionSupportsOnce(["camera"])).toBe(true);
+  expect(permissionSupportsOnce(["microphone", "camera"])).toBe(true);
+  for (const kinds of [[], ["notifications"], ["geolocation"], ["autoplay"], ["persistent-storage"], ["camera", "notifications"]])
+    expect(permissionSupportsOnce(kinds)).toBe(false);
+});
+
+test("unsupported one-time content grants fail closed instead of silently granting permanently", async () => {
+  for (const kind of ["notifications", "geolocation", "autoplay", "persistent-storage"]) {
+    const queue = new PermissionRequests();
+    queue.enqueue({ ...request(1), kind });
+    const replies: unknown[][] = [], saves: unknown[] = [], asked: string[] = [];
+    await expect(answerPermission(queue, 1, "once", {
+      requestAndroid: async (value) => { asked.push(value); return true; },
+      save: async (origin) => { saves.push(origin); },
+      resolve: (...reply) => replies.push(reply),
+    })).rejects.toThrow("cannot be allowed just once");
+    expect(asked).toEqual([]);
+    expect(saves).toEqual([]);
+    expect(replies).toEqual([[1, false, false]]);
+  }
+});
+
+test("content Allow saves its explicit site choice and forwards a grant", async () => {
+  for (const kind of ["notifications", "geolocation", "autoplay", "persistent-storage"]) {
+    const queue = new PermissionRequests();
+    queue.enqueue({ ...request(1), kind });
+    const replies: unknown[][] = [], saves: unknown[][] = [];
+    await answerPermission(queue, 1, "always", {
+      requestAndroid: async () => true,
+      save: async (...args) => { saves.push(args); },
+      resolve: (...reply) => replies.push(reply),
+    });
+    expect(saves).toEqual([["https://example.com", [kind], "allow"]]);
+    expect(replies).toEqual([[1, true, false]]);
+  }
+});
+
+test("dismiss is a prompt response, while a successfully saved explicit Block may be remembered by Gecko", async () => {
+  for (const choice of ["dismiss", "block"] as const) {
+    const queue = new PermissionRequests();
+    queue.enqueue({ ...request(1), kind: "notifications" });
+    const replies: unknown[][] = [], saves: unknown[][] = [];
+    await answerPermission(queue, 1, choice, {
+      requestAndroid: async () => { throw new Error("denials must not request Android"); },
+      save: async (...args) => { saves.push(args); },
+      resolve: (...reply) => replies.push(reply),
+    });
+    expect(replies).toEqual([[1, false, choice === "block"]]);
+    expect(saves.length).toBe(choice === "block" ? 1 : 0);
+  }
+});
+
+test("failed Block persistence must not leave an unlisted durable Gecko denial", async () => {
+  const queue = new PermissionRequests();
+  queue.enqueue({ ...request(1), kind: "notifications" });
+  const replies: unknown[][] = [];
+  await expect(answerPermission(queue, 1, "block", {
+    requestAndroid: async () => true,
+    save: async () => { throw new Error("disk full"); },
+    resolve: (...reply) => replies.push(reply),
+  })).rejects.toThrow("disk full");
+  expect(replies).toEqual([[1, false, false]]);
+});
+
+test("a remembered answer resolves already queued requests for that site without another prompt", async () => {
+  const queue = new PermissionRequests();
+  queue.enqueue({ ...request(1), kind: "camera,microphone" });
+  queue.enqueue(request(2));
+  queue.enqueue({ ...request(3), kind: "microphone" });
+  queue.enqueue({ ...request(4), origin: "https://other.example" });
+  queue.enqueue({ ...request(5), ephemeral: true });
+  queue.enqueue({ ...request(6), kind: "camera,geolocation" });
+  const replies: unknown[][] = [];
+  await answerPermission(queue, 1, "always", {
+    requestAndroid: async () => true,
+    save: async () => {},
+    resolve: (...reply) => replies.push(reply),
+  });
+  expect(replies).toEqual([[1, true, false], [2, true, false], [3, true, false]]);
+  expect(queue.getSnapshot()?.requestId).toBe(4);
+  expect(queue.has(5)).toBe(true);
+  expect(queue.has(6)).toBe(true);
+});
+
+test("a saved Block rejects queued combined requests while a one-time Allow stays one-time", async () => {
+  for (const choice of ["block", "once"] as const) {
+    const queue = new PermissionRequests();
+    queue.enqueue(request(1));
+    queue.enqueue({ ...request(2), kind: "camera,microphone" });
+    const replies: unknown[][] = [];
+    await answerPermission(queue, 1, choice, {
+      requestAndroid: async () => true, save: async () => {},
+      resolve: (...reply) => replies.push(reply),
+    });
+    expect(queue.has(2)).toBe(choice === "once");
+    expect(replies).toEqual(choice === "block"
+      ? [[1, false, true], [2, false, true]] : [[1, true, false]]);
   }
 });

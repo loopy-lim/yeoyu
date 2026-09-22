@@ -165,13 +165,13 @@ import type { RkyvV2Codec, RustraError, ComplexSchema } from '@rustra/types';
 import type { Bookmark, BookmarkCreateInput, BookmarkFolder, BookmarkFolderCreateInput, BookmarkFolderIdInput, BookmarkFolderRenameInput, BookmarkIdInput, BookmarkMoveInput, BookmarkOpenInput, BookmarkSetFolderInput, BookmarkUpdateInput, BrowserSnapshotInput, KeyBinding, KeymapSetInput, Snapshot, SnapshotRestoreInput, String, Tab, TabCreateInput, TabFavoriteInput, TabIdInput, TabMoveInput, TabNavigatedInput, TabOpenExternalInput, TabPinnedInput, TabWorkspaceInput, WorkArchiveExportInput, WorkArchiveImportInput, WorkArchivePrepareInput, WorkArchivePreview, WorkArchivePreviewInput, Workspace, WorkspaceCreateInput, WorkspaceIdInput } from './types.js';
 
 export const bookmarkCreateCodec: RkyvV2Codec<BookmarkCreateInput, Snapshot> = {
-  commandId: 19,
+  commandId: 20,
 
   encode(args: BookmarkCreateInput): ArrayBuffer {
     // [cmd_id: u16 LE][postcard(BookmarkCreateInput)]
     const parts: Uint8Array[] = [];
     const cmdId = new Uint8Array(2);
-    new DataView(cmdId.buffer).setUint16(0, 19, true);
+    new DataView(cmdId.buffer).setUint16(0, 20, true);
     parts.push(cmdId);
     parts.push(_pcEncodeString(args.title));
     parts.push(_pcEncodeString(args.url));
@@ -189,7 +189,7 @@ export const bookmarkCreateCodec: RkyvV2Codec<BookmarkCreateInput, Snapshot> = {
       out = grown;
     };
     ensure(2);
-    out[w++] = 19; out[w++] = 0;
+    out[w++] = 20; out[w++] = 0;
     { const _s = args.title; const _u = _utf8Encode(_s); ensure(5 + _u.length); let _v = _u.length; do { out[w++] = (_v % 128) | 0x80; _v = Math.floor(_v / 128); } while (_v > 0); out[w - 1] &= 0x7f; out.set(_u, w); w += _u.length; }
     { const _s = args.url; const _u = _utf8Encode(_s); ensure(5 + _u.length); let _v = _u.length; do { out[w++] = (_v % 128) | 0x80; _v = Math.floor(_v / 128); } while (_v > 0); out[w - 1] &= 0x7f; out.set(_u, w); w += _u.length; }
     { const _s = args.folderId; const _u = _utf8Encode(_s); ensure(5 + _u.length); let _v = _u.length; do { out[w++] = (_v % 128) | 0x80; _v = Math.floor(_v / 128); } while (_v > 0); out[w - 1] &= 0x7f; out.set(_u, w); w += _u.length; }
@@ -469,13 +469,13 @@ export const bookmarkCreateCodec: RkyvV2Codec<BookmarkCreateInput, Snapshot> = {
 };
 
 export const bookmarkFolderCreateCodec: RkyvV2Codec<BookmarkFolderCreateInput, Snapshot> = {
-  commandId: 23,
+  commandId: 24,
 
   encode(args: BookmarkFolderCreateInput): ArrayBuffer {
     // [cmd_id: u16 LE][postcard(BookmarkFolderCreateInput)]
     const parts: Uint8Array[] = [];
     const cmdId = new Uint8Array(2);
-    new DataView(cmdId.buffer).setUint16(0, 23, true);
+    new DataView(cmdId.buffer).setUint16(0, 24, true);
     parts.push(cmdId);
     parts.push(_pcEncodeString(args.title));
     return _pcConcatUint8Arrays(parts).buffer as ArrayBuffer;
@@ -491,7 +491,7 @@ export const bookmarkFolderCreateCodec: RkyvV2Codec<BookmarkFolderCreateInput, S
       out = grown;
     };
     ensure(2);
-    out[w++] = 23; out[w++] = 0;
+    out[w++] = 24; out[w++] = 0;
     { const _s = args.title; const _u = _utf8Encode(_s); ensure(5 + _u.length); let _v = _u.length; do { out[w++] = (_v % 128) | 0x80; _v = Math.floor(_v / 128); } while (_v > 0); out[w - 1] &= 0x7f; out.set(_u, w); w += _u.length; }
     return out.subarray(0, w);
   },
@@ -769,13 +769,13 @@ export const bookmarkFolderCreateCodec: RkyvV2Codec<BookmarkFolderCreateInput, S
 };
 
 export const bookmarkFolderRemoveCodec: RkyvV2Codec<BookmarkFolderIdInput, Snapshot> = {
-  commandId: 25,
+  commandId: 26,
 
   encode(args: BookmarkFolderIdInput): ArrayBuffer {
     // [cmd_id: u16 LE][postcard(BookmarkFolderIdInput)]
     const parts: Uint8Array[] = [];
     const cmdId = new Uint8Array(2);
-    new DataView(cmdId.buffer).setUint16(0, 25, true);
+    new DataView(cmdId.buffer).setUint16(0, 26, true);
     parts.push(cmdId);
     parts.push(_pcEncodeString(args.folderId));
     return _pcConcatUint8Arrays(parts).buffer as ArrayBuffer;
@@ -791,7 +791,7 @@ export const bookmarkFolderRemoveCodec: RkyvV2Codec<BookmarkFolderIdInput, Snaps
       out = grown;
     };
     ensure(2);
-    out[w++] = 25; out[w++] = 0;
+    out[w++] = 26; out[w++] = 0;
     { const _s = args.folderId; const _u = _utf8Encode(_s); ensure(5 + _u.length); let _v = _u.length; do { out[w++] = (_v % 128) | 0x80; _v = Math.floor(_v / 128); } while (_v > 0); out[w - 1] &= 0x7f; out.set(_u, w); w += _u.length; }
     return out.subarray(0, w);
   },
@@ -1069,13 +1069,13 @@ export const bookmarkFolderRemoveCodec: RkyvV2Codec<BookmarkFolderIdInput, Snaps
 };
 
 export const bookmarkFolderRenameCodec: RkyvV2Codec<BookmarkFolderRenameInput, Snapshot> = {
-  commandId: 24,
+  commandId: 25,
 
   encode(args: BookmarkFolderRenameInput): ArrayBuffer {
     // [cmd_id: u16 LE][postcard(BookmarkFolderRenameInput)]
     const parts: Uint8Array[] = [];
     const cmdId = new Uint8Array(2);
-    new DataView(cmdId.buffer).setUint16(0, 24, true);
+    new DataView(cmdId.buffer).setUint16(0, 25, true);
     parts.push(cmdId);
     parts.push(_pcEncodeString(args.folderId));
     parts.push(_pcEncodeString(args.title));
@@ -1092,7 +1092,7 @@ export const bookmarkFolderRenameCodec: RkyvV2Codec<BookmarkFolderRenameInput, S
       out = grown;
     };
     ensure(2);
-    out[w++] = 24; out[w++] = 0;
+    out[w++] = 25; out[w++] = 0;
     { const _s = args.folderId; const _u = _utf8Encode(_s); ensure(5 + _u.length); let _v = _u.length; do { out[w++] = (_v % 128) | 0x80; _v = Math.floor(_v / 128); } while (_v > 0); out[w - 1] &= 0x7f; out.set(_u, w); w += _u.length; }
     { const _s = args.title; const _u = _utf8Encode(_s); ensure(5 + _u.length); let _v = _u.length; do { out[w++] = (_v % 128) | 0x80; _v = Math.floor(_v / 128); } while (_v > 0); out[w - 1] &= 0x7f; out.set(_u, w); w += _u.length; }
     return out.subarray(0, w);
@@ -1371,13 +1371,13 @@ export const bookmarkFolderRenameCodec: RkyvV2Codec<BookmarkFolderRenameInput, S
 };
 
 export const bookmarkMoveCodec: RkyvV2Codec<BookmarkMoveInput, Snapshot> = {
-  commandId: 22,
+  commandId: 23,
 
   encode(args: BookmarkMoveInput): ArrayBuffer {
     // [cmd_id: u16 LE][postcard(BookmarkMoveInput)]
     const parts: Uint8Array[] = [];
     const cmdId = new Uint8Array(2);
-    new DataView(cmdId.buffer).setUint16(0, 22, true);
+    new DataView(cmdId.buffer).setUint16(0, 23, true);
     parts.push(cmdId);
     parts.push(_pcEncodeString(args.bookmarkId));
     parts.push(_pcEncodeVarint(args.index));
@@ -1394,7 +1394,7 @@ export const bookmarkMoveCodec: RkyvV2Codec<BookmarkMoveInput, Snapshot> = {
       out = grown;
     };
     ensure(2);
-    out[w++] = 22; out[w++] = 0;
+    out[w++] = 23; out[w++] = 0;
     { const _s = args.bookmarkId; const _u = _utf8Encode(_s); ensure(5 + _u.length); let _v = _u.length; do { out[w++] = (_v % 128) | 0x80; _v = Math.floor(_v / 128); } while (_v > 0); out[w - 1] &= 0x7f; out.set(_u, w); w += _u.length; }
     { let _v = args.index; do { ensure(1); out[w++] = (_v % 128) | 0x80; _v = Math.floor(_v / 128); } while (_v > 0); out[w - 1] &= 0x7f; }
     return out.subarray(0, w);
@@ -1673,13 +1673,13 @@ export const bookmarkMoveCodec: RkyvV2Codec<BookmarkMoveInput, Snapshot> = {
 };
 
 export const bookmarkOpenCodec: RkyvV2Codec<BookmarkOpenInput, Snapshot> = {
-  commandId: 28,
+  commandId: 29,
 
   encode(args: BookmarkOpenInput): ArrayBuffer {
     // [cmd_id: u16 LE][postcard(BookmarkOpenInput)]
     const parts: Uint8Array[] = [];
     const cmdId = new Uint8Array(2);
-    new DataView(cmdId.buffer).setUint16(0, 28, true);
+    new DataView(cmdId.buffer).setUint16(0, 29, true);
     parts.push(cmdId);
     parts.push(_pcEncodeString(args.bookmarkId));
     parts.push(_pcEncodeString(args.reuseTabId));
@@ -1697,7 +1697,7 @@ export const bookmarkOpenCodec: RkyvV2Codec<BookmarkOpenInput, Snapshot> = {
       out = grown;
     };
     ensure(2);
-    out[w++] = 28; out[w++] = 0;
+    out[w++] = 29; out[w++] = 0;
     { const _s = args.bookmarkId; const _u = _utf8Encode(_s); ensure(5 + _u.length); let _v = _u.length; do { out[w++] = (_v % 128) | 0x80; _v = Math.floor(_v / 128); } while (_v > 0); out[w - 1] &= 0x7f; out.set(_u, w); w += _u.length; }
     { const _s = args.reuseTabId; const _u = _utf8Encode(_s); ensure(5 + _u.length); let _v = _u.length; do { out[w++] = (_v % 128) | 0x80; _v = Math.floor(_v / 128); } while (_v > 0); out[w - 1] &= 0x7f; out.set(_u, w); w += _u.length; }
     { ensure(1); out[w++] = args.private ? 1 : 0; }
@@ -1977,13 +1977,13 @@ export const bookmarkOpenCodec: RkyvV2Codec<BookmarkOpenInput, Snapshot> = {
 };
 
 export const bookmarkRemoveCodec: RkyvV2Codec<BookmarkIdInput, Snapshot> = {
-  commandId: 21,
+  commandId: 22,
 
   encode(args: BookmarkIdInput): ArrayBuffer {
     // [cmd_id: u16 LE][postcard(BookmarkIdInput)]
     const parts: Uint8Array[] = [];
     const cmdId = new Uint8Array(2);
-    new DataView(cmdId.buffer).setUint16(0, 21, true);
+    new DataView(cmdId.buffer).setUint16(0, 22, true);
     parts.push(cmdId);
     parts.push(_pcEncodeString(args.bookmarkId));
     return _pcConcatUint8Arrays(parts).buffer as ArrayBuffer;
@@ -1999,7 +1999,7 @@ export const bookmarkRemoveCodec: RkyvV2Codec<BookmarkIdInput, Snapshot> = {
       out = grown;
     };
     ensure(2);
-    out[w++] = 21; out[w++] = 0;
+    out[w++] = 22; out[w++] = 0;
     { const _s = args.bookmarkId; const _u = _utf8Encode(_s); ensure(5 + _u.length); let _v = _u.length; do { out[w++] = (_v % 128) | 0x80; _v = Math.floor(_v / 128); } while (_v > 0); out[w - 1] &= 0x7f; out.set(_u, w); w += _u.length; }
     return out.subarray(0, w);
   },
@@ -2277,13 +2277,13 @@ export const bookmarkRemoveCodec: RkyvV2Codec<BookmarkIdInput, Snapshot> = {
 };
 
 export const bookmarkSetFolderCodec: RkyvV2Codec<BookmarkSetFolderInput, Snapshot> = {
-  commandId: 26,
+  commandId: 27,
 
   encode(args: BookmarkSetFolderInput): ArrayBuffer {
     // [cmd_id: u16 LE][postcard(BookmarkSetFolderInput)]
     const parts: Uint8Array[] = [];
     const cmdId = new Uint8Array(2);
-    new DataView(cmdId.buffer).setUint16(0, 26, true);
+    new DataView(cmdId.buffer).setUint16(0, 27, true);
     parts.push(cmdId);
     parts.push(_pcEncodeString(args.bookmarkId));
     parts.push(_pcEncodeString(args.folderId));
@@ -2300,7 +2300,7 @@ export const bookmarkSetFolderCodec: RkyvV2Codec<BookmarkSetFolderInput, Snapsho
       out = grown;
     };
     ensure(2);
-    out[w++] = 26; out[w++] = 0;
+    out[w++] = 27; out[w++] = 0;
     { const _s = args.bookmarkId; const _u = _utf8Encode(_s); ensure(5 + _u.length); let _v = _u.length; do { out[w++] = (_v % 128) | 0x80; _v = Math.floor(_v / 128); } while (_v > 0); out[w - 1] &= 0x7f; out.set(_u, w); w += _u.length; }
     { const _s = args.folderId; const _u = _utf8Encode(_s); ensure(5 + _u.length); let _v = _u.length; do { out[w++] = (_v % 128) | 0x80; _v = Math.floor(_v / 128); } while (_v > 0); out[w - 1] &= 0x7f; out.set(_u, w); w += _u.length; }
     return out.subarray(0, w);
@@ -2579,13 +2579,13 @@ export const bookmarkSetFolderCodec: RkyvV2Codec<BookmarkSetFolderInput, Snapsho
 };
 
 export const bookmarkUpdateCodec: RkyvV2Codec<BookmarkUpdateInput, Snapshot> = {
-  commandId: 20,
+  commandId: 21,
 
   encode(args: BookmarkUpdateInput): ArrayBuffer {
     // [cmd_id: u16 LE][postcard(BookmarkUpdateInput)]
     const parts: Uint8Array[] = [];
     const cmdId = new Uint8Array(2);
-    new DataView(cmdId.buffer).setUint16(0, 20, true);
+    new DataView(cmdId.buffer).setUint16(0, 21, true);
     parts.push(cmdId);
     parts.push(_pcEncodeString(args.bookmarkId));
     parts.push(_pcEncodeString(args.title));
@@ -2603,7 +2603,7 @@ export const bookmarkUpdateCodec: RkyvV2Codec<BookmarkUpdateInput, Snapshot> = {
       out = grown;
     };
     ensure(2);
-    out[w++] = 20; out[w++] = 0;
+    out[w++] = 21; out[w++] = 0;
     { const _s = args.bookmarkId; const _u = _utf8Encode(_s); ensure(5 + _u.length); let _v = _u.length; do { out[w++] = (_v % 128) | 0x80; _v = Math.floor(_v / 128); } while (_v > 0); out[w - 1] &= 0x7f; out.set(_u, w); w += _u.length; }
     { const _s = args.title; const _u = _utf8Encode(_s); ensure(5 + _u.length); let _v = _u.length; do { out[w++] = (_v % 128) | 0x80; _v = Math.floor(_v / 128); } while (_v > 0); out[w - 1] &= 0x7f; out.set(_u, w); w += _u.length; }
     { const _s = args.url; const _u = _utf8Encode(_s); ensure(5 + _u.length); let _v = _u.length; do { out[w++] = (_v % 128) | 0x80; _v = Math.floor(_v / 128); } while (_v > 0); out[w - 1] &= 0x7f; out.set(_u, w); w += _u.length; }
@@ -3177,6 +3177,102 @@ export const browserSnapshotCodec: RkyvV2Codec<BrowserSnapshotInput, Snapshot> =
       offset += _v.bytesRead;
     }
     return { ok: true, result: result as Snapshot };
+  },
+};
+
+export const keymapDefaultsCodec: RkyvV2Codec<BrowserSnapshotInput, KeymapSetInput> = {
+  commandId: 19,
+
+  encode(args: BrowserSnapshotInput): ArrayBuffer {
+    // [cmd_id: u16 LE][postcard(BrowserSnapshotInput)]
+    const parts: Uint8Array[] = [];
+    const cmdId = new Uint8Array(2);
+    new DataView(cmdId.buffer).setUint16(0, 19, true);
+    parts.push(cmdId);
+    return _pcConcatUint8Arrays(parts).buffer as ArrayBuffer;
+  },
+
+  encodeInto(args: BrowserSnapshotInput, reuse?: Uint8Array): Uint8Array {
+    let out = reuse ?? new Uint8Array(64);
+    let w = 0;
+    const ensure = (need: number) => {
+      if (w + need <= out.length) return;
+      const grown = new Uint8Array(Math.max(out.length * 2, w + need));
+      grown.set(out.subarray(0, w));
+      out = grown;
+    };
+    ensure(2);
+    out[w++] = 19; out[w++] = 0;
+    return out.subarray(0, w);
+  },
+
+  decode(buf: ArrayBuffer | ArrayBufferView): { ok: boolean; result?: KeymapSetInput; error?: RustraError } {
+    // caller-buffer 뷰(Uint8Array subarray 등)도 받는다 — node-loop 가 왕복당
+    // 사본 없이 프레임 뷰를 그대로 넘긴다. DataView 는 ArrayBuffer 만 받으므로
+    // (buf.buffer, byteOffset) 로 정규화한다.
+    const isView = ArrayBuffer.isView(buf);
+    const u8 = isView
+      ? new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength)
+      : new Uint8Array(buf);
+    const view = isView
+      ? new DataView(buf.buffer, buf.byteOffset, buf.byteLength)
+      : new DataView(buf);
+    if (view.byteLength < 8) return { ok: false, error: { code: 'invoke.too_short', message: 'response too short' } };
+    if (u8[0] !== 1) {
+      let err: RustraError = { code: 'invoke.failed', message: 'invoke failed' };
+      try {
+        const errLen = view.getUint16(8, true);
+        if (errLen > 0) {
+          // postcard({ code: String, message: String })
+          const c = _pcDecodeString(u8, 10);
+          const m = _pcDecodeString(u8, 10 + c.bytesRead);
+          err = { code: c.value, message: m.value };
+        }
+      } catch {
+        // 잘린/뒤틀린 에러 프레임 — 기본 err 를 유지한다.
+      }
+      return { ok: false, error: err };
+    }
+    // Decode postcard from offset 8
+    let offset = 8;
+    const result: Partial<KeymapSetInput> = {};
+    {
+      const _len = _pcDecodeVarint(u8, offset);
+      offset += _len.bytesRead;
+      const _arr: KeyBinding[] = new Array(_len.value);
+      for (let _i = 0; _i < _len.value; _i++) {
+        const _obj: KeyBinding = {} as KeyBinding;
+        {
+          const _v = _pcDecodeString(u8, offset);
+          _obj.key = _v.value;
+          offset += _v.bytesRead;
+        }
+        {
+          _obj.meta = u8[offset] === 1;
+          offset += 1;
+        }
+        {
+          _obj.ctrl = u8[offset] === 1;
+          offset += 1;
+        }
+        {
+          _obj.alt = u8[offset] === 1;
+          offset += 1;
+        }
+        {
+          _obj.shift = u8[offset] === 1;
+          offset += 1;
+        }
+        {
+          const _v = _pcDecodeString(u8, offset);
+          _obj.command = _v.value;
+          offset += _v.bytesRead;
+        }
+        _arr[_i] = _obj;
+      }
+      result.bindings = _arr;
+    }
+    return { ok: true, result: result as KeymapSetInput };
   },
 };
 
@@ -5589,13 +5685,13 @@ export const tabOpenExternalCodec: RkyvV2Codec<TabOpenExternalInput, Snapshot> =
 };
 
 export const tabResetCodec: RkyvV2Codec<TabIdInput, Snapshot> = {
-  commandId: 27,
+  commandId: 28,
 
   encode(args: TabIdInput): ArrayBuffer {
     // [cmd_id: u16 LE][postcard(TabIdInput)]
     const parts: Uint8Array[] = [];
     const cmdId = new Uint8Array(2);
-    new DataView(cmdId.buffer).setUint16(0, 27, true);
+    new DataView(cmdId.buffer).setUint16(0, 28, true);
     parts.push(cmdId);
     parts.push(_pcEncodeString(args.tabId));
     return _pcConcatUint8Arrays(parts).buffer as ArrayBuffer;
@@ -5611,7 +5707,7 @@ export const tabResetCodec: RkyvV2Codec<TabIdInput, Snapshot> = {
       out = grown;
     };
     ensure(2);
-    out[w++] = 27; out[w++] = 0;
+    out[w++] = 28; out[w++] = 0;
     { const _s = args.tabId; const _u = _utf8Encode(_s); ensure(5 + _u.length); let _v = _u.length; do { out[w++] = (_v % 128) | 0x80; _v = Math.floor(_v / 128); } while (_v > 0); out[w - 1] &= 0x7f; out.set(_u, w); w += _u.length; }
     return out.subarray(0, w);
   },

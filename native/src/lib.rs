@@ -286,6 +286,12 @@ pub fn snapshot_restore(input: SnapshotRestoreInput) -> Result<Snapshot> {
     lock_state()?.restore(&input.json)
 }
 #[command]
+pub fn keymap_defaults(_input: BrowserSnapshotInput) -> Result<KeymapSetInput> {
+    Ok(KeymapSetInput {
+        bindings: domain::default_key_bindings(),
+    })
+}
+#[command]
 pub fn keymap_set(input: KeymapSetInput) -> Result<Snapshot> {
     lock_state()?.set_keymap(input.bindings)
 }
@@ -346,6 +352,7 @@ pub fn browser_package() -> Package {
                 workspace_activate,
                 snapshot_restore,
                 keymap_set,
+                keymap_defaults,
                 bookmark_create,
                 bookmark_update,
                 bookmark_remove,

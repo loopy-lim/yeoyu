@@ -79,11 +79,23 @@ export function favoriteDropIndex(
 export function favoriteMoveIndex(
   tabs: readonly { id: string; favorite?: boolean }[],
   tabId: string,
-  slot: number
+  slot: number,
+  visibleFavoriteIds?: readonly string[]
 ): number | null {
   const from = tabs.findIndex((tab) => tab.id === tabId);
   if (from < 0) return null;
   const favorites = tabs.filter((tab) => tab.favorite);
+  if (visibleFavoriteIds) {
+    const visible = new Set(visibleFavoriteIds);
+    const shown = favorites.filter((tab) => visible.has(tab.id));
+    const next = shown[Math.max(0, Math.min(shown.length, slot))];
+    const last = shown.at(-1);
+    slot = next
+      ? favorites.indexOf(next)
+      : last
+      ? favorites.indexOf(last) + 1
+      : favorites.length;
+  }
   const oldSlot = favorites.findIndex((tab) => tab.id === tabId);
   const targetSlot = Math.max(0, Math.min(favorites.length, slot));
   if (oldSlot >= 0 && (targetSlot === oldSlot || targetSlot === oldSlot + 1))

@@ -33,28 +33,50 @@ internal object DownloadCoordinator {
     // Admission happens before the disk worker queue, so queued response bodies stay bounded too.
     private val slots = java.util.concurrent.Semaphore(10)
     private val jobs = java.util.concurrent.ConcurrentHashMap<String, Job>()
-    private var journal: DownloadJournal? = null
-    private var records = emptyList<DownloadRecord>()
+    private var history: DownloadHistory? = null
+    @Volatile private var appContext: Context? = null
+    private val journal: DownloadJournal? get() = history?.writableJournal
+    private var records: List<DownloadRecord>
+        get() = history?.records ?: emptyList()
+        set(value) { checkNotNull(history).records = value }
 
     fun initialize(context: Context) {
         val app = context.applicationContext
+        appContext = app
         stateWorker.execute {
+            DownloadNotifications.channels(app)
             try { ensureLoaded(app) }
             catch (failure: Exception) { reportFailure(null, "Download history could not be read: ${failure.message}") }
         }
     }
 
     private fun ensureLoaded(app: Context) {
-        if (journal != null) return
-        val store = DownloadJournal(File(app.filesDir, "browser-downloads-v1"))
-        val recovered = store.recover(System.currentTimeMillis())
-        records = recovered.map { record ->
-            if (!record.active && record.state != "completed" && record.pendingUri != null && cleanupPending(app, record.pendingUri))
-                record.copy(pendingUri = null) else record
-        }
-        if (records != recovered) store.write(records)
-        journal = store
+        val current = history ?: DownloadHistory(DownloadJournal(File(app.filesDir, "browser-downloads-v1"))).also { history = it }
+        if (!current.load(System.currentTimeMillis()) { cleanupRecord(app, it) }) throw IOException(current.message)
     }
+
+    private fun cleanupRecord(app: Context, record: DownloadRecord): DownloadRecord =
+        if (record.pendingUri != null && cleanupPending(app, record.pendingUri)) record.copy(pendingUri = null) else record
+
+    fun historyStatus(context: Context): String = stateWorker.submit<String> {
+        runCatching { ensureLoaded(context.applicationContext) }
+        historyStatusJson()
+    }.get()
+
+    /** Called only after the UI confirms replacing damaged history, never for a normal refresh. */
+    fun recoverHistory(context: Context): String = stateWorker.submit<String> {
+        val app = context.applicationContext
+        runCatching { ensureLoaded(app) }
+        checkNotNull(history).recover(System.currentTimeMillis()) { cleanupRecord(app, it) }
+        changed()
+        historyStatusJson()
+    }.get()
+
+    private fun historyStatusJson(): String = org.json.JSONObject().apply {
+        val current = checkNotNull(history)
+        put("state", current.state); put("message", current.message); put("canReset", current.canReset)
+        current.backupName?.let { put("backupName", it) }
+    }.toString()
 
     private fun update(id: String, transform: (DownloadRecord) -> DownloadRecord) {
         val next = records.map { if (it.id == id) transform(it) else it }
@@ -64,7 +86,8 @@ internal object DownloadCoordinator {
 
     /** Reads on the native module queue; file IO is serialized with every mutation. */
     fun list(context: Context): String = stateWorker.submit<String> {
-        ensureLoaded(context.applicationContext)
+        // Broken disk history does not hide safe in-process records or the recovery controls.
+        runCatching { ensureLoaded(context.applicationContext) }
         org.json.JSONArray().apply { records.asReversed().forEach { record ->
             put(org.json.JSONObject().apply {
                 put("id", record.id); put("filename", record.filename); put("mimeType", record.mimeType)
@@ -79,6 +102,7 @@ internal object DownloadCoordinator {
     /** Takes ownership of the actual received response, including queued/cancelled/error paths. */
     fun save(context: Context, response: WebResponse, emit: (String, WritableMap) -> Unit) {
         val app = context.applicationContext
+        appContext = app
         val id = java.util.UUID.randomUUID().toString()
         val filename = DownloadTransfer.filename(response.uri, response.header("Content-Disposition"))
         val mime = DownloadTransfer.mimeType(response.header("Content-Type"))
@@ -121,11 +145,13 @@ internal object DownloadCoordinator {
                             update(id) { it.copy(state = "running", updatedAt = System.currentTimeMillis()) }
                             changed()
                         }.get()
+                        DownloadNotifications.progress(app, id, filename, 0, total)
                         var lastProgress = 0L
                         val result = DownloadTransfer.save(body, cancellation, { bytes ->
                             val tick = android.os.SystemClock.elapsedRealtime()
                             if (tick - lastProgress >= 500) {
                                 lastProgress = tick
+                                DownloadNotifications.progress(app, id, filename, bytes, total)
                                 stateWorker.execute {
                                     // Progress is volatile; durable running state is sufficient for crash recovery.
                                     records = records.map { if (it.id == id && it.active) it.copy(bytes = bytes) else it }
@@ -148,6 +174,7 @@ internal object DownloadCoordinator {
                             try { checkNotNull(journal).write(records) }
                             catch (failure: Exception) { reportFailure(id, "File saved, but download history could not be saved: ${failure.message}") }
                             changed()
+                            DownloadNotifications.completed(app, id, result.filename, mime, result.uri)
                             main.post { emit("BrowserDownload", Arguments.createMap().apply {
                                 putString("id", id); putString("filename", result.filename)
                                 putString("location", result.location); putString("uri", result.uri)
@@ -176,6 +203,7 @@ internal object DownloadCoordinator {
 
     private fun finishFailure(id: String, failure: Exception, cancelled: Boolean) {
         val message = if (cancelled) "Download cancelled" else failure.cause?.message ?: failure.message ?: "Download failed"
+        DownloadNotifications.cancel(appContext, id)
         val next = records.map { if (it.id == id && it.state != "completed") it.copy(
             state = if (cancelled) "cancelled" else "failed", error = message.take(4000),
             updatedAt = System.currentTimeMillis()) else it }
@@ -234,14 +262,12 @@ internal object DownloadCoordinator {
     private fun cleanupPending(app: Context, value: String): Boolean = try {
         val uri = Uri.parse(value)
         if (uri.scheme == "file") {
-            val file = File(uri.path.orEmpty())
-            val folder = app.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)?.canonicalFile
-            if (file.canonicalFile.parentFile == folder && file.name.startsWith(".yeoyu-download-") && file.name.endsWith(".part"))
-                !file.exists() || file.delete() else false
-        } else if (Build.VERSION.SDK_INT >= 29 && uri.scheme == "content" && uri.authority == "media") {
+            val file = DownloadPendingCleanup.temporaryFile(value, app.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS))
+            if (file != null) !file.exists() || file.delete() else false
+        } else if (Build.VERSION.SDK_INT >= 29 && DownloadPendingCleanup.mediaStoreItem(value)) {
             app.contentResolver.query(uri, arrayOf(MediaStore.Downloads.IS_PENDING, MediaStore.MediaColumns.OWNER_PACKAGE_NAME), null, null, null)?.use { cursor ->
                 if (!cursor.moveToFirst()) true
-                else if (cursor.getInt(0) == 1 && cursor.getString(1) == app.packageName)
+                else if (DownloadPendingCleanup.ownedPending(cursor.getInt(0), cursor.getString(1), app.packageName))
                     app.contentResolver.delete(uri, null, null) > 0
                 else cursor.getInt(0) == 0 // Never delete a file already published to Downloads.
             } ?: false

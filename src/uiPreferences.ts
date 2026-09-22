@@ -1,4 +1,33 @@
+import { clampSidebarWidth } from "./sidebarSizing";
+
 export type Appearance = "lavender" | "warm";
+export type ColorSource = "appearance" | "space" | "custom";
+export type ColorMode = "system" | "light" | "dark";
+export type ResolvedColorMode = Exclude<ColorMode, "system">;
+export type LanguagePreference = "system" | "ko" | "en";
+
+export function normalizeLanguage(value: unknown): LanguagePreference {
+  return value === "ko" || value === "en" ? value : "system";
+}
+
+export function normalizeColorMode(value: unknown): ColorMode {
+  return value === "light" || value === "dark" ? value : "system";
+}
+
+export function resolveColorMode(
+  mode: ColorMode | undefined,
+  systemScheme?: ResolvedColorMode | null
+): ResolvedColorMode {
+  return mode === "light" || mode === "dark" ? mode : systemScheme === "dark" ? "dark" : "light";
+}
+
+export function normalizeCustomColor(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const hex = value.trim().replace(/^#/, "");
+  if (/^[0-9a-f]{3}$/i.test(hex))
+    return `#${hex.split("").map((digit) => digit + digit).join("").toLowerCase()}`;
+  return /^[0-9a-f]{6}$/i.test(hex) ? `#${hex.toLowerCase()}` : null;
+}
 export type SearchEngine = "google" | "naver" | "duckduckgo";
 
 export interface SiteBoost {
@@ -74,6 +103,12 @@ export interface UiPreferences {
   // Expanded sidebar width in dp; user-draggable (Arc's resizable sidebar).
   sidebarWidth: number;
   appearance: Appearance;
+  language?: LanguagePreference;
+  // Optional for legacy callers and archives; missing means follow the system.
+  colorMode?: ColorMode;
+  // Missing fields preserve the original behavior: follow the current Space.
+  colorSource?: ColorSource;
+  customColor?: string;
   fullscreen: boolean;
   autoPictureInPicture: boolean;
   searchEngine: SearchEngine;
@@ -86,6 +121,12 @@ export type UiPreferenceAction =
   | { type: "setSidebarCollapsed"; collapsed: boolean }
   | { type: "setSidebarWidth"; width: number }
   | { type: "setAppearance"; appearance: Appearance }
+  | { type: "setLanguage"; language: LanguagePreference }
+  | { type: "setColorMode"; colorMode: ColorMode }
+  | { type: "setColorSource"; source: ColorSource }
+  | { type: "setCustomColor"; color: string }
+  | { type: "resetColors" }
+  | { type: "resetLayout" }
   | { type: "setFullscreen"; fullscreen: boolean }
   | { type: "setAutoPictureInPicture"; enabled: boolean }
   | { type: "setSearchEngine"; searchEngine: SearchEngine }
@@ -97,6 +138,8 @@ export const defaultUiPreferences: UiPreferences = {
   sidebarCollapsed: false,
   sidebarWidth: 240,
   appearance: "lavender",
+  language: "system",
+  colorMode: "system",
   fullscreen: true,
   autoPictureInPicture: true,
   searchEngine: "google",
@@ -104,15 +147,60 @@ export const defaultUiPreferences: UiPreferences = {
   framePx: { ...defaultFramePadding },
 };
 
-// Boost hosts are bare hostnames: scheme, path, and the www. prefix are
-// stripped so user input and the native matcher agree.
+// Empty means invalid; keep the original draft so its editor can explain why.
+function parseBoostHostname(host: string): string {
+  const value = host.trim();
+  if (!value || /[\u0000-\u0020\u007f\\]/.test(value)) return "";
+  try {
+    const url = new URL(value.includes("://") ? value : `https://${value}`);
+    if (!["http:", "https:"].includes(url.protocol) || url.username || url.password) return "";
+    const hostname = url.hostname.toLowerCase();
+    const dnsName = hostname.replace(/\.$/, "");
+    if (!hostname.startsWith("[") && (dnsName.length > 253 || !dnsName.split(".").every((label) => /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(label)))) return "";
+    return hostname;
+  } catch { return ""; }
+}
+
+// Apply this matching transform once to each original hostname, on both sides.
+// Stored hosts retain www so repeated normalization cannot broaden their scope.
 export function normalizeBoostHost(host: string): string {
-  return host
-    .trim()
-    .toLowerCase()
-    .replace(/^https?:\/\//, "")
-    .replace(/^www\./, "")
-    .replace(/\/.*$/, "");
+  return parseBoostHostname(host).replace(/^www\./, "");
+}
+
+export interface BoostDraftError {
+  host?: string;
+  css?: string;
+  hostCode?: "required" | "invalid" | "duplicate";
+  cssCode?: "required";
+}
+
+/** Validate the complete replacement before Save; never silently remove an unfinished row. */
+export function validateBoostDrafts(drafts: readonly SiteBoost[]): {
+  valid: boolean;
+  boosts: SiteBoost[];
+  errors: BoostDraftError[];
+} {
+  const errors: BoostDraftError[] = drafts.map(() => ({}));
+  const hosts = new Map<string, number>();
+  const boosts = drafts.map((draft, index) => {
+    const host = parseBoostHostname(draft.host);
+    const matchHost = host.replace(/^www\./, "");
+    if (!host || !matchHost) {
+      errors[index].hostCode = draft.host.trim() ? "invalid" : "required";
+      errors[index].host = draft.host.trim() ? "Enter a valid hostname or HTTP(S) address without login details." : "Enter a site hostname.";
+    }
+    if (!draft.css.trim()) {
+      errors[index].cssCode = "required";
+      errors[index].css = "Enter CSS or remove this boost.";
+    }
+    const previous = hosts.get(matchHost);
+    if (host && previous !== undefined) {
+      errors[previous].hostCode = errors[index].hostCode = "duplicate";
+      errors[previous].host = errors[index].host = `Duplicate host: ${matchHost}. Keep one boost for this host.`;
+    } else if (host) hosts.set(matchHost, index);
+    return { ...draft, host };
+  });
+  return { valid: errors.every((error) => !error.host && !error.css), boosts, errors };
 }
 
 export function reduceUiPreferences(
@@ -120,6 +208,24 @@ export function reduceUiPreferences(
   action: UiPreferenceAction
 ): UiPreferences {
   if (action.type === "restore") return action.preferences;
+  if (action.type === "setLanguage") return { ...preferences, language: action.language };
+  if (action.type === "setColorMode") return { ...preferences, colorMode: action.colorMode };
+  if (action.type === "setCustomColor") {
+    const color = normalizeCustomColor(action.color);
+    return color ? { ...preferences, colorSource: "custom", customColor: color } : preferences;
+  }
+  if (action.type === "setColorSource") {
+    if (action.source === "custom" && !normalizeCustomColor(preferences.customColor)) return preferences;
+    return { ...preferences, colorSource: action.source };
+  }
+  if (action.type === "resetColors") {
+    const { colorSource: _source, customColor: _color, ...rest } = preferences;
+    return { ...rest, appearance: defaultUiPreferences.appearance, colorMode: "system" };
+  }
+  if (action.type === "resetLayout") {
+    return { ...preferences, sidebarWidth: defaultUiPreferences.sidebarWidth,
+      sidebarCollapsed: defaultUiPreferences.sidebarCollapsed, framePx: { ...defaultFramePadding } };
+  }
   if (action.type === "toggleSidebar") {
     return {
       ...preferences,
@@ -130,9 +236,10 @@ export function reduceUiPreferences(
     return { ...preferences, sidebarCollapsed: action.collapsed };
   }
   if (action.type === "setSidebarWidth") {
+    if (!Number.isFinite(action.width)) return preferences;
     return {
       ...preferences,
-      sidebarWidth: Math.max(200, Math.min(320, Math.round(action.width))),
+      sidebarWidth: clampSidebarWidth(action.width),
     };
   }
   if (action.type === "setFullscreen") {
@@ -193,7 +300,7 @@ const sanitizeFramePadding = (value: unknown): FramePadding => {
 
 const sanitizeSidebarWidth = (value: unknown): number =>
   typeof value === "number" && Number.isFinite(value)
-    ? Math.max(200, Math.min(320, Math.round(value)))
+    ? clampSidebarWidth(value)
     : 240;
 
 export async function loadUiPreferences(
@@ -215,8 +322,17 @@ export async function loadUiPreferences(
       // Stored preferences from before a field existed load with its default
       // rather than failing the whole restore.
       const prefs = value as UiPreferences;
+      const customColor = normalizeCustomColor(prefs.customColor);
+      const colorSource = ["appearance", "space", "custom"].includes(prefs.colorSource ?? "") &&
+        (prefs.colorSource !== "custom" || customColor) ? prefs.colorSource : undefined;
+      // Reconstruct color fields: malformed optional values must not reach rendering.
+      const { colorSource: _source, customColor: _color, ...existing } = prefs;
       return {
-        ...prefs,
+        ...existing,
+        colorMode: normalizeColorMode(prefs.colorMode),
+        language: normalizeLanguage(prefs.language),
+        ...(colorSource ? { colorSource } : {}),
+        ...(customColor ? { customColor } : {}),
         fullscreen: typeof prefs.fullscreen === "boolean" ? prefs.fullscreen : true,
         autoPictureInPicture:
           typeof prefs.autoPictureInPicture === "boolean"

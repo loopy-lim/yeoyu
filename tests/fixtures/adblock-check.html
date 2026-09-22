@@ -1,0 +1,12 @@
+<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><title>Ad blocking check</title>
+<style>body{font:20px system-ui;padding:30px}button{font:inherit;padding:20px}pre{white-space:pre-wrap}</style>
+<h1>Ad blocking check</h1><p>Configure this test-only filter in uBlock: <code>||localhost:8889/blocked-by-ublock.js$script</code>. Compare blocked, disabled and site-exception states.</p>
+<button id="check">Check request</button><pre id="result"></pre>
+<script>
+let n=0;
+document.querySelector('#check').onclick=()=>{
+ const tag=document.createElement('script');tag.src='./blocked-by-ublock.js?attempt='+(++n);
+ const report=result=>{document.querySelector('#result').textContent=result;fetch('/receipt',{method:'POST',body:JSON.stringify({kind:'adblock-check',result,n})});tag.remove();};
+ tag.onload=()=>report('loaded');tag.onerror=()=>report('blocked-or-failed');document.head.append(tag);
+};
+</script>
