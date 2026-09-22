@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "schemaHash": "7ffb08530575d95c2e5cb03cdbc509a11e1750f155ffc66fd891ac8c02f6e274",
+  "schemaHash": "43bd495b8a190cc65e4e1d893d8c9c438e7aa56aa5f57d8f1ac3ce50e4e66a6e",
   "generatorVersion": "0.8.0",
   "files": [
     {
@@ -29,7 +29,7 @@
     },
     {
       "path": "../modules/rustra-jsi/generated/rustra-generated-codecs.cpp",
-      "sha256": "f5c4f84d2812cdaa2dddee87bda1b67fd629b0c2352661788c21d077fdd89fae"
+      "sha256": "ac2c6c1f0999b5b252c3b17c1b770cf37deede1a044cd838c76a1f06c2f41d36"
     },
     {
       "path": "../modules/rustra-jsi/generated/rustra-generated-codecs.hpp",
@@ -65,11 +65,11 @@
     },
     {
       "path": "commands.ts",
-      "sha256": "ad0599605fb73e7c85fa02d7a15c5678929aa17026b1c0dedd0057cffcceadc5"
+      "sha256": "34e7130442da39c4de870437c64786e495897668aa794e4419021485dbd61f4a"
     },
     {
       "path": "contract.ts",
-      "sha256": "8c6a19e96be27fab2e27001d815128bdd27ac3f77af37a919f327c7c70126f9e"
+      "sha256": "4ae22a38ef30bd439e3833a1630ffa3b72e1817d516bd0986d193c9065c3695d"
     },
     {
       "path": "react-native.ts",
@@ -77,11 +77,11 @@
     },
     {
       "path": "rkyv-codecs.ts",
-      "sha256": "0b72e03dac852c8edb3577fffec1818c66073089fcf4564280077a94e9583204"
+      "sha256": "21aa15b892abbd335ce5a3b8158eee895ada989f724ef67e79d366d08c49c5ee"
     },
     {
       "path": "rkyv-registry.ts",
-      "sha256": "5259185fcd28cb6bf8a5509f364a968d8593ce39a76cca83558c4f3663a128c6"
+      "sha256": "2fedc887d8ae8907d36298bbe758d777a6c723c4aaf09a4fbe67ba47a8526652"
     },
     {
       "path": "types.ts",

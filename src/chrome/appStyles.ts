@@ -18,16 +18,19 @@ export const useThemedStyles = () => useStyles(useTheme());
 // All chrome styles, derived from tokens + the active theme. App.tsx calls
 // this once per appearance change; every s.<key> in its JSX lives here.
 const buildAppStyles = (t: Theme) => {
-  // Settings rows and toggles render the identical sunken action-row shape.
+  // Quiet rows share a baseline; fields and explicit buttons own their fills.
   const settingsRow: ViewStyle = {
     minHeight: size.actionRow,
-    paddingHorizontal: space.xxl,
-    paddingVertical: space.lg,
-    borderRadius: radius.field,
+    paddingHorizontal: space.sm,
+    paddingVertical: space.xxl,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: t.hairline,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: t.sunken,
+    flexWrap: "wrap",
+    gap: space.lg,
+    marginBottom: space.sm,
   };
   return StyleSheet.create({
     app: { flex: 1, backgroundColor: t.chrome },
@@ -52,7 +55,7 @@ const buildAppStyles = (t: Theme) => {
     },
     sidebarLayerRail: {
       flexDirection: "column",
-      paddingHorizontal: space.lg,
+      paddingHorizontal: space.sm,
       paddingTop: space.xxl,
       paddingBottom: space.lg,
     },
@@ -61,9 +64,15 @@ const buildAppStyles = (t: Theme) => {
       top: 0,
       bottom: 0,
       right: 0,
-      width: 10,
+      width: 12,
       alignItems: "center",
       justifyContent: "center",
+    },
+    sidebarResizeGrip: {
+      width: 3,
+      height: 32,
+      borderRadius: 2,
+      backgroundColor: t.inkMuted,
     },
     sidebarTop: { gap: space.md },
     navigationRow: {
@@ -131,7 +140,7 @@ const buildAppStyles = (t: Theme) => {
     tabScrollContent: { paddingBottom: space.lg },
     workspaceCount: { color: t.inkMuted, fontSize: font.small },
     persistentSection: { minHeight: 48, paddingBottom: space.md },
-    ordinarySection: { minHeight: 80 },
+    ordinarySection: { minHeight: 44 },
     spaceHeader: {
       minHeight: 28,
       paddingHorizontal: space.lg,
@@ -193,7 +202,7 @@ const buildAppStyles = (t: Theme) => {
       backgroundColor: t.fieldOnChrome,
     },
     privateBadgeText: {
-      color: t.accentStrong,
+      color: t.ink,
       fontSize: font.small,
       fontWeight: "600",
     },
@@ -291,7 +300,9 @@ const buildAppStyles = (t: Theme) => {
       gap: space.lg,
     },
     bookmarkTreeActive: { backgroundColor: t.pill },
-    bookmarkTreeIndent: { paddingLeft: 30 },
+    bookmarkTreeIndent: { paddingLeft: 10 },
+    folderChildren: { marginLeft: 20, borderLeftWidth: 1, borderLeftColor: t.hairlineOnChrome, marginBottom: 3 },
+    emptyFolder: { paddingHorizontal: 12, paddingVertical: 6, color: t.inkMuted, fontSize: 11 },
     bookmarkDisclosure: {
       width: 10,
       color: t.inkFaint,
@@ -502,13 +513,13 @@ const buildAppStyles = (t: Theme) => {
     quickOpenHint: { color: t.inkFaint, fontSize: font.body },
     railContent: {
       alignItems: "center",
-      gap: space.lg,
+      gap: space.xs,
       paddingBottom: space.lg,
     },
-    railHeader: { alignItems: "center", gap: space.lg },
+    railHeader: { alignItems: "center", gap: space.xs },
     railItem: {
-      width: size.railItem,
-      height: size.railItem,
+      width: 44,
+      height: 44,
       borderRadius: radius.control,
       alignItems: "center",
       justifyContent: "center",
@@ -599,7 +610,7 @@ const buildAppStyles = (t: Theme) => {
     },
     dialogTitle: { color: t.ink, fontSize: font.title, fontWeight: "700" },
     dialogHelp: {
-      color: t.inkFaint,
+      color: t.inkMuted,
       fontSize: font.body,
       lineHeight: space.xxxl,
     },
@@ -631,11 +642,11 @@ const buildAppStyles = (t: Theme) => {
     dialogHeader: { flexDirection: "row", alignItems: "flex-start" },
     dialogHeadingCopy: { flex: 1 },
     settingsSection: {
-      marginTop: space.xl,
-      color: t.inkFaint,
-      fontSize: font.micro,
-      fontWeight: "800",
-      letterSpacing: 0.9,
+      marginTop: 20,
+      marginBottom: 8,
+      color: t.ink,
+      fontSize: 15,
+      fontWeight: "600",
     },
     optionRow: { flexDirection: "row", gap: space.lg },
     appearanceOption: {
@@ -656,15 +667,30 @@ const buildAppStyles = (t: Theme) => {
       borderWidth: 5,
       borderColor: t.surfaceElevated,
     },
-    optionTitle: { color: t.ink, fontSize: font.body, fontWeight: "700" },
+    optionTitle: { color: t.ink, fontSize: 15, lineHeight: 22, fontWeight: "600" },
     optionDescription: {
-      color: t.inkFaint,
-      fontSize: font.micro,
+      color: t.inkMuted,
+      fontSize: 14,
+      lineHeight: 20,
       marginTop: space.xs,
     },
     settingsAction: settingsRow,
     settingsToggle: settingsRow,
-    settingsToggleCopy: { flex: 1, marginRight: space.xxl },
+    settingsToggleCopy: { flex: 1, minWidth: 120, marginRight: space.xxl },
+    consentPage: { gap: 20 },
+    consentChoices: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 12 },
+    consentChoice: { minHeight: 48, maxWidth: "100%", padding: 12, flexDirection: "row", alignItems: "center", gap: 8, borderWidth: 1, borderColor: t.hairline, borderRadius: radius.control },
+    consentChoiceSelected: { borderColor: t.ink, backgroundColor: t.sunkenStrong },
+    consentIntro: { flexDirection: "row", alignItems: "flex-start", gap: 12, padding: 16, borderRadius: radius.card, backgroundColor: t.sunken },
+    consentCopy: { flex: 1, minWidth: 120 },
+    consentGroup: { marginTop: 12, borderWidth: StyleSheet.hairlineWidth, borderColor: t.hairline, borderRadius: radius.card, overflow: "hidden" },
+    consentRow: { minHeight: 56, flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 12, paddingVertical: 14, paddingHorizontal: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: t.hairline },
+    consentButton: { minHeight: 48, paddingHorizontal: 16, paddingVertical: 10, maxWidth: "100%", justifyContent: "center", borderRadius: radius.control, backgroundColor: t.sunkenStrong },
+    consentStatus: { color: t.inkMuted, fontSize: 13, lineHeight: 20, marginTop: 6, fontWeight: "600" },
+    consentOrigin: { color: t.ink, fontSize: 14, lineHeight: 21, fontWeight: "600", backgroundColor: t.sunken, padding: 14 },
+    consentDetails: { paddingHorizontal: 12, gap: 12 },
+    consentNotice: { color: t.ink, backgroundColor: t.sunken, padding: 12, borderRadius: radius.control, fontSize: 14, lineHeight: 21 },
+    consentError: { color: t.errorInk, backgroundColor: t.errorBg, padding: 12, borderRadius: radius.control, fontSize: 14, lineHeight: 21 },
     stepperRow: { flexDirection: "row", alignItems: "center", gap: space.md },
     stepperValue: {
       color: t.ink,

@@ -1,0 +1,1 @@
+/* Deterministic local request for extension blocking acceptance. */

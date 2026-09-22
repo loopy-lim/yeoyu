@@ -101,12 +101,17 @@ export interface BrowserToolsConfig {
   sites: SitePreference[];
 }
 
+/** No stored row means a desktop request, global protection, and no keep-alive exception. */
+export function isDefaultSitePreference(site: SitePreference): boolean {
+  return site.desktop && site.trackingProtection === null && !site.keepAlive;
+}
+
 export function parseBrowserTools(json: string): BrowserToolsConfig {
   const value = JSON.parse(json);
   if (!value || (value.automaticMemorySaving !== undefined && typeof value.automaticMemorySaving !== "boolean") || value.schema !== 1 || typeof value.restoreSessions !== "boolean" ||
       !["engine-default", "standard", "strict"].includes(value.trackingProtection) ||
       typeof value.textScale !== "number" || !Number.isFinite(value.textScale) || value.textScale < 0.5 || value.textScale > 2 ||
-      !Array.isArray(value.sites)) throw Error("Browser settings could not be read");
+      !Array.isArray(value.sites) || value.sites.length > 256) throw Error("Browser settings could not be read");
   const origins = new Set<string>();
   const sites: SitePreference[] = value.sites.map((site: SitePreference) => {
     if (!site || (site.keepAlive !== undefined && typeof site.keepAlive !== "boolean") || new URL(webUrl(site.origin)).origin !== site.origin || origins.has(site.origin) ||
@@ -115,7 +120,7 @@ export function parseBrowserTools(json: string): BrowserToolsConfig {
     origins.add(site.origin);
     return { origin: site.origin, desktop: site.desktop, trackingProtection: site.trackingProtection, ...(site.keepAlive !== undefined ? { keepAlive: site.keepAlive } : {}) };
   });
-  return { schema: 1, automaticMemorySaving: value.automaticMemorySaving ?? false, restoreSessions: value.restoreSessions, trackingProtection: value.trackingProtection, textScale: value.textScale, sites };
+  return { schema: 1, automaticMemorySaving: value.automaticMemorySaving ?? false, restoreSessions: value.restoreSessions, trackingProtection: value.trackingProtection, textScale: value.textScale, sites: sites.filter((site) => !isDefaultSitePreference(site)) };
 }
 
 export type BrowserToolsUpdate = (current: BrowserToolsConfig) => BrowserToolsConfig;
@@ -168,6 +173,12 @@ export function updateSitePreference(origin: string, patch: Partial<Pick<SitePre
   return (current) => {
     const site = current.sites.find((entry) => entry.origin === origin);
     const next = { ...site, origin, desktop: site?.desktop ?? true, trackingProtection: site?.trackingProtection ?? null, ...patch };
-    return { ...current, sites: [...current.sites.filter((entry) => entry.origin !== origin), next] };
+    const others = current.sites.filter((entry) => entry.origin !== origin && !isDefaultSitePreference(entry));
+    return { ...current, sites: isDefaultSitePreference(next) ? others : [...others, next] };
   };
+}
+
+/** Reset preferences only; cookies, permissions, and global settings have separate owners. */
+export function resetSitePreferences(origin?: string): BrowserToolsUpdate {
+  return (current) => ({ ...current, sites: origin === undefined ? [] : current.sites.filter((site) => site.origin !== origin) });
 }

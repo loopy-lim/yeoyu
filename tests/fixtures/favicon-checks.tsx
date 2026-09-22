@@ -102,6 +102,9 @@ function exactBookmarkRows(
     openBookmark() {},
     setSidebarMenu() {},
     closeTab() {},
+    tr: (_key: string, values?: { name?: string }) => `Pinned tab ${String(values?.name ?? "")}`,
+    windowedTabs: [],
+    revealTab() {},
   };
   const row = new Function(
     "require",

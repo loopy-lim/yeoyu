@@ -374,14 +374,21 @@ object GeckoSessionRegistry {
         } catch (_: Exception) { sessionBlocked(id, "load-failed") }
     }
 
-    private fun getRuntime(app: Context): GeckoRuntime = runtime ?: GeckoRuntime.create(app.applicationContext).also {
+    private fun getRuntime(app: Context): GeckoRuntime = runtime ?: run {
+        BrowserAppearance.initialize(app)
+        GeckoRuntime.create(app.applicationContext)
+    }.also {
         runtime = it
         it.activityDelegate = CredentialActivityCoordinator
         applyRuntimeSettings(it)
-        BrowserVideoRegions.initialize(it, diagnostics = app.packageName == "com.workspacebrowser.acceptance")
+        BrowserWebNotifications.initialize(app, it)
+        installNotificationWindowDelegate(it)
+        BrowserExtensionHost.initialize(it)
+        BrowserVideoRegions.initialize(it, diagnostics = (app.packageName == "com.workspacebrowser.acceptance" || app.packageName.startsWith("com.workspacebrowser.acceptance.")))
     }
 
     private fun applyRuntimeSettings(rt: GeckoRuntime) {
+        BrowserAppearance.applyRuntimeSettings(rt.settings)
         rt.settings.setAutomaticFontSizeAdjustment(false).setFontSizeFactor(toolsConfig.textScale.toFloat())
         val protection = rt.settings.contentBlocking
         protection.setAntiTracking(if (toolsConfig.trackingProtection == "strict") ContentBlocking.AntiTracking.STRICT else ContentBlocking.AntiTracking.DEFAULT)
@@ -395,8 +402,11 @@ object GeckoSessionRegistry {
     private fun applySiteSettings(entry: Entry, url: String) {
         val site = toolsConfig.siteFor(url)
         entry.session.settings.userAgentMode = if (site?.desktop != false) GeckoSessionSettings.USER_AGENT_MODE_DESKTOP else GeckoSessionSettings.USER_AGENT_MODE_MOBILE
-        // Keep the existing device-width desktop default; explicit desktop choices use the desktop viewport.
-        entry.session.settings.viewportMode = if (site?.desktop == true) GeckoSessionSettings.VIEWPORT_MODE_DESKTOP else GeckoSessionSettings.VIEWPORT_MODE_MOBILE
+        // Desktop selects the site's UA variant, not a forced 980 CSS-pixel
+        // canvas. Keep responsive meta viewports in both modes so split/sidebar
+        // resizing still changes CSS breakpoints. Saving unrelated site settings
+        // must not change the default viewport behavior either.
+        entry.session.settings.viewportMode = GeckoSessionSettings.VIEWPORT_MODE_MOBILE
         entry.session.settings.useTrackingProtection = site?.trackingProtection ?: (toolsConfig.trackingProtection != "engine-default")
     }
 
@@ -430,6 +440,9 @@ object GeckoSessionRegistry {
         if (entry.privateSession) return
         if (entries[id] !== entry || isolation.clearing) return
         if (state.size <= 0 || state.currentIndex !in 0 until state.size) return
+        // Blocker interstitials contain installation-specific extension URLs.
+        // Keep the last usable web state; otherwise restore from the web target.
+        if ((0 until state.size).any { state[it].uri?.startsWith("moz-extension:", ignoreCase = true) == true }) return
         if (!entry.initialNavigation.acceptSessionState(entry.url, state[state.currentIndex].uri)) return
         val raw = state.toString() ?: return
         val value = StoredSessionState(id, entry.url, raw, System.currentTimeMillis())
@@ -453,35 +466,65 @@ object GeckoSessionRegistry {
         scheduleStateWrites()
     }
 
+    /** Single instance so removeCallbacks can cancel the pending pass. */
+    private val stateWritePass = Runnable { writePendingStates() }
+
     private fun scheduleStateWrites() {
         if (stateWriteScheduled || stateWriteInFlight || pendingStateWrites.isEmpty()) return
         stateWriteScheduled = true
-        main.postDelayed({
-            stateWriteScheduled = false
-            val writes = pendingStateWrites.values.toList()
-            pendingStateWrites.clear()
-            if (writes.isNotEmpty()) {
-                stateWriteInFlight = true
-                io.execute {
-                    var failed = false
-                    writes.forEach { pending ->
-                        if (writeGate.accepts(pending.token)) {
-                            try { store?.write(pending.value, System.currentTimeMillis()) }
-                            catch (_: Exception) { failed = true }
-                        }
-                    }
-                    main.post {
-                        stateWriteInFlight = false
-                        if (failed) storageError("A tab state could not be saved; the live page remains open")
-                        scheduleStateWrites()
-                    }
+        main.postDelayed(stateWritePass, 750)
+    }
+
+    /** Must run on the main handler. */
+    private fun writePendingStates() {
+        stateWriteScheduled = false
+        val writes = pendingStateWrites.values.toList()
+        pendingStateWrites.clear()
+        if (writes.isEmpty()) return
+        stateWriteInFlight = true
+        io.execute {
+            var failed = false
+            writes.forEach { pending ->
+                if (writeGate.accepts(pending.token)) {
+                    try { store?.write(pending.value, System.currentTimeMillis()) }
+                    catch (_: Exception) { failed = true }
                 }
             }
-        }, 750)
+            main.post {
+                stateWriteInFlight = false
+                if (failed) storageError("A tab state could not be saved; the live page remains open")
+                scheduleStateWrites()
+            }
+        }
+    }
+
+    /** Host activity stopped: capture every live tab's current engine state and
+     * drain queued writes now. JS flushes the tab snapshot for this same
+     * transition; without this pass a task removal inside the 750 ms
+     * coalescing window still loses the newest page states. Best effort —
+     * a write racing process death only covers what has reached the queue. */
+    fun flushSessionsForBackground() {
+        if (!initialized || !toolsConfig.restoreSessions || isolation.clearing) return
+        main.post {
+            if (isolation.clearing) return@post
+            entries.values.forEach { entry ->
+                if (!entry.privateSession) runCatching { entry.session.flushSessionState() }
+            }
+            // flushSessionState reports back through onSessionStateChange on
+            // this looper; one trailing pass catches those states, then the
+            // queue hits disk without waiting out the idle debounce.
+            main.post {
+                if (isolation.clearing) return@post
+                if (stateWriteScheduled) { main.removeCallbacks(stateWritePass); stateWriteScheduled = false }
+                if (pendingStateWrites.isNotEmpty() && !stateWriteInFlight) writePendingStates()
+            }
+        }
     }
     private data class PendingWindow(
         val openerId: String, val opener: GeckoSession, val uri: String,
-        val request: PopupRequest<GeckoSession>, val timeout: Runnable)
+        val request: PopupRequest<GeckoSession>, val timeout: Runnable,
+        val notificationWindow: Boolean = false,
+        val isAuthorized: () -> Boolean = { true })
     private val pendingWindows = mutableMapOf<Int, PendingWindow>()
     private val nextWindowId = AtomicInteger(1)
     /** Per-site permission decision pushed from JS: origin+kind → allow/block. */
@@ -507,6 +550,7 @@ object GeckoSessionRegistry {
         var fullscreen: Boolean = false, var mediaTitle: String? = null,
         var fullscreenVideoSize: Pair<Int, Int>? = null) {
         internal var lastContentfulPaintDocument: Long = -1
+        internal val permissionPrompts = DocumentPermissionPrompts()
         /** Fixed for the session lifetime at creation; private sessions never
          *  persist state and run without the shared profile's storage. */
         internal var privateSession: Boolean = false
@@ -524,6 +568,14 @@ object GeckoSessionRegistry {
     }
     private var boosts: Map<String, String> = emptyMap()
     fun entry(id: String): Entry? = entries[id]
+    internal fun isMediaPlaying(id: String, session: GeckoSession?): Boolean {
+        val entry = entries[id] ?: return false
+        return entry.session === session && session?.isOpen == true && entry.playing
+    }
+    internal fun extensionRuntime(app: Context): GeckoRuntime {
+        check(initialized) { "Browser settings are not ready" }
+        return getRuntime(app)
+    }
     internal fun spaceTransitionPair(from: String, to: String): Pair<Entry, Entry>? {
         val source = entries[from] ?: return null
         val target = entries[to] ?: return null
@@ -614,7 +666,7 @@ object GeckoSessionRegistry {
         permissionRules = list.associate { "${it.origin}|${it.kind}" to it.allow }
     }
     /** Completes a pending permission request from the JS dialog. */
-    fun resolvePermission(requestId: Int, allow: Boolean) {
+    fun resolvePermission(requestId: Int, allow: Boolean, rememberDenial: Boolean) {
         val resolution = pendingPermissions.resolve(
             requestId,
             allow,
@@ -626,9 +678,22 @@ object GeckoSessionRegistry {
         val pending = resolution.value
         main.removeCallbacks(pending.timeout)
         val grant = resolution.allow
-        pending.content?.complete(
-            if (grant) GeckoSession.PermissionDelegate.ContentPermission.VALUE_ALLOW
-            else GeckoSession.PermissionDelegate.ContentPermission.VALUE_DENY)
+        if (!grant && resolution.current) {
+            val entry = entries.values.firstOrNull { it.session === pending.session }
+            entry?.permissionPrompts?.dismiss(pending.origin, pending.kind)
+            // Requests already queued by the same page must not reopen a
+            // dismissed prompt. Other pages and capabilities remain separate.
+            pendingPermissions.cancelMatching(pending.session) {
+                entry?.permissionPrompts?.shouldPrompt(it.origin, it.kind) == false
+            }.forEach { cancelPermission(it, "dismissed-for-document") }
+        }
+        // Gecko 155 remembers content responses. PROMPT denies this request
+        // without converting a dismissal or failed save into a durable block.
+        pending.content?.complete(when {
+            grant -> GeckoSession.PermissionDelegate.ContentPermission.VALUE_ALLOW
+            rememberDenial && resolution.current -> GeckoSession.PermissionDelegate.ContentPermission.VALUE_DENY
+            else -> GeckoSession.PermissionDelegate.ContentPermission.VALUE_PROMPT
+        })
         pending.media?.let { if (grant) it.grant(pending.video, pending.audio) else it.reject() }
     }
     private fun cancelPermission(requestId: Int, reason: String) {
@@ -637,7 +702,7 @@ object GeckoSessionRegistry {
     private fun cancelPermission(request: PendingPermissionRequest<PendingPermission>, reason: String) {
         val pending = request.value
         main.removeCallbacks(pending.timeout)
-        pending.content?.complete(GeckoSession.PermissionDelegate.ContentPermission.VALUE_DENY)
+        pending.content?.complete(GeckoSession.PermissionDelegate.ContentPermission.VALUE_PROMPT)
         pending.media?.reject()
         emit?.invoke("BrowserPermissionCancelled", Arguments.createMap().apply {
             putInt("requestId", request.id); putString("reason", reason)
@@ -646,9 +711,58 @@ object GeckoSessionRegistry {
     private fun cancelPermissions(session: GeckoSession, reason: String) {
         pendingPermissions.cancelForOwner(session).forEach { cancelPermission(it, reason) }
     }
-    /** Reject every permission callback owned by the retiring React bridge. */
+    /** Reject permission and window callbacks owned by the retiring React bridge. */
     fun cancelPendingRequests() {
         pendingPermissions.cancelAll().forEach { cancelPermission(it, "bridge-invalidated") }
+        pendingWindows.keys.toList().forEach { cancelNewSession(it, "Browser window closed") }
+    }
+    internal fun requestExtensionWindow(openerId: String, opener: GeckoSession, uri: String, isAuthorized: () -> Boolean): GeckoResult<GeckoSession>? {
+        if (canonicalBrowserOrigin(uri) == null) return null
+        return requestWindow(openerId, opener, uri, fromExtension = true, isAuthorized = isAuthorized)
+    }
+    private fun installNotificationWindowDelegate(rt: GeckoRuntime) {
+        rt.serviceWorkerDelegate = object : GeckoRuntime.ServiceWorkerDelegate {
+            override fun onOpenWindow(url: String): GeckoResult<GeckoSession> {
+                val origin = BrowserWebNotifications.consumeWindowActivation(url)
+                    ?: return GeckoResult.fromException(IllegalStateException("A current website notification click is required"))
+                val host = activityProvider?.invoke()
+                if (host == null || host.isFinishing || host.isDestroyed || isolation.clearing ||
+                    entries.values.any { it.privateSession && permissionOrigin(it.url) == origin })
+                    return GeckoResult.fromException(IllegalStateException("The notification window is not available"))
+                val opener = entries.entries.firstOrNull { (id, entry) ->
+                    !entry.privateSession && entry.session.isOpen && activeIds?.contains(id) == true &&
+                        id !in suspended && permissionOrigin(entry.url) == origin
+                } ?: return GeckoResult.fromException(IllegalStateException("The notification website is no longer open"))
+                val session = opener.value.session
+                val generation = opener.value.documentGeneration
+                return requestWindow(opener.key, session, url, fromExtension = false, notificationWindow = true,
+                    isAuthorized = {
+                        val current = entries[opener.key]
+                        current != null && current.session === session && !current.privateSession && current.documentGeneration == generation &&
+                            permissionOrigin(current.url) == origin &&
+                            entries.values.none { it.privateSession && permissionOrigin(it.url) == origin }
+                    }) ?: GeckoResult.fromException(IllegalStateException("The notification window could not be opened"))
+            }
+        }
+    }
+    private fun requestWindow(id: String, session: GeckoSession, uri: String, fromExtension: Boolean, notificationWindow: Boolean = false, isAuthorized: () -> Boolean = { true }): GeckoResult<GeckoSession>? {
+        if (entries[id]?.session !== session || !session.isOpen || isolation.clearing || emit == null || !isAuthorized()) return null
+        val result = GeckoResult<GeckoSession>()
+        val requestId = nextWindowId.getAndIncrement()
+        val request = PopupRequest<GeckoSession>({ result.complete(it) }, { child ->
+            entries.entries.firstOrNull { it.value.session === child }?.key?.let { disposeEntry(it) }
+            // Cancellation can race GeckoResult's queued open mapper.
+            // Its main-loop dispatch precedes this cleanup dispatch.
+            main.post { if (child.isOpen) child.close() }
+        }, { it.isOpen })
+        val timeout = Runnable { cancelNewSession(requestId, "Popup request timed out") }
+        pendingWindows[requestId] = PendingWindow(id, session, uri, request, timeout, notificationWindow, isAuthorized)
+        main.postDelayed(timeout, 10_000)
+        emit?.invoke("BrowserNewWindow", Arguments.createMap().apply {
+            putInt("requestId", requestId); putString("openerTabId", id); putString("uri", uri)
+            putBoolean("extension", fromExtension)
+        })
+        return result
     }
     private fun cancelWindowsFrom(session: GeckoSession) {
         pendingWindows.filterValues { it.opener === session }.keys.toList()
@@ -662,14 +776,24 @@ object GeckoSessionRegistry {
             putInt("requestId", requestId); putString("error", reason)
         })
     }
-    /** Completes Gecko's result with an UNOPENED session. Gecko opens it with
-     * the popup's native window ID; manually opening/loading loses its opener.
+    /** New popups and service-worker windows require an UNOPENED session.
+     * Gecko opens it and attaches native window information before navigating.
+     * GeckoRuntime 155 also accepts existing open sessions, but a just-opened
+     * session can lack its native browsing context and must not use that path.
      * The browsing mode arrives with the adoption call because publish (and
      * therefore reconcile) only happens after the popup resolves. */
     fun resolveNewSession(app: Context, requestId: Int, tabId: String, isPrivate: Boolean, reply: (String?) -> Unit) {
         if (isolation.clearing || !isolation.allowAttach(tabId)) { reply("Browser data is being cleared"); return }
         val pending = pendingWindows[requestId]
         if (pending == null) { reply("Popup request expired"); return }
+        if (!pending.isAuthorized()) {
+            cancelNewSession(requestId, "Window authorization changed")
+            reply("Window authorization changed"); return
+        }
+        if (pending.notificationWindow && isPrivate) {
+            cancelNewSession(requestId, "Notification windows require a normal tab")
+            reply("Notification windows require a normal tab"); return
+        }
         if (entries[pending.openerId]?.session !== pending.opener || !pending.opener.isOpen) {
             cancelNewSession(requestId, "Popup opener closed")
             reply("Popup opener closed"); return
@@ -679,11 +803,20 @@ object GeckoSessionRegistry {
         }
         try {
             val entry = createEntry(app.applicationContext, tabId, pending.uri, openInitially = false, isPrivate = isPrivate)
+            if (pending.notificationWindow) {
+                entry.initialNavigation = InitialNavigationAdmission(pending.uri, true) { entries[tabId] === entry }
+            }
+            // Prepare accessibility without opening: GeckoRuntime must observe
+            // isOpen=false so GeckoViewServiceWorker waits for native setup.
+            entry.session.accessibility
             pending.request.adopt(entry.session, reply)
             // GeckoResult dispatches its mapper asynchronously. A bounded
             // pending timeout remains armed until Gecko confirms isOpen.
             fun acknowledgeWhenOpen() {
                 if (pendingWindows[requestId] !== pending) return
+                if (!pending.isAuthorized()) {
+                    cancelNewSession(requestId, "Window authorization changed"); return
+                }
                 if (entries[tabId] !== entry) {
                     cancelNewSession(requestId, "Popup session was closed"); return
                 }
@@ -713,9 +846,9 @@ object GeckoSessionRegistry {
     private fun createEntry(app: Context, id: String, initialUrl: String, openInitially: Boolean = true, isPrivate: Boolean = false): Entry {
         check(isolation.allowAttach(id)) { "This tab is paused" }
         val rt = getRuntime(app)
-        // Desktop UA serves desktop layouts; the viewport stays device-width
-        // with density applied (1280 css px here) so desktop pages render at
-        // monitor-like scale instead of 1 physical px per css px. Private
+        // Request desktop content while respecting responsive meta viewports
+        // and the current pane's density-adjusted size. Pages without viewport
+        // metadata retain Gecko's legacy wide-page fallback. Private
         // mode keeps cookies/storage out of the shared profile for the whole
         // session lifetime; the flag can never change afterwards.
         val session = GeckoSession(GeckoSessionSettings.Builder()
@@ -723,6 +856,7 @@ object GeckoSessionRegistry {
             .viewportMode(GeckoSessionSettings.VIEWPORT_MODE_MOBILE)
             .usePrivateMode(isPrivate).build())
         val e = Entry(session, initialUrl, sessionVersion = nextSessionVersion++)
+        var requestedWebUrl = initialUrl
         e.privateSession = isPrivate
         entries[id] = e
         writeGate.register(id, e)
@@ -732,13 +866,14 @@ object GeckoSessionRegistry {
         e.initialNavigation = InitialNavigationAdmission(initialUrl, openInitially, ::current)
         var bootstrapEvents = 0
         fun traceBootstrap(event: String, reported: String? = null) {
-            if (e.privateSession || app.packageName != "com.workspacebrowser.acceptance" || bootstrapEvents++ >= 40) return
+            if (e.privateSession || !app.packageName.startsWith("com.workspacebrowser.acceptance") || bootstrapEvents++ >= 40) return
             val kind = when (reported) { null -> "none"; "about:blank" -> "blank"; else -> "nonblank" }
             android.util.Log.i("YeoyuBootstrap", "event=$event tab=$id session=${e.sessionVersion}" +
                 " document=${e.documentGeneration} reported=$kind knownBlank=${e.url == "about:blank"}" +
                 " current=${current()} owner=${e.owner != null} openInitially=$openInitially")
         }
         traceBootstrap("created", initialUrl)
+        BrowserExtensionHost.bind(session, id)
         BrowserVideoRegions.bind(session, ::current, { e.documentGeneration })
         e.contentFullscreen = ContentFullscreenSession(session, ::current, {
             ExternalPictureInPicture.holdsSession(session) ||
@@ -788,8 +923,10 @@ object GeckoSessionRegistry {
                 if (!current() || isolation.clearing) return GeckoResult.deny()
                 if (request.target != GeckoSession.NavigationDelegate.TARGET_WINDOW_NEW && request.uri == "about:blank")
                     e.initialNavigation.navigationRequested(request.uri)
-                if (request.target != GeckoSession.NavigationDelegate.TARGET_WINDOW_NEW && canonicalBrowserOrigin(request.uri) != null)
+                if (request.target != GeckoSession.NavigationDelegate.TARGET_WINDOW_NEW && canonicalBrowserOrigin(request.uri) != null) {
+                    requestedWebUrl = request.uri
                     applySiteSettings(e, request.uri)
+                }
                 val generation = e.documentGeneration
                 return ExternalNavigationCoordinator.onLoadRequest(app, id, s, request, { current() && e.documentGeneration == generation })
             }
@@ -803,9 +940,11 @@ object GeckoSessionRegistry {
                 traceBootstrap("location", url)
                 val wasReady = e.initialNavigationLocationAccepted
                 if (!e.initialNavigation.acceptLocation(url, hasUserGesture)) { traceBootstrap("suppressed-location", url); return }
-                e.url = navigationTargetUrl(url, e.url)
+                val extensionPage = BrowserExtensionHost.isExtensionPage(url)
+                e.url = if (extensionPage) requestedWebUrl else navigationTargetUrl(url, e.url)
+                if (!extensionPage && canonicalBrowserOrigin(e.url) != null) requestedWebUrl = e.url
                 e.activityVersion++
-                if (e.security?.optString("origin") != canonicalBrowserOrigin(e.url)) e.security = null
+                if (extensionPage || e.security?.optString("origin") != canonicalBrowserOrigin(e.url)) e.security = null
                 if (!wasReady && e.initialNavigationLocationAccepted) SpaceTransitionCover.initialNavigationReady(id, e)
                 changed(id)
             }
@@ -823,21 +962,7 @@ object GeckoSessionRegistry {
             }
             override fun onNewSession(s: GeckoSession, uri: String): GeckoResult<GeckoSession>? {
                 if (!current() || isolation.clearing) return GeckoResult.fromValue(null)
-                val result = GeckoResult<GeckoSession>()
-                val requestId = nextWindowId.getAndIncrement()
-                val request = PopupRequest<GeckoSession>({ result.complete(it) }, { child ->
-                    entries.entries.firstOrNull { it.value.session === child }?.key?.let { disposeEntry(it) }
-                    // Cancellation can race GeckoResult's queued open mapper.
-                    // Its main-loop dispatch precedes this cleanup dispatch.
-                    main.post { if (child.isOpen) child.close() }
-                })
-                val timeout = Runnable { cancelNewSession(requestId, "Popup request timed out") }
-                pendingWindows[requestId] = PendingWindow(id, session, uri, request, timeout)
-                main.postDelayed(timeout, 10_000)
-                emit?.invoke("BrowserNewWindow", Arguments.createMap().apply {
-                    putInt("requestId", requestId); putString("openerTabId", id); putString("uri", uri)
-                })
-                return result
+                return requestWindow(id, session, uri, fromExtension = false)
             }
         }
         session.historyDelegate = object : GeckoSession.HistoryDelegate {
@@ -853,6 +978,10 @@ object GeckoSessionRegistry {
             }
         }
         session.contentDelegate = object : GeckoSession.ContentDelegate {
+            override fun onFocusRequest(s: GeckoSession) {
+                if (!current() || isolation.clearing || activeIds?.contains(id) != true || id in suspended) return
+                emit?.invoke("BrowserFocusWindow", Arguments.createMap().apply { putString("tabId", id) })
+            }
             override fun onFirstComposite(s: GeckoSession) { if (current()) traceBootstrap("first-composite") }
             override fun onFirstContentfulPaint(s: GeckoSession) {
                 if (!current()) return
@@ -897,7 +1026,7 @@ object GeckoSessionRegistry {
             // completes later via resolvePermission. A stored allow whose
             // Android runtime permission was revoked falls back to asking.
             override fun onContentPermissionRequest(s: GeckoSession, perm: GeckoSession.PermissionDelegate.ContentPermission): GeckoResult<Int>? {
-                if (!current()) return GeckoResult.fromValue(GeckoSession.PermissionDelegate.ContentPermission.VALUE_DENY)
+                if (!current()) return GeckoResult.fromValue(GeckoSession.PermissionDelegate.ContentPermission.VALUE_PROMPT)
                 val kind = contentPermissionKind(perm.permission)
                 val origin = permissionOrigin(perm.uri)
                 if (kind == null || origin == null) {
@@ -905,11 +1034,14 @@ object GeckoSessionRegistry {
                     return GeckoResult.fromValue(GeckoSession.PermissionDelegate.ContentPermission.VALUE_DENY)
                 }
                 val decision = if (e.privateSession) null else decide(origin, kind)
+                defaultContentPermissionDecision(perm.permission, decision)?.let { return GeckoResult.fromValue(it) }
                 if (decision == false) return GeckoResult.fromValue(GeckoSession.PermissionDelegate.ContentPermission.VALUE_DENY)
                 if (decision == true && osHeld(app, kind))
                     return GeckoResult.fromValue(GeckoSession.PermissionDelegate.ContentPermission.VALUE_ALLOW)
+                if (!e.permissionPrompts.shouldPrompt(origin, kind))
+                    return GeckoResult.fromValue(GeckoSession.PermissionDelegate.ContentPermission.VALUE_PROMPT)
                 val eventSink = emit ?: return GeckoResult.fromValue(
-                    GeckoSession.PermissionDelegate.ContentPermission.VALUE_DENY
+                    GeckoSession.PermissionDelegate.ContentPermission.VALUE_PROMPT
                 )
                 val result = GeckoResult<Int>()
                 val requestId = nextPermissionId.getAndIncrement()
@@ -931,10 +1063,10 @@ object GeckoSessionRegistry {
                 // is already held; otherwise deny — the OS prompt flows
                 // through the JS dialog path (requestAndroidPermission), not
                 // a second native dialog here.
-                val missing = permissions.orEmpty().filter {
-                    androidx.core.content.ContextCompat.checkSelfPermission(app, it) != android.content.pm.PackageManager.PERMISSION_GRANTED
+                val held = requestedAndroidPermissionsHeld(permissions.orEmpty()) {
+                    androidx.core.content.ContextCompat.checkSelfPermission(app, it) == android.content.pm.PackageManager.PERMISSION_GRANTED
                 }
-                if (missing.isEmpty()) callback.grant() else callback.reject()
+                if (held) callback.grant() else callback.reject()
             }
             override fun onMediaPermissionRequest(s: GeckoSession, uri: String, video: Array<GeckoSession.PermissionDelegate.MediaSource>?, audio: Array<GeckoSession.PermissionDelegate.MediaSource>?, callback: GeckoSession.PermissionDelegate.MediaCallback) {
                 if (!current()) { callback.reject(); return }
@@ -954,6 +1086,7 @@ object GeckoSessionRegistry {
                 }
                 val eventSink = emit ?: run { callback.reject(); return }
                 val ask = wants.filter { e.privateSession || decide(origin, it) != false }.joinToString(",")
+                if (!e.permissionPrompts.shouldPrompt(origin, ask)) { callback.reject(); return }
                 val requestId = nextPermissionId.getAndIncrement()
                 val timeout = Runnable { cancelPermission(requestId, "timeout") }
                 pendingPermissions.add(
@@ -975,6 +1108,7 @@ object GeckoSessionRegistry {
                 fullscreenOperation { e.contentFullscreen.leave() }
                 PrivateDownloadConfirmation.cancel(s)
                 e.documentGeneration += 1
+                e.permissionPrompts.clear()
                 e.lastContentfulPaintDocument = -1
                 SpaceTransitionCover.coldDocumentChanged(id, e)
                 SpaceTransitionCover.returnDocumentChanged(id)
@@ -1154,10 +1288,12 @@ object GeckoSessionRegistry {
     }
     private fun retireEntry(id: String, reason: String): Boolean {
         val e = entries.remove(id) ?: return true
+        if (e.privateSession) BrowserWebNotifications.dismissPrivate()
         SpaceTransitionCover.coldEntryRetired(id, e)
         SpaceTransitionCover.returnDocumentChanged(id)
         ExternalPictureInPicture.registryChanged(id)
         fullscreenOperation { e.contentFullscreen.retire() }
+        BrowserExtensionHost.unbind(e.session)
         BrowserVideoRegions.retire(e.session)
         PrivateDownloadConfirmation.cancel(e.session)
         writeGate.remove(id)
@@ -1186,6 +1322,9 @@ object GeckoSessionRegistry {
     private fun disposeEntry(id: String) {
         pendingAdmissions.removeTab(id)
         retireEntry(id, "tab-closed")
+        // Closing the tab from the main browser must not leave an orphaned
+        // window rendering a disposed session.
+        BrowserWindowCoordinator.closeForTab(id)
         writeGate.remove(id)
         pendingStateWrites.remove(id)
         savedStates.remove(id)
@@ -1215,6 +1354,20 @@ object GeckoSessionRegistry {
     }
     fun pause(id:String) { entries[id]?.media?.pause() }
     fun allMedia() { entries.forEach { (id,e)->mediaChanged(id,e.playing) } }
+    /** Native history step for OS windows; true when the page went back. */
+    fun windowGoBack(id: String): Boolean {
+        val e = entries[id] ?: return false
+        if (!e.back || !e.session.isOpen) return false
+        return try { e.session.goBack(); true } catch (_: Exception) { false }
+    }
+    /** The entry a system media notification may surface. Private tabs never leave the app. */
+    fun backgroundMedia(): Pair<String, Entry>? = entries.entries.firstOrNull { (id, e) ->
+        id !in suspended && e.playing && e.media?.isActive == true && !e.privateSession
+    }?.toPair()
+    fun mediaSetPlayback(id: String, play: Boolean) {
+        val e = entries[id] ?: return
+        if (play) e.media?.play() else e.media?.pause()
+    }
     private fun releaseObservation(id: String, entry: Entry, restorableConsent: Boolean = false) = SessionReleaseObservation(
         sessionVersion = entry.sessionVersion,
         documentVersion = entry.documentGeneration,
@@ -1361,10 +1514,12 @@ object GeckoSessionRegistry {
     private fun mediaChanged(id:String,playing:Boolean) {
         val e=entries[id] ?: return
         e.playing=playing
+        e.owner?.mediaPlaybackChanged(e.session, playing)
         e.activityVersion++
         updateActive(e)
         emit?.invoke("BrowserMedia",Arguments.createMap().apply {putString("tabId",id);putBoolean("playing",playing)})
         pictureInPictureChanged(id)
+        BrowserMediaCoordinator.onMediaChanged()
     }
     private fun reportProgress(id:String,e:Entry) {
         emit?.invoke("BrowserProgress",Arguments.createMap().apply {putString("tabId",id);putBoolean("loading",e.loading);putInt("progress",e.progress)})

@@ -243,6 +243,67 @@ test('watch suppresses identical frames, reports motion and provides a bounded h
   expect(h.messages.at(-1).sequence).toBeGreaterThan(first.sequence);
 });
 
+test('scroll and resize bursts publish the latest geometry once per frame', () => {
+  const h = harness(); const video = h.add(new Element('VIDEO')); h.start();
+  let scans = 0;
+  h.doc.querySelectorAll = () => { scans++; return h.doc.nodes; };
+  const count = h.messages.length;
+  for (let x = 110; x <= 150; x += 10) {
+    video.rect.x = x;
+    h.doc.emit('scroll'); h.win.emit('resize'); h.win.visualViewport.emit('scroll');
+  }
+  expect(scans).toBe(0); expect(h.messages.length).toBe(count);
+  h.frame(16);
+  expect(scans).toBe(1); expect(h.messages.length).toBe(count + 1);
+  expect(h.messages.at(-1)).toMatchObject({ rect: { x: 150 } });
+  h.win.emit('resize'); h.win.visualViewport.emit('resize'); h.frame(32);
+  expect(h.messages.length).toBe(count + 1);
+  h.heartbeat(300); expect(h.messages.length).toBe(count + 2);
+});
+
+test('a queued scroll shares the watch frame and media end still invalidates immediately', () => {
+  const h = harness(); const video = h.add(new Element('VIDEO')); h.start(); const first = h.measure();
+  h.send({ type: 'watch', enabled: true, videoToken: first.videoToken, watchId: 'shared-frame' });
+  let boxes = 0;
+  const original = video.getBoundingClientRect.bind(video);
+  video.getBoundingClientRect = () => { boxes++; return original(); };
+  video.rect.x = 120;
+  h.doc.emit('scroll'); h.win.emit('resize');
+  expect(boxes).toBe(0);
+  h.frame(16);
+  // One picture reads its content box and its object-fit scale.
+  expect(boxes).toBe(2);
+  const count = h.messages.length;
+  h.doc.emit('scroll'); video.ended = true; h.doc.emit('ended');
+  expect(h.messages.length).toBe(count + 1);
+  expect(h.messages.at(-1)).toMatchObject({ rect: null, playing: false, watchId: 'shared-frame' });
+  h.frame(32); expect(h.messages.length).toBe(count + 1);
+});
+
+test('fresh requests supersede queued geometry and measure each candidate only once', () => {
+  const h = harness(); const video = h.add(new Element('VIDEO')); h.start();
+  let boxes = 0;
+  const original = video.getBoundingClientRect.bind(video);
+  video.getBoundingClientRect = () => { boxes++; return original(); };
+  video.rect.x = 120; h.doc.emit('scroll');
+  expect(h.measure()).toMatchObject({ requestId: 'fresh', rect: { x: 120 } });
+  expect(boxes).toBe(2);
+  const count = h.messages.length;
+  h.frame(16); expect(boxes).toBe(2); expect(h.messages.length).toBe(count);
+});
+
+test('pagehide cancels a queued resize and BFCache restoration discovers a fresh document epoch', () => {
+  const h = harness(); const video = h.add(new Element('VIDEO')); h.start(); const first = h.measure();
+  video.rect.x = 120; h.win.emit('resize');
+  h.win.emit('pagehide', { persisted: true });
+  expect(h.messages.at(-1)).toMatchObject({ rect: null, reason: 'page-hidden' });
+  const count = h.messages.length;
+  h.frame(16); h.heartbeat(300); expect(h.messages.length).toBe(count);
+  h.win.emit('pageshow', { persisted: true });
+  expect(h.messages.at(-1)).toMatchObject({ rect: { x: 120 } });
+  expect(h.messages.at(-1).documentToken).not.toBe(first.documentToken);
+});
+
 test('removed watched video invalidates instead of switching to a different playing video', () => {
   const h = harness(); const firstVideo = h.add(new Element('VIDEO')); h.start(); const first = h.measure();
   h.send({ type: 'watch', enabled: true, videoToken: first?.videoToken, watchId: 'lease-1' });

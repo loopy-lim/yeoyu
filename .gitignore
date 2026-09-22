@@ -3,7 +3,7 @@ node_modules/
 /dist/
 
 # Vendored dependencies and tool state (scripts/bootstrap.sh)
-/.deps/
+/.deps
 .cache/
 .superpowers/
 

@@ -70,6 +70,12 @@ def enableProguardInReleaseBuilds = false
  * give correct results when using with locales other than en-US. Note that
  * this variant is about 6MiB larger per architecture than default.
  */
+// Optional isolated Acceptance installation; never overrides the production package.
+def acceptanceProfile = System.getenv("YEORYU_ACCEPTANCE_PROFILE") ?: ""
+if (acceptanceProfile && !(acceptanceProfile ==~ /[a-z][a-z0-9_]{0,39}/)) {
+    throw new GradleException("YEORYU_ACCEPTANCE_PROFILE must be a lowercase package segment")
+}
+
 def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
 
 android {
@@ -83,7 +89,10 @@ android {
         applicationId "com.workspacebrowser"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode (System.getenv("YEORYU_LOCAL_RELEASE") == "1" ? 1 : (System.getenv("YEORYU_VERSION_CODE") ?: "1").toInteger())
+        // Ad-hoc builds without env versions default to a monotonic day
+        // counter so an install always upgrades versionCode 1-era builds.
+        versionCode (System.getenv("YEORYU_LOCAL_RELEASE") == "1" ? 1 :
+            (System.getenv("YEORYU_VERSION_CODE") ?: "${(System.currentTimeMillis() / 86400000L) as int}").toInteger())
         versionName (System.getenv("YEORYU_LOCAL_RELEASE") == "1" ? "1.0-local" : (System.getenv("YEORYU_VERSION_NAME") ?: "1.0-local"))
     }
     signingConfigs {
@@ -108,13 +117,16 @@ android {
         acceptance {
             initWith release
             matchingFallbacks = ['release']
-            applicationIdSuffix ".acceptance"
+            applicationIdSuffix (acceptanceProfile ? ".acceptance.${acceptanceProfile}" : ".acceptance")
             versionNameSuffix "-acceptance"
             signingConfig signingConfigs.debug
-            resValue "string", "app_name", "Yeoyu Acceptance"
+            resValue "string", "app_name", (acceptanceProfile ? "Yeoyu Check ${acceptanceProfile}" : "Yeoyu Acceptance")
             // RN configures this placeholder only for its named built-in types.
             manifestPlaceholders["usesCleartextTraffic"] = "false"
         }
+    }
+    testOptions {
+        unitTests.includeAndroidResources = true
     }
 }
 
@@ -129,8 +141,11 @@ tasks.configureEach { task ->
 dependencies {
     implementation project(":rustra-jsi")
     implementation("org.mozilla.geckoview:geckoview:155.0.20260903215306")
+    // MediaStyle notification + MediaSessionCompat for background media controls.
+    implementation("androidx.media:media:1.7.0")
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.json:json:20250517")
+    testImplementation("org.robolectric:robolectric:4.16.1")
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
 

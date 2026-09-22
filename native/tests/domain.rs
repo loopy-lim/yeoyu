@@ -586,10 +586,12 @@ fn legacy_default_keymap_migration_is_idempotent_and_later_customization_stays_c
 #[test]
 fn defaults_cover_browser_commands_and_tab_slots() {
     let snapshot = BrowserState::default().snapshot();
-    // 54 base chords + 4 Tab-cycling bindings (Cmd/Ctrl+Tab, +Shift twins).
-    assert_eq!(snapshot.key_bindings.len(), 58);
+    // 54 base chords + 4 Tab-cycling bindings (Cmd/Ctrl+Tab, +Shift twins)
+    // + the OS-window chord with its generated Ctrl twin and Alt fallback.
+    assert_eq!(snapshot.key_bindings.len(), 61);
     for command in [
         "tab.new",
+        "window.new",
         "tab.close",
         "location.focus",
         "commandPalette.open",

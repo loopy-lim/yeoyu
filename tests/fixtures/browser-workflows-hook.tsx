@@ -30,7 +30,7 @@ mock.module("../../src/controllerRuntime", () => ({ controller: {
 const { useBrowserWorkflows } = await import("../../src/hooks/useBrowserWorkflows");
 const errors: string[] = [], readiness: boolean[] = [];
 function Harness() {
-  const state = useBrowserWorkflows({ onError: (error) => errors.push(error), onNotice() {}, onExternalTab() {} });
+  const state = useBrowserWorkflows({ onError: (error) => errors.push(error), onNotice() {}, onExternalTab() {}, onCommand() {} });
   readiness.push(state.ready);
   return null;
 }

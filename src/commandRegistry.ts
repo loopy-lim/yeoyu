@@ -1,3 +1,5 @@
+import { translate, type AppLanguage, type TranslationKey } from "./i18n";
+
 export interface ProductCommand {
   id: string;
   title: string;
@@ -18,7 +20,7 @@ export function matchingCommands(
     .slice(0, 5);
 }
 
-const labels: Record<string, Omit<ProductCommand, "id">> = {
+const labels = {
   "tab.new": { title: "New tab", keywords: "open search" },
   "private.newTab": { title: "New private tab", keywords: "incognito" },
   "tab.close": { title: "Close tab" },
@@ -49,6 +51,20 @@ const labels: Record<string, Omit<ProductCommand, "id">> = {
   "browser.focusPane.2": { title: "Focus second pane" },
   "space.manage": { title: "Manage Spaces" },
   "settings.open": { title: "Open settings" },
+  "window.new": { title: "New window", keywords: "second window" },
+} as const satisfies Record<string, Omit<ProductCommand, "id">>;
+
+const commandKeys: Record<keyof typeof labels, TranslationKey> = {
+  "tab.new": "command.newTab", "private.newTab": "command.privateTab", "tab.close": "command.closeTab",
+  "tab.reopen": "command.reopenTab", "tab.next": "command.nextTab", "tab.prev": "command.previousTab",
+  "location.focus": "command.editAddress", "commandPalette.open": "command.searchCommands",
+  "history.open": "command.history", "find.open": "command.find", "browser.copyUrl": "command.copyUrl",
+  "browser.back": "command.back", "browser.forward": "command.forward", "browser.reload": "command.reload",
+  "sidebar.toggle": "command.sidebar", "favorites.toggle": "command.favorite", "pins.toggle": "command.pin",
+  "tab.reset": "command.resetTab", "browser.split": "command.split", "browser.split.close": "command.closeSplit",
+  "browser.focusPane.1": "command.focusFirst", "browser.focusPane.2": "command.focusSecond",
+  "space.manage": "command.spaces", "settings.open": "command.settings",
+  "window.new": "command.windowNew",
 };
 
 /** Native routes stable IDs; product surfaces expose human-readable commands. */
@@ -66,13 +82,17 @@ export class CommandRegistry {
   names() {
     return [...this.commands.keys()];
   }
-  entries(): ProductCommand[] {
+  entries(language: AppLanguage = "en"): ProductCommand[] {
     return this.names().flatMap((id) => {
       if (id === "favorites.addCurrent") return [];
-      const entry = labels[id];
-      if (entry) return [{ id, ...entry }];
+      const key = id as keyof typeof labels;
+      const entry = labels[key];
+      if (entry) return [{ id, title: translate(language, commandKeys[key]),
+        ...(language === "ko"
+          ? { keywords: `${"keywords" in entry ? entry.keywords : ""} ${entry.title}`.trim() }
+          : "keywords" in entry ? { keywords: entry.keywords } : {}) }];
       const position = /^tab\.activate\.(\d+)$/.exec(id);
-      return position ? [{ id, title: `Go to tab ${position[1]}` }] : [];
+      return position ? [{ id, title: translate(language, "command.activateTab", { number: position[1] }) }] : [];
     });
   }
 }

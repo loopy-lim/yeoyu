@@ -17,3 +17,15 @@ test("commands expose readable titles, preserve execution and omit compatibility
   expect(executions).toBe(1);
   expect(registry.execute("missing")).toBe(false);
 });
+
+test("translated command titles keep stable executable IDs and English search words", () => {
+  const registry = new CommandRegistry();
+  let called = false;
+  registry.register("pins.toggle", () => { called = true; });
+  const [entry] = registry.entries("ko");
+  expect(entry.id).toBe("pins.toggle");
+  expect(entry.title).toBe("탭 고정 또는 해제");
+  expect(entry.keywords).toContain("Pin or unpin tab");
+  expect(registry.execute(entry.id)).toBe(true);
+  expect(called).toBe(true);
+});

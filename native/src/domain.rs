@@ -1446,7 +1446,7 @@ fn legacy_default_bookmarks() -> Vec<Bookmark> {
     bookmarks
 }
 
-fn default_key_bindings() -> Vec<KeyBinding> {
+pub fn default_key_bindings() -> Vec<KeyBinding> {
     // Meta/Command chords follow Arc's macOS set; Android delivers shortcuts
     // through Ctrl while the OS reserves Meta combinations (e.g. Meta+L locks
     // the device), so every Meta binding ships with a Ctrl twin.
@@ -1470,8 +1470,11 @@ fn default_key_bindings() -> Vec<KeyBinding> {
         // Ctrl twins below are the reliable path on keyboard devices.
         KeyBinding::command("TAB", true, false, false, false, "tab.next"),
         KeyBinding::command("TAB", true, false, false, true, "tab.prev"),
+        // OS windows: Cmd/Ctrl+Shift+N mirrors desktop browsers' new window.
+        // The Ctrl twin is generated below with the other Meta bindings.
+        KeyBinding::command("n", true, false, false, true, "window.new"),
     ];
-    // Some Android keyboard layouts swallow Ctrl/Cmd+Shift+T before the app; Alt+Shift+T
+    // TB710FU-class devices swallow Ctrl/Cmd+Shift+T before the app; Alt+Shift+T
     // is the device-friendly reopen chord (verified via InputRouter events). It
     // is appended after twin generation to avoid duplicating ctrl+shift+t.
     meta_bindings.extend((1..=9).map(|slot| {
@@ -1512,6 +1515,17 @@ fn default_key_bindings() -> Vec<KeyBinding> {
     // Arc defines these chords identically on macOS and Windows.
     bindings.push(KeyBinding::command(
         "DPAD_UP", false, true, true, false, "tab.prev",
+    ));
+    // TB710FU-class devices swallow Ctrl/Cmd+Shift+N before the app;
+    // Alt+Shift+N is the device-friendly new-window chord (kept out of the
+    // Meta list above so twin generation cannot duplicate it).
+    bindings.push(KeyBinding::command(
+        "n",
+        false,
+        false,
+        true,
+        true,
+        "window.new",
     ));
     bindings.push(KeyBinding::command(
         "DPAD_DOWN",

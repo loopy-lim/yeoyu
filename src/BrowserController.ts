@@ -30,15 +30,26 @@ type GeneratedCommands = Pick<
   | "bookmarkFolderRemove"
   | "bookmarkSetFolder"
 >;
-type ArchiveCommands = Pick<typeof import("../generated/commands"), "workArchiveExport" | "workArchivePreview" | "workArchivePrepare" | "workArchiveImport">;
+type ArchiveCommands = Pick<
+  typeof import("../generated/commands"),
+  | "workArchiveExport"
+  | "workArchivePreview"
+  | "workArchivePrepare"
+  | "workArchiveImport"
+>;
 export type BrowserCommands = {
   [Name in keyof GeneratedCommands]: (
     ...args: Parameters<GeneratedCommands[Name]>
   ) => ReturnType<GeneratedCommands[Name]>;
 } & {
   ready(): Promise<unknown>;
+  keymapDefaults?: typeof import("../generated/commands").keymapDefaults;
   tabOpenExternal?: typeof import("../generated/commands").tabOpenExternal;
-} & { [Name in keyof ArchiveCommands]?: (...args: Parameters<ArchiveCommands[Name]>) => ReturnType<ArchiveCommands[Name]> };
+} & {
+  [Name in keyof ArchiveCommands]?: (
+    ...args: Parameters<ArchiveCommands[Name]>
+  ) => ReturnType<ArchiveCommands[Name]>;
+};
 
 export interface BrowserStorage {
   reconcileTabs(tabs: { id: string; private: boolean }[]): void;
@@ -52,10 +63,21 @@ export interface BrowserStorage {
   quarantineSnapshot?(json: string): Promise<void>;
   // Address a live detached session too; absent sessions stay lazy.
   loadTabUrl?(id: string, url: string): void;
-  resolveNewSession?(requestId: number, tabId: string, isPrivate: boolean): Promise<void>;
+  resolveNewSession?(
+    requestId: number,
+    tabId: string,
+    isPrivate: boolean
+  ): Promise<void>;
   cancelNewSession?(requestId: number): void;
-  prepareColdSpaceTransition?(previousTabId: string, nextTabId: string, nextUrl: string): Promise<void>;
-  prepareSpaceTransition?(previousTabId: string | null, nextTabId: string | null): Promise<void>;
+  prepareColdSpaceTransition?(
+    previousTabId: string,
+    nextTabId: string,
+    nextUrl: string
+  ): Promise<void>;
+  prepareSpaceTransition?(
+    previousTabId: string | null,
+    nextTabId: string | null
+  ): Promise<void>;
   prepareTabTransition?(
     previousTabId: string | null,
     nextTabId: string | null,
@@ -150,8 +172,8 @@ export class BrowserController {
       const retained = snapshot.tabs.some(
         (tab) => tab.id === previous && !tab.suspended
       );
-      const afterIds = (presentation ?? singleVisibleTab)(snapshot).filter((id) =>
-        snapshot.tabs.some((tab) => tab.id === id && !tab.suspended)
+      const afterIds = (presentation ?? singleVisibleTab)(snapshot).filter(
+        (id) => snapshot.tabs.some((tab) => tab.id === id && !tab.suspended)
       );
       for (const listener of this.transitionListeners) {
         // Observation cannot make a successful domain mutation fail to publish.
@@ -159,15 +181,27 @@ export class BrowserController {
           listener(this.snapshot!, snapshot, afterIds);
         } catch {}
       }
-      if (retained && next && previous !== next && afterIds.length === 1 &&
-          this.snapshot?.activeWorkspaceId !== snapshot.activeWorkspaceId) {
+      if (
+        retained &&
+        next &&
+        previous !== next &&
+        afterIds.length === 1 &&
+        this.snapshot?.activeWorkspaceId !== snapshot.activeWorkspaceId
+      ) {
         try {
-          const target = snapshot.tabs.find((tab) => tab.id === next && !tab.suspended);
+          const target = snapshot.tabs.find(
+            (tab) => tab.id === next && !tab.suspended
+          );
           if (target && this.platform.prepareColdSpaceTransition)
-            await this.platform.prepareColdSpaceTransition(previous, next, target.url);
+            await this.platform.prepareColdSpaceTransition(
+              previous,
+              next,
+              target.url
+            );
           else await this.platform.prepareSpaceTransition?.(previous, next);
+        } catch {
+          /* A visual fallback must not suppress native ownership preparation. */
         }
-        catch { /* A visual fallback must not suppress native ownership preparation. */ }
       }
       try {
         await this.platform.prepareTabTransition?.(
@@ -205,7 +239,11 @@ export class BrowserController {
       this.pendingSave = snapshot;
       this.scheduleSave();
     }
-    if (this.performance.enabled) this.performance.record("publication", performance.now() - publicationStarted);
+    if (this.performance.enabled)
+      this.performance.record(
+        "publication",
+        performance.now() - publicationStarted
+      );
     return snapshot;
   }
   /** Native sessions need the live id set AND each tab's browsing mode before
@@ -251,15 +289,26 @@ export class BrowserController {
           const started = this.performance.enabled ? performance.now() : 0;
           const { revision, ...content } = persistableSnapshot(latest);
           const serializedContent = JSON.stringify(content);
-          if (this.performance.enabled) this.performance.record("serialization", performance.now() - started);
+          if (this.performance.enabled)
+            this.performance.record(
+              "serialization",
+              performance.now() - started
+            );
           // Revision alone carries no user data. Private-only mutations can
           // change it without changing the ordinary persisted document.
           if (serializedContent !== this.lastDurableContent) {
-            const json = `{"revision":${revision},${serializedContent.slice(1)}`;
+            const json = `{"revision":${revision},${serializedContent.slice(
+              1
+            )}`;
             const writing = this.performance.enabled ? performance.now() : 0;
             await this.platform.saveSnapshot(json);
             this.lastDurableContent = serializedContent;
-            if (this.performance.enabled) this.performance.record("write", performance.now() - writing, utf8Bytes(json));
+            if (this.performance.enabled)
+              this.performance.record(
+                "write",
+                performance.now() - writing,
+                utf8Bytes(json)
+              );
           } else this.performance.record("skippedWrite", 0);
           if (this.persistenceError) this.reportPersistenceError(null);
         } catch (cause) {
@@ -295,7 +344,8 @@ export class BrowserController {
     await this.drainSaves();
   }
   initialize(): Promise<void> {
-    if (this.importRecoveryRequired) return Promise.reject(this.importRecoveryRequired);
+    if (this.importRecoveryRequired)
+      return Promise.reject(this.importRecoveryRequired);
     if (!this.initialization) {
       const run = this.queue.run(async () => {
         await this.commands.ready();
@@ -366,72 +416,107 @@ export class BrowserController {
         this.assertMutable();
         const started = this.performance.enabled ? performance.now() : 0;
         const snapshot = await operation();
-        if (this.performance.enabled) this.performance.record("command", performance.now() - started);
+        if (this.performance.enabled)
+          this.performance.record("command", performance.now() - started);
         return this.publish(snapshot, visibleAfter);
       })
     );
   }
-  private assertMutable() { if (this.importRecoveryRequired) throw this.importRecoveryRequired; }
+  private assertMutable() {
+    if (this.importRecoveryRequired) throw this.importRecoveryRequired;
+  }
   exportArchive(presentation: string | null) {
-    return this.initialize().then(() => this.queue.run(async () => {
-      if (!this.commands.workArchiveExport) throw new Error("Rebuild the browser to export data");
-      return this.commands.workArchiveExport({ presentation });
-    }));
+    return this.initialize().then(() =>
+      this.queue.run(async () => {
+        if (!this.commands.workArchiveExport)
+          throw new Error("Rebuild the browser to export data");
+        return this.commands.workArchiveExport({ presentation });
+      })
+    );
   }
   previewArchive(json: string) {
-    return this.initialize().then(() => this.queue.run(async () => {
-      if (!this.commands.workArchivePreview) throw new Error("Rebuild the browser to import data");
-      return this.commands.workArchivePreview({ json });
-    }));
+    return this.initialize().then(() =>
+      this.queue.run(async () => {
+        if (!this.commands.workArchivePreview)
+          throw new Error("Rebuild the browser to import data");
+        return this.commands.workArchivePreview({ json });
+      })
+    );
   }
-  importArchive(json: string, includeFavorites: boolean, restoreKeymap: boolean) {
-    return this.initialize().then(() => this.queue.run(async () => {
-      if (this.importRecoveryRequired) throw this.importRecoveryRequired;
-      const prepare = this.commands.workArchivePrepare, commit = this.commands.workArchiveImport;
-      if (!prepare || !commit) throw new Error("Rebuild the browser to import data");
-      if (this.saveTimer) { clearTimeout(this.saveTimer); this.saveTimer = null; }
-      await this.drainSaves();
-      const before = this.snapshot!;
-      const input = { json, includeFavorites, restoreKeymap };
-      const candidate = await prepare(input);
-      // No domain mutation, reconciliation or publication until the append is durable.
-      await this.platform.saveSnapshot(JSON.stringify(persistableSnapshot(candidate)));
-      let committed: Snapshot;
-      try { committed = await commit({ ...input, expectedRevision: before.revision }); }
-      catch (failure) {
-        // A failed bridge reply does not prove the native command failed. Read
-        // state before deciding whether to publish or restore the previous file.
-        let actual: Snapshot;
-        try { actual = await this.commands.browserSnapshot({}); }
-        catch {
-          this.importRecoveryRequired = new Error("Import recovery needs an app restart. Saved data has been kept; further changes are paused.");
-          this.reportPersistenceError(this.importRecoveryRequired);
-          throw this.importRecoveryRequired;
+  importArchive(
+    json: string,
+    includeFavorites: boolean,
+    restoreKeymap: boolean
+  ) {
+    return this.initialize().then(() =>
+      this.queue.run(async () => {
+        if (this.importRecoveryRequired) throw this.importRecoveryRequired;
+        const prepare = this.commands.workArchivePrepare,
+          commit = this.commands.workArchiveImport;
+        if (!prepare || !commit)
+          throw new Error("Rebuild the browser to import data");
+        if (this.saveTimer) {
+          clearTimeout(this.saveTimer);
+          this.saveTimer = null;
         }
-        if (JSON.stringify(actual) === JSON.stringify(candidate)) committed = actual;
-        else if (JSON.stringify(actual) === JSON.stringify(before)) {
+        await this.drainSaves();
+        const before = this.snapshot!;
+        const input = { json, includeFavorites, restoreKeymap };
+        const candidate = await prepare(input);
+        // No domain mutation, reconciliation or publication until the append is durable.
+        await this.platform.saveSnapshot(
+          JSON.stringify(persistableSnapshot(candidate))
+        );
+        let committed: Snapshot;
+        try {
+          committed = await commit({
+            ...input,
+            expectedRevision: before.revision,
+          });
+        } catch (failure) {
+          // A failed bridge reply does not prove the native command failed. Read
+          // state before deciding whether to publish or restore the previous file.
+          let actual: Snapshot;
           try {
-            const previous = JSON.stringify(persistableSnapshot(before));
-            // Restore primary and rolling fallback, so a later recovery cannot
-            // resurrect a transaction whose native commit was rejected.
-            await this.platform.saveSnapshot(previous);
-            await this.platform.saveSnapshot(previous);
+            actual = await this.commands.browserSnapshot({});
           } catch {
-            this.importRecoveryRequired = new Error("Import recovery needs an app restart. Further changes are paused to protect saved data.");
+            this.importRecoveryRequired = new Error(
+              "Import recovery needs an app restart. Saved data has been kept; further changes are paused."
+            );
             this.reportPersistenceError(this.importRecoveryRequired);
             throw this.importRecoveryRequired;
           }
-          throw failure;
-        } else {
-          this.importRecoveryRequired = new Error("Browser state changed during import. Restart before making further changes.");
-          this.reportPersistenceError(this.importRecoveryRequired);
-          throw this.importRecoveryRequired;
+          if (JSON.stringify(actual) === JSON.stringify(candidate))
+            committed = actual;
+          else if (JSON.stringify(actual) === JSON.stringify(before)) {
+            try {
+              const previous = JSON.stringify(persistableSnapshot(before));
+              // Restore primary and rolling fallback, so a later recovery cannot
+              // resurrect a transaction whose native commit was rejected.
+              await this.platform.saveSnapshot(previous);
+              await this.platform.saveSnapshot(previous);
+            } catch {
+              this.importRecoveryRequired = new Error(
+                "Import recovery needs an app restart. Further changes are paused to protect saved data."
+              );
+              this.reportPersistenceError(this.importRecoveryRequired);
+              throw this.importRecoveryRequired;
+            }
+            throw failure;
+          } else {
+            this.importRecoveryRequired = new Error(
+              "Browser state changed during import. Restart before making further changes."
+            );
+            this.reportPersistenceError(this.importRecoveryRequired);
+            throw this.importRecoveryRequired;
+          }
         }
-      }
-      const { revision: _revision, ...content } = persistableSnapshot(committed);
-      this.lastDurableContent = JSON.stringify(content);
-      return this.publish(committed, undefined, undefined, true);
-    }));
+        const { revision: _revision, ...content } =
+          persistableSnapshot(committed);
+        this.lastDurableContent = JSON.stringify(content);
+        return this.publish(committed, undefined, undefined, true);
+      })
+    );
   }
   createTab(
     url = NEW_TAB_URL,
@@ -535,7 +620,9 @@ export class BrowserController {
   }
   activate(
     tabId: string,
-    visibleAfter?: readonly string[] | ((snapshot: Snapshot) => readonly string[]),
+    visibleAfter?:
+      | readonly string[]
+      | ((snapshot: Snapshot) => readonly string[]),
     shouldActivate?: (snapshot: Snapshot) => boolean,
     beforePublication?: (snapshot: Snapshot) => void
   ) {
@@ -543,12 +630,15 @@ export class BrowserController {
       this.queue.run(async () => {
         this.assertMutable();
         // An OS return may wait behind close/move input already in the queue.
-        if (shouldActivate && !shouldActivate(this.snapshot!)) return this.snapshot!;
+        if (shouldActivate && !shouldActivate(this.snapshot!))
+          return this.snapshot!;
         return this.publish(
           await this.commands.tabActivate({ tabId }),
           typeof visibleAfter === "function"
             ? visibleAfter
-            : visibleAfter ? () => visibleAfter : undefined,
+            : visibleAfter
+            ? () => visibleAfter
+            : undefined,
           beforePublication
         );
       })
@@ -556,6 +646,33 @@ export class BrowserController {
   }
   close(tabId: string) {
     return this.mutate(() => this.commands.tabClose({ tabId }));
+  }
+  applyExtensionTabRequest(
+    tabId: string,
+    action: "close" | "activate",
+    claim: () => Promise<boolean>
+  ) {
+    return this.initialize().then(() =>
+      this.queue.run(async () => {
+        this.assertMutable();
+        if (
+          !this.snapshot!.tabs.some((tab) => tab.id === tabId && !tab.suspended)
+        )
+          throw new Error("Extension target tab is no longer available");
+        if (!(await claim()))
+          throw new Error(
+            "Extension request expired or its permission changed"
+          );
+        const next =
+          action === "close"
+            ? await this.commands.tabClose({ tabId })
+            : await this.commands.tabActivate({ tabId });
+        return this.publish(
+          next,
+          action === "activate" ? singleVisibleTab : undefined
+        );
+      })
+    );
   }
   reset(tabId: string) {
     return this.mutate(() => this.commands.tabReset({ tabId })).then(
@@ -598,6 +715,11 @@ export class BrowserController {
   }
   workspace(name: string) {
     return this.mutate(() => this.commands.workspaceCreate({ name }));
+  }
+  async defaultKeymap() {
+    if (!this.commands.keymapDefaults)
+      throw new Error("Update the app to restore default shortcuts");
+    return (await this.commands.keymapDefaults({})).bindings;
   }
   keymap(bindings: Snapshot["keyBindings"]) {
     return this.mutate(() => this.commands.keymapSet({ bindings }));

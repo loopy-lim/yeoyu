@@ -8,11 +8,14 @@ const paths = {
   forward: "M9 5l7 7-7 7 M3 12h13",
   reload: "M20 10a8 8 0 1 0-1 7 M20 4v6h-6",
   close: "M6 6l12 12 M18 6L6 18",
+  closeOthers: "M4 4l7 7 M11 4l-7 7 M8 8h12v13H8z",
   plus: "M12 5v14 M5 12h14",
   home: "M3 10l9-7 9 7 M5 9v11h5v-6h4v6h5V9",
   space:
     "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18 M3 12h18 M12 3c-5 5-5 13 0 18 M12 3c5 5 5 13 0 18",
-  folder: "M3 6h7l2 3h9v11H3z",
+  folder:
+    "M3 7a2 2 0 0 1 2-2h5l2 3h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z",
+  folderOpen: "M3 17V7a2 2 0 0 1 2-2h5l2 3h7a2 2 0 0 1 2 2 M3 20l2-9h17l-3 9z",
   chevronRight: "M9 5l7 7-7 7",
   chevronDown: "M5 9l7 7 7-7",
   chevronUp: "M5 15l7-7 7 7",
@@ -27,12 +30,16 @@ const paths = {
   play: "M7 4l13 8-13 8z",
   search: "M17 10a7 7 0 1 0-14 0 7 7 0 0 0 14 0 M15 15l6 6",
   copy: "M8 8h12v13H8z M16 8V3H3v13h5",
+  link: "M9.5 13.5l5-5 M8 11l-2.8 2.8a4 4 0 0 0 5.7 5.7L13.5 17 M16 13l2.8-2.8a4 4 0 0 0-5.7-5.7L10.5 7",
   edit: "M4 16L16 4l4 4L8 20H4z M13 7l4 4",
   trash: "M3 6h18 M9 6V3h6v3 M5 6l1 15h12l1-15 M10 10v7 M14 10v7",
   check: "M4 12l5 5L20 6",
   external: "M14 3h7v7 M21 3L10 14 M10 3H3v18h18v-7",
   private:
-    "M9 5l-1.5 7 M15 5l1.5 7 M4 12h16 M9.5 16a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0 M14.5 16a2.5 2.5 0 1 1 5 0 2.5 2.5 0 0 1-5 0 M9.5 16h5",
+    "M8 4h8 M9 4l-1 8 M15 4l1 8 M4 12h16 M9.5 16a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0 M14.5 16a2.5 2.5 0 1 1 5 0 2.5 2.5 0 0 1-5 0 M9.5 16h5",
+  lock: "M6 11h12v9H6z M9 11V7a3 3 0 0 1 6 0v4",
+  warning: "M12 4L2.5 20h19z M12 10v4 M12 17v.01",
+  window: "M4 5h16v14H4z M4 9h16",
 } as const;
 
 export type IconName = keyof typeof paths;

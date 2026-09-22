@@ -1,4 +1,5 @@
 import type { UiPreferences } from "./uiPreferences";
+import { normalizeCustomColor } from "./uiPreferences";
 
 export const MAX_ARCHIVE_BYTES = 8 * 1024 * 1024;
 const MAX_ITEMS = 10_000;
@@ -121,9 +122,9 @@ export function bookmarksToHtml(archiveJson: string): string {
   return lines.join("\n");
 }
 
-export type PortablePresentation = Pick<UiPreferences, "appearance" | "sidebarCollapsed" | "sidebarWidth" | "framePx"> & { schema: 1 };
+export type PortablePresentation = Pick<UiPreferences, "appearance" | "colorMode" | "colorSource" | "customColor" | "sidebarCollapsed" | "sidebarWidth" | "framePx"> & { schema: 1 };
 export function portablePresentation(ui: UiPreferences): string {
-  return JSON.stringify({ schema: 1, appearance: ui.appearance, sidebarCollapsed: ui.sidebarCollapsed, sidebarWidth: ui.sidebarWidth, framePx: ui.framePx } satisfies PortablePresentation);
+  return JSON.stringify({ schema: 1, appearance: ui.appearance, colorMode: ui.colorMode ?? "system", colorSource: ui.colorSource, customColor: ui.customColor, sidebarCollapsed: ui.sidebarCollapsed, sidebarWidth: ui.sidebarWidth, framePx: ui.framePx } satisfies PortablePresentation);
 }
 export function parsePresentation(raw: string | null): PortablePresentation | null {
   if (raw === null) return null;
@@ -132,6 +133,15 @@ export function parsePresentation(raw: string | null): PortablePresentation | nu
   if (!v || v.schema !== 1 || !["lavender", "warm"].includes(v.appearance) || typeof v.sidebarCollapsed !== "boolean" || !Number.isInteger(v.sidebarWidth) || v.sidebarWidth < 200 || v.sidebarWidth > 320 || !v.framePx) throw invalid();
   for (const side of ["left", "right", "top", "bottom"])
     if (!Number.isInteger(v.framePx[side]) || v.framePx[side] < 0 || v.framePx[side] > 64) throw invalid();
+  if (v.colorSource !== undefined && !["appearance", "space", "custom"].includes(v.colorSource)) throw invalid();
+  if (v.colorMode !== undefined && !["system", "light", "dark"].includes(v.colorMode)) throw invalid();
+  const customColor = normalizeCustomColor(v.customColor);
+  if ((v.customColor !== undefined && !customColor) || (v.colorSource === "custom" && !customColor)) throw invalid();
   // Reconstruct an allowlist, excluding executable/site-specific and unknown fields.
-  return { schema: 1, appearance: v.appearance, sidebarCollapsed: v.sidebarCollapsed, sidebarWidth: v.sidebarWidth, framePx: { left: v.framePx.left, right: v.framePx.right, top: v.framePx.top, bottom: v.framePx.bottom } };
+  return { schema: 1, appearance: v.appearance,
+    colorMode: v.colorMode ?? "system",
+    ...(v.colorSource !== undefined ? { colorSource: v.colorSource } : {}),
+    ...(customColor ? { customColor } : {}),
+    sidebarCollapsed: v.sidebarCollapsed, sidebarWidth: v.sidebarWidth,
+    framePx: { left: v.framePx.left, right: v.framePx.right, top: v.framePx.top, bottom: v.framePx.bottom } };
 }

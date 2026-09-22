@@ -13,6 +13,10 @@ This document describes the current public source. It deliberately avoids promot
 - Private tabs with private Gecko sessions, non-persistent history/permissions, local favicon placeholders, and explicit persistence warnings.
 - Bookmark HTML and bounded work-archive import/export with preview, fresh IDs, and excluded credentials/private state.
 - Site settings, tracking-protection controls, site-data removal, tab protection, and conservative memory-pressure policy.
+- Korean/English app UI, adaptive settings, device-permission preparation, remembered site decisions, and muted-allow/audible-block autoplay defaults.
+- Same-document suppression of dismissed permission requests and reuse of successfully saved decisions for queued requests.
+- Android separate windows, share input, background media controls, download recovery, and live-runtime web notifications.
+- Compatible Mozilla extension search/install, toolbar actions, permission review/revocation, and extension-page controls.
 
 ## Reproducible repository gates
 
@@ -28,8 +32,8 @@ These gates establish source and build behavior. They do not, by themselves, est
 ## Current limitations
 
 - Android landscape tablets are the only runnable target; the iOS directory exposes an interface but no application.
-- There is no public APK release or supported automatic update channel.
-- Sync, extensions, saved split groups, isolated account profiles, and automatic tab archiving are not implemented.
+- Distribution artifacts and their exact scope are listed in [GitHub Releases](https://github.com/loopy-lim/yeoyu/releases). There is no supported automatic update channel.
+- Sync, saved split groups, isolated account profiles, and automatic tab archiving are not implemented.
 - The mini player and Android PiP move the full browser surface/session; they do not extract a service-independent video overlay.
 - Automatic memory release stays conservative when the app cannot prove that page state is safely restorable. No general memory-saving claim is made.
 - Passkeys, autofill, OAuth, DRM media, accessibility, downloads under process death, and provider-specific behavior require dedicated device/account validation.
@@ -50,7 +54,7 @@ A pass at one level is not evidence for a later level.
 
 ## Near-term roadmap
 
-- Establish a repeatable public release/signing process before distributing APKs.
+- Keep version, source, certificate and checksum records for every distributed APK.
 - Add trustworthy safe-restoration signals before making tab release more aggressive.
 - Expand accessibility and real-provider acceptance with isolated test accounts.
 - Measure input readiness, frame timing, memory, and energy on matched devices.

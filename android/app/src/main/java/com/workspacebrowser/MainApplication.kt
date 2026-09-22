@@ -26,6 +26,8 @@ class MainApplication : Application(), ReactApplication {
     // Fabric only creates its mouse/stylus pointer dispatcher when this
     // flag is enabled before the React surface is constructed.
     com.facebook.react.config.ReactFeatureFlags.dispatchPointerEvents = true
+    dev.browser.CrashJournal.install(this)
+    dev.browser.BrowserShortcuts.push(this)
     loadReactNative(this)
   }
 
