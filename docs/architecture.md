@@ -32,6 +32,8 @@ Each tab has a stable Rust-owned ID. Android maps that ID to a live `GeckoSessio
 
 Split layout is presentational React state. Saved split groups are not part of the durable model. A tab can be protected from release when it is visible, private, playing media, recording, uploading, showing a dialog, handling a permission, or otherwise unsafe to restore.
 
+Separate Android windows keep stable window/tab ownership while sharing one React host. Each Activity retains its own surface and lifecycle; the host follows the active owner and pauses only when no root remains resumed. Permission requests and file-picker results are routed to their owning window, with stale or closed owners rejected. Input viewport measurements also belong to each Activity, so an on-screen keyboard changes only the affected window's overlays.
+
 ## Privacy boundary
 
 Private tabs use Gecko private sessions and a separate in-memory collection. They are excluded from normal snapshots and history. Private permissions are one-time; persistent site settings are unavailable from a private page. Explicit actions such as saving a download or bookmark can still create durable data and must be explained in the UI.
@@ -49,7 +51,9 @@ bun run codegen --check
 
 ## UI quality gates
 
-Theme roles, spacing, motion, and contrast live in `src/theme.ts`, `src/themeGates.ts`, and `src/chrome/motion.ts`. `scripts/contrast-check.ts`, TypeScript tests, and geometry checks enforce the machine-verifiable subset. Device screenshots can demonstrate a particular build, but they are not a substitute for current source checks.
+React Native chrome uses Uniwind to compile Tailwind classes from `global.css`. Shared component variants use CVA in `src/ui/variants.ts`; `cn` combines conditional classes and resolves conflicting utilities. `ThemeScope` maps semantic theme roles to scoped variables for each React root or nested Space, preserving independent window colors.
+
+Theme roles, contrast, and motion remain defined in `src/theme.ts`, `src/themeGates.ts`, and `src/chrome/motion.ts`. Runtime styles are reserved for values that depend on animation, measured geometry, keyboard bounds, or native view adapters. `scripts/contrast-check.ts`, TypeScript tests, compiled-style layout checks, and geometry checks enforce the machine-verifiable subset. Device screenshots can demonstrate a particular build, but they are not a substitute for current source checks.
 
 ## Test seams
 

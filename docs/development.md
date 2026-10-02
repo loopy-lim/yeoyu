@@ -26,6 +26,21 @@ cargo install cargo-ndk --version 4.1.2 --locked
 
 Bootstrap clones the exact Rustra revision declared in `scripts/bootstrap.sh` into `.deps/rustra-main`, installs its packages, installs this repository's packages, generates bindings, and checks that the output is current. An existing Rustra checkout at another revision is never overwritten.
 
+## UI styles and imports
+
+Use Uniwind/Tailwind classes for React Native UI, CVA for shared variants, and `cn` for conditional classes. Wrap each root or nested Space in `ThemeScope` rather than changing a global theme. Keep animation values, measured geometry, keyboard bounds, and native adapter properties in runtime styles. Metro compiles `global.css` and maintains `src/uniwind-types.d.ts` through its Uniwind wrapper.
+
+TypeScript and Metro share these application import aliases:
+
+| Import | Target |
+| --- | --- |
+| `@/*` | `src/*` |
+| `@modules/*` | `modules/*` |
+| `@generated/*` | `generated/*` |
+| `@styles/global.css` | `global.css` (exact import) |
+
+Metro keeps dependency namespaces separate and resolves Rustra's generated `.js` specifiers to their TypeScript sources. Keep the aliases aligned in `tsconfig.json` and `metro.config.js`.
+
 ## Host verification
 
 ```sh
