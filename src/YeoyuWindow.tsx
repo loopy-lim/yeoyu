@@ -3,54 +3,86 @@ import React, {
   useEffect,
   useRef,
   useState,
+  useSyncExternalStore,
   type ComponentRef,
 } from "react";
 import {
   AppState,
   DeviceEventEmitter,
   Pressable,
-  StyleSheet,
   Text,
   TextInput,
   useColorScheme,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import { useResolveClassNames, withUniwind } from "uniwind";
+import "@styles/global.css";
+import { ThemeScope } from "@/ui/ThemeScope";
+import { cn } from "@/ui/cn";
+import { controlVariants } from "@/ui/variants";
 import Surface, {
   Commands,
   type Navigation,
-} from "../modules/browser-surface/src/BrowserSurfaceNativeComponent";
-import { controller } from "./controllerRuntime";
-import { platform } from "./platform";
-import { NEW_TAB_URL } from "./BrowserController";
-import { ChromeIcon, type IconName } from "./chrome/ChromeIcon";
-import { addressShield } from "./components/AddressTrigger";
-import type { BrowserSecurity } from "./hooks/useBrowserWorkflows";
-import { ThemeContext, useTheme } from "./themeContext";
-import { I18nContext, useI18n } from "./i18nContext";
-import { font, radius, size, space, type Theme } from "./theme";
-import { resolveTheme } from "./theme";
-import { resolveLanguage } from "./i18n";
+} from "@modules/browser-surface/src/BrowserSurfaceNativeComponent";
+import { controller } from "@/controllerRuntime";
+import { platform } from "@/platform";
+import { normalizeInput, type SearchEngineId } from "@/suggestions";
+import {
+  answerBrowserPermission,
+  initializeBrowserPermissions,
+  listenBrowserPermissions,
+  permissionRequests,
+} from "@/browserPermissionRuntime";
+import { permissionKindsFromEvent } from "@/permissions";
+import { PermissionDialog } from "@/components/Dialogs";
+import type { PermissionChoice } from "@/permissionRequests";
+import { NEW_TAB_URL } from "@/BrowserController";
+import { ChromeIcon, type IconName } from "@/chrome/ChromeIcon";
+import { addressShield } from "@/components/AddressTrigger";
+import type { BrowserSecurity } from "@/hooks/useBrowserWorkflows";
+import { ThemeContext } from "@/themeContext";
+import { I18nContext, useI18n } from "@/i18nContext";
+import { type Theme } from "@/theme";
+import { useInputViewport } from "@/hooks/useInputViewport";
+import { resolveTheme } from "@/theme";
+import { resolveLanguage } from "@/i18n";
 import {
   defaultUiPreferences,
   loadUiPreferences,
   type ResolvedColorMode,
   type UiPreferences,
-} from "./uiPreferences";
+} from "@/uiPreferences";
 
 // Compact OS-window chrome: one tab, no sidebar. The main Activity remains
 // the Arc browser; this root only mirrors chrome state for its own tab.
-export default function YeoyuWindow(props: { tabId?: string }) {
+const WindowSafeArea = withUniwind(SafeAreaView);
+
+export default function YeoyuWindow(props: {
+  tabId?: string;
+  windowId?: string;
+}) {
   const [prefs, setPrefs] = useState<UiPreferences | null>(null);
+  const [preferencesFailed, setPreferencesFailed] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
   const [deviceLocale, setDeviceLocale] = useState("en");
   const systemScheme = useColorScheme();
 
   useEffect(() => {
     let live = true;
+    let readGeneration = 0;
     const refresh = () => {
-      void loadUiPreferences(platform.readUiPreferences?.bind(platform)).then(
-        (next) => {
-          if (live) setPrefs(next);
+      const read = ++readGeneration;
+      setPreferencesFailed(false);
+      void Promise.all([
+        loadUiPreferences(platform.readUiPreferences?.bind(platform)),
+        initializeBrowserPermissions().then(() => controller.initialize()),
+      ]).then(
+        ([next]) => {
+          if (live && read === readGeneration) setPrefs(next);
+        },
+        () => {
+          if (live && read === readGeneration) setPreferencesFailed(true);
         }
       );
       if (typeof platform.getDeviceLanguage === "function") {
@@ -70,32 +102,91 @@ export default function YeoyuWindow(props: { tabId?: string }) {
       live = false;
       subscription.remove();
     };
-  }, []);
+  }, [refreshKey]);
 
-  const resolved =
-    prefs === null
-      ? null
-      : resolveTheme(prefs, "", (systemScheme ?? null) as ResolvedColorMode | null);
-  if (!resolved) return null;
-  const language = resolveLanguage(prefs!.language, deviceLocale);
+  const resolved = resolveTheme(
+    prefs ?? defaultUiPreferences,
+    "",
+    (systemScheme ?? null) as ResolvedColorMode | null
+  );
+  const language = resolveLanguage(
+    (prefs ?? defaultUiPreferences).language,
+    deviceLocale
+  );
   return (
-    <ThemeContext.Provider value={resolved}>
-      <I18nContext.Provider value={language}>
-        <WindowBody initialTabId={props.tabId} theme={resolved} />
-      </I18nContext.Provider>
-    </ThemeContext.Provider>
+    <SafeAreaProvider>
+      <ThemeContext.Provider value={resolved}>
+        <ThemeScope theme={resolved}>
+          <I18nContext.Provider value={language}>
+            {prefs ? (
+              <WindowBody
+                initialTabId={props.tabId}
+                windowId={props.windowId}
+                theme={resolved}
+                searchEngine={prefs.searchEngine}
+              />
+            ) : (
+              <WindowStartup
+                failed={preferencesFailed}
+                onRetry={() => setRefreshKey((value) => value + 1)}
+              />
+            )}
+          </I18nContext.Provider>
+        </ThemeScope>
+      </ThemeContext.Provider>
+    </SafeAreaProvider>
+  );
+}
+
+function WindowStartup({
+  failed,
+  onRetry,
+}: {
+  failed: boolean;
+  onRetry: () => void;
+}) {
+  const { tr } = useI18n();
+  return (
+    <WindowSafeArea className="flex-1 bg-chrome p-xxl justify-center items-center gap-xl">
+      <Text
+        accessibilityRole={failed ? "alert" : "text"}
+        className="text-ink text-input-plus"
+      >
+        {tr(failed ? "window.preferencesFailed" : "chrome.opening")}
+      </Text>
+      {failed && (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={tr("common.retry")}
+          onPress={onRetry}
+          className={cn(
+            controlVariants({ size: "action", tone: "sunken" }),
+            "p-xxl active:opacity-pressed"
+          )}
+        >
+          <Text className="text-ink text-input">{tr("common.retry")}</Text>
+        </Pressable>
+      )}
+    </WindowSafeArea>
   );
 }
 
 function WindowBody({
   initialTabId,
+  windowId,
   theme,
+  searchEngine,
 }: {
   initialTabId?: string;
+  windowId?: string;
   theme: Theme;
+  searchEngine: SearchEngineId;
 }) {
   const { tr } = useI18n();
+  // The generated Fabric host receives the compiled layout at its native seam.
+  const surfaceStyle = useResolveClassNames("flex-1");
   const [tabId, setTabId] = useState<string | null>(initialTabId ?? null);
+  const { keyboardInset } = useInputViewport(tabId ?? "");
   const [nav, setNav] = useState<Navigation>({
     tabId: initialTabId ?? "",
     url: "",
@@ -108,21 +199,63 @@ function WindowBody({
   const [editing, setEditing] = useState(false);
   const [security, setSecurity] = useState<BrowserSecurity | null>(null);
   const surfaceRef = useRef<ComponentRef<typeof Surface>>(null);
+  useEffect(listenBrowserPermissions, []);
+  const getPermissionRequest = useCallback(
+    () =>
+      permissionRequests.getSnapshotFor((request) => request.tabId === tabId),
+    [tabId]
+  );
+  const permissionRequest = useSyncExternalStore(
+    permissionRequests.subscribe,
+    getPermissionRequest
+  );
+  const [permissionError, setPermissionError] = useState<string | null>(null);
+  const decidePermission = (choice: PermissionChoice) => {
+    if (!permissionRequest) return;
+    setPermissionError(null);
+    void answerBrowserPermission(permissionRequest.requestId, choice).catch(
+      (failure) =>
+        setPermissionError(
+          failure instanceof Error ? failure.message : String(failure)
+        )
+    );
+  };
+  useEffect(() => {
+    if (!tabId) return;
+    platform.configureWindowPermissionPrompt?.(tabId, !!permissionRequest);
+    const subscription = DeviceEventEmitter.addListener(
+      "BrowserWindowPermissionDismiss",
+      (event: { tabId: string }) => {
+        if (event.tabId === tabId && permissionRequest)
+          decidePermission("dismiss");
+      }
+    );
+    return () => {
+      subscription.remove();
+      platform.configureWindowPermissionPrompt?.(tabId, false);
+    };
+  }, [tabId, permissionRequest]);
 
-  // Initial props may not survive every bridgeless surface path, and the
-  // bridge fallback only answers once THIS activity is the current one. The
-  // mission pull retries until the coordinator can identify us: an existing
-  // tab id binds it, "" means a fresh window, null keeps retrying.
+  // Every native launch carries its Activity's immutable token. Focus changes
+  // cannot lend another root's mission to this delayed lookup.
   const [missionResolved, setMissionResolved] = useState(!!initialTabId);
+  const [missionFailed, setMissionFailed] = useState(false);
+  const [missionAttempt, setMissionAttempt] = useState(0);
+  const unboundTab = useRef<string | null>(null);
   useEffect(() => {
     if (initialTabId || tabId || missionResolved) return;
     let live = true;
     let attempts = 0;
+    setMissionFailed(false);
     let timer: ReturnType<typeof setTimeout>;
     const pull = () => {
       if (!live || tabId || missionResolved) return;
       void Promise.resolve()
-        .then(() => platform.windowMission?.() ?? null)
+        .then(() =>
+          windowId && platform.windowMissionFor
+            ? platform.windowMissionFor(windowId)
+            : null
+        )
         .then((mission) => {
           if (!live || tabId || missionResolved) return;
           if (mission != null) {
@@ -131,9 +264,11 @@ function WindowBody({
             return;
           }
           if (++attempts <= 8) timer = setTimeout(pull, 350);
+          else setMissionFailed(true);
         })
         .catch(() => {
           if (live && ++attempts <= 8) timer = setTimeout(pull, 350);
+          else if (live) setMissionFailed(true);
         });
     };
     timer = setTimeout(pull, 150);
@@ -141,7 +276,7 @@ function WindowBody({
       live = false;
       clearTimeout(timer);
     };
-  }, [initialTabId, tabId, missionResolved]);
+  }, [initialTabId, windowId, tabId, missionResolved, missionAttempt]);
 
   // A fresh window mints its own tab in the global session, then binds it so
   // the coordinator (and the main sidebar) knows this tab lives in a window.
@@ -150,23 +285,36 @@ function WindowBody({
     if (tabId || !missionResolved) return;
     let live = true;
     const previous = controller.snapshot?.activeTabId ?? null;
-    void controller
-      .createTab(NEW_TAB_URL, controller.snapshot?.activeWorkspaceId, {})
-      .then((snapshot) => {
+    const created = unboundTab.current
+      ? Promise.resolve({ activeTabId: unboundTab.current })
+      : controller.createTab(
+          NEW_TAB_URL,
+          controller.snapshot?.activeWorkspaceId,
+          {}
+        );
+    void created
+      .then(async (snapshot) => {
         if (!live) return;
         const id = snapshot.activeTabId ?? null;
         if (id) {
+          unboundTab.current = id;
+          if (!windowId || !platform.bindWindowTabFor)
+            throw new Error("Window owner is unavailable");
+          await platform.bindWindowTabFor(windowId, id);
+          if (!live) return;
+          unboundTab.current = null;
           setTabId(id);
-          void platform.bindWindowTab?.(id);
           if (previous && previous !== id)
             controller.activate(previous, [previous]).catch(() => {});
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        if (live) setMissionFailed(true);
+      });
     return () => {
       live = false;
     };
-  }, [tabId, missionResolved]);
+  }, [tabId, windowId, missionResolved]);
 
   const applyNavigation = useCallback(
     (event: Navigation) => {
@@ -214,9 +362,8 @@ function WindowBody({
 
   const submitAddress = () => {
     if (!tabId) return;
-    const typed = draft.trim();
-    if (!typed) return;
-    const url = /^[a-z][a-z0-9+.-]*:\/\//i.test(typed) ? typed : `https://${typed}`;
+    const url = normalizeInput(draft, searchEngine);
+    if (!url) return;
     setEditing(false);
     platform.loadTabUrl?.(tabId, url);
   };
@@ -232,10 +379,7 @@ function WindowBody({
       true;
 
   // Same trust read as the main browser's address pill.
-  const shield = addressShield(
-    nav.url || boundUrl,
-    security ?? undefined
-  );
+  const shield = addressShield(nav.url || boundUrl, security ?? undefined);
   const shieldGlyph: IconName | null =
     shield === "secure" ? "lock" : shield === "attention" ? "warning" : null;
 
@@ -251,136 +395,162 @@ function WindowBody({
       disabled={disabled}
       hitSlop={8}
       onPress={onPress}
-      style={({ pressed }) => ({
-        width: size.iconButton,
-        height: size.iconButton,
-        borderRadius: radius.control,
-        alignItems: "center" as const,
-        justifyContent: "center" as const,
-        opacity: disabled ? 0.35 : pressed ? 0.6 : 1,
-      })}
+      className={cn(
+        controlVariants({ disabled }),
+        !disabled && "active:opacity-pressed"
+      )}
     >
       <ChromeIcon name={icon} size={18} />
     </Pressable>
   );
 
   return (
-    <SafeAreaView
-      style={{ flex: 1, backgroundColor: theme.chrome }}
-      edges={["top"]}
+    <WindowSafeArea
+      className="flex-1 bg-chrome"
+      edges={["top", "left", "right", "bottom"]}
     >
       <View
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          gap: space.sm,
-          paddingHorizontal: space.md,
-          height: size.input,
-          borderBottomWidth: StyleSheet.hairlineWidth,
-          borderBottomColor: theme.hairlineOnChrome,
-          backgroundColor: theme.chrome,
-        }}
+        className="flex-1"
+        pointerEvents={permissionRequest ? "none" : "auto"}
+        importantForAccessibility={
+          permissionRequest ? "no-hide-descendants" : "auto"
+        }
       >
-        {iconButton("back", tr("chrome.back"), !nav.canGoBack, () => {
-          const ref = surfaceRef.current;
-          if (ref) Commands.goBack(ref);
-        })}
-        {iconButton("forward", tr("chrome.forward"), !nav.canGoForward, () => {
-          const ref = surfaceRef.current;
-          if (ref) Commands.goForward(ref);
-        })}
-        {iconButton("reload", tr("chrome.reload"), false, () => {
-          const ref = surfaceRef.current;
-          if (ref) Commands.reload(ref);
-        })}
-        {isPrivate && (
-          <View
-            accessibilityRole="text"
-            accessibilityLabel={tr("chrome.private")}
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              paddingHorizontal: space.xs,
-              height: size.addressCompact,
-              borderRadius: radius.control,
-              backgroundColor: theme.sunken,
-            }}
-          >
-            <ChromeIcon name="private" size={15} color={theme.inkMuted} />
-          </View>
-        )}
-        <View
-          style={{
-            flex: 1,
-            flexDirection: "row",
-            alignItems: "center",
-            height: size.addressCompact,
-            paddingHorizontal: space.md,
-            gap: space.sm,
-            borderRadius: radius.control,
-            backgroundColor: theme.sunken,
-          }}
-        >
-          {shieldGlyph && (
-            <ChromeIcon
-              name={shieldGlyph}
-              size={15}
-              color={shieldGlyph === "warning" ? theme.errorInk : theme.inkMuted}
-            />
+        <View className="flex-row items-center gap-sm px-md h-input border-b-hairline-width border-hairline-on-chrome bg-chrome">
+          {iconButton("back", tr("chrome.back"), !nav.canGoBack, () => {
+            const ref = surfaceRef.current;
+            if (ref) Commands.goBack(ref);
+          })}
+          {iconButton(
+            "forward",
+            tr("chrome.forward"),
+            !nav.canGoForward,
+            () => {
+              const ref = surfaceRef.current;
+              if (ref) Commands.goForward(ref);
+            }
           )}
-          <TextInput
-            accessibilityLabel={tr("address.edit")}
-            value={editing ? draft : nav.url === NEW_TAB_URL ? "" : nav.url}
-            onChangeText={(value) => {
-              setEditing(true);
-              setDraft(value);
+          {iconButton("reload", tr("chrome.reload"), false, () => {
+            const ref = surfaceRef.current;
+            if (ref) Commands.reload(ref);
+          })}
+          {isPrivate && (
+            <View
+              accessibilityRole="text"
+              accessibilityLabel={tr("chrome.private")}
+              className="flex-row items-center px-xs h-address-compact rounded-control bg-sunken"
+            >
+              <ChromeIcon name="private" size={15} color={theme.inkMuted} />
+            </View>
+          )}
+          <View className="flex-1 min-w-0 flex-row items-center h-address-compact px-md gap-sm rounded-control bg-sunken">
+            {shieldGlyph && (
+              <ChromeIcon
+                name={shieldGlyph}
+                size={15}
+                color={
+                  shieldGlyph === "warning" ? theme.errorInk : theme.inkMuted
+                }
+              />
+            )}
+            <TextInput
+              accessibilityLabel={tr("address.edit")}
+              value={editing ? draft : nav.url === NEW_TAB_URL ? "" : nav.url}
+              onChangeText={(value) => {
+                setEditing(true);
+                setDraft(value);
+              }}
+              onFocus={() => {
+                setEditing(true);
+                setDraft(nav.url === NEW_TAB_URL ? "" : nav.url);
+              }}
+              onSubmitEditing={submitAddress}
+              onEndEditing={() => setEditing(false)}
+              autoCapitalize="none"
+              autoCorrect={false}
+              disableFullscreenUI
+              keyboardType="url"
+              maxFontSizeMultiplier={1.35}
+              placeholder={tr("address.placeholder")}
+              placeholderTextColor={theme.inkFaint}
+              numberOfLines={1}
+              className="flex-1 min-w-0 text-ink text-input"
+            />
+          </View>
+          {iconButton("close", tr("common.close"), false, () => {
+            void (
+              windowId && platform.closeWindowFor
+                ? platform.closeWindowFor(windowId)
+                : tabId
+                ? platform.closeWindowForTab?.(tabId)
+                : undefined
+            )?.catch((failure) => setPermissionError(String(failure)));
+          })}
+        </View>
+        <View className="flex-1 bg-canvas">
+          {tabId ? (
+            <Surface
+              key={tabId}
+              ref={surfaceRef}
+              style={surfaceStyle}
+              tabId={tabId}
+              initialUrl={nav.url || boundUrl || NEW_TAB_URL}
+              active
+              onNavigation={(e) => applyNavigation(e.nativeEvent)}
+            />
+          ) : (
+            <View className="flex-1 items-center justify-center">
+              <Text
+                className="text-ink-faint text-body"
+                accessibilityRole={missionFailed ? "alert" : "text"}
+              >
+                {tr(
+                  missionFailed ? "window.preferencesFailed" : "chrome.opening"
+                )}
+              </Text>
+              {missionFailed && (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={tr("common.retry")}
+                  className={cn(
+                    controlVariants({ size: "action", tone: "sunken" }),
+                    "px-xxl active:opacity-pressed"
+                  )}
+                  onPress={() => {
+                    setMissionResolved(false);
+                    setMissionAttempt((value) => value + 1);
+                  }}
+                >
+                  <Text className="text-ink text-input">
+                    {tr("common.retry")}
+                  </Text>
+                </Pressable>
+              )}
+            </View>
+          )}
+        </View>
+        {permissionError && (
+          <Text accessibilityRole="alert" className="text-error-ink p-xl">
+            {permissionError}
+          </Text>
+        )}
+      </View>
+      {permissionRequest && (
+        <View
+          className="absolute inset-0 z-40 bg-scrim justify-center items-center"
+          style={{ bottom: keyboardInset }}
+        >
+          <PermissionDialog
+            request={{
+              origin: permissionRequest.origin,
+              kinds: permissionKindsFromEvent(permissionRequest.kind),
+              ephemeral: permissionRequest.ephemeral,
             }}
-            onFocus={() => {
-              setEditing(true);
-              setDraft(nav.url === NEW_TAB_URL ? "" : nav.url);
-            }}
-            onSubmitEditing={submitAddress}
-            onEndEditing={() => setEditing(false)}
-            autoCapitalize="none"
-            autoCorrect={false}
-            disableFullscreenUI
-            keyboardType="url"
-            maxFontSizeMultiplier={1.35}
-            placeholder={tr("address.placeholder")}
-            placeholderTextColor={theme.inkFaint}
-            numberOfLines={1}
-            style={{
-              flex: 1,
-              color: theme.ink,
-              fontSize: font.input,
-            }}
+            onDecide={decidePermission}
+            onDismiss={() => decidePermission("dismiss")}
           />
         </View>
-        {iconButton("close", tr("common.close"), false, () =>
-          platform.closeWindow?.()
-        )}
-      </View>
-      <View style={{ flex: 1, backgroundColor: theme.canvas }}>
-        {tabId ? (
-              <Surface
-                key={tabId}
-                ref={surfaceRef}
-                style={{ flex: 1 }}
-                tabId={tabId}
-                initialUrl={nav.url || boundUrl || NEW_TAB_URL}
-                active
-                onNavigation={(e) => applyNavigation(e.nativeEvent)}
-              />
-        ) : (
-          <View
-            style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
-          >
-            <Text style={{ color: theme.inkFaint, fontSize: font.body }}>
-              {tr("chrome.opening")}
-            </Text>
-          </View>
-        )}
-      </View>
-    </SafeAreaView>
+      )}
+    </WindowSafeArea>
   );
 }

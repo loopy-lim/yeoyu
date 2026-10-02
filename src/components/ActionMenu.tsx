@@ -6,12 +6,13 @@ import {
   View,
   useWindowDimensions,
 } from "react-native";
-import { ChromeIcon, type IconName } from "../chrome/ChromeIcon";
-import { menuPosition, type MenuAnchor } from "../menuLayout";
-import { useTheme } from "../themeContext";
-import { useI18n } from "../i18nContext";
+import { ChromeIcon, type IconName } from "@/chrome/ChromeIcon";
+import { menuPosition, type MenuAnchor } from "@/menuLayout";
+import { cva } from "class-variance-authority";
+import { cn } from "@/ui/cn";
+import { useI18n } from "@/i18nContext";
 
-export type { MenuAnchor } from "../menuLayout";
+export type { MenuAnchor } from "@/menuLayout";
 export interface MenuItem {
   id: string;
   label: string;
@@ -21,6 +22,11 @@ export interface MenuItem {
   disabled?: boolean;
   shortcut?: string;
 }
+
+const menuRowVariants = cva("min-h-favorite px-xl rounded-[7px] flex-row items-center gap-xl bg-transparent active:bg-sunken", {
+  variants: { disabled: { true: "opacity-disabled", false: "" } },
+  defaultVariants: { disabled: false },
+});
 
 export function ActionMenu({
   title,
@@ -33,7 +39,6 @@ export function ActionMenu({
   items: MenuItem[];
   onClose: () => void;
 }) {
-  const t = useTheme();
   const { tr } = useI18n();
   const window = useWindowDimensions();
   const [height, setHeight] = useState(44 + items.length * 40);
@@ -43,37 +48,16 @@ export function ActionMenu({
       accessibilityViewIsModal
       accessibilityLabel={title}
       onLayout={({ nativeEvent }) => setHeight(nativeEvent.layout.height)}
-      style={{
-        position: "absolute",
-        ...position,
-        padding: 6,
-        borderRadius: 12,
-        backgroundColor: t.surfaceElevated,
-        borderWidth: 1,
-        borderColor: t.hairline,
-        shadowColor: t.ringShadow,
-        shadowRadius: 18,
-        shadowOpacity: 0.2,
-        shadowOffset: { width: 0, height: 6 },
-        elevation: 12,
-      }}
+      className="absolute p-md rounded-tile bg-surface-elevated border border-hairline shadow-action-menu"
+      // Placement depends on the measured menu and current native window.
+      style={position}
     >
       <View
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          minHeight: 36,
-          paddingLeft: 8,
-        }}
+        className="flex-row items-center min-h-rail-item pl-lg"
       >
         <Text
           numberOfLines={1}
-          style={{
-            flex: 1,
-            color: t.inkMuted,
-            fontSize: 12,
-            fontWeight: "600",
-          }}
+          className="flex-1 text-ink-muted text-body-plus font-semibold"
         >
           {title}
         </Text>
@@ -82,19 +66,14 @@ export function ActionMenu({
           accessibilityLabel={tr("dialog.closeMenu", { title })}
           onPress={onClose}
           hitSlop={8}
-          style={{
-            width: 32,
-            height: 32,
-            alignItems: "center",
-            justifyContent: "center",
-          }}
+          className="size-icon-button items-center justify-center"
         >
-          <ChromeIcon name="close" size={14} color={t.icon} />
+          <ChromeIcon name="close" className="size-[14px] text-icon" />
         </Pressable>
       </View>
       <ScrollView
         keyboardShouldPersistTaps="handled"
-        style={{ flexGrow: 0, flexShrink: 1 }}
+        className="grow-0 shrink"
       >
         {items.map((item) => (
           <Pressable
@@ -107,33 +86,19 @@ export function ActionMenu({
               onClose();
               item.onPress();
             }}
-            style={({ pressed }) => ({
-              minHeight: 40,
-              paddingHorizontal: 10,
-              borderRadius: 7,
-              flexDirection: "row",
-              alignItems: "center",
-              gap: 10,
-              backgroundColor: pressed ? t.sunken : "transparent",
-              opacity: item.disabled ? 0.38 : 1,
-            })}
+            className={cn(menuRowVariants({ disabled: !!item.disabled }))}
           >
             <ChromeIcon
               name={item.icon ?? "chevronRight"}
-              size={16}
-              color={item.destructive ? t.errorInk : t.icon}
+              className={cn("size-[16px]", item.destructive ? "text-error-ink" : "text-icon")}
             />
             <Text
-              style={{
-                color: item.destructive ? t.errorInk : t.ink,
-                fontSize: 13,
-                flex: 1,
-              }}
+              className={cn("text-input flex-1", item.destructive ? "text-error-ink" : "text-ink")}
             >
               {item.label}
             </Text>
             {item.shortcut && (
-              <Text style={{ color: t.inkMuted, fontSize: 11 }}>
+              <Text className="text-ink-muted text-body">
                 {item.shortcut}
               </Text>
             )}

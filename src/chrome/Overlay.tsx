@@ -6,9 +6,11 @@ import {
   type StyleProp,
   type ViewStyle,
 } from "react-native";
-import { motion as motionTokens } from "../theme";
-import { easing } from "./motion";
-import { useReducedMotion } from "./useReducedMotion";
+import { motion as motionTokens } from "@/theme";
+import { easing } from "@/chrome/motion";
+import { useReducedMotion } from "@/chrome/useReducedMotion";
+import { useResolveClassNames } from "uniwind";
+import { cn } from "@/ui/cn";
 
 // Keep committed content frozen during exit. A reversal continues from the
 // visible pose; only a presentation after a completed exit starts afresh.
@@ -16,6 +18,7 @@ export function Overlay({
   open,
   children,
   style,
+  className,
   pop = false,
   lift = 0,
   dim = true,
@@ -26,6 +29,7 @@ export function Overlay({
   open: boolean;
   children: React.ReactNode;
   style?: StyleProp<ViewStyle>;
+  className?: string;
   /** Subtle scale entrance for dialogs and the new-tab page. */
   pop?: boolean;
   /** Slide the content in from `lift` px (banners, mini players). */
@@ -50,6 +54,11 @@ export function Overlay({
     offset: new Animated.Value(reducedMotion ? 0 : lift),
   }));
   const exitedRef = useRef(onExited);
+  const resolved = useResolveClassNames(
+    cn(className, !dim && "bg-transparent")
+  );
+  const guardStyle = useResolveClassNames("absolute inset-0");
+  const clearScrim = useResolveClassNames("bg-transparent");
 
   // Updating open content must not schedule a second React commit. Keep the
   // callback committed too, so a pending render cannot change exit behavior.
@@ -132,8 +141,8 @@ export function Overlay({
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants"
           style={[
-            StyleSheet.absoluteFill,
-            { zIndex: StyleSheet.flatten(style)?.zIndex ?? 1 },
+            guardStyle,
+            { zIndex: StyleSheet.flatten([resolved, style])?.zIndex ?? 1 },
           ]}
         />
       )}
@@ -151,7 +160,9 @@ export function Overlay({
         accessibilityElementsHidden={!open}
         importantForAccessibility={open ? "auto" : "no-hide-descendants"}
         style={[
-          dim ? style : [style, { backgroundColor: "transparent" }],
+          resolved,
+          style,
+          !dim && clearScrim,
           {
             opacity,
             transform: [{ translateY: offset }, { scale }],

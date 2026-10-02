@@ -1,7 +1,7 @@
 import React, { useLayoutEffect, useRef, useState } from "react";
 import { Animated } from "react-native";
-import { easing } from "./motion";
-import { useReducedMotion } from "./useReducedMotion";
+import { easing } from "@/chrome/motion";
+import { useReducedMotion } from "@/chrome/useReducedMotion";
 
 /** Keep the folder's layout until its rows finish fading out. */
 export function FolderDisclosure({

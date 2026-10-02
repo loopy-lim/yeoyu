@@ -1,6 +1,7 @@
 import { afterEach, expect, mock, test } from "bun:test";
 import React from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
+import "../uniwindTestHarness";
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
 mock.module("react-native", () => ({
   View: "View",

@@ -8,6 +8,7 @@ test("extension action tiles render per action and pass the press anchor", async
     import { mock } from 'bun:test';
     import React from 'react';
     import { act, create } from 'react-test-renderer';
+    await import('./tests/uniwindTestHarness');
     mock.module('react-native', () => ({
       View: 'View', Text: 'Text', Pressable: 'Pressable', Image: 'Image',
       StyleSheet: { create: (v) => v, hairlineWidth: 1 },

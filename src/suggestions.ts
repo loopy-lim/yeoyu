@@ -1,4 +1,4 @@
-import type { HistoryEntry } from "./history";
+import type { HistoryEntry } from "@/history";
 
 export type SearchEngineId = "google" | "naver" | "duckduckgo";
 

@@ -26,6 +26,21 @@ cargo install cargo-ndk --version 4.1.2 --locked
 
 Bootstrap은 `scripts/bootstrap.sh`에 선언된 정확한 Rustra revision을 `.deps/rustra-main`에 clone하고, Rustra와 이 저장소의 package를 설치한 뒤 binding을 생성·검사합니다. 이미 다른 revision인 Rustra checkout은 덮어쓰지 않습니다.
 
+## UI style과 import
+
+React Native UI에는 Uniwind/Tailwind class, 공통 variant에는 CVA, 조건부 class에는 `cn`을 사용합니다. 전역 theme을 변경하는 대신 각 root 또는 중첩 Space를 `ThemeScope`로 감쌉니다. Animation 값, 측정한 geometry, 키보드 bounds, native adapter 속성은 runtime style에 유지합니다. Metro의 Uniwind wrapper가 `global.css`를 컴파일하고 `src/uniwind-types.d.ts`를 관리합니다.
+
+TypeScript와 Metro는 다음 application import alias를 공유합니다.
+
+| Import | 대상 |
+| --- | --- |
+| `@/*` | `src/*` |
+| `@modules/*` | `modules/*` |
+| `@generated/*` | `generated/*` |
+| `@styles/global.css` | `global.css` (정확히 일치하는 import) |
+
+Metro는 dependency의 namespace를 분리하고 Rustra가 생성한 `.js` specifier를 TypeScript source로 해석합니다. `tsconfig.json`과 `metro.config.js`의 alias를 일치시킵니다.
+
 ## Host 검증
 
 ```sh

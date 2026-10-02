@@ -16,11 +16,11 @@ function visit(node: unknown) {
   const item = node as Record<string, any>;
   if (item.type === "JSXOpeningElement" && item.name?.name === "SafeAreaView") {
     const style = item.attributes.find(
-      (attr: any) => attr.name?.name === "style"
+      (attr: any) => attr.name?.name === "className"
     );
     const expression = style?.value?.expression;
     if (
-      expression?.object?.name === "s" &&
+      expression?.object?.name === "c" &&
       expression.property?.name === "app"
     ) {
       const edges = item.attributes.find(

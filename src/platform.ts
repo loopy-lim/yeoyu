@@ -48,10 +48,15 @@ export interface BrowserRuntime {
   pendingShortcutCommands?(): Promise<string>;
   openInNewWindow?(tabId: string | null): Promise<void>;
   bindWindowTab?(tabId: string): Promise<void>;
+  windowMissionFor?(windowId: string): Promise<string>;
+  bindWindowTabFor?(windowId: string, tabId: string): Promise<void>;
+  closeWindowFor?(windowId: string): Promise<void>;
   closeWindowForTab?(tabId: string): Promise<boolean>;
   closeWindow?(): Promise<void>;
   windowTabs?(): Promise<string>;
+  getInputViewport?(scope: string): Promise<string>;
   windowMission?(): Promise<string>;
+  configureWindowPermissionPrompt?(tabId: string, enabled: boolean): void;
   acknowledgeExternalLink(id: string): Promise<void>;
   rejectExternalLink(id: string): Promise<void>;
   getDefaultBrowserStatus(): Promise<string>;
@@ -107,7 +112,7 @@ export interface BrowserRuntime {
   openAndroidPermissionSettings?(): Promise<void>;
   resetSitePermission?(
     origin: string | null,
-    kind: import("./uiPreferences").PermissionKind | null
+    kind: import("@/uiPreferences").PermissionKind | null
   ): Promise<void>;
   readSitePermissions(): Promise<string | null>;
   saveSitePermissions(json: string): Promise<void>;

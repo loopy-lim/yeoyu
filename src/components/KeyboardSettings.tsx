@@ -1,18 +1,32 @@
-import React, { useLayoutEffect, useMemo, useRef, useState } from "react";
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
-import type { KeyBinding } from "../../generated/types";
-import type { ProductCommand } from "../commandRegistry";
-import { parseKeymap, shortcutLabel } from "../keyboardEditor";
-import { withCtrlAlternatives } from "../keyboardProfiles";
-import { useTheme } from "../themeContext";
-import { useI18n } from "../i18nContext";
+import { cva } from "class-variance-authority";
+import { cn } from "@/ui/cn";
+import React, { useLayoutEffect, useRef, useState } from "react";
+import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import type { KeyBinding } from "@generated/types";
+import type { ProductCommand } from "@/commandRegistry";
+import { parseKeymap, shortcutLabel } from "@/keyboardEditor";
+import { withCtrlAlternatives } from "@/keyboardProfiles";
+import { useTheme } from "@/themeContext";
+import { useI18n } from "@/i18nContext";
+
+const c = {
+  root: "w-[92%] max-w-[760px] max-h-[88%] bg-surface-elevated rounded-card p-[20px] gap-xxl",
+  title: "text-[20px] font-semibold text-ink",
+  text: "text-input-plus text-ink leading-[21px]",
+  muted: "text-input text-ink-muted leading-[20px]",
+  actions: "flex-row flex-wrap gap-lg",
+  button:
+    "min-h-action-row px-xxl py-xxl rounded-[8px] border border-ink-muted justify-center active:opacity-pressed",
+  input:
+    "min-h-action-row text-ink text-icon-size border border-ink-muted rounded-[8px] p-xxl",
+  row: "gap-lg py-[14px] border-b border-hairline",
+} as const;
+const actionClasses = cva(c.button, {
+  variants: {
+    disabled: { true: "opacity-50", false: "" },
+    selected: { true: "bg-sunken-strong border-ink", false: "" },
+  },
+});
 
 export function KeyboardSettings({
   bindings,
@@ -37,57 +51,15 @@ export function KeyboardSettings({
   const mounted = useRef(false);
   useLayoutEffect(() => {
     mounted.current = true;
-    return () => { mounted.current = false; };
+    return () => {
+      mounted.current = false;
+    };
   }, []);
   const [query, setQuery] = useState("");
   const [advanced, setAdvanced] = useState(false);
   const [json, setJson] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const s = useMemo(
-    () =>
-      StyleSheet.create({
-        root: {
-          width: "92%",
-          maxWidth: 760,
-          maxHeight: "88%",
-          backgroundColor: t.surfaceElevated,
-          borderRadius: 16,
-          padding: 20,
-          gap: 12,
-        },
-        title: { fontSize: 20, fontWeight: "600", color: t.ink },
-        text: { fontSize: 14, color: t.ink, lineHeight: 21 },
-        muted: { fontSize: 13, color: t.inkMuted, lineHeight: 20 },
-        actions: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-        button: {
-          minHeight: 48,
-          paddingHorizontal: 12,
-          paddingVertical: 12,
-          borderRadius: 8,
-          borderWidth: 1,
-          borderColor: t.inkMuted,
-          justifyContent: "center",
-        },
-        input: {
-          minHeight: 48,
-          color: t.ink,
-          fontSize: 16,
-          borderWidth: 1,
-          borderColor: t.inkMuted,
-          borderRadius: 8,
-          padding: 12,
-        },
-        row: {
-          gap: 8,
-          paddingVertical: 14,
-          borderBottomWidth: 1,
-          borderBottomColor: t.hairline,
-        },
-        selected: { backgroundColor: t.sunkenStrong, borderColor: t.ink },
-      }),
-    [t]
-  );
   const values = () => rows.map(({ id: _id, ...binding }) => binding);
   const replace = (bindings: KeyBinding[]) => {
     setRows(bindings.map((binding, id) => ({ id, ...binding })));
@@ -159,29 +131,27 @@ export function KeyboardSettings({
         ...(selected === undefined ? {} : { selected }),
       }}
       disabled={busy}
-      style={[s.button, selected && s.selected, busy && { opacity: 0.5 }]}
+      className={cn(actionClasses({ selected, disabled: busy }))}
       onPress={onPress}
     >
-      <Text style={s.text}>{label}</Text>
+      <Text className={c.text}>{label}</Text>
     </Pressable>
   );
   const titleFor = (id: string) =>
     commands.find((c) => c.id === id)?.title ?? id;
   return (
-    <View style={s.root}>
-      <Text style={s.title}>{tr("keyboard.title")}</Text>
-      <Text style={s.muted}>
-        {tr("keyboard.help")}
-      </Text>
+    <View className={c.root}>
+      <Text className={c.title}>{tr("keyboard.title")}</Text>
+      <Text className={c.muted}>{tr("keyboard.help")}</Text>
       {error ? (
-        <Text accessibilityRole="alert" style={s.text}>
+        <Text accessibilityRole="alert" className={c.text}>
           {error}
         </Text>
       ) : null}
       {!advanced && (
         <TextInput
           accessibilityLabel={tr("keyboard.search")}
-          style={s.input}
+          className={c.input}
           value={query}
           onChangeText={setQuery}
           placeholder={tr("keyboard.searchHint")}
@@ -190,7 +160,7 @@ export function KeyboardSettings({
       )}
       <ScrollView
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ gap: 8 }}
+        contentContainerClassName="gap-lg"
       >
         {advanced ? (
           <TextInput
@@ -202,7 +172,7 @@ export function KeyboardSettings({
             autoCorrect={false}
             autoCapitalize="none"
             disableFullscreenUI
-            style={[s.input, { minHeight: 250, textAlignVertical: "top" }]}
+            className={cn(c.input, "min-h-[250px] align-top")}
           />
         ) : (
           rows
@@ -212,14 +182,16 @@ export function KeyboardSettings({
                 .includes(query.toLowerCase())
             )
             .map((row) => (
-              <View key={row.id} style={s.row}>
-                <Text style={s.text}>{titleFor(row.command)}</Text>
-                <Text style={s.muted}>{shortcutLabel(row)}</Text>
+              <View key={row.id} className={c.row}>
+                <Text className={c.text}>{titleFor(row.command)}</Text>
+                <Text className={c.muted}>{shortcutLabel(row)}</Text>
                 <TextInput
                   editable={!busy}
-                  accessibilityLabel={tr("keyboard.keyFor", { action: titleFor(row.command) })}
+                  accessibilityLabel={tr("keyboard.keyFor", {
+                    action: titleFor(row.command),
+                  })}
                   value={row.key}
-                  style={s.input}
+                  className={c.input}
                   onChangeText={(key) =>
                     setRows((old) =>
                       old.map((r) => (r.id === row.id ? { ...r, key } : r))
@@ -229,7 +201,7 @@ export function KeyboardSettings({
                   autoCorrect={false}
                   disableFullscreenUI
                 />
-                <View style={s.actions}>
+                <View className={c.actions}>
                   {(["ctrl", "meta", "alt", "shift"] as const).map(
                     (modifier) => (
                       <React.Fragment key={modifier}>
@@ -253,16 +225,17 @@ export function KeyboardSettings({
                     )
                   )}
                 </View>
-                {button(tr("keyboard.remove", { shortcut: shortcutLabel(row) }), () =>
-                  setRows((old) => old.filter((r) => r.id !== row.id))
+                {button(
+                  tr("keyboard.remove", { shortcut: shortcutLabel(row) }),
+                  () => setRows((old) => old.filter((r) => r.id !== row.id))
                 )}
               </View>
             ))
         )}
         {!advanced && (
           <>
-            <Text style={s.text}>{tr("keyboard.add")}</Text>
-            <View style={s.actions}>
+            <Text className={c.text}>{tr("keyboard.add")}</Text>
+            <View className={c.actions}>
               {commands
                 .filter((c) =>
                   `${c.title} ${c.id}`
@@ -278,13 +251,16 @@ export function KeyboardSettings({
           </>
         )}
       </ScrollView>
-      <View style={s.actions}>
+      <View className={c.actions}>
         {button(
           tr(advanced ? "keyboard.visual" : "keyboard.advanced"),
           () => void runAction("toggleEditor")
         )}
         {button(tr("keyboard.defaults"), () => void runAction("defaults"))}
-        {button(tr("keyboard.alternatives"), () => void runAction("alternatives"))}
+        {button(
+          tr("keyboard.alternatives"),
+          () => void runAction("alternatives")
+        )}
         {button(tr("keyboard.save"), () => void runAction("save"))}
         {button(tr("keyboard.cancel"), onClose)}
       </View>

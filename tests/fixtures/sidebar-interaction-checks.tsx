@@ -3,6 +3,9 @@ import React, { useState } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
 import { latestAnimation, resetAnimations } from "../chromeTestHarness";
 import { FrameCoalescer } from "../../src/chrome/FrameCoalescer";
+import { appClasses as c } from "../../src/chrome/appStyles";
+import { cn } from "../../src/ui/cn";
+import { controlVariants } from "../../src/ui/variants";
 const native = await import("react-native");
 const { Pressable } = require("./loadNativePressable.cjs");
 mock.module("react-native", () => ({ ...native, Pressable }));
@@ -240,6 +243,7 @@ test("ContextPressGuard resets on inactive even when its existing menu remains o
 });
 
 test("actual App IconButton resets its retained scale as its sidebar becomes inactive", async () => {
+  const { withUniwind } = await import("uniwind");
   const { loadAppIconButton } = require("./loadNativePressable.cjs");
   const { motion: motionTokens } = await import("../../src/theme");
   const { easing } = await import("../../src/chrome/motion");
@@ -248,12 +252,15 @@ test("actual App IconButton resets its retained scale as its sidebar becomes ina
     useState: React.useState,
     useEffect: React.useEffect,
     Animated: native.Animated,
+    AnimatedView: withUniwind(native.Animated.View),
     useReducedMotion: () => false,
     useSidebarActive,
     SidebarPressable,
     motionTokens,
     easing,
-    useThemedStyles: () => ({ iconButton: {}, disabled: {} }),
+    c,
+    cn,
+    controlVariants,
     ChromeIcon: () => React.createElement("View"),
   });
   const body = (
@@ -303,7 +310,7 @@ function dropBoundary(active: boolean) {
     sidebarDropEpoch = { current: 0 };
   let preview: any = { tabId: "a", zone: null, reorderIndex: null };
   const favorite = mock(() => Promise.resolve());
-  const dragFrames = new FrameCoalescer<{x: number; y: number}>(() => {}, {
+  const dragFrames = new FrameCoalescer<{ x: number; y: number }>(() => {}, {
     request: () => 1,
     cancel: () => {},
   });

@@ -15,11 +15,16 @@
     "@rustra/generated-react-native": "workspace:*",
     "@rustra/react-native": "file:.deps/rustra-main/packages/react-native",
     "@rustra/types": "file:.deps/rustra-main/packages/types",
+    "class-variance-authority": "0.7.1",
+    "clsx": "2.1.1",
     "react": "19.2.3",
     "react-native": "0.87.1",
     "react-native-safe-area-context": "^5.5.2",
     "react-native-svg": "15.15.5",
-    "react-native-url-polyfill": "4.0.0"
+    "react-native-url-polyfill": "4.0.0",
+    "tailwind-merge": "3.7.0",
+    "tailwindcss": "4.3.3",
+    "uniwind": "1.12.1"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

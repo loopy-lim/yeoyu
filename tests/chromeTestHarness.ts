@@ -123,3 +123,7 @@ mock.module("react-native", () => ({
     create: (handlers: Record<string, unknown>) => ({ panHandlers: handlers }),
   },
 }));
+
+// Resolve chrome classes with the installed compiler/native store. Only the
+// surrounding native host and animation driver remain test boundaries.
+await import("./uniwindTestHarness");

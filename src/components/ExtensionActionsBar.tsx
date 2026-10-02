@@ -1,9 +1,13 @@
 import React from "react";
 import { Image, Pressable, Text, View } from "react-native";
-import { useTheme } from "../themeContext";
-import { useI18n } from "../i18nContext";
-import { alpha } from "../theme";
-import type { ExtensionToolbarAction } from "../browserExtensionActions";
+import { cva } from "class-variance-authority";
+import { cn } from "@/ui/cn";
+import { useI18n } from "@/i18nContext";
+import type { ExtensionToolbarAction } from "@/browserExtensionActions";
+
+const extensionButtonVariants = cva("size-icon-button rounded-[8px] items-center justify-center", {
+  variants: { enabled: { true: "active:opacity-pressed", false: "opacity-disabled" } },
+});
 
 /** Chrome-style extension action buttons: the engine-provided icon (falling
  * back to a letter tile until the bitmap arrives), the engine badge with its
@@ -15,12 +19,11 @@ export function ExtensionActionsBar({
   actions: ExtensionToolbarAction[];
   onOpen: (action: ExtensionToolbarAction, anchor: { x: number; y: number }) => void;
 }) {
-  const t = useTheme();
   const { tr } = useI18n();
   if (actions.length === 0) return null;
   return (
     <View
-      style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
+      className="flex-row items-center gap-md"
       accessibilityRole="toolbar"
     >
       {actions.map((action) => (
@@ -37,43 +40,19 @@ export function ExtensionActionsBar({
               y: event.nativeEvent.pageY,
             })
           }
-          style={({ pressed }) => ({
-            width: 32,
-            height: 32,
-            borderRadius: 8,
-            alignItems: "center",
-            justifyContent: "center",
-            opacity: action.actionEnabled
-              ? pressed
-                ? alpha.pressed
-                : 1
-              : alpha.disabled,
-          })}
+          className={cn(extensionButtonVariants({ enabled: action.actionEnabled }))}
         >
           {action.icon !== "" ? (
             <Image
               source={{ uri: action.icon }}
-              style={{ width: 24, height: 24, borderRadius: 6 }}
+              className="size-[24px] rounded-[6px]"
             />
           ) : (
             <View
-              style={{
-                width: 26,
-                height: 26,
-                borderRadius: 7,
-                alignItems: "center",
-                justifyContent: "center",
-                backgroundColor: t.sunken,
-                borderWidth: 1,
-                borderColor: t.hairline,
-              }}
+              className="size-[26px] rounded-[7px] items-center justify-center bg-sunken border border-hairline"
             >
               <Text
-                style={{
-                  fontSize: 13,
-                  fontWeight: "600",
-                  color: t.ink,
-                }}
+                className="text-input font-semibold text-ink"
               >
                 {(action.name.trim().slice(0, 1) || "?").toUpperCase()}
               </Text>
@@ -81,25 +60,14 @@ export function ExtensionActionsBar({
           )}
           {action.badge !== "" && (
             <View
-              style={{
-                position: "absolute",
-                right: -1,
-                bottom: -1,
-                maxWidth: 30,
-                borderRadius: 7,
-                paddingHorizontal: 3,
-                backgroundColor: action.badgeBackgroundColor || t.accent,
-                borderWidth: 1,
-                borderColor: t.surface,
-              }}
+              className={cn("absolute right-[-1px] bottom-[-1px] max-w-[30px] rounded-[7px] px-[3px] border border-surface", !action.badgeBackgroundColor && "bg-accent")}
+              // Engine-defined badge colors are extension data, not theme roles.
+              style={action.badgeBackgroundColor ? { backgroundColor: action.badgeBackgroundColor } : undefined}
             >
               <Text
                 numberOfLines={1}
-                style={{
-                  fontSize: 9,
-                  fontWeight: "700",
-                  color: action.badgeTextColor || t.surfaceElevated,
-                }}
+                className={cn("text-micro font-bold", !action.badgeTextColor && "text-surface-elevated")}
+                style={action.badgeTextColor ? { color: action.badgeTextColor } : undefined}
               >
                 {action.badge.slice(0, 4)}
               </Text>

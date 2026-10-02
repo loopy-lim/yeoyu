@@ -1,3 +1,4 @@
+import "@styles/global.css";
 import React, {
   useCallback,
   useEffect,
@@ -28,52 +29,54 @@ import {
 } from "react-native";
 import {
   SafeAreaProvider,
-  SafeAreaView,
+  SafeAreaView as NativeSafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import Surface, {
+import NativeSurface, {
   Commands,
   type Navigation,
-} from "../modules/browser-surface/src/BrowserSurfaceNativeComponent";
-import { controller } from "./controllerRuntime";
-import { focusBrowserWindow } from "./browserFocus";
-import { useBrowserWorkflows } from "./hooks/useBrowserWorkflows";
-import { usePictureInPicture } from "./hooks/usePictureInPicture";
-import { useExternalPictureInPicture } from "./hooks/useExternalPictureInPicture";
-import { useExternalPipReturnLayout } from "./hooks/useExternalPipReturnLayout";
-import { useContentFullscreen } from "./hooks/useContentFullscreen";
-import { usePipLayout, advanceSidebarWindow } from "./hooks/usePipLayout";
-import { PictureInPictureSettings } from "./components/PictureInPictureSettings";
-import { BrowserToolsPanel } from "./components/BrowserToolsPanel";
-import { BrowserDataPanel } from "./components/BrowserDataPanel";
-import { AppearanceSettings } from "./components/AppearanceSettings";
-import { ConsentSettings } from "./components/ConsentSettings";
-import { ExtensionsSettings } from "./components/ExtensionsSettings";
-import { ExtensionActionsBar } from "./components/ExtensionActionsBar";
+} from "@modules/browser-surface/src/BrowserSurfaceNativeComponent";
+import { controller } from "@/controllerRuntime";
+import { focusBrowserWindow } from "@/browserFocus";
+import { useBrowserWorkflows } from "@/hooks/useBrowserWorkflows";
+import { usePictureInPicture } from "@/hooks/usePictureInPicture";
+import { useExternalPictureInPicture } from "@/hooks/useExternalPictureInPicture";
+import { useExternalPipReturnLayout } from "@/hooks/useExternalPipReturnLayout";
+import { useContentFullscreen } from "@/hooks/useContentFullscreen";
+import { usePipLayout, advanceSidebarWindow } from "@/hooks/usePipLayout";
+import { PictureInPictureSettings } from "@/components/PictureInPictureSettings";
+import { BrowserToolsPanel } from "@/components/BrowserToolsPanel";
+import { BrowserDataPanel } from "@/components/BrowserDataPanel";
+import { AppearanceSettings } from "@/components/AppearanceSettings";
+import { ConsentSettings } from "@/components/ConsentSettings";
+import { ExtensionsSettings } from "@/components/ExtensionsSettings";
+import { ExtensionActionsBar } from "@/components/ExtensionActionsBar";
 import {
   browserExtensions,
   extensionErrorMessage,
   localizeExtensionError,
-} from "./browserExtensions";
+} from "@/browserExtensions";
 import {
   useExtensionActions,
   type ExtensionToolbarAction,
-} from "./browserExtensionActions";
-import { SettingsDialog } from "./components/SettingsDialog";
-import { SettingsRow } from "./components/SettingsRow";
-import { I18nContext, useI18n } from "./i18nContext";
-import { resolveLanguage, translate, type TranslationKey } from "./i18n";
-import { useUiPreferencePersistence } from "./hooks/useUiPreferencePersistence";
-import { BrowserContentMenu } from "./components/BrowserContentMenu";
-import { retainLiveTabs } from "./browserWorkflows";
-import { NavigationEventOrder } from "./navigationEvents";
-import { NEW_TAB_URL } from "./BrowserController";
-import { favicons } from "./favicons";
-import { platform } from "./platform";
-import { history, type HistoryEntry } from "./history";
-import { SEARCH_ENGINES, type SearchEngineId } from "./suggestions";
-import { CommandRegistry, type ProductCommand } from "./commandRegistry";
-import { KeyboardSettings } from "./components/KeyboardSettings";
+} from "@/browserExtensionActions";
+import { SettingsDialog } from "@/components/SettingsDialog";
+import { SettingsRow } from "@/components/SettingsRow";
+import { I18nContext, useI18n } from "@/i18nContext";
+import { resolveLanguage, translate, type TranslationKey } from "@/i18n";
+import { useUiPreferencePersistence } from "@/hooks/useUiPreferencePersistence";
+import { useWindowTabs } from "@/hooks/useWindowTabs";
+import { useInputViewport } from "@/hooks/useInputViewport";
+import { BrowserContentMenu } from "@/components/BrowserContentMenu";
+import { retainLiveTabs } from "@/browserWorkflows";
+import { NavigationEventOrder } from "@/navigationEvents";
+import { NEW_TAB_URL } from "@/BrowserController";
+import { favicons } from "@/favicons";
+import { platform } from "@/platform";
+import { history, type HistoryEntry } from "@/history";
+import { SEARCH_ENGINES, type SearchEngineId } from "@/suggestions";
+import { CommandRegistry, type ProductCommand } from "@/commandRegistry";
+import { KeyboardSettings } from "@/components/KeyboardSettings";
 import {
   defaultUiPreferences,
   resolveColorMode,
@@ -85,37 +88,40 @@ import {
   normalizeBoostHost,
   reduceUiPreferences,
   type PermissionKind,
-} from "./uiPreferences";
-import { SitePermissions, permissionKindsFromEvent } from "./permissions";
+} from "@/uiPreferences";
+import { permissionKindsFromEvent } from "@/permissions";
 import {
-  PermissionRequests,
-  answerPermission,
-  type PermissionChoice,
-  type PermissionRequest,
-} from "./permissionRequests";
-import type { KeyBinding } from "../generated/types";
-import { DragSource } from "./chrome/DragSource";
+  sitePermissions,
+  permissionRequests,
+  listenBrowserPermissions,
+  initializeBrowserPermissions,
+  answerBrowserPermission,
+  subscribeSitePermissionChanges,
+} from "@/browserPermissionRuntime";
+import { type PermissionChoice } from "@/permissionRequests";
+import type { KeyBinding } from "@generated/types";
+import { DragSource } from "@/chrome/DragSource";
 import {
   SidebarLayer,
   SidebarPressable,
   useSidebarActive,
-} from "./chrome/SidebarInteraction";
-import { ContextPressable } from "./chrome/ContextPressable";
-import { FrameCoalescer } from "./chrome/FrameCoalescer";
+} from "@/chrome/SidebarInteraction";
+import { ContextPressable } from "@/chrome/ContextPressable";
+import { FrameCoalescer } from "@/chrome/FrameCoalescer";
 import {
   clampSidebarWidth,
   sidebarSizing,
   SIDEBAR_WIDTH_STEP,
-} from "./sidebarSizing";
-import { DragLifecycle } from "./dragLifecycle";
-import { registerSurfaceRef } from "./surfaceRefs";
-import { PaneLoadBar } from "./chrome/PaneLoadBar";
-import { ChromeIcon, type IconName } from "./chrome/ChromeIcon";
+} from "@/sidebarSizing";
+import { DragLifecycle } from "@/dragLifecycle";
+import { registerSurfaceRef } from "@/surfaceRefs";
+import { PaneLoadBar } from "@/chrome/PaneLoadBar";
+import { ChromeIcon, type IconName } from "@/chrome/ChromeIcon";
 import {
   ActionMenu,
   type MenuAnchor,
   type MenuItem,
-} from "./components/ActionMenu";
+} from "@/components/ActionMenu";
 import {
   bookmarkTabsForSpace,
   libraryItemsForSpace,
@@ -126,32 +132,41 @@ import {
   favoriteMoveIndex,
   sidebarAddressLabel,
   type TileBounds,
-} from "./sidebarModel";
-import { Overlay } from "./chrome/Overlay";
-import { useReducedMotion } from "./chrome/useReducedMotion";
+} from "@/sidebarModel";
+import { Overlay } from "@/chrome/Overlay";
+import { useReducedMotion } from "@/chrome/useReducedMotion";
 import {
   useSidebarMotion,
   useSpaceMotion,
   useSplitMotion,
-} from "./chrome/useChromeMotion";
-import { FolderDisclosure } from "./chrome/FolderDisclosure";
-import { easing } from "./chrome/motion";
-import { useStyles, useThemedStyles } from "./chrome/appStyles";
-import { motion as motionTokens, resolveTheme, size, space } from "./theme";
-import { ThemeContext } from "./themeContext";
-import { Favicon } from "./components/Favicon";
-import { SidebarFolderItem, SidebarPageMenu, SplitSidebarItem } from "./components/SidebarCollections";
-import { sidebarPresentation, type SidebarFolder } from "./sidebarPresentation";
-import { AddressBox } from "./components/AddressBox";
-import { AddressTrigger } from "./components/AddressTrigger";
-import { FindBar } from "./components/FindBar";
+} from "@/chrome/useChromeMotion";
+import { FolderDisclosure } from "@/chrome/FolderDisclosure";
+import { easing } from "@/chrome/motion";
+import { appClasses as c } from "@/chrome/appStyles";
+import { cn } from "@/ui/cn";
+import { cva } from "class-variance-authority";
+import { controlVariants, rowVariants } from "@/ui/variants";
+import { ThemeScope } from "@/ui/ThemeScope";
+import { withUniwind } from "uniwind";
+import { motion as motionTokens, resolveTheme, size, space } from "@/theme";
+import { ThemeContext } from "@/themeContext";
+import { Favicon } from "@/components/Favicon";
+import {
+  SidebarFolderItem,
+  SidebarPageMenu,
+  SplitSidebarItem,
+} from "@/components/SidebarCollections";
+import { sidebarPresentation, type SidebarFolder } from "@/sidebarPresentation";
+import { AddressBox } from "@/components/AddressBox";
+import { AddressTrigger } from "@/components/AddressTrigger";
+import { FindBar } from "@/components/FindBar";
 import {
   BoostsDialog,
   HistoryDialog,
   PermissionDialog,
   SpaceSwitcherDialog,
   TabContextMenuDialog,
-} from "./components/Dialogs";
+} from "@/components/Dialogs";
 import {
   clampSplitRatio,
   commitSplitDrop,
@@ -159,7 +174,12 @@ import {
   type Bounds,
   type DropZone,
   type SplitLayout,
-} from "./splitLayout";
+} from "@/splitLayout";
+
+// Custom/native hosts resolve classes before merging measured or animated styles.
+const AnimatedView = withUniwind(Animated.View);
+const SafeAreaView = withUniwind(NativeSafeAreaView);
+const Surface = withUniwind(NativeSurface);
 
 type SurfaceRef = React.ElementRef<typeof Surface>;
 type SuggestionSources = {
@@ -168,6 +188,23 @@ type SuggestionSources = {
   tabs: { id?: string; url: string; title: string }[];
   history: HistoryEntry[];
 };
+const buttonClasses = cva(c.button, {
+  variants: { disabled: { true: c.disabled } },
+});
+const favoriteClasses = cva(c.favorite, {
+  variants: { selected: { true: c.favoriteActive } },
+});
+const paneClasses = cva(c.pane, {
+  variants: {
+    focused: { true: c.paneFocused },
+    fullscreen: { true: c.paneFullscreen },
+    hidden: { true: c.hidden },
+  },
+});
+const settingsChoiceClasses = cva(c.settingsAction, {
+  variants: { selected: { true: "bg-sunken-strong" } },
+});
+
 const Button = ({
   label,
   onPress,
@@ -177,17 +214,16 @@ const Button = ({
   onPress: () => void;
   disabled?: boolean;
 }) => {
-  const s = useThemedStyles();
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ disabled }}
       disabled={disabled}
-      style={[s.button, disabled && s.disabled]}
+      className={buttonClasses({ disabled })}
       onPress={onPress}
     >
-      <Text style={s.buttonText}>{label}</Text>
+      <Text className={c.buttonText}>{label}</Text>
     </Pressable>
   );
 };
@@ -202,7 +238,6 @@ const IconButton = ({
   onPress: () => void;
   disabled?: boolean;
 }) => {
-  const s = useThemedStyles();
   const sidebarActive = useSidebarActive();
   const [scale] = useState(() => new Animated.Value(1));
   const reduced = useReducedMotion();
@@ -247,20 +282,22 @@ const IconButton = ({
       onPressIn={pressIn}
       onPressOut={pressOut}
     >
-      <Animated.View
-        style={[
-          s.iconButton,
-          { transform: [{ scale }] },
-          disabled && s.disabled,
-        ]}
+      <AnimatedView
+        className={cn(
+          controlVariants({ size: "icon", disabled }),
+          c.iconButton
+        )}
+        style={[{ transform: [{ scale }] }]}
       >
-        <ChromeIcon name={icon} size={18} />
-      </Animated.View>
+        <ChromeIcon className={cn("size-[18px]")} name={icon} />
+      </AnimatedView>
     </SidebarPressable>
   );
 };
 const NewTabPage = ({
   favorites,
+  keyboardInset,
+  visibleHeight,
   reducedMotion,
   engine,
   suggestions,
@@ -270,6 +307,8 @@ const NewTabPage = ({
   onOpenFavorite,
 }: {
   favorites: { id: string; title: string; url: string }[];
+  keyboardInset: number;
+  visibleHeight: number;
   reducedMotion: boolean;
   engine: SearchEngineId;
   suggestions: SuggestionSources;
@@ -278,55 +317,86 @@ const NewTabPage = ({
   onOpenUrl: (url: string) => void;
   onOpenFavorite: (id: string) => void;
 }) => {
-  const s = useThemedStyles();
   const { tr } = useI18n();
+  const host = useRef<React.ComponentRef<typeof View>>(null);
+  const [frame, setFrame] = useState({ y: 0, height: 0 });
+  const measure = useCallback(() => {
+    const measuredHost = host.current;
+    measuredHost?.measureInWindow((_x, y, _width, height) => {
+      if (host.current !== measuredHost) return;
+      setFrame((current) =>
+        current.y === y && current.height === height ? current : { y, height }
+      );
+    });
+  }, []);
+  useLayoutEffect(measure, [measure, keyboardInset, visibleHeight]);
+  // A vertical split may already sit entirely above the IME. Only the overlap
+  // of this pane and its Activity's confirmed keyboard changes input bounds.
+  const newTabKeyboardInset =
+    keyboardInset > 0 && frame.height > 0
+      ? Math.max(
+          0,
+          Math.min(frame.height, frame.y + frame.height - visibleHeight)
+        )
+      : 0;
   return (
-    <View style={s.newTabOverlay} pointerEvents="box-none">
-      <View style={s.newTabPanel}>
-        <AddressBox
-          engine={engine}
-          autoFocus={false}
-          reducedMotion={reducedMotion}
-          suggestions={suggestions}
-          commands={commands}
-          onCommand={onCommand}
-          onOpenTab={onOpenFavorite}
-          onSubmit={onOpenUrl}
-        />
-        {favorites.length > 0 ? (
-          <>
-            <Text style={s.newTabHeading}>{tr("chrome.favorites")}</Text>
-            <View style={s.newTabGrid}>
-              {favorites.slice(0, 12).map((tab) => (
-                <Pressable
-                  key={tab.id}
-                  accessibilityRole="button"
-                  accessibilityLabel={tr("chrome.favoriteLabel", { name: tab.title || tab.url })}
-                  style={({ pressed }) => [s.newTabTile, pressed && s.pressed]}
-                  onPress={() => onOpenFavorite(tab.id)}
-                >
-                  <View style={s.newTabTileIcon}>
-                    <Favicon
-                      url={tab.url}
-                      fallback={(tab.title || tab.url)
-                        .slice(0, 1)
-                        .toUpperCase()}
-                      size={32}
-                      radius={8}
-                    />
-                  </View>
-                  <Text numberOfLines={1} style={s.newTabTileLabel}>
-                    {tab.title || tab.url}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
-          </>
-        ) : (
-          <Text style={s.newTabHint}>
-            {tr("chrome.newTabHint")}
-          </Text>
-        )}
+    <View
+      ref={host}
+      className="absolute inset-0"
+      pointerEvents="box-none"
+      onLayout={measure}
+    >
+      <View
+        className={c.newTabOverlay}
+        style={{ bottom: newTabKeyboardInset }}
+        pointerEvents="box-none"
+      >
+        <View className={cn(c.newTabPanel, "max-h-full min-h-0")}>
+          <AddressBox
+            engine={engine}
+            autoFocus={false}
+            reducedMotion={reducedMotion}
+            suggestions={suggestions}
+            commands={commands}
+            onCommand={onCommand}
+            onOpenTab={onOpenFavorite}
+            onSubmit={onOpenUrl}
+          />
+          {favorites.length > 0 ? (
+            <>
+              <Text className={c.newTabHeading}>{tr("chrome.favorites")}</Text>
+              <View className={c.newTabGrid}>
+                {favorites.slice(0, 12).map((tab) => (
+                  <Pressable
+                    key={tab.id}
+                    accessibilityRole="button"
+                    accessibilityLabel={tr("chrome.favoriteLabel", {
+                      name: tab.title || tab.url,
+                    })}
+                    className={cn(c.newTabTile, "active:opacity-pressed")}
+                    onPress={() => onOpenFavorite(tab.id)}
+                  >
+                    <View className={c.newTabTileIcon}>
+                      <Favicon
+                        url={tab.url}
+                        fallback={(tab.title || tab.url)
+                          .slice(0, 1)
+                          .toUpperCase()}
+                        size={32}
+                        radius={8}
+                      />
+                    </View>
+                    <Text numberOfLines={1} className={c.newTabTileLabel}>
+                      {tab.title || tab.url}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            </>
+          ) : (
+            <Text className={c.newTabHint}>{tr("chrome.newTabHint")}</Text>
+          )}
+        </View>
       </View>
     </View>
   );
@@ -356,7 +426,6 @@ favicons.attach(
   (url, options) => fetch(url, options)
 );
 // Per-site permission decisions persist through the native platform store.
-const sitePermissions = new SitePermissions(platform);
 // Browsing history persists through the same native store pattern.
 history.attach({
   read: () =>
@@ -369,6 +438,10 @@ history.attach({
       : Promise.resolve(),
 });
 function BrowserApp() {
+  // This owner-confirmed IME geometry bounds input overlays only. The browser
+  // canvas and its native Gecko descendants retain their full measured frame.
+  const inputViewport = useInputViewport("main");
+  const { keyboardInset } = inputViewport;
   const state = useSyncExternalStore(
     controller.subscribe,
     controller.getSnapshot
@@ -384,6 +457,13 @@ function BrowserApp() {
   const [palette, setPalette] = useState(false);
   const [query, setQuery] = useState("");
   const [quickOpen, setQuickOpen] = useState(false);
+  const [quickOpenPresentation, nextQuickOpenPresentation] = useReducer(
+    (presentation: number) => presentation + 1,
+    0
+  );
+  const quickOpenInputRef = useRef<React.ComponentRef<typeof TextInput> | null>(
+    null
+  );
   // Cmd/Ctrl+L reuses the centered dialog to edit the focused pane's URL:
   // the sidebar address field is too small to be comfortable.
   const [quickOpenEdit, setQuickOpenEdit] = useState(false);
@@ -395,7 +475,13 @@ function BrowserApp() {
   const [ctxMenuTabId, setCtxMenuTabId] = useState<string | null>(null);
   const [ctxMenuAnchor, setCtxMenuAnchor] = useState<MenuAnchor | undefined>();
   const [sidebarMenu, setSidebarMenu] = useState<{
-    kind: "bookmark" | "bookmarkMove" | "folder" | "folderPages" | "split" | "create";
+    kind:
+      | "bookmark"
+      | "bookmarkMove"
+      | "folder"
+      | "folderPages"
+      | "split"
+      | "create";
     id?: string;
     anchor?: MenuAnchor;
   } | null>(null);
@@ -424,14 +510,17 @@ function BrowserApp() {
   const [folderName, setFolderName] = useState("");
   // Per-site permission requests raised by the native delegates, shown one
   // at a time; further requests queue behind the visible one.
-  const [permissionRequests] = useState(() => new PermissionRequests());
-  const permissionRequest = useSyncExternalStore(
-    permissionRequests.subscribe,
-    permissionRequests.getSnapshot
-  );
+  useEffect(listenBrowserPermissions, []);
   // Bumped when stored rules change so Settings and the native delegate
   // push re-read sitePermissions.
   const [permissionRulesVersion, setPermissionRulesVersion] = useState(0);
+  useEffect(
+    () =>
+      subscribeSitePermissionChanges(() =>
+        setPermissionRulesVersion((v) => v + 1)
+      ),
+    []
+  );
   const siteRules = useMemo(
     () => sitePermissions.all(),
     [permissionRulesVersion]
@@ -450,20 +539,30 @@ function BrowserApp() {
   const [ui, updateUi] = useReducer(reduceUiPreferences, defaultUiPreferences);
   const [deviceLocale, setDeviceLocale] = useState("en");
   const language = resolveLanguage(ui.language, deviceLocale);
-  const tr = useCallback((key: TranslationKey, values?: Record<string, string | number>) => translate(language, key, values), [language]);
+  const tr = useCallback(
+    (key: TranslationKey, values?: Record<string, string | number>) =>
+      translate(language, key, values),
+    [language]
+  );
   useEffect(() => {
     let mounted = true;
     const refresh = () => {
       if (typeof platform.getDeviceLanguage !== "function") return;
-      void platform.getDeviceLanguage().then((locale) => {
-        if (mounted) setDeviceLocale(locale);
-      }).catch(() => {});
+      void platform
+        .getDeviceLanguage()
+        .then((locale) => {
+          if (mounted) setDeviceLocale(locale);
+        })
+        .catch(() => {});
     };
     refresh();
     const subscription = AppState.addEventListener("change", (state) => {
       if (state === "active") refresh();
     });
-    return () => { mounted = false; subscription.remove(); };
+    return () => {
+      mounted = false;
+      subscription.remove();
+    };
   }, []);
   const currentUi = useRef(ui);
   useLayoutEffect(() => {
@@ -473,7 +572,12 @@ function BrowserApp() {
   useEffect(() => {
     if (uiHydrated) platform.setAppLanguage?.(ui.language ?? "system");
   }, [ui.language, uiHydrated]);
-  const uiPersistence = useUiPreferencePersistence(ui, uiHydrated, setError, tr("settings.failedGlobal"));
+  const uiPersistence = useUiPreferencePersistence(
+    ui,
+    uiHydrated,
+    setError,
+    tr("settings.failedGlobal")
+  );
   // The explicit source chooses the base palette, active Space or custom seed.
   const activeWorkspace = state?.workspaces.find(
     (w) => w.id === state.activeWorkspaceId
@@ -512,7 +616,6 @@ function BrowserApp() {
       )
       .catch((error) => setError(String(error)));
   }, [uiHydrated, ui.colorMode, systemColorScheme, theme.chrome]);
-  const s = useStyles(theme);
   const noticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [navigation, setNavigation] = useState<Record<string, Navigation>>({});
   const [navigationOrder] = useState(() => new NavigationEventOrder());
@@ -535,9 +638,7 @@ function BrowserApp() {
   const [dragFrames] = useState(
     () => new FrameCoalescer<{ x: number; y: number }>(() => {})
   );
-  const [sidebarFrames] = useState(
-    () => new FrameCoalescer<number>(() => {})
-  );
+  const [sidebarFrames] = useState(() => new FrameCoalescer<number>(() => {}));
   const dividerOwner = useRef<SplitLayout | null>(null);
   const [dividerFrames] = useState(
     () => new FrameCoalescer<{ owner: SplitLayout; ratio: number }>(() => {})
@@ -816,34 +917,24 @@ function BrowserApp() {
   });
   // Tabs hosted in secondary OS windows. They stay in the global session;
   // tapping one in the sidebar closes its window and reveals it here.
-  const [windowedTabs, setWindowedTabs] = useState<readonly string[]>([]);
-  // Mirror for imperative readers (the switchTab guard, revealTab): their
-  // closures capture per-render state, and a captured array once froze the
-  // window-close guard into a loop after the real set had already cleared.
-  const windowedTabsRef = useRef<readonly string[]>([]);
-  useEffect(() => {
-    if (!browser.ready || typeof platform.windowTabs !== "function") return;
-    let live = true;
-    const apply = (json: string) => {
-      try {
-        const list = JSON.parse(json) as string[];
-        windowedTabsRef.current = list;
-        if (live) setWindowedTabs(list);
-      } catch {}
-    };
-    void Promise.resolve()
-      .then(() => platform.windowTabs!())
-      .then(apply)
-      .catch(() => {});
-    const subscription = DeviceEventEmitter.addListener(
-      "BrowserWindowTabsChanged",
-      (event: { tabIds: string }) => apply(event.tabIds)
-    );
-    return () => {
-      live = false;
-      subscription.remove();
-    };
-  }, [browser.ready]);
+  const {
+    tabs: windowedTabs,
+    ref: windowedTabsRef,
+    loaded: windowTabsLoaded,
+  } = useWindowTabs(browser.ready);
+  const getPermissionRequest = useCallback(
+    () =>
+      windowTabsLoaded
+        ? permissionRequests.getSnapshotFor(
+            (request) => !windowedTabs.includes(request.tabId)
+          )
+        : null,
+    [windowedTabs, windowTabsLoaded]
+  );
+  const permissionRequest = useSyncExternalStore(
+    permissionRequests.subscribe,
+    getPermissionRequest
+  );
   const overlayOpen =
     quickOpen ||
     palette ||
@@ -857,6 +948,9 @@ function BrowserApp() {
     !!sidebarMenu ||
     !!splitPickerTabId ||
     newFolderOpen;
+  // Sheets are siblings of the canvas. Hide only the underlying sidebar/page
+  // accessibility tree; in-page find intentionally keeps that tree available.
+  const accessibilityBlocking = overlayOpen || !!permissionRequest;
   const pipTab = state?.tabs.find(
     (tab) =>
       tab.id === (fullscreen.tabId ?? liveTarget) &&
@@ -903,34 +997,47 @@ function BrowserApp() {
     pipVisible || splitRestoreToken !== undefined || splitMotion.settled;
   const contentFullscreen = !!fullscreenTabId;
   const splitPaneIds = [first?.id, second?.id];
-  const sidebar = useMemo(() => sidebarPresentation({
-    tabs: state?.tabs ?? [],
-    bookmarks: state?.bookmarks ?? [],
-    folders: state?.bookmarkFolders ?? [],
-    workspaceId: state?.activeWorkspaceId ?? "",
-    focusedId: target,
-    split: validSplit,
-  }), [state?.tabs, state?.bookmarks, state?.bookmarkFolders, state?.activeWorkspaceId, target, validSplit]);
+  const sidebar = useMemo(
+    () =>
+      sidebarPresentation({
+        tabs: state?.tabs ?? [],
+        bookmarks: state?.bookmarks ?? [],
+        folders: state?.bookmarkFolders ?? [],
+        workspaceId: state?.activeWorkspaceId ?? "",
+        focusedId: target,
+        split: validSplit,
+      }),
+    [
+      state?.tabs,
+      state?.bookmarks,
+      state?.bookmarkFolders,
+      state?.activeWorkspaceId,
+      target,
+      validSplit,
+    ]
+  );
   useLayoutEffect(() => {
     if (sidebarMenu?.kind === "split" && sidebarMenu.id !== sidebar.split?.key)
       setSidebarMenu(null);
-    if (sidebarMenu?.kind === "folderPages" && !sidebar.folders.some(item => item.folder.id === sidebarMenu.id))
+    if (
+      sidebarMenu?.kind === "folderPages" &&
+      !sidebar.folders.some((item) => item.folder.id === sidebarMenu.id)
+    )
       setSidebarMenu(null);
   }, [sidebarMenu, sidebar.split?.key, sidebar.folders]);
   const openSplitCollection = (anchor: MenuAnchor) => {
-    if (sidebar.split) setSidebarMenu({ kind: "split", id: sidebar.split.key, anchor });
+    if (sidebar.split)
+      setSidebarMenu({ kind: "split", id: sidebar.split.key, anchor });
   };
   const targetUrl = state?.tabs.find((tab) => tab.id === target)?.url ?? "";
-  const addressValue = targetUrl === NEW_TAB_URL ? "" : displayUrl(targetUrl);
+  const addressValue = targetUrl === NEW_TAB_URL ? "" : targetUrl;
   const enterPictureInPicture = () => {
     setSettings(false);
     setSidebarMenu(null);
     void pip.enter().then((result) => {
       if (result && !result.active && !result.transitioning)
         flashNotice(
-          !result.allowed
-            ? tr("chrome.pipNotAllowed")
-            : tr("chrome.pipFailed")
+          !result.allowed ? tr("chrome.pipNotAllowed") : tr("chrome.pipFailed")
         );
     });
   };
@@ -1083,17 +1190,17 @@ function BrowserApp() {
     return (
       <View
         key={bookmark.id}
-        style={[
-          s.tab,
-          indented && s.bookmarkTreeIndent,
-          isActive && s.tabSelected,
-        ]}
+        className={cn(
+          rowVariants({ density: "tab", selected: isActive }),
+          c.tab,
+          indented && c.bookmarkTreeIndent
+        )}
       >
         <ContextPressable
           accessibilityRole="button"
           accessibilityLabel={tr("chrome.pinnedTabLabel", { name: title })}
           accessibilityState={{ selected: isActive }}
-          style={({ pressed }) => [s.tabDrag, pressed && s.pressed]}
+          className={cn(c.tabDrag, "active:opacity-pressed")}
           onPress={() => (tab ? revealTab(tab.id) : openBookmark(bookmark))}
           contextOpen={
             sidebarMenu?.kind === "bookmark" && sidebarMenu.id === bookmark.id
@@ -1106,9 +1213,9 @@ function BrowserApp() {
             })
           }
         >
-          <View style={s.tabFavicon}>
+          <View className={c.tabFavicon}>
             {tab && playing.includes(tab.id) ? (
-              <ChromeIcon name="play" size={14} />
+              <ChromeIcon className={cn("size-[14px]")} name="play" />
             ) : (
               <Favicon
                 url={tab?.url || bookmark.url}
@@ -1118,25 +1225,38 @@ function BrowserApp() {
               />
             )}
           </View>
-          <Text numberOfLines={1} maxFontSizeMultiplier={1.35} style={s.tabTitle}>
+          <Text
+            numberOfLines={1}
+            maxFontSizeMultiplier={1.35}
+            className={c.tabTitle}
+          >
             {title}
           </Text>
           {!!validSplit && isActive && (
-            <ChromeIcon name="split" size={14} color={theme.inkMuted} />
+            <ChromeIcon
+              className={cn("size-[14px]", "text-ink-muted")}
+              name="split"
+            />
           )}
           {windowedTabs.includes(tab?.id ?? bookmark.id) && (
-            <ChromeIcon name="window" size={14} color={theme.inkMuted} />
+            <ChromeIcon
+              className={cn("size-[14px]", "text-ink-muted")}
+              name="window"
+            />
           )}
         </ContextPressable>
         {tab && !tab.suspended && (
           <SidebarPressable
             accessibilityRole="button"
-        accessibilityLabel={tr("chrome.closeNamedTab", { name: title })}
-        hitSlop={8}
-        style={({ pressed }) => [s.tabClose, pressed && s.rowPressed]}
+            accessibilityLabel={tr("chrome.closeNamedTab", { name: title })}
+            hitSlop={8}
+            className={cn(c.tabClose, "active:bg-field-on-chrome")}
             onPress={() => closeTab(tab.id)}
           >
-            <ChromeIcon name="close" size={15} color={theme.inkMuted} />
+            <ChromeIcon
+              className={cn("size-[15px]", "text-ink-muted")}
+              name="close"
+            />
           </SidebarPressable>
         )}
       </View>
@@ -1175,6 +1295,7 @@ function BrowserApp() {
     // mounted while the dialog changes pointerEvents.
     if (target && typeof platform.captureRendering === "function")
       platform.captureRendering(target);
+    nextQuickOpenPresentation();
     setQuickOpenSoft(mode === "touch");
     setQuickOpenEdit(false);
     setQuickOpen(true);
@@ -1182,11 +1303,13 @@ function BrowserApp() {
   // ⌘L and the address triggers share the centered dialog in edit mode:
   // submitting loads the URL in the same tab.
   const openLocationEditor = (mode: "touch" | "keyboard" = "keyboard") => {
+    nextQuickOpenPresentation();
     setQuickOpenSoft(mode === "touch");
     setQuickOpenEdit(true);
     setQuickOpen(true);
   };
   const closeQuickOpen = () => {
+    quickOpenInputRef.current?.blur();
     setQuickOpen(false);
     setQuickOpenEdit(false);
   };
@@ -1321,7 +1444,7 @@ function BrowserApp() {
       if (tab) switchTab(tab.id);
     });
   useEffect(() => {
-    run(controller.initialize());
+    run(initializeBrowserPermissions().then(() => controller.initialize()));
     return controller.subscribePersistenceError((failure) => {
       if (failure) setError(failure.message);
     });
@@ -1470,11 +1593,6 @@ function BrowserApp() {
   // at startup, then stream the rule list to the native delegates whenever
   // it changes. No rule means the site's next request asks the user.
   useEffect(() => {
-    run(
-      sitePermissions.load().then(() => setPermissionRulesVersion((v) => v + 1))
-    );
-  }, []);
-  useEffect(() => {
     if (typeof platform.setSitePermissionRules !== "function") return;
     // Native expects {origin, kind, allow}; the store keeps decision strings.
     platform.setSitePermissionRules(
@@ -1487,56 +1605,10 @@ function BrowserApp() {
       )
     );
   }, [permissionRulesVersion]);
-  // Device-backed kinds ask Android first; a system denial surfaces an
-  // honest notice instead of a web grant the OS would veto anyway.
-  const requestPermission = (kind: PermissionKind): Promise<boolean> => {
-    if (
-      kind !== "geolocation" &&
-      kind !== "notifications" &&
-      kind !== "camera" &&
-      kind !== "microphone"
-    )
-      return Promise.resolve(true);
-    if (typeof platform.requestAndroidPermission !== "function")
-      return Promise.resolve(false);
-    return platform.requestAndroidPermission(kind).catch(() => false);
-  };
-  const resolvePermissionRequest = (requestId: number, allow: boolean, rememberDenial = false) => {
-    if (typeof platform.resolvePermission === "function")
-      platform.resolvePermission(requestId, allow, rememberDenial);
-  };
-  // Content grants are remembered by Gecko and our site rule. Media alone
-  // supports "once". Dismissals keep Gecko's prompt behavior for the next request.
   const decidePermission = (choice: PermissionChoice) => {
-    // Use the ID displayed by this render: a double click must not answer
-    // the next site's request before that dialog has actually been shown.
     if (!permissionRequest) return;
-    run(
-      answerPermission(
-        permissionRequests,
-        permissionRequest.requestId,
-        choice,
-        {
-          requestAndroid: requestPermission,
-          save: async (origin, kinds, decision) => {
-            await sitePermissions.decideMany(origin, kinds, decision);
-            platform.setSitePermissionRules?.(JSON.stringify(sitePermissions.all().map((rule) => ({
-              origin: rule.origin, kind: rule.kind, allow: rule.decision === "allow",
-            }))));
-          },
-          resolve: resolvePermissionRequest,
-        }
-      ).finally(() => setPermissionRulesVersion((v) => v + 1))
-    );
+    run(answerBrowserPermission(permissionRequest.requestId, choice));
   };
-  useEffect(
-    () => () => {
-      permissionRequests
-        .cancelAll()
-        .forEach((id) => resolvePermissionRequest(id, false));
-    },
-    [permissionRequests]
-  );
   useEffect(() => {
     if (!uiHydrated || Platform.OS !== "android") return;
     if (typeof platform.setFullscreen === "function")
@@ -1628,15 +1700,6 @@ function BrowserApp() {
           if (findTab === event.tabId)
             setFindResult({ current: event.current, total: event.total });
         }
-      ),
-      DeviceEventEmitter.addListener(
-        "BrowserPermissionRequest",
-        (event: PermissionRequest) => permissionRequests.enqueue(event)
-      ),
-      DeviceEventEmitter.addListener(
-        "BrowserPermissionCancelled",
-        (event: { requestId: number }) =>
-          permissionRequests.cancel(event.requestId)
       ),
       DeviceEventEmitter.addListener(
         "BrowserDownload",
@@ -1981,7 +2044,8 @@ function BrowserApp() {
   const sheet = (open: boolean, onClose: () => void, node: React.ReactNode) => (
     <Overlay
       open={open}
-      style={s.overlay}
+      className={c.overlay}
+      style={{ bottom: keyboardInset }}
       pop
       dim={false}
       reducedMotion={reducedMotion}
@@ -1991,12 +2055,12 @@ function BrowserApp() {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={tr("common.close")}
-            style={s.sheetUnderlay}
+            className={c.sheetUnderlay}
             onPress={onClose}
           />
           {/* The card must be a direct child of the full-screen centerer:
               its percent width/height resolve against that container. */}
-          <View style={s.overlayTouch} pointerEvents="box-none">
+          <View className={c.overlayTouch} pointerEvents="box-none">
             {node}
           </View>
         </>
@@ -2114,7 +2178,12 @@ function BrowserApp() {
             y - grid.y + favoriteScrollOffset.current,
             tiles
           );
-          index = favoriteMoveIndex(state.tabs, draggedTab.id, slot, sidebar.favorites.map(tab => tab.id));
+          index = favoriteMoveIndex(
+            state.tabs,
+            draggedTab.id,
+            slot,
+            sidebar.favorites.map((tab) => tab.id)
+          );
         } else {
           const rows = state.tabs
             .filter(
@@ -2382,7 +2451,7 @@ function BrowserApp() {
       ref={(ref) => {
         if (ref) return registerSurfaceRef(refs.current, id, ref);
       }}
-      style={s.surface}
+      className={c.surface}
       tabId={id}
       initialUrl={url}
       active={id === target}
@@ -2421,22 +2490,6 @@ function BrowserApp() {
     );
     return () => clearTimeout(id);
   }, [overlayOpen, reducedMotion]);
-  // The page-find bar lives inside the body, so it can't ride the sheet
-  // blocker: while find is open only the page canvas loses touches and the
-  // bar's own input/buttons stay interactive.
-  const [findBlocking, setFindBlocking] = useState(false);
-  useEffect(() => {
-    const open = !!findTab;
-    if (reducedMotion) {
-      setFindBlocking(open);
-      return;
-    }
-    const id = setTimeout(
-      () => setFindBlocking(open),
-      open ? motionTokens.split : motionTokens.fade + 60
-    );
-    return () => clearTimeout(id);
-  }, [findTab, reducedMotion]);
   const renderSidebarTab = (tab: NonNullable<typeof state>["tabs"][number]) => (
     <View
       key={tab.id}
@@ -2444,15 +2497,24 @@ function BrowserApp() {
         if (view) sidebarRowRefs.current.set(tab.id, view);
         else sidebarRowRefs.current.delete(tab.id);
       }}
-      style={[
-        s.tab,
-        splitPaneIds.includes(tab.id) && !tab.suspended && s.tabSelected,
-      ]}
+      className={cn(
+        rowVariants({
+          density: "tab",
+          selected: splitPaneIds.includes(tab.id) && !tab.suspended,
+        }),
+        c.tab
+      )}
     >
       <DragSource
         reducedMotion={reducedMotion}
-        accessibilityLabel={`${tr(tab.private ? "chrome.privateTab" : tab.pinned ? "chrome.pinnedTab" : "chrome.tab")} ${tabLabel(tab)}`}
-        style={s.tabDrag}
+        accessibilityLabel={`${tr(
+          tab.private
+            ? "chrome.privateTab"
+            : tab.pinned
+            ? "chrome.pinnedTab"
+            : "chrome.tab"
+        )} ${tabLabel(tab)}`}
+        className={c.tabDrag}
         onPress={() => revealTab(tab.id)}
         onDragStart={(x, y) => beginDrag(tab.id, tabLabel(tab), x, y)}
         onDragMove={moveDrag}
@@ -2460,9 +2522,9 @@ function BrowserApp() {
         onDragCancel={cancelDrag}
         onLongPress={(x, y) => openTabMenu(tab.id, x, y)}
       >
-        <View style={s.tabFavicon}>
+        <View className={c.tabFavicon}>
           {playing.includes(tab.id) ? (
-            <ChromeIcon name="play" size={14} />
+            <ChromeIcon className={cn("size-[14px]")} name="play" />
           ) : (
             // Private tabs use a local fallback: nothing about the
             // visit may reach the shared disk cache.
@@ -2475,14 +2537,24 @@ function BrowserApp() {
             />
           )}
         </View>
-        <Text numberOfLines={1} maxFontSizeMultiplier={1.35} style={s.tabTitle}>
+        <Text
+          numberOfLines={1}
+          maxFontSizeMultiplier={1.35}
+          className={c.tabTitle}
+        >
           {tabLabel(tab)}
         </Text>
         {!!validSplit && splitPaneIds.includes(tab.id) && (
-          <ChromeIcon name="split" size={14} color={theme.inkMuted} />
+          <ChromeIcon
+            className={cn("size-[14px]", "text-ink-muted")}
+            name="split"
+          />
         )}
         {windowedTabs.includes(tab.id) && (
-          <ChromeIcon name="window" size={14} color={theme.inkMuted} />
+          <ChromeIcon
+            className={cn("size-[14px]", "text-ink-muted")}
+            name="window"
+          />
         )}
       </DragSource>
       <SidebarPressable
@@ -2491,14 +2563,17 @@ function BrowserApp() {
         accessibilityState={{ disabled: !!tab.suspended }}
         disabled={!!tab.suspended}
         hitSlop={8}
-        style={({ pressed }) => [
-          s.tabClose,
-          tab.suspended && s.disabled,
-          pressed && s.rowPressed,
-        ]}
+        className={cn(
+          c.tabClose,
+          tab.suspended && c.disabled,
+          "active:bg-field-on-chrome"
+        )}
         onPress={() => closeTab(tab.id)}
       >
-        <ChromeIcon name="close" size={15} color={theme.inkMuted} />
+        <ChromeIcon
+          className={cn("size-[15px]", "text-ink-muted")}
+          name="close"
+        />
       </SidebarPressable>
     </View>
   );
@@ -2507,12 +2582,20 @@ function BrowserApp() {
       key={item.folder.id}
       title={item.folder.title}
       count={item.bookmarks.length}
-      open={sidebarMenu?.kind === "folderPages" && sidebarMenu.id === item.folder.id}
+      open={
+        sidebarMenu?.kind === "folderPages" && sidebarMenu.id === item.folder.id
+      }
       collapsed
       containsFocused={item.containsFocused}
-      contextOpen={sidebarMenu?.kind === "folder" && sidebarMenu.id === item.folder.id}
-      onPress={() => setSidebarMenu({ kind: "folderPages", id: item.folder.id })}
-      onContextMenu={(x, y) => setSidebarMenu({ kind: "folder", id: item.folder.id, anchor: { x, y } })}
+      contextOpen={
+        sidebarMenu?.kind === "folder" && sidebarMenu.id === item.folder.id
+      }
+      onPress={() =>
+        setSidebarMenu({ kind: "folderPages", id: item.folder.id })
+      }
+      onContextMenu={(x, y) =>
+        setSidebarMenu({ kind: "folder", id: item.folder.id, anchor: { x, y } })
+      }
     />
   );
   const createSpace = () =>
@@ -2684,7 +2767,11 @@ function BrowserApp() {
     return [
       {
         id: "toggle",
-        label: tr(expandedFolders.has(folder.id) ? "chrome.collapseFolder" : "chrome.expandFolder"),
+        label: tr(
+          expandedFolders.has(folder.id)
+            ? "chrome.collapseFolder"
+            : "chrome.expandFolder"
+        ),
         icon: "folder",
         onPress: () => toggleFolder(folder.id),
       },
@@ -2719,2337 +2806,2712 @@ function BrowserApp() {
   if (!browser.ready)
     return (
       <I18nContext.Provider value={language}>
-      <ThemeContext.Provider value={theme}>
-        <SafeAreaView
-          style={[
-            s.app,
-            { justifyContent: "center", alignItems: "center", padding: 24 },
-          ]}
-        >
-          <Text style={s.dialogTitle}>
-            {browser.startupError
-              ? tr("chrome.startupError")
-              : tr("chrome.opening")}
-          </Text>
-          {!!browser.startupError && (
-            <>
-              <Text style={s.dialogHelp}>{browser.startupError}</Text>
-              <Button label={tr("common.retry")} onPress={browser.retryStartup} />
-            </>
-          )}
-        </SafeAreaView>
-      </ThemeContext.Provider>
+        <ThemeContext.Provider value={theme}>
+          <ThemeScope theme={theme}>
+            <SafeAreaView
+              className={cn(
+                c.app,
+                "justify-center",
+                "items-center",
+                "p-[24px]"
+              )}
+            >
+              <Text className={c.dialogTitle}>
+                {browser.startupError
+                  ? tr("chrome.startupError")
+                  : tr("chrome.opening")}
+              </Text>
+              {!!browser.startupError && (
+                <>
+                  <Text className={c.dialogHelp}>{browser.startupError}</Text>
+                  <Button
+                    label={tr("common.retry")}
+                    onPress={browser.retryStartup}
+                  />
+                </>
+              )}
+            </SafeAreaView>
+          </ThemeScope>
+        </ThemeContext.Provider>
       </I18nContext.Provider>
     );
   return (
     <I18nContext.Provider value={language}>
-    <ThemeContext.Provider value={theme}>
-      <SafeAreaView
-        style={s.app}
-        edges={contentFullscreen ? ["left", "right", "bottom"] : undefined}
-      >
-        {!!error && !contentFullscreen && (
-          <Pressable onPress={() => setError("")}>
-            <Text selectable style={s.error}>
-              {error}
-            </Text>
-          </Pressable>
-        )}
-        {!!target && !!tabErrors[target] && !contentFullscreen && (
-          <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <Pressable
-              style={{ flex: 1 }}
-              onPress={() =>
-                setTabErrors((old) => {
-                  if (!target) return old;
-                  const next = { ...old };
-                  delete next[target];
-                  return next;
-                })
-              }
-            >
-              <Text selectable style={s.error}>
-                {tabErrors[target]}
-              </Text>
-            </Pressable>
-            <Button
-              label={tr("common.retry")}
-              onPress={() => {
-                setTabErrors((old) => {
-                  if (!target) return old;
-                  const next = { ...old };
-                  delete next[target];
-                  return next;
-                });
-                invoke(Commands.reload);
-              }}
-            />
-          </View>
-        )}
-        {/* pointerEvents must not flatten/unflatten the native Gecko ancestors. */}
-        <View
-          collapsable={false}
-          style={[s.body, !contentFullscreen && frameStyle]}
-          pointerEvents={bodyBlocking ? "none" : "auto"}
-        >
-          <Animated.View
-            style={[
-              s.sidebar,
-              {
-                width: sideP.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [size.rail, sidebarLimits.width],
-                }),
-              },
-              contentFullscreen && s.hidden,
-            ]}
+      <ThemeContext.Provider value={theme}>
+        <ThemeScope theme={theme}>
+          <SafeAreaView
+            className={c.app}
+            edges={contentFullscreen ? ["left", "right", "bottom"] : undefined}
           >
-            <SidebarLayer
-              visible={sidebarMotion.expanded && !contentFullscreen}
-              active={!ui.sidebarCollapsed && !contentFullscreen}
-              style={[
-                s.sidebarLayer,
-                s.sidebarLayerExpanded,
-                {
-                  width: sidebarLimits.width,
-                  opacity: sideP,
-                  transform: [
-                    {
-                      translateX: sideP.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [-12, 0],
-                      }),
-                    },
-                  ],
-                },
-              ]}
-            >
-              <View style={s.sidebarTop}>
-                <View style={s.navigationRow}>
-                  <IconButton
-                    label={tr("chrome.collapseSidebar")}
-                    icon="sidebar"
-                    onPress={toggleSidebar}
-                    disabled={!uiHydrated}
-                  />
-                  <View style={s.navSpacer} />
-                  <IconButton
-                    label={tr("chrome.back")}
-                    icon="back"
-                    onPress={goBack}
-                    disabled={!canGoBack}
-                  />
-                  <IconButton
-                    label={tr("chrome.forward")}
-                    icon="forward"
-                    onPress={() => invoke(Commands.goForward)}
-                    disabled={!canGoForward}
-                  />
-                  <IconButton
-                    label={tr("chrome.reload")}
-                    icon="reload"
-                    onPress={() => invoke(Commands.reload)}
-                  />
-                </View>
-                {activePrivate && (
-                  <View
-                    style={s.privateBadge}
-                    accessibilityLabel={tr("chrome.privateActive")}
-                    accessibilityRole="text"
-                  >
-                    <ChromeIcon name="private" size={13} color={theme.ink} />
-                    <Text style={s.privateBadgeText}>{tr("chrome.private")}</Text>
-                  </View>
-                )}
-                <AddressTrigger
-                  url={addressValue}
-                  security={target ? browser.security[target] : undefined}
-                  onPress={() => openLocationEditor("touch")}
-                />
-                <ExtensionActionsBar
-                  actions={extensionActions}
-                  onOpen={openExtensionAction}
-                />
-                <View ref={favoritesRowRef} style={s.favoritesDropTarget}>
-                  <ScrollView
-                    style={s.favoritesScroll}
-                    contentContainerStyle={s.favorites}
-                    showsVerticalScrollIndicator={false}
-                    onScroll={(event) => {
-                      favoriteScrollOffset.current =
-                        event.nativeEvent.contentOffset.y;
-                    }}
-                    scrollEventThrottle={16}
-                  >
-                    {sidebar.favorites.map((tab) => (
-                      <View
-                        key={tab.id}
-                        style={{
-                          width:
-                            (sidebarLimits.width - 24 - 6 * (favoriteColumns - 1)) /
-                            favoriteColumns,
-                        }}
-                        onLayout={(event) => {
-                          favoriteLayouts.current.set(
-                            tab.id,
-                            event.nativeEvent.layout
-                          );
-                        }}
-                      >
-                        <DragSource
-                          reducedMotion={reducedMotion}
-                          accessibilityLabel={tr("chrome.favoriteLabel", { name: tabLabel(tab) })}
-                          style={[
-                            s.favorite,
-                            splitPaneIds.includes(tab.id) &&
-                              !tab.suspended &&
-                              s.favoriteActive,
-                          ]}
-                          onPress={() => revealTab(tab.id)}
-                          onDragStart={(x, y) =>
-                            beginDrag(tab.id, tabLabel(tab), x, y)
-                          }
-                          onDragMove={moveDrag}
-                          onDragRelease={finishDrag}
-                          onDragCancel={cancelDrag}
-                          onLongPress={(x, y) => openTabMenu(tab.id, x, y)}
-                        >
-                          {playing.includes(tab.id) ? (
-                            <ChromeIcon name="play" size={20} />
-                          ) : (
-                            <Favicon
-                              url={tab.url}
-                              fallback={tabLabel(tab).slice(0, 1).toUpperCase()}
-                              size={22}
-                              radius={5}
-                            />
-                          )}
-                        </DragSource>
-                      </View>
-                    ))}
-                  </ScrollView>
-                </View>
-              </View>
-              <Animated.View
-                ref={tabListRef}
-                style={[s.tabScrollWrap, spaceStyle]}
-              >
-                <FlatList
-                  key={state?.activeWorkspaceId}
-                  data={sidebar.ordinaryTabs}
-                  keyExtractor={(tab) => tab.id}
-                  renderItem={({ item }) => renderSidebarTab(item)}
-                  initialNumToRender={initialSidebarRows}
-                  maxToRenderPerBatch={8}
-                  windowSize={3}
-                  removeClippedSubviews={false}
-                  style={s.tabScroll}
-                  contentContainerStyle={s.tabScrollContent}
-                  showsVerticalScrollIndicator={false}
-                  ListHeaderComponent={
-                    <View>
-                      {sidebar.split && <SplitSidebarItem split={sidebar.split} collapsed={false} open={sidebarMenu?.kind === "split"} onOpen={openSplitCollection} />}
-                      <View ref={pinnedSectionRef} style={s.persistentSection}>
-                        <SidebarPressable
-                          accessibilityRole="button"
-                          accessibilityLabel={`Manage space ${
-                            activeWorkspace?.name ?? "Space"
-                          }`}
-                          style={({ pressed }) => [
-                            s.spaceHeader,
-                            pressed && s.pressed,
-                          ]}
-                          onPress={() => setSpaceSwitcher(true)}
-                        >
-                          <ChromeIcon
-                            name="space"
-                            size={12}
-                            color={theme.inkMuted}
-                          />
-                          <Text numberOfLines={1} style={s.spaceHeaderTitle}>
-                            {activeWorkspace?.name ?? "Space"}
-                          </Text>
-                          <ChromeIcon
-                            name="chevronDown"
-                            size={10}
-                            color={theme.inkMuted}
-                          />
-                        </SidebarPressable>
-                        {sidebar.folders.map(({ folder, bookmarks, visibleBookmarks, containsFocused }) => {
-                          const open = expandedFolders.has(folder.id);
-                          return (
-                            <View key={folder.id}>
-                              <SidebarFolderItem
-                                title={folder.title}
-                                count={bookmarks.length}
-                                open={open}
-                                containsFocused={containsFocused}
-                                onPress={() => toggleFolder(folder.id)}
-                                contextOpen={
-                                  sidebarMenu?.kind === "folder" &&
-                                  sidebarMenu.id === folder.id
-                                }
-                                onContextMenu={(x, y) =>
-                                  setSidebarMenu({
-                                    kind: "folder",
-                                    id: folder.id,
-                                    anchor: { x, y },
-                                  })
-                                }
-                              />
-                              <FolderDisclosure
-                                open={open}
-                                reducedMotion={reducedMotion}
-                              >
-                                <View style={s.folderChildren}>
-                                {visibleBookmarks.map((bookmark) =>
-                                  bookmarkTreeRow(bookmark, true)
-                                )}
-                                {bookmarks.length === 0 && <Text style={s.emptyFolder}>{tr("chrome.emptyFolder")}</Text>}
-                                </View>
-                              </FolderDisclosure>
-                            </View>
-                          );
-                        })}
-                        {sidebar.looseBookmarks
-                          .map((bookmark) => bookmarkTreeRow(bookmark, false))}
-                        {sidebar.pinnedTabs
-                          .map((tab) => renderSidebarTab(tab))}
-                        {privateTabs.length > 0 && (
-                          <View style={s.privateSection}>
-                            <View style={s.privateHeader}>
-                              <ChromeIcon
-                                name="private"
-                                size={12}
-                                color={theme.accentStrong}
-                              />
-                              <Text
-                                numberOfLines={1}
-                                style={s.privateHeaderText}
-                              >
-                                {tr("chrome.privateTabs")}
-                              </Text>
-                              <SidebarPressable
-                                accessibilityRole="button"
-                                accessibilityLabel={tr("chrome.privateNewTab")}
-                                hitSlop={8}
-                                style={({ pressed }) => [
-                                  s.privateNewTab,
-                                  pressed && s.rowPressed,
-                                ]}
-                                onPress={() => createPrivateTabAndShow()}
-                              >
-                                <ChromeIcon
-                                  name="plus"
-                                  size={15}
-                                  color={theme.inkMuted}
-                                />
-                              </SidebarPressable>
-                            </View>
-                            {/* One collection across Spaces: private tabs
-                                vanish with the session, wherever they were
-                                opened. */}
-                            {sidebar.privateTabs.map((tab) => renderSidebarTab(tab))}
-                          </View>
-                        )}
-                      </View>
-                      <View style={s.sectionRule} />
-                      <View
-                        ref={ordinarySectionRef}
-                        style={
-                          !sidebar.ordinaryTabs.length ? s.ordinarySection : undefined
-                        }
-                      >
-                        <SidebarPressable
-                          accessibilityRole="button"
-                          accessibilityLabel={tr("chrome.newTabIn", { space: activeWorkspace?.name ?? "Space" })}
-                          style={({ pressed }) => [
-                            s.newTab,
-                            pressed && s.rowPressed,
-                          ]}
-                          onPress={() => openQuickOpen("touch")}
-                        >
-                          <ChromeIcon
-                            name="plus"
-                            size={18}
-                            color={theme.inkMuted}
-                          />
-                          <Text style={s.newTabText}>{tr("chrome.newTab")}</Text>
-                        </SidebarPressable>
-                      </View>
-                    </View>
-                  }
-                />
-              </Animated.View>
-              <View style={s.sidebarBottom}>
-                <IconButton label={tr("chrome.androidHome")} icon="home" onPress={goHome} />
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  style={s.spaceRailScroll}
-                  contentContainerStyle={s.spaceRail}
-                >
-                  {(state?.workspaces ?? []).map((workspace) => (
-                    <SidebarPressable
-                      key={workspace.id}
-                      accessibilityRole="button"
-                      accessibilityLabel={tr("chrome.switchSpace", { space: workspace.name })}
-                      accessibilityState={{
-                        selected: workspace.id === state?.activeWorkspaceId,
-                      }}
-                      hitSlop={8}
-                      style={({ pressed }) => [
-                        s.spaceChip,
-                        workspace.id === state?.activeWorkspaceId &&
-                          s.spaceChipActive,
-                        pressed && s.pressed,
-                      ]}
-                      onPress={() => switchSpace(workspace.id)}
-                      onLongPress={() => setSpaceSwitcher(true)}
-                    >
-                      <ChromeIcon
-                        name="space"
-                        size={17}
-                        color={
-                          workspace.id === state?.activeWorkspaceId
-                            ? theme.ink
-                            : theme.inkMuted
-                        }
-                      />
-                      {workspace.id === state?.activeWorkspaceId && (
-                        <View style={s.spaceIndicator} />
-                      )}
-                    </SidebarPressable>
-                  ))}
-                </ScrollView>
-                <SidebarPressable
-                  accessibilityRole="button"
-                  accessibilityLabel={tr("chrome.settings")}
-                  style={s.iconButton}
-                  onPress={() => setSettings(true)}
-                >
-                  <ChromeIcon name="settings" size={20} />
-                </SidebarPressable>
-                <SidebarPressable
-                  accessibilityRole="button"
-                  accessibilityLabel={tr("chrome.addSidebar")}
-                  style={s.iconButton}
-                  onPress={(event) =>
-                    setSidebarMenu({
-                      kind: "create",
-                      anchor: {
-                        x: event.nativeEvent.pageX,
-                        y: event.nativeEvent.pageY,
-                      },
+            {!!error && !contentFullscreen && (
+              <Pressable onPress={() => setError("")}>
+                <Text selectable className={c.error}>
+                  {error}
+                </Text>
+              </Pressable>
+            )}
+            {!!target && !!tabErrors[target] && !contentFullscreen && (
+              <View className={cn("flex-row", "items-center")}>
+                <Pressable
+                  className={"flex-1"}
+                  onPress={() =>
+                    setTabErrors((old) => {
+                      if (!target) return old;
+                      const next = { ...old };
+                      delete next[target];
+                      return next;
                     })
                   }
                 >
-                  <ChromeIcon name="plus" size={20} />
-                </SidebarPressable>
-              </View>
-            </SidebarLayer>
-            <SidebarLayer
-              visible={sidebarMotion.rail && !contentFullscreen}
-              active={ui.sidebarCollapsed && !contentFullscreen}
-              style={[
-                s.sidebarLayer,
-                s.sidebarLayerRail,
-                {
-                  width: 48,
-                  opacity: sideP.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [1, 0],
-                  }),
-                  transform: [
-                    {
-                      // Rest state (collapsed, progress 0) must sit at 0; the
-                      // 24px offset only exists while expanded so the rail
-                      // slides left into place during the collapse fade.
-                      translateX: sideP.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [0, 12],
-                      }),
-                    },
-                  ],
-                },
-              ]}
-            >
-              <View style={[s.identityRow, s.identityRowCollapsed]}>
-                <IconButton
-                  label={tr("chrome.expandSidebar")}
-                  icon="sidebar"
-                  onPress={toggleSidebar}
-                  disabled={!uiHydrated}
+                  <Text selectable className={c.error}>
+                    {tabErrors[target]}
+                  </Text>
+                </Pressable>
+                <Button
+                  label={tr("common.retry")}
+                  onPress={() => {
+                    setTabErrors((old) => {
+                      if (!target) return old;
+                      const next = { ...old };
+                      delete next[target];
+                      return next;
+                    });
+                    invoke(Commands.reload);
+                  }}
                 />
               </View>
-              <View style={s.tabScrollWrap}>
-                <FlatList
-                  key={state?.activeWorkspaceId}
-                  data={sidebar.railTabs}
-                  keyExtractor={(tab) => tab.id}
-                  renderItem={({ item: t }) => (
-                    <DragSource
-                      reducedMotion={reducedMotion}
-                      key={t.id}
-                      accessibilityLabel={tr("chrome.tabNamed", { name: tabLabel(t) })}
-                      style={[
-                        s.railItem,
-                        splitPaneIds.includes(t.id) &&
-                          !t.suspended &&
-                          s.railTabActive,
-                      ]}
-                      onPress={() => revealTab(t.id)}
-                      onDragStart={(x, y) => beginDrag(t.id, tabLabel(t), x, y)}
-                      onDragMove={moveDrag}
-                      onDragRelease={finishDrag}
-                      onDragCancel={cancelDrag}
-                      onLongPress={(x, y) => openTabMenu(t.id, x, y)}
-                    >
-                      <View style={s.railIcon}>
-                        {playing.includes(t.id) ? (
-                          <ChromeIcon name="play" size={16} />
-                        ) : (
-                          <Favicon
-                            url={t.url}
-                            fallback={tabLabel(t).slice(0, 1).toUpperCase()}
-                            size={18}
-                            radius={5}
-                          />
-                        )}
+            )}
+            {/* pointerEvents must not flatten/unflatten the native Gecko ancestors. */}
+            <View
+              collapsable={false}
+              className={c.body}
+              style={[!contentFullscreen && frameStyle]}
+              pointerEvents={bodyBlocking ? "none" : "auto"}
+              accessibilityElementsHidden={accessibilityBlocking}
+              importantForAccessibility={
+                accessibilityBlocking ? "no-hide-descendants" : "auto"
+              }
+            >
+              <AnimatedView
+                className={cn(c.sidebar, contentFullscreen && c.hidden)}
+                style={[
+                  {
+                    width: sideP.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [size.rail, sidebarLimits.width],
+                    }),
+                  },
+                ]}
+              >
+                <SidebarLayer
+                  visible={sidebarMotion.expanded && !contentFullscreen}
+                  active={!ui.sidebarCollapsed && !contentFullscreen}
+                  className={cn(c.sidebarLayer, c.sidebarLayerExpanded)}
+                  style={[
+                    {
+                      width: sidebarLimits.width,
+                      opacity: sideP,
+                      transform: [
+                        {
+                          translateX: sideP.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [-12, 0],
+                          }),
+                        },
+                      ],
+                    },
+                  ]}
+                >
+                  <View className={c.sidebarTop}>
+                    <View className={c.navigationRow}>
+                      <IconButton
+                        label={tr("chrome.collapseSidebar")}
+                        icon="sidebar"
+                        onPress={toggleSidebar}
+                        disabled={!uiHydrated}
+                      />
+                      <View className={c.navSpacer} />
+                      <IconButton
+                        label={tr("chrome.back")}
+                        icon="back"
+                        onPress={goBack}
+                        disabled={!canGoBack}
+                      />
+                      <IconButton
+                        label={tr("chrome.forward")}
+                        icon="forward"
+                        onPress={() => invoke(Commands.goForward)}
+                        disabled={!canGoForward}
+                      />
+                      <IconButton
+                        label={tr("chrome.reload")}
+                        icon="reload"
+                        onPress={() => invoke(Commands.reload)}
+                      />
+                    </View>
+                    {activePrivate && (
+                      <View
+                        className={c.privateBadge}
+                        accessibilityLabel={tr("chrome.privateActive")}
+                        accessibilityRole="text"
+                      >
+                        <ChromeIcon
+                          className={cn("size-[13px]", "text-ink")}
+                          name="private"
+                        />
+                        <Text className={c.privateBadgeText}>
+                          {tr("chrome.private")}
+                        </Text>
                       </View>
-                    </DragSource>
-                  )}
-                  initialNumToRender={initialSidebarRows}
-                  maxToRenderPerBatch={8}
-                  windowSize={3}
-                  removeClippedSubviews={false}
-                  style={s.tabScroll}
-                  contentContainerStyle={s.railContent}
-                  showsVerticalScrollIndicator={false}
-                  ListHeaderComponent={
-                    <View style={s.railHeader}>
-                      {sidebar.split && <SplitSidebarItem split={sidebar.split} collapsed open={sidebarMenu?.kind === "split"} onOpen={openSplitCollection} />}
-                      {sidebar.favorites.map((tab) => (
+                    )}
+                    <AddressTrigger
+                      url={addressValue}
+                      security={target ? browser.security[target] : undefined}
+                      onPress={() => openLocationEditor("touch")}
+                    />
+                    <ExtensionActionsBar
+                      actions={extensionActions}
+                      onOpen={openExtensionAction}
+                    />
+                    <View
+                      ref={favoritesRowRef}
+                      className={c.favoritesDropTarget}
+                    >
+                      <ScrollView
+                        className={c.favoritesScroll}
+                        contentContainerClassName={c.favorites}
+                        showsVerticalScrollIndicator={false}
+                        onScroll={(event) => {
+                          favoriteScrollOffset.current =
+                            event.nativeEvent.contentOffset.y;
+                        }}
+                        scrollEventThrottle={16}
+                      >
+                        {sidebar.favorites.map((tab) => (
+                          <View
+                            key={tab.id}
+                            style={{
+                              width:
+                                (sidebarLimits.width -
+                                  24 -
+                                  6 * (favoriteColumns - 1)) /
+                                favoriteColumns,
+                            }}
+                            onLayout={(event) => {
+                              favoriteLayouts.current.set(
+                                tab.id,
+                                event.nativeEvent.layout
+                              );
+                            }}
+                          >
+                            <DragSource
+                              reducedMotion={reducedMotion}
+                              accessibilityLabel={tr("chrome.favoriteLabel", {
+                                name: tabLabel(tab),
+                              })}
+                              className={favoriteClasses({
+                                selected:
+                                  splitPaneIds.includes(tab.id) &&
+                                  !tab.suspended,
+                              })}
+                              onPress={() => revealTab(tab.id)}
+                              onDragStart={(x, y) =>
+                                beginDrag(tab.id, tabLabel(tab), x, y)
+                              }
+                              onDragMove={moveDrag}
+                              onDragRelease={finishDrag}
+                              onDragCancel={cancelDrag}
+                              onLongPress={(x, y) => openTabMenu(tab.id, x, y)}
+                            >
+                              {playing.includes(tab.id) ? (
+                                <ChromeIcon
+                                  className={cn("size-[20px]")}
+                                  name="play"
+                                />
+                              ) : (
+                                <Favicon
+                                  url={tab.url}
+                                  fallback={tabLabel(tab)
+                                    .slice(0, 1)
+                                    .toUpperCase()}
+                                  size={22}
+                                  radius={5}
+                                />
+                              )}
+                            </DragSource>
+                          </View>
+                        ))}
+                      </ScrollView>
+                    </View>
+                  </View>
+                  <AnimatedView
+                    ref={tabListRef}
+                    className={c.tabScrollWrap}
+                    style={[spaceStyle]}
+                  >
+                    <FlatList
+                      key={state?.activeWorkspaceId}
+                      data={sidebar.ordinaryTabs}
+                      keyExtractor={(tab) => tab.id}
+                      renderItem={({ item }) => renderSidebarTab(item)}
+                      initialNumToRender={initialSidebarRows}
+                      maxToRenderPerBatch={8}
+                      windowSize={3}
+                      removeClippedSubviews={false}
+                      className={c.tabScroll}
+                      contentContainerClassName={c.tabScrollContent}
+                      showsVerticalScrollIndicator={false}
+                      ListHeaderComponent={
+                        <View>
+                          {sidebar.split && (
+                            <SplitSidebarItem
+                              split={sidebar.split}
+                              collapsed={false}
+                              open={sidebarMenu?.kind === "split"}
+                              onOpen={openSplitCollection}
+                            />
+                          )}
+                          <View
+                            ref={pinnedSectionRef}
+                            className={c.persistentSection}
+                          >
+                            <SidebarPressable
+                              accessibilityRole="button"
+                              accessibilityLabel={`Manage space ${
+                                activeWorkspace?.name ?? "Space"
+                              }`}
+                              className={cn(
+                                c.spaceHeader,
+                                "active:opacity-pressed"
+                              )}
+                              onPress={() => setSpaceSwitcher(true)}
+                            >
+                              <ChromeIcon
+                                className={cn("size-[12px]", "text-ink-muted")}
+                                name="space"
+                              />
+                              <Text
+                                numberOfLines={1}
+                                className={c.spaceHeaderTitle}
+                              >
+                                {activeWorkspace?.name ?? "Space"}
+                              </Text>
+                              <ChromeIcon
+                                className={cn("size-[10px]", "text-ink-muted")}
+                                name="chevronDown"
+                              />
+                            </SidebarPressable>
+                            {sidebar.folders.map(
+                              ({
+                                folder,
+                                bookmarks,
+                                visibleBookmarks,
+                                containsFocused,
+                              }) => {
+                                const open = expandedFolders.has(folder.id);
+                                return (
+                                  <View key={folder.id}>
+                                    <SidebarFolderItem
+                                      title={folder.title}
+                                      count={bookmarks.length}
+                                      open={open}
+                                      containsFocused={containsFocused}
+                                      onPress={() => toggleFolder(folder.id)}
+                                      contextOpen={
+                                        sidebarMenu?.kind === "folder" &&
+                                        sidebarMenu.id === folder.id
+                                      }
+                                      onContextMenu={(x, y) =>
+                                        setSidebarMenu({
+                                          kind: "folder",
+                                          id: folder.id,
+                                          anchor: { x, y },
+                                        })
+                                      }
+                                    />
+                                    <FolderDisclosure
+                                      open={open}
+                                      reducedMotion={reducedMotion}
+                                    >
+                                      <View className={c.folderChildren}>
+                                        {visibleBookmarks.map((bookmark) =>
+                                          bookmarkTreeRow(bookmark, true)
+                                        )}
+                                        {bookmarks.length === 0 && (
+                                          <Text className={c.emptyFolder}>
+                                            {tr("chrome.emptyFolder")}
+                                          </Text>
+                                        )}
+                                      </View>
+                                    </FolderDisclosure>
+                                  </View>
+                                );
+                              }
+                            )}
+                            {sidebar.looseBookmarks.map((bookmark) =>
+                              bookmarkTreeRow(bookmark, false)
+                            )}
+                            {sidebar.pinnedTabs.map((tab) =>
+                              renderSidebarTab(tab)
+                            )}
+                            {privateTabs.length > 0 && (
+                              <View className={c.privateSection}>
+                                <View className={c.privateHeader}>
+                                  <ChromeIcon
+                                    className={cn(
+                                      "size-[12px]",
+                                      "text-accent-strong"
+                                    )}
+                                    name="private"
+                                  />
+                                  <Text
+                                    numberOfLines={1}
+                                    className={c.privateHeaderText}
+                                  >
+                                    {tr("chrome.privateTabs")}
+                                  </Text>
+                                  <SidebarPressable
+                                    accessibilityRole="button"
+                                    accessibilityLabel={tr(
+                                      "chrome.privateNewTab"
+                                    )}
+                                    hitSlop={8}
+                                    className={cn(
+                                      c.privateNewTab,
+                                      "active:bg-field-on-chrome"
+                                    )}
+                                    onPress={() => createPrivateTabAndShow()}
+                                  >
+                                    <ChromeIcon
+                                      className={cn(
+                                        "size-[15px]",
+                                        "text-ink-muted"
+                                      )}
+                                      name="plus"
+                                    />
+                                  </SidebarPressable>
+                                </View>
+                                {/* One collection across Spaces: private tabs
+                                vanish with the session, wherever they were
+                                opened. */}
+                                {sidebar.privateTabs.map((tab) =>
+                                  renderSidebarTab(tab)
+                                )}
+                              </View>
+                            )}
+                          </View>
+                          <View className={c.sectionRule} />
+                          <View
+                            ref={ordinarySectionRef}
+                            className={
+                              !sidebar.ordinaryTabs.length
+                                ? c.ordinarySection
+                                : undefined
+                            }
+                          >
+                            <SidebarPressable
+                              accessibilityRole="button"
+                              accessibilityLabel={tr("chrome.newTabIn", {
+                                space: activeWorkspace?.name ?? "Space",
+                              })}
+                              className={cn(
+                                c.newTab,
+                                "active:bg-field-on-chrome"
+                              )}
+                              onPress={() => openQuickOpen("touch")}
+                            >
+                              <ChromeIcon
+                                className={cn("size-[18px]", "text-ink-muted")}
+                                name="plus"
+                              />
+                              <Text className={c.newTabText}>
+                                {tr("chrome.newTab")}
+                              </Text>
+                            </SidebarPressable>
+                          </View>
+                        </View>
+                      }
+                    />
+                  </AnimatedView>
+                  <View className={c.sidebarBottom}>
+                    <IconButton
+                      label={tr("chrome.androidHome")}
+                      icon="home"
+                      onPress={goHome}
+                    />
+                    <ScrollView
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      className={c.spaceRailScroll}
+                      contentContainerClassName={c.spaceRail}
+                    >
+                      {(state?.workspaces ?? []).map((workspace) => (
+                        <SidebarPressable
+                          key={workspace.id}
+                          accessibilityRole="button"
+                          accessibilityLabel={tr("chrome.switchSpace", {
+                            space: workspace.name,
+                          })}
+                          accessibilityState={{
+                            selected: workspace.id === state?.activeWorkspaceId,
+                          }}
+                          hitSlop={8}
+                          className={cn(
+                            c.spaceChip,
+                            workspace.id === state?.activeWorkspaceId &&
+                              c.spaceChipActive,
+                            "active:opacity-pressed"
+                          )}
+                          onPress={() => switchSpace(workspace.id)}
+                          onLongPress={() => setSpaceSwitcher(true)}
+                        >
+                          <ChromeIcon
+                            className={cn(
+                              "size-[17px]",
+                              workspace.id === state?.activeWorkspaceId
+                                ? "text-ink"
+                                : "text-ink-muted"
+                            )}
+                            name="space"
+                          />
+                          {workspace.id === state?.activeWorkspaceId && (
+                            <View className={c.spaceIndicator} />
+                          )}
+                        </SidebarPressable>
+                      ))}
+                    </ScrollView>
+                    <SidebarPressable
+                      accessibilityRole="button"
+                      accessibilityLabel={tr("chrome.settings")}
+                      className={c.iconButton}
+                      onPress={() => setSettings(true)}
+                    >
+                      <ChromeIcon
+                        className={cn("size-[20px]")}
+                        name="settings"
+                      />
+                    </SidebarPressable>
+                    <SidebarPressable
+                      accessibilityRole="button"
+                      accessibilityLabel={tr("chrome.addSidebar")}
+                      className={c.iconButton}
+                      onPress={(event) =>
+                        setSidebarMenu({
+                          kind: "create",
+                          anchor: {
+                            x: event.nativeEvent.pageX,
+                            y: event.nativeEvent.pageY,
+                          },
+                        })
+                      }
+                    >
+                      <ChromeIcon className={cn("size-[20px]")} name="plus" />
+                    </SidebarPressable>
+                  </View>
+                </SidebarLayer>
+                <SidebarLayer
+                  visible={sidebarMotion.rail && !contentFullscreen}
+                  active={ui.sidebarCollapsed && !contentFullscreen}
+                  className={cn(c.sidebarLayer, c.sidebarLayerRail, "w-[48px]")}
+                  style={[
+                    {
+                      opacity: sideP.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [1, 0],
+                      }),
+                      transform: [
+                        {
+                          // Rest state (collapsed, progress 0) must sit at 0; the
+                          // 24px offset only exists while expanded so the rail
+                          // slides left into place during the collapse fade.
+                          translateX: sideP.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [0, 12],
+                          }),
+                        },
+                      ],
+                    },
+                  ]}
+                >
+                  <View className={cn(c.identityRow, c.identityRowCollapsed)}>
+                    <IconButton
+                      label={tr("chrome.expandSidebar")}
+                      icon="sidebar"
+                      onPress={toggleSidebar}
+                      disabled={!uiHydrated}
+                    />
+                  </View>
+                  <View className={c.tabScrollWrap}>
+                    <FlatList
+                      key={state?.activeWorkspaceId}
+                      data={sidebar.railTabs}
+                      keyExtractor={(tab) => tab.id}
+                      renderItem={({ item: t }) => (
                         <DragSource
                           reducedMotion={reducedMotion}
-                          key={tab.id}
-                          accessibilityLabel={tr("chrome.favoriteLabel", { name: tabLabel(tab) })}
-                          style={[
-                            s.railItem,
-                            splitPaneIds.includes(tab.id) &&
-                              !tab.suspended &&
-                              s.railTabActive,
-                          ]}
-                          onPress={() => revealTab(tab.id)}
+                          key={t.id}
+                          accessibilityLabel={tr("chrome.tabNamed", {
+                            name: tabLabel(t),
+                          })}
+                          className={cn(
+                            c.railItem,
+                            splitPaneIds.includes(t.id) &&
+                              !t.suspended &&
+                              c.railTabActive
+                          )}
+                          onPress={() => revealTab(t.id)}
                           onDragStart={(x, y) =>
-                            beginDrag(tab.id, tabLabel(tab), x, y)
+                            beginDrag(t.id, tabLabel(t), x, y)
                           }
                           onDragMove={moveDrag}
                           onDragRelease={finishDrag}
                           onDragCancel={cancelDrag}
-                          onLongPress={(x, y) => openTabMenu(tab.id, x, y)}
+                          onLongPress={(x, y) => openTabMenu(t.id, x, y)}
                         >
-                          <View style={s.railIcon}>
-                            {playing.includes(tab.id) ? (
-                              <ChromeIcon name="play" size={16} />
+                          <View className={c.railIcon}>
+                            {playing.includes(t.id) ? (
+                              <ChromeIcon
+                                className={cn("size-[16px]")}
+                                name="play"
+                              />
                             ) : (
                               <Favicon
-                                url={tab.url}
-                                fallback={tabLabel(tab)
-                                  .slice(0, 1)
-                                  .toUpperCase()}
+                                url={t.url}
+                                fallback={tabLabel(t).slice(0, 1).toUpperCase()}
                                 size={18}
                                 radius={5}
                               />
                             )}
                           </View>
                         </DragSource>
-                      ))}
-                      <View style={s.railSeparator} />
-                      {sidebar.folders.map(renderRailFolder)}
-                    </View>
-                  }
-                />
-              </View>
-              <View style={s.sidebarBottomCollapsed}>
-                <IconButton label={tr("chrome.androidHome")} icon="home" onPress={goHome} />
-                <SidebarPressable
-                  accessibilityRole="button"
-                  accessibilityLabel={tr("chrome.newTab")}
-                  hitSlop={8}
-                  style={({ pressed }) => [s.railItem, pressed && s.pressed]}
-                  onPress={() => openQuickOpen("touch")}
-                >
-                  <View style={s.railIcon}>
-                    <ChromeIcon name="plus" size={18} />
-                  </View>
-                </SidebarPressable>
-                <IconButton
-                  label={tr("chrome.settings")}
-                  icon="settings"
-                  onPress={() => setSettings(true)}
-                />
-              </View>
-            </SidebarLayer>
-            {!ui.sidebarCollapsed && (
-              <View
-                accessibilityRole="adjustable"
-                accessibilityLabel={tr("chrome.resizeSidebar")}
-                accessibilityHint={tr("chrome.resizeSidebarHint")}
-                accessibilityState={{ disabled: !uiHydrated }}
-                accessibilityValue={{
-                  min: sidebarLimits.min,
-                  max: sidebarLimits.max,
-                  now: sidebarLimits.width,
-                }}
-                accessibilityActions={[
-                  { name: "increment", label: tr("chrome.wider") },
-                  { name: "decrement", label: tr("chrome.narrower") },
-                ]}
-                onAccessibilityAction={({ nativeEvent }) => {
-                  if (nativeEvent.actionName === "increment")
-                    resizeSidebarTo(sidebarLimits.width + SIDEBAR_WIDTH_STEP);
-                  else if (nativeEvent.actionName === "decrement")
-                    resizeSidebarTo(sidebarLimits.width - SIDEBAR_WIDTH_STEP);
-                }}
-                style={s.sidebarResizeHandle}
-                {...sidebarResize.panHandlers}
-              >
-                <View pointerEvents="none" style={s.sidebarResizeGrip} />
-              </View>
-            )}
-          </Animated.View>
-          <Animated.View
-            style={[
-              s.content,
-              { opacity: spaceMotion.opacity },
-              contentFullscreen && s.contentFullscreen,
-            ]}
-          >
-            <SidebarLayer
-              visible={sidebarMotion.rail && !contentFullscreen}
-              active={ui.sidebarCollapsed && !contentFullscreen}
-              style={{
-                display: contentFullscreen ? "none" : "flex",
-                overflow: "hidden",
-                height: sideP.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [size.toolbar, 0],
-                }),
-                opacity: sideP.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [1, 0],
-                }),
-              }}
-            >
-              <View style={s.canvasToolbar}>
-                <View style={s.compactNavigation}>
-                  <IconButton
-                    label={tr("chrome.back")}
-                    icon="back"
-                    onPress={goBack}
-                    disabled={!canGoBack}
-                  />
-                  <IconButton
-                    label={tr("chrome.forward")}
-                    icon="forward"
-                    onPress={() => invoke(Commands.goForward)}
-                    disabled={!canGoForward}
-                  />
-                  <AddressTrigger
-                    compact
-                    url={addressValue}
-                    security={target ? browser.security[target] : undefined}
-                    onPress={() => openLocationEditor("touch")}
-                  />
-                  <ExtensionActionsBar
-                    actions={extensionActions}
-                    onOpen={openExtensionAction}
-                  />
-                </View>
-                <IconButton
-                  label={tr(validSplit ? "chrome.unsplitButton" : "chrome.split")}
-                  icon="split"
-                  onPress={toggleSplit}
-                  disabled={!validSplit && !splitCandidate}
-                />
-              </View>
-            </SidebarLayer>
-            <View
-              ref={panesRef}
-              collapsable={false}
-              accessible={false}
-              accessibilityLabel={tr("chrome.splitCanvas")}
-              style={[
-                s.panes,
-                renderSplit?.orientation === "vertical" && s.panesVertical,
-              ]}
-              pointerEvents={findBlocking ? "none" : "auto"}
-            >
-              {[first, second].filter(Boolean).map((tab, index) => {
-                const item = tab!;
-                const hiddenByFullscreen =
-                  contentFullscreen && item.id !== fullscreenTabId;
-                const ratio = contentFullscreen
-                  ? 1
-                  : renderSplit
-                  ? fixedSplitGeometry
-                    ? index === 0
-                      ? renderSplit.ratio
-                      : 1 - renderSplit.ratio
-                    : index === 0
-                    ? splitMotion.firstFraction
-                    : splitMotion.firstFraction.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [1, 0],
-                      })
-                  : 1;
-                // Geometry and chrome share the transition so no pane jumps
-                // to its final bounds before its content appears.
-                const joiner =
-                  !contentFullscreen &&
-                  !fixedSplitGeometry &&
-                  splitOpen &&
-                  index === 1;
-                const leaving =
-                  !contentFullscreen &&
-                  !fixedSplitGeometry &&
-                  !splitOpen &&
-                  !!renderSplit &&
-                  item.id !== target;
-                const vertical = renderSplit?.orientation === "vertical";
-                const contentMotion =
-                  joiner || leaving
-                    ? {
-                        opacity: splitP,
-                        transform: [
-                          vertical
-                            ? {
-                                translateY: splitP.interpolate({
-                                  inputRange: [0, 1],
-                                  outputRange: [index === 0 ? -16 : 16, 0],
-                                }),
-                              }
-                            : {
-                                translateX: splitP.interpolate({
-                                  inputRange: [0, 1],
-                                  outputRange: [index === 0 ? -16 : 16, 0],
-                                }),
-                              },
-                        ],
-                      }
-                    : null;
-                return (
-                  <React.Fragment key={item.id}>
-                    {index === 1 && renderSplit && (
-                      <Animated.View
-                        style={[
-                          contentFullscreen && s.hidden,
-                          { opacity: fixedSplitGeometry ? 1 : splitP },
-                          vertical
-                            ? {
-                                height: fixedSplitGeometry
-                                  ? 2
-                                  : splitP.interpolate({
-                                      inputRange: [0, 1],
-                                      outputRange: [0, 2],
-                                    }),
-                              }
-                            : {
-                                width: fixedSplitGeometry
-                                  ? 2
-                                  : splitP.interpolate({
-                                      inputRange: [0, 1],
-                                      outputRange: [0, 2],
-                                    }),
-                              },
-                        ]}
-                        pointerEvents={splitOpen ? "auto" : "none"}
-                      >
-                        <View
-                          accessibilityRole="adjustable"
-                          accessibilityLabel={tr("chrome.resizeSplit")}
-                          accessibilityActions={[
-                            { name: "increment", label: tr("chrome.growFirst") },
-                            { name: "decrement", label: tr("chrome.shrinkFirst") },
-                          ]}
-                          onAccessibilityAction={(event) => {
-                            const delta =
-                              event.nativeEvent.actionName === "increment"
-                                ? 0.05
-                                : -0.05;
-                            if (validSplit)
-                              setSplitLayout({
-                                ...validSplit,
-                                ratio: clampSplitRatio(
-                                  validSplit.ratio + delta
-                                ),
-                              });
-                          }}
-                          hitSlop={8}
-                          style={[
-                            s.divider,
-                            !vertical && { height: "100%" },
-                            renderSplit.orientation === "vertical" &&
-                              s.dividerVertical,
-                          ]}
-                          {...dividerPanResponder.panHandlers}
-                        >
-                          <View
-                            style={[
-                              s.dividerHandle,
-                              renderSplit.orientation === "vertical" &&
-                                s.dividerHandleVertical,
-                            ]}
-                          />
-                        </View>
-                      </Animated.View>
-                    )}
-                    <Animated.View
-                      pointerEvents={
-                        leaving || hiddenByFullscreen ? "none" : "auto"
-                      }
-                      importantForAccessibility={
-                        leaving || hiddenByFullscreen
-                          ? "no-hide-descendants"
-                          : "auto"
-                      }
-                      style={[
-                        s.pane,
-                        { flex: ratio },
-                        // Arc gives a single pane no focus ring — the ring
-                        // only marks which half of a split is focused, so a
-                        // lone pane never draws a doubled border inside the
-                        // card's own border.
-                        renderSplit && target === item.id && s.paneFocused,
-                        contentFullscreen && s.paneFullscreen,
-                        hiddenByFullscreen && s.hidden,
-                      ]}
-                    >
-                      {renderSplit && (
-                        <Animated.View
-                          style={{
-                            overflow: "hidden",
-                            height: contentFullscreen
-                              ? 0
-                              : fixedSplitGeometry
-                              ? size.row
-                              : splitP.interpolate({
-                                  inputRange: [0, 1],
-                                  outputRange: [0, size.row],
-                                }),
-                            opacity: fixedSplitGeometry ? 1 : splitP,
-                          }}
-                        >
-                          <DragSource
-                            reducedMotion={reducedMotion}
-                            accessibilityLabel={tabLabel(item)}
-                            style={[
-                              s.paneHeader,
-                              target === item.id && s.paneHeaderFocused,
-                            ]}
-                            onPress={() => setFocused(item.id)}
-                            onDragStart={(x, y) =>
-                              beginDrag(item.id, tabLabel(item), x, y)
-                            }
-                            onDragMove={moveDrag}
-                            onDragRelease={finishDrag}
-                            onDragCancel={cancelDrag}
-                          >
-                            <Favicon
-                              url={item.url}
-                              fallback={tabLabel(item)
-                                .slice(0, 1)
-                                .toUpperCase()}
-                              size={16}
-                              radius={4}
-                            />
-                            <Text numberOfLines={1} style={s.paneHeaderTitle}>
-                              {tabLabel(item)}
-                            </Text>
-                            <ChromeIcon
-                              name="more"
-                              size={16}
-                              color={theme.inkMuted}
-                            />
-                          </DragSource>
-                        </Animated.View>
                       )}
-                      <Animated.View
-                        style={
-                          contentMotion
-                            ? [s.paneContent, contentMotion]
-                            : s.paneContent
-                        }
-                      >
-                        <PaneLoadBar
-                          tabId={item.id}
-                          theme={theme}
-                          reducedMotion={reducedMotion}
-                        />
-                        {renderSurface(item.id, item.url)}
-                        <Overlay
-                          open={
-                            item.url === NEW_TAB_URL &&
-                            !controller.isPopupTab(item.id)
-                          }
-                          style={s.newTabOverlay}
-                          pop
-                          reducedMotion={reducedMotion}
-                        >
-                          {item.url === NEW_TAB_URL &&
-                            !controller.isPopupTab(item.id) && (
-                              <NewTabPage
-                                favorites={favoriteTabs}
-                                reducedMotion={reducedMotion}
-                                engine={ui.searchEngine}
-                                suggestions={suggestionSources}
-                                commands={registry.entries(language)}
-                                onCommand={(id) => registry.execute(id)}
-                                onOpenUrl={(url) => loadInPane(item.id, url)}
-                                onOpenFavorite={(id) => {
-                                  const blank = item.id;
-                                  switchTab(id);
-                                  if (blank !== id)
-                                    run(controller.close(blank));
-                                }}
-                              />
-                            )}
-                        </Overlay>
-                      </Animated.View>
-                    </Animated.View>
-                  </React.Fragment>
-                );
-              })}
-              {drag?.zone && (
-                <View
-                  pointerEvents="none"
-                  style={[
-                    s.dropPreview,
-                    drag.zone === "left" && s.dropLeft,
-                    drag.zone === "right" && s.dropRight,
-                    drag.zone === "top" && s.dropTop,
-                    drag.zone === "bottom" && s.dropBottom,
-                  ]}
-                />
-              )}
-            </View>
-            <Overlay open={!!findTab} reducedMotion={reducedMotion}>
-              {findTab && (
-                <FindBar
-                  onFind={(text) => {
-                    lastFindQuery.current = text;
-                    if (typeof platform.findInPage === "function")
-                      platform.findInPage(findTab, text, false);
-                  }}
-                  onStep={(backward) => {
-                    if (typeof platform.findInPage === "function")
-                      platform.findInPage(
-                        findTab,
-                        lastFindQuery.current,
-                        backward
-                      );
-                  }}
-                  onClose={closeFind}
-                  result={findResult}
-                />
-              )}
-            </Overlay>
-          </Animated.View>
-        </View>
-        <Overlay
-          open={notice !== ""}
-          style={s.noticeBanner}
-          lift={-12}
-          touchThrough
-          reducedMotion={reducedMotion}
-        >
-          <View pointerEvents="none">
-            <Text style={s.noticeText}>{notice}</Text>
-          </View>
-        </Overlay>
-        {sheet(
-          !!menuTab,
-          () => setCtxMenuTabId(null),
-          menuTab && state && (
-            <TabContextMenuDialog
-              tab={
-                menuTab
-                  ? {
-                      id: menuTab.id,
-                      title: tabLabel(menuTab),
-                      workspaceId: menuTab.favorite
-                        ? state.activeWorkspaceId
-                        : menuTab.workspaceId,
-                      favorite: !!menuTab.favorite,
-                      pinned: !!menuTab.pinned,
-                    }
-                  : null
-              }
-              anchor={ctxMenuAnchor}
-              workspaces={state.workspaces}
-              onCloseTab={() => closeTab(menuTab.id)}
-              onSplit={() => setSplitPickerTabId(menuTab.id)}
-              onCopyLink={() => {
-                platform.copyToClipboard(menuTab.url);
-                flashNotice(tr("chrome.linkCopied"));
-              }}
-              onReset={
-                menuTab.favorite || menuTab.pinned
-                  ? () => run(controller.reset(menuTab.id))
-                  : undefined
-              }
-              onToggleFavorite={
-                menuTab.private
-                  ? undefined
-                  : () => {
-                      if (!menuTab) return;
-                      run(
-                        controller.setFavorite(menuTab.id, !menuTab.favorite)
-                      );
-                    }
-              }
-              onTogglePin={
-                menuTab.private
-                  ? undefined
-                  : () => {
-                      if (!menuTab) return;
-                      run(controller.setPinned(menuTab.id, !menuTab.pinned));
-                    }
-              }
-              onDuplicate={() => {
-                if (!menuTab) return;
-                const workspaceId = menuTab.favorite
-                  ? state.activeWorkspaceId
-                  : menuTab.workspaceId;
-                // Duplicating a private tab keeps the browsing mode.
-                if (menuTab.private) {
-                  run(
-                    controller
-                      .createTab(menuTab.url, workspaceId, { private: true })
-                      .then((snapshot) => {
-                        setSplitLayout(null);
-                        setFocused(snapshot.activeTabId ?? null);
-                      })
-                  );
-                } else createTabAndShow(menuTab.url, workspaceId);
-              }}
-              onOpenInNewWindow={
-                // The focused pane can pop out only when another live tab can
-                // take its place, so the main browser never shows a stolen pane.
-                menuTab && !menuTab.suspended &&
-                (menuTab.id !== target ||
-                  (state?.tabs ?? []).some(
-                    (t) =>
-                      !t.suspended &&
-                      t.id !== menuTab.id &&
-                      (t.favorite ||
-                        t.workspaceId ===
-                          (menuTab.favorite
-                            ? state.activeWorkspaceId
-                            : menuTab.workspaceId))
-                  ))
-                  ? () => {
-                      if (!menuTab) return;
-                      setCtxMenuTabId(null);
-                      if (menuTab.id !== target) {
-                        void platform.openInNewWindow?.(menuTab.id).catch(() => {});
-                        return;
+                      initialNumToRender={initialSidebarRows}
+                      maxToRenderPerBatch={8}
+                      windowSize={3}
+                      removeClippedSubviews={false}
+                      className={c.tabScroll}
+                      contentContainerClassName={c.railContent}
+                      showsVerticalScrollIndicator={false}
+                      ListHeaderComponent={
+                        <View className={c.railHeader}>
+                          {sidebar.split && (
+                            <SplitSidebarItem
+                              split={sidebar.split}
+                              collapsed
+                              open={sidebarMenu?.kind === "split"}
+                              onOpen={openSplitCollection}
+                            />
+                          )}
+                          {sidebar.favorites.map((tab) => (
+                            <DragSource
+                              reducedMotion={reducedMotion}
+                              key={tab.id}
+                              accessibilityLabel={tr("chrome.favoriteLabel", {
+                                name: tabLabel(tab),
+                              })}
+                              className={cn(
+                                c.railItem,
+                                splitPaneIds.includes(tab.id) &&
+                                  !tab.suspended &&
+                                  c.railTabActive
+                              )}
+                              onPress={() => revealTab(tab.id)}
+                              onDragStart={(x, y) =>
+                                beginDrag(tab.id, tabLabel(tab), x, y)
+                              }
+                              onDragMove={moveDrag}
+                              onDragRelease={finishDrag}
+                              onDragCancel={cancelDrag}
+                              onLongPress={(x, y) => openTabMenu(tab.id, x, y)}
+                            >
+                              <View className={c.railIcon}>
+                                {playing.includes(tab.id) ? (
+                                  <ChromeIcon
+                                    className={cn("size-[16px]")}
+                                    name="play"
+                                  />
+                                ) : (
+                                  <Favicon
+                                    url={tab.url}
+                                    fallback={tabLabel(tab)
+                                      .slice(0, 1)
+                                      .toUpperCase()}
+                                    size={18}
+                                    radius={5}
+                                  />
+                                )}
+                              </View>
+                            </DragSource>
+                          ))}
+                          <View className={c.railSeparator} />
+                          {sidebar.folders.map(renderRailFolder)}
+                        </View>
                       }
-                      const workspaceId = menuTab.favorite
-                        ? state.activeWorkspaceId
-                        : menuTab.workspaceId;
-                      const replacement = (state?.tabs ?? []).find(
+                    />
+                  </View>
+                  <View className={c.sidebarBottomCollapsed}>
+                    <IconButton
+                      label={tr("chrome.androidHome")}
+                      icon="home"
+                      onPress={goHome}
+                    />
+                    <SidebarPressable
+                      accessibilityRole="button"
+                      accessibilityLabel={tr("chrome.newTab")}
+                      hitSlop={8}
+                      className={cn(c.railItem, "active:opacity-pressed")}
+                      onPress={() => openQuickOpen("touch")}
+                    >
+                      <View className={c.railIcon}>
+                        <ChromeIcon className={cn("size-[18px]")} name="plus" />
+                      </View>
+                    </SidebarPressable>
+                    <IconButton
+                      label={tr("chrome.settings")}
+                      icon="settings"
+                      onPress={() => setSettings(true)}
+                    />
+                  </View>
+                </SidebarLayer>
+                {!ui.sidebarCollapsed && (
+                  <View
+                    accessibilityRole="adjustable"
+                    accessibilityLabel={tr("chrome.resizeSidebar")}
+                    accessibilityHint={tr("chrome.resizeSidebarHint")}
+                    accessibilityState={{ disabled: !uiHydrated }}
+                    accessibilityValue={{
+                      min: sidebarLimits.min,
+                      max: sidebarLimits.max,
+                      now: sidebarLimits.width,
+                    }}
+                    accessibilityActions={[
+                      { name: "increment", label: tr("chrome.wider") },
+                      { name: "decrement", label: tr("chrome.narrower") },
+                    ]}
+                    onAccessibilityAction={({ nativeEvent }) => {
+                      if (nativeEvent.actionName === "increment")
+                        resizeSidebarTo(
+                          sidebarLimits.width + SIDEBAR_WIDTH_STEP
+                        );
+                      else if (nativeEvent.actionName === "decrement")
+                        resizeSidebarTo(
+                          sidebarLimits.width - SIDEBAR_WIDTH_STEP
+                        );
+                    }}
+                    className={c.sidebarResizeHandle}
+                    {...sidebarResize.panHandlers}
+                  >
+                    <View
+                      pointerEvents="none"
+                      className={c.sidebarResizeGrip}
+                    />
+                  </View>
+                )}
+              </AnimatedView>
+              <AnimatedView
+                className={cn(
+                  c.content,
+                  contentFullscreen && c.contentFullscreen
+                )}
+                style={[{ opacity: spaceMotion.opacity }]}
+              >
+                <SidebarLayer
+                  visible={sidebarMotion.rail && !contentFullscreen}
+                  active={ui.sidebarCollapsed && !contentFullscreen}
+                  className={cn(
+                    contentFullscreen ? "hidden" : "flex",
+                    "overflow-hidden"
+                  )}
+                  style={{
+                    height: sideP.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [size.toolbar, 0],
+                    }),
+                    opacity: sideP.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [1, 0],
+                    }),
+                  }}
+                >
+                  <View className={c.canvasToolbar}>
+                    <View className={c.compactNavigation}>
+                      <IconButton
+                        label={tr("chrome.back")}
+                        icon="back"
+                        onPress={goBack}
+                        disabled={!canGoBack}
+                      />
+                      <IconButton
+                        label={tr("chrome.forward")}
+                        icon="forward"
+                        onPress={() => invoke(Commands.goForward)}
+                        disabled={!canGoForward}
+                      />
+                      <AddressTrigger
+                        compact
+                        url={addressValue}
+                        security={target ? browser.security[target] : undefined}
+                        onPress={() => openLocationEditor("touch")}
+                      />
+                      <ExtensionActionsBar
+                        actions={extensionActions}
+                        onOpen={openExtensionAction}
+                      />
+                    </View>
+                    <IconButton
+                      label={tr(
+                        validSplit ? "chrome.unsplitButton" : "chrome.split"
+                      )}
+                      icon="split"
+                      onPress={toggleSplit}
+                      disabled={!validSplit && !splitCandidate}
+                    />
+                  </View>
+                </SidebarLayer>
+                <View
+                  ref={panesRef}
+                  collapsable={false}
+                  accessible={false}
+                  accessibilityLabel={tr("chrome.splitCanvas")}
+                  className={cn(
+                    c.panes,
+                    renderSplit?.orientation === "vertical" && c.panesVertical
+                  )}
+                >
+                  {[first, second].filter(Boolean).map((tab, index) => {
+                    const item = tab!;
+                    const hiddenByFullscreen =
+                      contentFullscreen && item.id !== fullscreenTabId;
+                    const ratio = contentFullscreen
+                      ? 1
+                      : renderSplit
+                      ? fixedSplitGeometry
+                        ? index === 0
+                          ? renderSplit.ratio
+                          : 1 - renderSplit.ratio
+                        : index === 0
+                        ? splitMotion.firstFraction
+                        : splitMotion.firstFraction.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [1, 0],
+                          })
+                      : 1;
+                    // Geometry and chrome share the transition so no pane jumps
+                    // to its final bounds before its content appears.
+                    const joiner =
+                      !contentFullscreen &&
+                      !fixedSplitGeometry &&
+                      splitOpen &&
+                      index === 1;
+                    const leaving =
+                      !contentFullscreen &&
+                      !fixedSplitGeometry &&
+                      !splitOpen &&
+                      !!renderSplit &&
+                      item.id !== target;
+                    const vertical = renderSplit?.orientation === "vertical";
+                    const contentMotion =
+                      joiner || leaving
+                        ? {
+                            opacity: splitP,
+                            transform: [
+                              vertical
+                                ? {
+                                    translateY: splitP.interpolate({
+                                      inputRange: [0, 1],
+                                      outputRange: [index === 0 ? -16 : 16, 0],
+                                    }),
+                                  }
+                                : {
+                                    translateX: splitP.interpolate({
+                                      inputRange: [0, 1],
+                                      outputRange: [index === 0 ? -16 : 16, 0],
+                                    }),
+                                  },
+                            ],
+                          }
+                        : null;
+                    return (
+                      <React.Fragment key={item.id}>
+                        {index === 1 && renderSplit && (
+                          <AnimatedView
+                            className={cn(contentFullscreen && c.hidden)}
+                            style={[
+                              { opacity: fixedSplitGeometry ? 1 : splitP },
+                              vertical
+                                ? {
+                                    height: fixedSplitGeometry
+                                      ? 2
+                                      : splitP.interpolate({
+                                          inputRange: [0, 1],
+                                          outputRange: [0, 2],
+                                        }),
+                                  }
+                                : {
+                                    width: fixedSplitGeometry
+                                      ? 2
+                                      : splitP.interpolate({
+                                          inputRange: [0, 1],
+                                          outputRange: [0, 2],
+                                        }),
+                                  },
+                            ]}
+                            pointerEvents={splitOpen ? "auto" : "none"}
+                          >
+                            <View
+                              accessibilityRole="adjustable"
+                              accessibilityLabel={tr("chrome.resizeSplit")}
+                              accessibilityActions={[
+                                {
+                                  name: "increment",
+                                  label: tr("chrome.growFirst"),
+                                },
+                                {
+                                  name: "decrement",
+                                  label: tr("chrome.shrinkFirst"),
+                                },
+                              ]}
+                              onAccessibilityAction={(event) => {
+                                const delta =
+                                  event.nativeEvent.actionName === "increment"
+                                    ? 0.05
+                                    : -0.05;
+                                if (validSplit)
+                                  setSplitLayout({
+                                    ...validSplit,
+                                    ratio: clampSplitRatio(
+                                      validSplit.ratio + delta
+                                    ),
+                                  });
+                              }}
+                              hitSlop={8}
+                              className={cn(
+                                c.divider,
+                                !vertical && "h-full",
+                                renderSplit.orientation === "vertical" &&
+                                  c.dividerVertical
+                              )}
+                              {...dividerPanResponder.panHandlers}
+                            >
+                              <View
+                                className={cn(
+                                  c.dividerHandle,
+                                  renderSplit.orientation === "vertical" &&
+                                    c.dividerHandleVertical
+                                )}
+                              />
+                            </View>
+                          </AnimatedView>
+                        )}
+                        <AnimatedView
+                          pointerEvents={
+                            leaving || hiddenByFullscreen ? "none" : "auto"
+                          }
+                          importantForAccessibility={
+                            leaving || hiddenByFullscreen
+                              ? "no-hide-descendants"
+                              : "auto"
+                          }
+                          className={paneClasses({
+                            focused: !!renderSplit && target === item.id,
+                            fullscreen: contentFullscreen,
+                            hidden: hiddenByFullscreen,
+                          })}
+                          style={[{ flex: ratio }]}
+                        >
+                          {renderSplit && (
+                            <AnimatedView
+                              className={"overflow-hidden"}
+                              style={{
+                                height: contentFullscreen
+                                  ? 0
+                                  : fixedSplitGeometry
+                                  ? size.row
+                                  : splitP.interpolate({
+                                      inputRange: [0, 1],
+                                      outputRange: [0, size.row],
+                                    }),
+                                opacity: fixedSplitGeometry ? 1 : splitP,
+                              }}
+                            >
+                              <DragSource
+                                reducedMotion={reducedMotion}
+                                accessibilityLabel={tabLabel(item)}
+                                className={cn(
+                                  c.paneHeader,
+                                  target === item.id && c.paneHeaderFocused
+                                )}
+                                onPress={() => setFocused(item.id)}
+                                onDragStart={(x, y) =>
+                                  beginDrag(item.id, tabLabel(item), x, y)
+                                }
+                                onDragMove={moveDrag}
+                                onDragRelease={finishDrag}
+                                onDragCancel={cancelDrag}
+                              >
+                                <Favicon
+                                  url={item.url}
+                                  fallback={tabLabel(item)
+                                    .slice(0, 1)
+                                    .toUpperCase()}
+                                  size={16}
+                                  radius={4}
+                                />
+                                <Text
+                                  numberOfLines={1}
+                                  className={c.paneHeaderTitle}
+                                >
+                                  {tabLabel(item)}
+                                </Text>
+                                <ChromeIcon
+                                  className={cn(
+                                    "size-[16px]",
+                                    "text-ink-muted"
+                                  )}
+                                  name="more"
+                                />
+                              </DragSource>
+                            </AnimatedView>
+                          )}
+                          <AnimatedView
+                            className={c.paneContent}
+                            style={contentMotion ? [contentMotion] : undefined}
+                          >
+                            <PaneLoadBar
+                              tabId={item.id}
+                              theme={theme}
+                              reducedMotion={reducedMotion}
+                            />
+                            {renderSurface(item.id, item.url)}
+                            <Overlay
+                              open={
+                                item.url === NEW_TAB_URL &&
+                                !controller.isPopupTab(item.id)
+                              }
+                              className={c.newTabOverlay}
+                              pop
+                              reducedMotion={reducedMotion}
+                            >
+                              {item.url === NEW_TAB_URL &&
+                                !controller.isPopupTab(item.id) && (
+                                  <NewTabPage
+                                    favorites={favoriteTabs}
+                                    keyboardInset={keyboardInset}
+                                    visibleHeight={
+                                      inputViewport.visibleHeight ||
+                                      windowHeight - keyboardInset
+                                    }
+                                    reducedMotion={reducedMotion}
+                                    engine={ui.searchEngine}
+                                    suggestions={suggestionSources}
+                                    commands={registry.entries(language)}
+                                    onCommand={(id) => registry.execute(id)}
+                                    onOpenUrl={(url) =>
+                                      loadInPane(item.id, url)
+                                    }
+                                    onOpenFavorite={(id) => {
+                                      const blank = item.id;
+                                      switchTab(id);
+                                      if (blank !== id)
+                                        run(controller.close(blank));
+                                    }}
+                                  />
+                                )}
+                            </Overlay>
+                          </AnimatedView>
+                        </AnimatedView>
+                      </React.Fragment>
+                    );
+                  })}
+                  {drag?.zone && (
+                    <View
+                      pointerEvents="none"
+                      className={cn(
+                        c.dropPreview,
+                        drag.zone === "left" && c.dropLeft,
+                        drag.zone === "right" && c.dropRight,
+                        drag.zone === "top" && c.dropTop,
+                        drag.zone === "bottom" && c.dropBottom
+                      )}
+                    />
+                  )}
+                </View>
+                <Overlay
+                  open={!!findTab}
+                  className={c.findOverlay}
+                  touchThrough
+                  dim={false}
+                  reducedMotion={reducedMotion}
+                >
+                  {findTab && (
+                    <FindBar
+                      key={findTab}
+                      onFind={(text) => {
+                        lastFindQuery.current = text;
+                        if (typeof platform.findInPage === "function")
+                          platform.findInPage(findTab, text, false);
+                      }}
+                      onStep={(backward) => {
+                        if (typeof platform.findInPage === "function")
+                          platform.findInPage(
+                            findTab,
+                            lastFindQuery.current,
+                            backward
+                          );
+                      }}
+                      onClose={closeFind}
+                      result={findResult}
+                    />
+                  )}
+                </Overlay>
+              </AnimatedView>
+            </View>
+            <Overlay
+              open={notice !== ""}
+              className={c.noticeBanner}
+              lift={-12}
+              touchThrough
+              reducedMotion={reducedMotion}
+            >
+              <View pointerEvents="none">
+                <Text className={c.noticeText}>{notice}</Text>
+              </View>
+            </Overlay>
+            {sheet(
+              !!menuTab,
+              () => setCtxMenuTabId(null),
+              menuTab && state && (
+                <TabContextMenuDialog
+                  tab={
+                    menuTab
+                      ? {
+                          id: menuTab.id,
+                          title: tabLabel(menuTab),
+                          workspaceId: menuTab.favorite
+                            ? state.activeWorkspaceId
+                            : menuTab.workspaceId,
+                          favorite: !!menuTab.favorite,
+                          pinned: !!menuTab.pinned,
+                        }
+                      : null
+                  }
+                  anchor={ctxMenuAnchor}
+                  workspaces={state.workspaces}
+                  onCloseTab={() => closeTab(menuTab.id)}
+                  onSplit={() => setSplitPickerTabId(menuTab.id)}
+                  onCopyLink={() => {
+                    platform.copyToClipboard(menuTab.url);
+                    flashNotice(tr("chrome.linkCopied"));
+                  }}
+                  onReset={
+                    menuTab.favorite || menuTab.pinned
+                      ? () => run(controller.reset(menuTab.id))
+                      : undefined
+                  }
+                  onToggleFavorite={
+                    menuTab.private
+                      ? undefined
+                      : () => {
+                          if (!menuTab) return;
+                          run(
+                            controller.setFavorite(
+                              menuTab.id,
+                              !menuTab.favorite
+                            )
+                          );
+                        }
+                  }
+                  onTogglePin={
+                    menuTab.private
+                      ? undefined
+                      : () => {
+                          if (!menuTab) return;
+                          run(
+                            controller.setPinned(menuTab.id, !menuTab.pinned)
+                          );
+                        }
+                  }
+                  onDuplicate={() => {
+                    if (!menuTab) return;
+                    const workspaceId = menuTab.favorite
+                      ? state.activeWorkspaceId
+                      : menuTab.workspaceId;
+                    // Duplicating a private tab keeps the browsing mode.
+                    if (menuTab.private) {
+                      run(
+                        controller
+                          .createTab(menuTab.url, workspaceId, {
+                            private: true,
+                          })
+                          .then((snapshot) => {
+                            setSplitLayout(null);
+                            setFocused(snapshot.activeTabId ?? null);
+                          })
+                      );
+                    } else createTabAndShow(menuTab.url, workspaceId);
+                  }}
+                  onOpenInNewWindow={
+                    // The focused pane can pop out only when another live tab can
+                    // take its place, so the main browser never shows a stolen pane.
+                    menuTab &&
+                    !menuTab.suspended &&
+                    (menuTab.id !== target ||
+                      (state?.tabs ?? []).some(
                         (t) =>
                           !t.suspended &&
                           t.id !== menuTab.id &&
-                          (t.favorite || t.workspaceId === workspaceId)
-                      );
-                      if (!replacement) return;
-                      void platform
-                        .openInNewWindow?.(menuTab.id)
-                        .then(() => switchTab(replacement.id))
-                        .catch(() => {});
-                    }
-                  : undefined
-              }
-              onMoveToWorkspace={(workspaceId) => {
-                if (!menuTab) return;
-                // Preserve the outgoing pane until native claims its display.
-                run(
-                  controller
-                    .setTabWorkspace(menuTab.id, workspaceId)
-                    .then((snapshot) => {
-                      setSplitLayout(null);
-                      setFocused(snapshot.activeTabId ?? null);
-                    })
-                );
-              }}
-              onCloseOthers={() => {
-                if (!menuTab) return;
-                state.tabs
-                  .filter(
-                    (t) =>
-                      t.workspaceId ===
-                        (menuTab.favorite
-                          ? state.activeWorkspaceId
-                          : menuTab.workspaceId) &&
-                      t.id !== menuTab.id &&
-                      !t.favorite &&
-                      !t.pinned
-                  )
-                  .forEach((t) => closeTab(t.id));
-              }}
-              onClose={() => setCtxMenuTabId(null)}
-            />
-          )
-        )}
-        {sheet(
-          !!sidebarMenu,
-          () => setSidebarMenu(null),
-          sidebarMenu && (
-            sidebarMenu.kind === "split" && sidebar.split ? <SidebarPageMenu
-              title={tr(sidebar.split.pages[0].private ? "chrome.privateSplit" : "chrome.splitView")}
-              anchor={sidebarMenu.anchor}
-              onClose={() => setSidebarMenu(null)}
-              pages={sidebar.split.pages.map((page, index) => ({
-                ...page,
-                detail: tr(sidebar.split!.orientation === "horizontal" ? (index ? "side.right" : "side.left") : (index ? "side.bottom" : "side.top")),
-                selected: page.id === sidebar.split!.focusedId,
-                onPress: () => switchTab(page.id),
-                onMenu: (anchor) => openTabMenu(page.id, anchor.x, anchor.y),
-              }))}
-              actions={[
-                { id: "orientation", label: tr(sidebar.split.orientation === "horizontal" ? "chrome.arrangeVertical" : "chrome.arrangeHorizontal"), icon: "split", onPress: () => setSplitLayout(current => current && current.first === sidebar.split?.pages[0].id && current.second === sidebar.split?.pages[1].id ? { ...current, orientation: current.orientation === "horizontal" ? "vertical" : "horizontal" } : current) },
-                { id: "unsplit", label: tr("chrome.unsplit"), icon: "sidebar", onPress: toggleSplit },
-              ]}
-            /> : sidebarMenu.kind === "folderPages" ? <SidebarPageMenu
-              title={sidebar.folders.find(item => item.folder.id === sidebarMenu.id)?.folder.title ?? tr("chrome.folder")}
-              anchor={sidebarMenu.anchor}
-              onClose={() => setSidebarMenu(null)}
-              pages={(sidebar.folders.find(item => item.folder.id === sidebarMenu.id)?.bookmarks ?? []).map(bookmark => {
-                const tab = bookmarkTabs.get(bookmark.id);
-                return {
-                  id: bookmark.id, title: bookmark.title, url: tab?.url || bookmark.url,
-                  private: !!tab?.private,
-                  selected: !!tab && !tab.suspended && tab.id === target,
-                  onPress: () => tab ? switchTab(tab.id) : openBookmark(bookmark),
-                  onMenu: (anchor) => setSidebarMenu({ kind: "bookmark", id: bookmark.id, anchor }),
-                };
-              })}
-              actions={[{ id: "manage", label: tr("chrome.folderActions"), icon: "folder", onPress: () => setSidebarMenu({ kind: "folder", id: sidebarMenu.id, anchor: sidebarMenu.anchor }) }]}
-            /> :
-            <ActionMenu
-              title={
-                sidebarMenu.kind === "create"
-                  ? tr("chrome.addSidebar")
-                  : sidebarMenu.kind === "folder"
-                  ? tr("chrome.folder")
-                  : sidebarMenu.kind === "bookmarkMove"
-                  ? tr("chrome.moveBookmark")
-                  : tr("chrome.bookmark")
-              }
-              anchor={sidebarMenu.anchor}
-              items={sidebarActions()}
-              onClose={() => setSidebarMenu(null)}
-            />
-          )
-        )}
-        {sheet(
-          !!splitPickerTabId,
-          () => setSplitPickerTabId(null),
-          splitPickerTabId && (
-            <ActionMenu
-              title={tr("chrome.chooseSplitTab")}
-              onClose={() => setSplitPickerTabId(null)}
-              items={(state?.tabs ?? [])
-                .filter(
-                  (tab) =>
-                    tab.id !== splitPickerTabId &&
-                    !tab.suspended &&
-                    (tab.favorite ||
-                      tab.workspaceId === state?.activeWorkspaceId) &&
-                    // Splits never cross the browsing-mode boundary.
-                    !!tab.private ===
-                      !!state?.tabs.find(
-                        (origin) => origin.id === splitPickerTabId
-                      )?.private
-                )
-                .map((tab) => ({
-                  id: tab.id,
-                  label: tabLabel(tab),
-                  icon: "split",
-                  onPress: () => {
-                    const origin = splitPickerTabId;
-                    if (!origin) return;
-                    run(
-                      controller.activate(origin, [origin, tab.id]).then(() => {
-                        setSplitLayout({
-                          first: origin,
-                          second: tab.id,
-                          orientation: "horizontal",
-                          ratio: 0.5,
-                        });
-                        setFocused(origin);
-                      })
-                    );
-                  },
-                }))}
-            />
-          )
-        )}
-        {sheet(
-          newFolderOpen,
-          () => setNewFolderOpen(false),
-          newFolderOpen && (
-            <View style={[s.dialog, s.settingsDialog]}>
-              <Text style={s.dialogTitle}>{tr("chrome.newFolder")}</Text>
-              <TextInput
-                accessibilityLabel={tr("chrome.folderName")}
-                autoFocus
-                value={folderName}
-                onChangeText={setFolderName}
-                style={s.commandInput}
-                placeholder={tr("chrome.folderName")}
-                placeholderTextColor={theme.inkFaint}
-              />
-              <Button
-                label={tr("chrome.createFolder")}
-                disabled={!folderName.trim()}
-                onPress={() => {
-                  if (!folderName.trim()) return;
-                  run(
-                    controller
-                      .bookmarkFolderCreate(folderName.trim())
-                      .then(() => {
-                        setNewFolderOpen(false);
-                        setFolderName("");
-                      })
-                  );
-                }}
-              />
-            </View>
-          )
-        )}
-        {sheet(
-          !!spaceSwitcher,
-          () => setSpaceSwitcher(false),
-          state && (
-            <SpaceSwitcherDialog
-              workspaces={state.workspaces}
-              activeWorkspaceId={state.activeWorkspaceId}
-              counts={Object.fromEntries(
-                state.workspaces.map((w) => [
-                  w.id,
-                  state.tabs.filter((t) => t.workspaceId === w.id).length,
-                ])
-              )}
-              onSwitch={(id) => {
-                setSpaceSwitcher(false);
-                switchSpace(id);
-              }}
-              onCreate={() => {
-                run(
-                  controller
-                    .workspace(`Space ${(state.workspaces.length ?? 0) + 1}`)
-                    .then((snapshot) => {
-                      setSplitLayout(null);
-                      setFocused(snapshot.activeTabId ?? null);
-                      setSpaceSwitcher(false);
-                    })
-                );
-              }}
-              onClose={() => setSpaceSwitcher(false)}
-            />
-          )
-        )}
-        {sheet(
-          !!historyOpen,
-          () => closeSettingsChild("history", () => setHistoryOpen(false)),
-          <HistoryDialog
-            entries={history.entries}
-            onOpen={(url) => {
-              settingsReturn.current = null;
-              createTabAndShow(url);
-            }}
-            onClear={() => {
-              void history.clear().then((ok) => {
-                if (!ok) setError(tr("chrome.historyClearFailed"));
-              });
-            }}
-            onClose={() =>
-              closeSettingsChild("history", () => setHistoryOpen(false))
-            }
-          />
-        )}
-        {drag && (
-          <Animated.View
-            pointerEvents="none"
-            style={[
-              s.dragGhost,
-              {
-                opacity: ghostOpacity,
-                transform: [
-                  { translateX: ghostPosition.x },
-                  { translateY: ghostPosition.y },
-                  { scale: ghostScale },
-                ],
-              },
-            ]}
-          >
-            <Text numberOfLines={1} style={s.dragGhostText}>
-              {drag.title}
-            </Text>
-          </Animated.View>
-        )}
-        {sheet(
-          !!quickOpen,
-          closeQuickOpen,
-          quickOpen && (
-            <View style={[s.dialog, s.quickOpenDialog]}>
-              <AddressBox
-                autoFocus
-                softInput={quickOpenSoft}
-                reducedMotion={reducedMotion}
-                engine={ui.searchEngine}
-                value={
-                  quickOpenEdit && targetUrl !== NEW_TAB_URL
-                    ? targetUrl
-                    : undefined
-                }
-                suggestions={suggestionSources}
-                commands={quickOpenEdit ? [] : registry.entries(language)}
-                onDismiss={closeQuickOpen}
-                onOpenTab={
-                  quickOpenEdit
-                    ? undefined
-                    : (id) => {
-                        closeQuickOpen();
-                        switchTab(id);
-                      }
-                }
-                onCommand={(id) => {
-                  closeQuickOpen();
-                  registry.execute(id);
-                }}
-                onSubmit={(url) => {
-                  closeQuickOpen();
-                  if (quickOpenEdit) {
-                    invoke((ref) => Commands.loadUrl(ref, url));
-                    invoke(Commands.focusContent);
-                  } else {
-                    createTabInActiveMode(url);
-                  }
-                }}
-              />
-              {favoriteTabs.length > 0 ? (
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={s.quickOpenRow}
-                >
-                  {favoriteTabs.map((tab) => (
-                    <Pressable
-                      key={tab.id}
-                      accessibilityRole="button"
-                      accessibilityLabel={tr("chrome.favoriteLabel", {
-                        name: tab.title || tab.url,
-                      })}
-                      style={({ pressed }) => [
-                        s.quickOpenTile,
-                        pressed && s.pressed,
-                      ]}
-                      onPress={() => {
-                        closeQuickOpen();
-                        switchTab(tab.id);
-                      }}
-                    >
-                      <View style={s.quickOpenTileIcon}>
-                        <Favicon
-                          url={tab.url}
-                          fallback={(tab.title || tab.url)
-                            .slice(0, 1)
-                            .toUpperCase()}
-                          size={22}
-                          radius={6}
-                        />
-                      </View>
-                      <Text
-                        numberOfLines={1}
-                        maxFontSizeMultiplier={1.35}
-                        style={s.quickOpenTileLabel}
-                      >
-                        {tab.title || tab.url}
-                      </Text>
-                    </Pressable>
-                  ))}
-                </ScrollView>
-              ) : (
-                <Text style={s.quickOpenHint}>
-                  {tr("chrome.quickOpenLinkHint")}
-                </Text>
-              )}
-            </View>
-          )
-        )}
-        {sheet(
-          !!permissionRequest,
-          () => decidePermission("dismiss"),
-          permissionRequest && (
-            <PermissionDialog
-              request={{
-                origin: permissionRequest.origin,
-                kinds: permissionKindsFromEvent(permissionRequest.kind),
-                ephemeral: permissionRequest.ephemeral,
-              }}
-              onDecide={decidePermission}
-              onDismiss={() => decidePermission("dismiss")}
-            />
-          )
-        )}
-        {sheet(
-          !!palette,
-          () => setPalette(false),
-          palette && (
-            <View style={s.dialog}>
-              <Text style={s.dialogTitle}>{tr("chrome.commands")}</Text>
-              <TextInput
-                accessibilityLabel={tr("chrome.findCommand")}
-                value={query}
-                onChangeText={setQuery}
-                style={s.commandInput}
-                disableFullscreenUI
-              />
-              <ScrollView>
-                {registry
-                  .entries(language)
-                  .filter((command) => {
-                    const haystack = `${command.title} ${command.keywords ?? ""}`;
-                    return haystack
-                      .toLowerCase()
-                      .includes(query.toLowerCase());
-                  })
-                  .map(({ id, title }) => (
-                    <Button
-                      key={id}
-                      label={title}
-                      onPress={() => {
-                        setPalette(false);
-                        registry.execute(id);
-                      }}
-                    />
-                  ))}
-              </ScrollView>
-              <Button
-                label={tr("chrome.closeCommands")}
-                onPress={() => setPalette(false)}
-              />
-            </View>
-          )
-        )}
-        {sheet(
-          !!bookmarkManager,
-          () =>
-            closeSettingsChild("bookmarks", () => setBookmarkManager(false)),
-          bookmarkManager && (
-            <View style={[s.dialog, s.bookmarkDialog]}>
-              <View style={s.dialogHeader}>
-                <Text style={[s.dialogTitle, { flex: 1 }]}>{tr("chrome.bookmarks")}</Text>
-                <IconButton
-                  label={tr("chrome.closeBookmarks")}
-                  icon="close"
-                  onPress={() =>
-                    closeSettingsChild("bookmarks", () =>
-                      setBookmarkManager(false)
-                    )
-                  }
-                />
-              </View>
-              <Text style={s.dialogHelp}>
-                {bookmarkFolder
-                  ? tr("chrome.bookmarkInside", { folder:
-                      spaceFolders.find(
-                        (folder) => folder.id === bookmarkFolder
-                      )?.title ?? tr("chrome.folderFallback") })
-                  : tr("chrome.bookmarkSavedIn", { space: activeWorkspace?.name ?? tr("chrome.thisSpace") })}
-              </Text>
-              <Text style={s.dialogHelp}>
-                {tr("chrome.bookmarkPrivateNote")}
-              </Text>
-              <View style={s.bookmarkForm}>
-                <TextInput
-                  accessibilityLabel={tr("chrome.bookmarkTitle")}
-                  value={bookmarkTitle}
-                  onChangeText={setBookmarkTitle}
-                  placeholder={tr("chrome.bookmarkName")}
-                  placeholderTextColor={theme.inkFaint}
-                  style={s.commandInput}
-                  autoCorrect={false}
-                  disableFullscreenUI
-                />
-                <TextInput
-                  accessibilityLabel={tr("chrome.bookmarkUrl")}
-                  value={bookmarkUrl}
-                  onChangeText={setBookmarkUrl}
-                  placeholder="https://"
-                  placeholderTextColor={theme.inkFaint}
-                  style={s.commandInput}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  disableFullscreenUI
-                  keyboardType="url"
-                />
-                <View style={s.bookmarkActions}>
-                  <Button
-                    label={tr(bookmarkEditing ? "chrome.saveBookmark" : "chrome.addBookmark")}
-                    onPress={() => {
-                      if (!bookmarkTitle.trim() || !bookmarkUrl.trim()) return;
-                      run(
-                        (bookmarkEditing
-                          ? controller.bookmarkUpdate(
-                              bookmarkEditing,
-                              bookmarkTitle.trim(),
-                              bookmarkUrl.trim()
-                            )
-                          : controller.bookmarkCreate(
-                              bookmarkTitle.trim(),
-                              bookmarkUrl.trim(),
-                              bookmarkFolder
-                            )
-                        ).then(() => {
-                          setBookmarkEditing(null);
-                          setBookmarkTitle("");
-                          setBookmarkUrl("");
-                        })
-                      );
-                    }}
-                  />
-                  <Button
-                    label={tr("chrome.addPage")}
-                    onPress={() => {
-                      const current = state?.tabs.find(
-                        (tab) => tab.id === target
-                      );
-                      if (!current) return;
-                      run(
-                        controller.bookmarkCreate(
-                          current.title || current.url,
-                          current.url,
-                          bookmarkFolder
-                        )
-                      );
-                    }}
-                  />
-                </View>
-              </View>
-              {!bookmarkFolder && (
-                <View style={s.bookmarkActions}>
-                  <TextInput
-                    accessibilityLabel={tr("chrome.newFolderName")}
-                    value={folderName}
-                    onChangeText={setFolderName}
-                    placeholder={tr("chrome.newFolderName")}
-                    placeholderTextColor={theme.inkFaint}
-                    style={[s.commandInput, { flex: 1 }]}
-                    autoCorrect={false}
-                    autoCapitalize="none"
-                    disableFullscreenUI
-                  />
-                  <Button
-                    label={tr("chrome.addFolder")}
-                    onPress={() => {
-                      const name = folderName.trim();
-                      if (!name) return;
-                      run(
-                        controller
-                          .bookmarkFolderCreate(name)
-                          .then(() => setFolderName(""))
-                      );
-                    }}
-                  />
-                </View>
-              )}
-              <ScrollView style={s.bookmarkList}>
-                {!bookmarkFolder &&
-                  spaceFolders.map((folder) => (
-                    <View key={folder.id} style={s.bookmarkRow}>
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel={tr("chrome.openFolder", { name: folder.title })}
-                        style={s.folderRow}
-                        onPress={() => setBookmarkFolder(folder.id)}
-                      >
-                        <ChromeIcon name="folder" size={18} />
-                        <Text numberOfLines={1} style={s.optionTitle}>
-                          {folder.title}
-                        </Text>
-                        <Text style={s.workspaceCount}>
-                          {
-                            spaceBookmarks.filter(
-                              (bookmark) =>
-                                (bookmark.folderId ?? "") === folder.id
-                            ).length
+                          (t.favorite ||
+                            t.workspaceId ===
+                              (menuTab.favorite
+                                ? state.activeWorkspaceId
+                                : menuTab.workspaceId))
+                      ))
+                      ? () => {
+                          if (!menuTab) return;
+                          setCtxMenuTabId(null);
+                          if (menuTab.id !== target) {
+                            void platform
+                              .openInNewWindow?.(menuTab.id)
+                              .catch(() => {});
+                            return;
                           }
-                        </Text>
-                      </Pressable>
-                      <IconButton
-                        label={tr("chrome.renameFolderNamed", { name: folder.title })}
-                        icon="edit"
-                        onPress={() => {
-                          setRenamingFolder(folder.id);
-                          setFolderName(folder.title);
-                        }}
-                      />
-                      <IconButton
-                        label={tr("chrome.deleteFolderNamed", { name: folder.title })}
-                        icon="close"
-                        onPress={() =>
-                          run(controller.bookmarkFolderRemove(folder.id))
+                          const workspaceId = menuTab.favorite
+                            ? state.activeWorkspaceId
+                            : menuTab.workspaceId;
+                          const replacement = (state?.tabs ?? []).find(
+                            (t) =>
+                              !t.suspended &&
+                              t.id !== menuTab.id &&
+                              (t.favorite || t.workspaceId === workspaceId)
+                          );
+                          if (!replacement) return;
+                          void platform
+                            .openInNewWindow?.(menuTab.id)
+                            .then(() => switchTab(replacement.id))
+                            .catch(() => {});
                         }
-                      />
-                    </View>
-                  ))}
-                {renamingFolder && (
-                  <View style={s.bookmarkActions}>
-                    <TextInput
-                      accessibilityLabel={tr("chrome.renameFolder")}
-                      value={folderName}
-                      onChangeText={setFolderName}
-                      placeholder={tr("chrome.folderName")}
-                      placeholderTextColor={theme.inkFaint}
-                      style={[s.commandInput, { flex: 1 }]}
-                      autoCorrect={false}
-                      autoCapitalize="none"
-                      disableFullscreenUI
-                    />
-                    <Button
-                      label={tr("chrome.saveName")}
-                      onPress={() => {
-                        const name = folderName.trim();
-                        if (!name || !renamingFolder) return;
+                      : undefined
+                  }
+                  onMoveToWorkspace={(workspaceId) => {
+                    if (!menuTab) return;
+                    // Preserve the outgoing pane until native claims its display.
+                    run(
+                      controller
+                        .setTabWorkspace(menuTab.id, workspaceId)
+                        .then((snapshot) => {
+                          setSplitLayout(null);
+                          setFocused(snapshot.activeTabId ?? null);
+                        })
+                    );
+                  }}
+                  onCloseOthers={() => {
+                    if (!menuTab) return;
+                    state.tabs
+                      .filter(
+                        (t) =>
+                          t.workspaceId ===
+                            (menuTab.favorite
+                              ? state.activeWorkspaceId
+                              : menuTab.workspaceId) &&
+                          t.id !== menuTab.id &&
+                          !t.favorite &&
+                          !t.pinned
+                      )
+                      .forEach((t) => closeTab(t.id));
+                  }}
+                  onClose={() => setCtxMenuTabId(null)}
+                />
+              )
+            )}
+            {sheet(
+              !!sidebarMenu,
+              () => setSidebarMenu(null),
+              sidebarMenu &&
+                (sidebarMenu.kind === "split" && sidebar.split ? (
+                  <SidebarPageMenu
+                    title={tr(
+                      sidebar.split.pages[0].private
+                        ? "chrome.privateSplit"
+                        : "chrome.splitView"
+                    )}
+                    anchor={sidebarMenu.anchor}
+                    onClose={() => setSidebarMenu(null)}
+                    pages={sidebar.split.pages.map((page, index) => ({
+                      ...page,
+                      detail: tr(
+                        sidebar.split!.orientation === "horizontal"
+                          ? index
+                            ? "side.right"
+                            : "side.left"
+                          : index
+                          ? "side.bottom"
+                          : "side.top"
+                      ),
+                      selected: page.id === sidebar.split!.focusedId,
+                      onPress: () => switchTab(page.id),
+                      onMenu: (anchor) =>
+                        openTabMenu(page.id, anchor.x, anchor.y),
+                    }))}
+                    actions={[
+                      {
+                        id: "orientation",
+                        label: tr(
+                          sidebar.split.orientation === "horizontal"
+                            ? "chrome.arrangeVertical"
+                            : "chrome.arrangeHorizontal"
+                        ),
+                        icon: "split",
+                        onPress: () =>
+                          setSplitLayout((current) =>
+                            current &&
+                            current.first === sidebar.split?.pages[0].id &&
+                            current.second === sidebar.split?.pages[1].id
+                              ? {
+                                  ...current,
+                                  orientation:
+                                    current.orientation === "horizontal"
+                                      ? "vertical"
+                                      : "horizontal",
+                                }
+                              : current
+                          ),
+                      },
+                      {
+                        id: "unsplit",
+                        label: tr("chrome.unsplit"),
+                        icon: "sidebar",
+                        onPress: toggleSplit,
+                      },
+                    ]}
+                  />
+                ) : sidebarMenu.kind === "folderPages" ? (
+                  <SidebarPageMenu
+                    title={
+                      sidebar.folders.find(
+                        (item) => item.folder.id === sidebarMenu.id
+                      )?.folder.title ?? tr("chrome.folder")
+                    }
+                    anchor={sidebarMenu.anchor}
+                    onClose={() => setSidebarMenu(null)}
+                    pages={(
+                      sidebar.folders.find(
+                        (item) => item.folder.id === sidebarMenu.id
+                      )?.bookmarks ?? []
+                    ).map((bookmark) => {
+                      const tab = bookmarkTabs.get(bookmark.id);
+                      return {
+                        id: bookmark.id,
+                        title: bookmark.title,
+                        url: tab?.url || bookmark.url,
+                        private: !!tab?.private,
+                        selected: !!tab && !tab.suspended && tab.id === target,
+                        onPress: () =>
+                          tab ? switchTab(tab.id) : openBookmark(bookmark),
+                        onMenu: (anchor) =>
+                          setSidebarMenu({
+                            kind: "bookmark",
+                            id: bookmark.id,
+                            anchor,
+                          }),
+                      };
+                    })}
+                    actions={[
+                      {
+                        id: "manage",
+                        label: tr("chrome.folderActions"),
+                        icon: "folder",
+                        onPress: () =>
+                          setSidebarMenu({
+                            kind: "folder",
+                            id: sidebarMenu.id,
+                            anchor: sidebarMenu.anchor,
+                          }),
+                      },
+                    ]}
+                  />
+                ) : (
+                  <ActionMenu
+                    title={
+                      sidebarMenu.kind === "create"
+                        ? tr("chrome.addSidebar")
+                        : sidebarMenu.kind === "folder"
+                        ? tr("chrome.folder")
+                        : sidebarMenu.kind === "bookmarkMove"
+                        ? tr("chrome.moveBookmark")
+                        : tr("chrome.bookmark")
+                    }
+                    anchor={sidebarMenu.anchor}
+                    items={sidebarActions()}
+                    onClose={() => setSidebarMenu(null)}
+                  />
+                ))
+            )}
+            {sheet(
+              !!splitPickerTabId,
+              () => setSplitPickerTabId(null),
+              splitPickerTabId && (
+                <ActionMenu
+                  title={tr("chrome.chooseSplitTab")}
+                  onClose={() => setSplitPickerTabId(null)}
+                  items={(state?.tabs ?? [])
+                    .filter(
+                      (tab) =>
+                        tab.id !== splitPickerTabId &&
+                        !tab.suspended &&
+                        (tab.favorite ||
+                          tab.workspaceId === state?.activeWorkspaceId) &&
+                        // Splits never cross the browsing-mode boundary.
+                        !!tab.private ===
+                          !!state?.tabs.find(
+                            (origin) => origin.id === splitPickerTabId
+                          )?.private
+                    )
+                    .map((tab) => ({
+                      id: tab.id,
+                      label: tabLabel(tab),
+                      icon: "split",
+                      onPress: () => {
+                        const origin = splitPickerTabId;
+                        if (!origin) return;
                         run(
                           controller
-                            .bookmarkFolderRename(renamingFolder, name)
+                            .activate(origin, [origin, tab.id])
                             .then(() => {
-                              setRenamingFolder(null);
-                              setFolderName("");
+                              setSplitLayout({
+                                first: origin,
+                                second: tab.id,
+                                orientation: "horizontal",
+                                ratio: 0.5,
+                              });
+                              setFocused(origin);
                             })
                         );
-                      }}
-                    />
-                  </View>
-                )}
-                {bookmarkFolder && (
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={tr("chrome.backBookmarks")}
-                    style={s.bookmarkRow}
-                    onPress={() => setBookmarkFolder("")}
-                  >
-                    <ChromeIcon name="back" size={18} />
-                    <Text style={s.optionTitle}>
-                      {spaceFolders.find(
-                        (folder) => folder.id === bookmarkFolder
-                      )?.title ?? tr("chrome.folder")}
-                    </Text>
-                  </Pressable>
-                )}
-                {spaceBookmarks
-                  .filter(
-                    (bookmark) => (bookmark.folderId ?? "") === bookmarkFolder
-                  )
-                  .map((bookmark, index, list) => {
-                    const all = state?.bookmarks ?? [];
-                    const folders = spaceFolders;
-                    const globalIndex = all.findIndex(
-                      (item) => item.id === bookmark.id
+                      },
+                    }))}
+                />
+              )
+            )}
+            {sheet(
+              newFolderOpen,
+              () => setNewFolderOpen(false),
+              newFolderOpen && (
+                <View className={cn(c.dialog, c.settingsDialog)}>
+                  <Text className={c.dialogTitle}>
+                    {tr("chrome.newFolder")}
+                  </Text>
+                  <TextInput
+                    accessibilityLabel={tr("chrome.folderName")}
+                    autoFocus
+                    value={folderName}
+                    onChangeText={setFolderName}
+                    className={c.commandInput}
+                    placeholder={tr("chrome.folderName")}
+                    placeholderTextColorClassName="accent-ink-faint"
+                  />
+                  <Button
+                    label={tr("chrome.createFolder")}
+                    disabled={!folderName.trim()}
+                    onPress={() => {
+                      if (!folderName.trim()) return;
+                      run(
+                        controller
+                          .bookmarkFolderCreate(folderName.trim())
+                          .then(() => {
+                            setNewFolderOpen(false);
+                            setFolderName("");
+                          })
+                      );
+                    }}
+                  />
+                </View>
+              )
+            )}
+            {sheet(
+              !!spaceSwitcher,
+              () => setSpaceSwitcher(false),
+              state && (
+                <SpaceSwitcherDialog
+                  workspaces={state.workspaces}
+                  activeWorkspaceId={state.activeWorkspaceId}
+                  counts={Object.fromEntries(
+                    state.workspaces.map((w) => [
+                      w.id,
+                      state.tabs.filter((t) => t.workspaceId === w.id).length,
+                    ])
+                  )}
+                  onSwitch={(id) => {
+                    setSpaceSwitcher(false);
+                    switchSpace(id);
+                  }}
+                  onCreate={() => {
+                    run(
+                      controller
+                        .workspace(
+                          `Space ${(state.workspaces.length ?? 0) + 1}`
+                        )
+                        .then((snapshot) => {
+                          setSplitLayout(null);
+                          setFocused(snapshot.activeTabId ?? null);
+                          setSpaceSwitcher(false);
+                        })
                     );
-                    // Up/down swap with the VISIBLE neighbor (same folder), so
-                    // reordering reads honestly instead of jumping global slots.
-                    const globalIndexOf = (row: { id: string }) =>
-                      all.findIndex((item) => item.id === row.id);
-                    const upTarget =
-                      index > 0 ? globalIndexOf(list[index - 1]) : -1;
-                    const downTarget =
-                      index < list.length - 1
-                        ? globalIndexOf(list[index + 1])
-                        : -1;
-                    return (
-                      <View key={bookmark.id} style={s.bookmarkRow}>
-                        <View style={s.bookmarkCopy}>
-                          <Text numberOfLines={1} style={s.optionTitle}>
-                            {bookmark.title}
-                          </Text>
-                          <Text numberOfLines={1} style={s.optionDescription}>
-                            {bookmark.url}
-                          </Text>
-                        </View>
-                        {folders.length > 0 && (
-                          <IconButton
-                            label={tr("chrome.moveBookmarkNamed", { name: bookmark.title })}
-                            icon="folder"
-                            onPress={() => {
-                              setBookmarkManager(false);
-                              setSidebarMenu({
-                                kind: "bookmarkMove",
-                                id: bookmark.id,
-                              });
-                            }}
-                          />
-                        )}
-                        <IconButton
-                          label={tr("chrome.moveBookmarkUp", { name: bookmark.title })}
-                          icon="chevronUp"
-                          disabled={index === 0 || upTarget < 0}
-                          onPress={() =>
-                            run(controller.bookmarkMove(bookmark.id, upTarget))
+                  }}
+                  onClose={() => setSpaceSwitcher(false)}
+                />
+              )
+            )}
+            {sheet(
+              !!historyOpen,
+              () => closeSettingsChild("history", () => setHistoryOpen(false)),
+              <HistoryDialog
+                entries={history.entries}
+                onOpen={(url) => {
+                  settingsReturn.current = null;
+                  createTabAndShow(url);
+                }}
+                onClear={() => {
+                  void history.clear().then((ok) => {
+                    if (!ok) setError(tr("chrome.historyClearFailed"));
+                  });
+                }}
+                onClose={() =>
+                  closeSettingsChild("history", () => setHistoryOpen(false))
+                }
+              />
+            )}
+            {drag && (
+              <AnimatedView
+                pointerEvents="none"
+                className={c.dragGhost}
+                style={[
+                  {
+                    opacity: ghostOpacity,
+                    transform: [
+                      { translateX: ghostPosition.x },
+                      { translateY: ghostPosition.y },
+                      { scale: ghostScale },
+                    ],
+                  },
+                ]}
+              >
+                <Text numberOfLines={1} className={c.dragGhostText}>
+                  {drag.title}
+                </Text>
+              </AnimatedView>
+            )}
+            {sheet(
+              !!quickOpen,
+              closeQuickOpen,
+              quickOpen && (
+                <View className={cn(c.dialog, c.quickOpenDialog)}>
+                  <AddressBox
+                    key={quickOpenPresentation}
+                    ref={quickOpenInputRef}
+                    autoFocus
+                    softInput={quickOpenSoft}
+                    reducedMotion={reducedMotion}
+                    engine={ui.searchEngine}
+                    value={
+                      quickOpenEdit && targetUrl !== NEW_TAB_URL
+                        ? targetUrl
+                        : undefined
+                    }
+                    suggestions={suggestionSources}
+                    commands={quickOpenEdit ? [] : registry.entries(language)}
+                    onDismiss={closeQuickOpen}
+                    onOpenTab={
+                      quickOpenEdit
+                        ? undefined
+                        : (id) => {
+                            closeQuickOpen();
+                            switchTab(id);
                           }
-                        />
-                        <IconButton
-                          label={tr("chrome.moveBookmarkDown", { name: bookmark.title })}
-                          icon="chevronDown"
-                          disabled={index === list.length - 1 || downTarget < 0}
-                          onPress={() =>
-                            run(
-                              controller.bookmarkMove(bookmark.id, downTarget)
-                            )
-                          }
-                        />
-                        <IconButton
-                          label={tr("chrome.editBookmarkNamed", { name: bookmark.title })}
-                          icon="edit"
+                    }
+                    onCommand={(id) => {
+                      closeQuickOpen();
+                      registry.execute(id);
+                    }}
+                    onSubmit={(url) => {
+                      closeQuickOpen();
+                      if (quickOpenEdit) {
+                        invoke((ref) => Commands.loadUrl(ref, url));
+                        invoke(Commands.focusContent);
+                      } else {
+                        createTabInActiveMode(url);
+                      }
+                    }}
+                  />
+                  {favoriteTabs.length > 0 ? (
+                    <ScrollView
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      contentContainerClassName={c.quickOpenRow}
+                    >
+                      {favoriteTabs.map((tab) => (
+                        <Pressable
+                          key={tab.id}
+                          accessibilityRole="button"
+                          accessibilityLabel={tr("chrome.favoriteLabel", {
+                            name: tab.title || tab.url,
+                          })}
+                          className={cn(
+                            c.quickOpenTile,
+                            "active:opacity-pressed"
+                          )}
                           onPress={() => {
-                            setBookmarkEditing(bookmark.id);
-                            setBookmarkTitle(bookmark.title);
-                            setBookmarkUrl(bookmark.url);
+                            closeQuickOpen();
+                            switchTab(tab.id);
+                          }}
+                        >
+                          <View className={c.quickOpenTileIcon}>
+                            <Favicon
+                              url={tab.url}
+                              fallback={(tab.title || tab.url)
+                                .slice(0, 1)
+                                .toUpperCase()}
+                              size={22}
+                              radius={6}
+                            />
+                          </View>
+                          <Text
+                            numberOfLines={1}
+                            maxFontSizeMultiplier={1.35}
+                            className={c.quickOpenTileLabel}
+                          >
+                            {tab.title || tab.url}
+                          </Text>
+                        </Pressable>
+                      ))}
+                    </ScrollView>
+                  ) : (
+                    <Text className={c.quickOpenHint}>
+                      {tr("chrome.quickOpenLinkHint")}
+                    </Text>
+                  )}
+                </View>
+              )
+            )}
+            {sheet(
+              !!permissionRequest,
+              () => decidePermission("dismiss"),
+              permissionRequest && (
+                <PermissionDialog
+                  request={{
+                    origin: permissionRequest.origin,
+                    kinds: permissionKindsFromEvent(permissionRequest.kind),
+                    ephemeral: permissionRequest.ephemeral,
+                  }}
+                  onDecide={decidePermission}
+                  onDismiss={() => decidePermission("dismiss")}
+                />
+              )
+            )}
+            {sheet(
+              !!palette,
+              () => setPalette(false),
+              palette && (
+                <View className={c.dialog}>
+                  <Text className={c.dialogTitle}>{tr("chrome.commands")}</Text>
+                  <TextInput
+                    accessibilityLabel={tr("chrome.findCommand")}
+                    value={query}
+                    onChangeText={setQuery}
+                    className={c.commandInput}
+                    disableFullscreenUI
+                  />
+                  <ScrollView>
+                    {registry
+                      .entries(language)
+                      .filter((command) => {
+                        const haystack = `${command.title} ${
+                          command.keywords ?? ""
+                        }`;
+                        return haystack
+                          .toLowerCase()
+                          .includes(query.toLowerCase());
+                      })
+                      .map(({ id, title }) => (
+                        <Button
+                          key={id}
+                          label={title}
+                          onPress={() => {
+                            setPalette(false);
+                            registry.execute(id);
                           }}
                         />
-                        <IconButton
-                          label={tr("chrome.removeBookmarkNamed", { name: bookmark.title })}
-                          icon="close"
-                          onPress={() =>
-                            run(controller.bookmarkRemove(bookmark.id))
-                          }
+                      ))}
+                  </ScrollView>
+                  <Button
+                    label={tr("chrome.closeCommands")}
+                    onPress={() => setPalette(false)}
+                  />
+                </View>
+              )
+            )}
+            {sheet(
+              !!bookmarkManager,
+              () =>
+                closeSettingsChild("bookmarks", () =>
+                  setBookmarkManager(false)
+                ),
+              bookmarkManager && (
+                <View className={cn(c.dialog, c.bookmarkDialog)}>
+                  <View className={c.dialogHeader}>
+                    <Text className={cn(c.dialogTitle, "flex-1")}>
+                      {tr("chrome.bookmarks")}
+                    </Text>
+                    <IconButton
+                      label={tr("chrome.closeBookmarks")}
+                      icon="close"
+                      onPress={() =>
+                        closeSettingsChild("bookmarks", () =>
+                          setBookmarkManager(false)
+                        )
+                      }
+                    />
+                  </View>
+                  <Text className={c.dialogHelp}>
+                    {bookmarkFolder
+                      ? tr("chrome.bookmarkInside", {
+                          folder:
+                            spaceFolders.find(
+                              (folder) => folder.id === bookmarkFolder
+                            )?.title ?? tr("chrome.folderFallback"),
+                        })
+                      : tr("chrome.bookmarkSavedIn", {
+                          space:
+                            activeWorkspace?.name ?? tr("chrome.thisSpace"),
+                        })}
+                  </Text>
+                  <Text className={c.dialogHelp}>
+                    {tr("chrome.bookmarkPrivateNote")}
+                  </Text>
+                  <View className={c.bookmarkForm}>
+                    <TextInput
+                      accessibilityLabel={tr("chrome.bookmarkTitle")}
+                      value={bookmarkTitle}
+                      onChangeText={setBookmarkTitle}
+                      placeholder={tr("chrome.bookmarkName")}
+                      placeholderTextColorClassName="accent-ink-faint"
+                      className={c.commandInput}
+                      autoCorrect={false}
+                      disableFullscreenUI
+                    />
+                    <TextInput
+                      accessibilityLabel={tr("chrome.bookmarkUrl")}
+                      value={bookmarkUrl}
+                      onChangeText={setBookmarkUrl}
+                      placeholder="https://"
+                      placeholderTextColorClassName="accent-ink-faint"
+                      className={c.commandInput}
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      disableFullscreenUI
+                      keyboardType="url"
+                    />
+                    <View className={c.bookmarkActions}>
+                      <Button
+                        label={tr(
+                          bookmarkEditing
+                            ? "chrome.saveBookmark"
+                            : "chrome.addBookmark"
+                        )}
+                        onPress={() => {
+                          if (!bookmarkTitle.trim() || !bookmarkUrl.trim())
+                            return;
+                          run(
+                            (bookmarkEditing
+                              ? controller.bookmarkUpdate(
+                                  bookmarkEditing,
+                                  bookmarkTitle.trim(),
+                                  bookmarkUrl.trim()
+                                )
+                              : controller.bookmarkCreate(
+                                  bookmarkTitle.trim(),
+                                  bookmarkUrl.trim(),
+                                  bookmarkFolder
+                                )
+                            ).then(() => {
+                              setBookmarkEditing(null);
+                              setBookmarkTitle("");
+                              setBookmarkUrl("");
+                            })
+                          );
+                        }}
+                      />
+                      <Button
+                        label={tr("chrome.addPage")}
+                        onPress={() => {
+                          const current = state?.tabs.find(
+                            (tab) => tab.id === target
+                          );
+                          if (!current) return;
+                          run(
+                            controller.bookmarkCreate(
+                              current.title || current.url,
+                              current.url,
+                              bookmarkFolder
+                            )
+                          );
+                        }}
+                      />
+                    </View>
+                  </View>
+                  {!bookmarkFolder && (
+                    <View className={c.bookmarkActions}>
+                      <TextInput
+                        accessibilityLabel={tr("chrome.newFolderName")}
+                        value={folderName}
+                        onChangeText={setFolderName}
+                        placeholder={tr("chrome.newFolderName")}
+                        placeholderTextColorClassName="accent-ink-faint"
+                        className={cn(c.commandInput, "flex-1")}
+                        autoCorrect={false}
+                        autoCapitalize="none"
+                        disableFullscreenUI
+                      />
+                      <Button
+                        label={tr("chrome.addFolder")}
+                        onPress={() => {
+                          const name = folderName.trim();
+                          if (!name) return;
+                          run(
+                            controller
+                              .bookmarkFolderCreate(name)
+                              .then(() => setFolderName(""))
+                          );
+                        }}
+                      />
+                    </View>
+                  )}
+                  <ScrollView className={c.bookmarkList}>
+                    {!bookmarkFolder &&
+                      spaceFolders.map((folder) => (
+                        <View key={folder.id} className={c.bookmarkRow}>
+                          <Pressable
+                            accessibilityRole="button"
+                            accessibilityLabel={tr("chrome.openFolder", {
+                              name: folder.title,
+                            })}
+                            className={c.folderRow}
+                            onPress={() => setBookmarkFolder(folder.id)}
+                          >
+                            <ChromeIcon
+                              className={cn("size-[18px]")}
+                              name="folder"
+                            />
+                            <Text numberOfLines={1} className={c.optionTitle}>
+                              {folder.title}
+                            </Text>
+                            <Text className={c.workspaceCount}>
+                              {
+                                spaceBookmarks.filter(
+                                  (bookmark) =>
+                                    (bookmark.folderId ?? "") === folder.id
+                                ).length
+                              }
+                            </Text>
+                          </Pressable>
+                          <IconButton
+                            label={tr("chrome.renameFolderNamed", {
+                              name: folder.title,
+                            })}
+                            icon="edit"
+                            onPress={() => {
+                              setRenamingFolder(folder.id);
+                              setFolderName(folder.title);
+                            }}
+                          />
+                          <IconButton
+                            label={tr("chrome.deleteFolderNamed", {
+                              name: folder.title,
+                            })}
+                            icon="close"
+                            onPress={() =>
+                              run(controller.bookmarkFolderRemove(folder.id))
+                            }
+                          />
+                        </View>
+                      ))}
+                    {renamingFolder && (
+                      <View className={c.bookmarkActions}>
+                        <TextInput
+                          accessibilityLabel={tr("chrome.renameFolder")}
+                          value={folderName}
+                          onChangeText={setFolderName}
+                          placeholder={tr("chrome.folderName")}
+                          placeholderTextColorClassName="accent-ink-faint"
+                          className={cn(c.commandInput, "flex-1")}
+                          autoCorrect={false}
+                          autoCapitalize="none"
+                          disableFullscreenUI
+                        />
+                        <Button
+                          label={tr("chrome.saveName")}
+                          onPress={() => {
+                            const name = folderName.trim();
+                            if (!name || !renamingFolder) return;
+                            run(
+                              controller
+                                .bookmarkFolderRename(renamingFolder, name)
+                                .then(() => {
+                                  setRenamingFolder(null);
+                                  setFolderName("");
+                                })
+                            );
+                          }}
                         />
                       </View>
-                    );
-                  })}
-              </ScrollView>
-            </View>
-          )
-        )}
-        {sheet(
-          !!settings,
-          () => setSettings(false),
-          settings && (
-            <SettingsDialog
-              query={settingsQuery}
-              onQueryChange={setSettingsQuery}
-              selectedId={settingsSection}
-              onSelect={setSettingsSection}
-              onClose={() => setSettings(false)}
-              saveStatus={uiPersistence.status}
-              onRetrySave={uiPersistence.retry}
-              sections={[
-                {
-                  id: "browsing",
-                  title: tr("category.browsing"),
-                  description: tr("category.browsingDetail"),
-                  keywords:
-                    "language 언어 한국어 English search engine google naver duckduckgo restore pages text scale default browser 검색 엔진 기본 브라우저 글자 크기",
-                  content: (
-                    <>
-                      <SettingsRow
-                        title={tr("language.title")}
-                        summary={tr("language.detail")}
-                        value={tr("language.current", { language: tr(`language.${language}`) })}
+                    )}
+                    {bookmarkFolder && (
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel={tr("chrome.backBookmarks")}
+                        className={c.bookmarkRow}
+                        onPress={() => setBookmarkFolder("")}
                       >
-                        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-                          {(["system", "ko", "en"] as const).map((choice) => (
-                            <Pressable
-                              key={choice}
-                              accessibilityRole="radio"
-                              accessibilityState={{ checked: (ui.language ?? "system") === choice, disabled: !uiHydrated }}
-                              disabled={!uiHydrated}
-                              onPress={() => updateUi({ type: "setLanguage", language: choice })}
-                              style={[s.settingsAction, { minHeight: 48, borderWidth: 1, borderColor: theme.hairline },
-                                (ui.language ?? "system") === choice && { backgroundColor: theme.sunkenStrong }]}
+                        <ChromeIcon className={cn("size-[18px]")} name="back" />
+                        <Text className={c.optionTitle}>
+                          {spaceFolders.find(
+                            (folder) => folder.id === bookmarkFolder
+                          )?.title ?? tr("chrome.folder")}
+                        </Text>
+                      </Pressable>
+                    )}
+                    {spaceBookmarks
+                      .filter(
+                        (bookmark) =>
+                          (bookmark.folderId ?? "") === bookmarkFolder
+                      )
+                      .map((bookmark, index, list) => {
+                        const all = state?.bookmarks ?? [];
+                        const folders = spaceFolders;
+                        const globalIndex = all.findIndex(
+                          (item) => item.id === bookmark.id
+                        );
+                        // Up/down swap with the VISIBLE neighbor (same folder), so
+                        // reordering reads honestly instead of jumping global slots.
+                        const globalIndexOf = (row: { id: string }) =>
+                          all.findIndex((item) => item.id === row.id);
+                        const upTarget =
+                          index > 0 ? globalIndexOf(list[index - 1]) : -1;
+                        const downTarget =
+                          index < list.length - 1
+                            ? globalIndexOf(list[index + 1])
+                            : -1;
+                        return (
+                          <View key={bookmark.id} className={c.bookmarkRow}>
+                            <View className={c.bookmarkCopy}>
+                              <Text numberOfLines={1} className={c.optionTitle}>
+                                {bookmark.title}
+                              </Text>
+                              <Text
+                                numberOfLines={1}
+                                className={c.optionDescription}
+                              >
+                                {bookmark.url}
+                              </Text>
+                            </View>
+                            {folders.length > 0 && (
+                              <IconButton
+                                label={tr("chrome.moveBookmarkNamed", {
+                                  name: bookmark.title,
+                                })}
+                                icon="folder"
+                                onPress={() => {
+                                  setBookmarkManager(false);
+                                  setSidebarMenu({
+                                    kind: "bookmarkMove",
+                                    id: bookmark.id,
+                                  });
+                                }}
+                              />
+                            )}
+                            <IconButton
+                              label={tr("chrome.moveBookmarkUp", {
+                                name: bookmark.title,
+                              })}
+                              icon="chevronUp"
+                              disabled={index === 0 || upTarget < 0}
+                              onPress={() =>
+                                run(
+                                  controller.bookmarkMove(bookmark.id, upTarget)
+                                )
+                              }
+                            />
+                            <IconButton
+                              label={tr("chrome.moveBookmarkDown", {
+                                name: bookmark.title,
+                              })}
+                              icon="chevronDown"
+                              disabled={
+                                index === list.length - 1 || downTarget < 0
+                              }
+                              onPress={() =>
+                                run(
+                                  controller.bookmarkMove(
+                                    bookmark.id,
+                                    downTarget
+                                  )
+                                )
+                              }
+                            />
+                            <IconButton
+                              label={tr("chrome.editBookmarkNamed", {
+                                name: bookmark.title,
+                              })}
+                              icon="edit"
+                              onPress={() => {
+                                setBookmarkEditing(bookmark.id);
+                                setBookmarkTitle(bookmark.title);
+                                setBookmarkUrl(bookmark.url);
+                              }}
+                            />
+                            <IconButton
+                              label={tr("chrome.removeBookmarkNamed", {
+                                name: bookmark.title,
+                              })}
+                              icon="close"
+                              onPress={() =>
+                                run(controller.bookmarkRemove(bookmark.id))
+                              }
+                            />
+                          </View>
+                        );
+                      })}
+                  </ScrollView>
+                </View>
+              )
+            )}
+            {sheet(
+              !!settings,
+              () => setSettings(false),
+              settings && (
+                <SettingsDialog
+                  query={settingsQuery}
+                  onQueryChange={setSettingsQuery}
+                  selectedId={settingsSection}
+                  onSelect={setSettingsSection}
+                  onClose={() => setSettings(false)}
+                  saveStatus={uiPersistence.status}
+                  onRetrySave={uiPersistence.retry}
+                  sections={[
+                    {
+                      id: "browsing",
+                      title: tr("category.browsing"),
+                      description: tr("category.browsingDetail"),
+                      keywords:
+                        "language 언어 한국어 English search engine google naver duckduckgo restore pages text scale default browser 검색 엔진 기본 브라우저 글자 크기",
+                      content: (
+                        <>
+                          <SettingsRow
+                            title={tr("language.title")}
+                            summary={tr("language.detail")}
+                            value={tr("language.current", {
+                              language: tr(`language.${language}`),
+                            })}
+                          >
+                            <View
+                              className={cn("flex-row", "flex-wrap", "gap-lg")}
                             >
-                              <Text style={s.optionTitle}>{tr(`language.${choice}`)}</Text>
-                            </Pressable>
-                          ))}
-                        </View>
-                      </SettingsRow>
-                      <BrowserToolsPanel
-                        section="browsing"
-                        config={browser.config}
-                        onSave={browser.saveConfig}
-                        tabId={target ?? undefined}
-                        url={targetUrl}
-                        privateTab={
-                          !!state?.tabs.find((tab) => tab.id === target)
-                            ?.private
-                        }
-                        security={target ? browser.security[target] : undefined}
-                        onError={setError}
-                        onNotice={flashNotice}
-                      />
-                      <Text style={s.settingsSection}>{tr("browsing.searchEngine")}</Text>
-                      <Text style={s.dialogHelp}>
-                        {tr("browsing.searchEngineHelp")}
-                      </Text>
-                      {(["google", "naver", "duckduckgo"] as const).map(
-                        (searchEngine) => (
+                              {(["system", "ko", "en"] as const).map(
+                                (choice) => (
+                                  <Pressable
+                                    key={choice}
+                                    accessibilityRole="radio"
+                                    accessibilityState={{
+                                      checked:
+                                        (ui.language ?? "system") === choice,
+                                      disabled: !uiHydrated,
+                                    }}
+                                    disabled={!uiHydrated}
+                                    onPress={() =>
+                                      updateUi({
+                                        type: "setLanguage",
+                                        language: choice,
+                                      })
+                                    }
+                                    className={cn(
+                                      c.settingsAction,
+                                      "min-h-[48px]",
+                                      "border",
+                                      "border-hairline",
+                                      (ui.language ?? "system") === choice &&
+                                        "bg-sunken-strong"
+                                    )}
+                                  >
+                                    <Text className={c.optionTitle}>
+                                      {tr(`language.${choice}`)}
+                                    </Text>
+                                  </Pressable>
+                                )
+                              )}
+                            </View>
+                          </SettingsRow>
+                          <BrowserToolsPanel
+                            section="browsing"
+                            config={browser.config}
+                            onSave={browser.saveConfig}
+                            tabId={target ?? undefined}
+                            url={targetUrl}
+                            privateTab={
+                              !!state?.tabs.find((tab) => tab.id === target)
+                                ?.private
+                            }
+                            security={
+                              target ? browser.security[target] : undefined
+                            }
+                            onError={setError}
+                            onNotice={flashNotice}
+                          />
+                          <Text className={c.settingsSection}>
+                            {tr("browsing.searchEngine")}
+                          </Text>
+                          <Text className={c.dialogHelp}>
+                            {tr("browsing.searchEngineHelp")}
+                          </Text>
+                          {(["google", "naver", "duckduckgo"] as const).map(
+                            (searchEngine) => (
+                              <Pressable
+                                key={searchEngine}
+                                accessibilityRole="radio"
+                                accessibilityState={{
+                                  checked: ui.searchEngine === searchEngine,
+                                  disabled: !uiHydrated,
+                                }}
+                                disabled={!uiHydrated}
+                                className={settingsChoiceClasses({
+                                  selected: ui.searchEngine === searchEngine,
+                                })}
+                                onPress={() =>
+                                  updateUi({
+                                    type: "setSearchEngine",
+                                    searchEngine,
+                                  })
+                                }
+                              >
+                                <Text className={c.optionTitle}>
+                                  {SEARCH_ENGINES[searchEngine].label}
+                                </Text>
+                                {ui.searchEngine === searchEngine && (
+                                  <View
+                                    className={cn(
+                                      "flex-row",
+                                      "items-center",
+                                      "gap-md"
+                                    )}
+                                  >
+                                    <ChromeIcon
+                                      className={cn(
+                                        "size-[14px]",
+                                        "text-accent-strong"
+                                      )}
+                                      name="check"
+                                    />
+                                    <Text className={c.optionTitle}>
+                                      {tr("common.selected")}
+                                    </Text>
+                                  </View>
+                                )}
+                              </Pressable>
+                            )
+                          )}
+                        </>
+                      ),
+                    },
+                    {
+                      id: "appearance",
+                      title: tr("category.appearance"),
+                      description: tr("category.appearanceDetail"),
+                      keywords:
+                        "custom hex colour color theme palette space lavender warm padding px dp size layout display fullscreen 색 컬러 테마 여백 사이드바 크기 화면",
+                      content: (
+                        <>
+                          <AppearanceSettings
+                            ui={ui}
+                            hydrated={uiHydrated}
+                            spaceColor={activeWorkspace?.color ?? ""}
+                            spaceName={
+                              activeWorkspace?.name ?? "the current Space"
+                            }
+                            onChange={updateUi}
+                          />
+                          <Text className={c.settingsSection}>
+                            {tr("appearance.sidebar")}
+                          </Text>
                           <Pressable
-                            key={searchEngine}
-                            accessibilityRole="radio"
+                            accessibilityRole="button"
+                            accessibilityLabel={tr(
+                              ui.sidebarCollapsed
+                                ? "appearance.expandSidebar"
+                                : "appearance.collapseSidebar"
+                            )}
+                            className={c.settingsAction}
+                            accessibilityState={{ disabled: !uiHydrated }}
+                            disabled={!uiHydrated}
+                            onPress={toggleSidebar}
+                          >
+                            <View className={c.settingsToggleCopy}>
+                              <Text className={c.optionTitle}>
+                                {tr(
+                                  ui.sidebarCollapsed
+                                    ? "appearance.expandSidebar"
+                                    : "appearance.collapseSidebar"
+                                )}
+                              </Text>
+                              <Text className={c.optionDescription}>
+                                {tr(
+                                  ui.sidebarCollapsed
+                                    ? "appearance.expandDetail"
+                                    : "appearance.collapseDetail"
+                                )}
+                              </Text>
+                            </View>
+                            <Text className={c.chevron}>›</Text>
+                          </Pressable>
+                          <View className={c.settingsAction}>
+                            <View className={c.settingsToggleCopy}>
+                              <Text className={c.optionTitle}>
+                                {tr("appearance.sidebarWidth")}
+                              </Text>
+                              <Text className={c.optionDescription}>
+                                {sidebarLimits.width < ui.sidebarWidth
+                                  ? tr("appearance.fittedWidth", {
+                                      width: ui.sidebarWidth,
+                                    })
+                                  : tr("appearance.sidebarWidthDetail")}
+                              </Text>
+                            </View>
+                            <View className={c.stepperRow}>
+                              <IconButton
+                                label={tr("appearance.decreaseWidth")}
+                                icon="minus"
+                                disabled={
+                                  !uiHydrated ||
+                                  sidebarLimits.width <= sidebarLimits.min
+                                }
+                                onPress={() =>
+                                  resizeSidebarTo(
+                                    sidebarLimits.width - SIDEBAR_WIDTH_STEP
+                                  )
+                                }
+                              />
+                              <Text className={c.stepperValue}>
+                                {sidebarLimits.width}dp
+                              </Text>
+                              <IconButton
+                                label={tr("appearance.increaseWidth")}
+                                icon="plus"
+                                disabled={
+                                  !uiHydrated ||
+                                  sidebarLimits.width >= sidebarLimits.max
+                                }
+                                onPress={() =>
+                                  resizeSidebarTo(
+                                    sidebarLimits.width + SIDEBAR_WIDTH_STEP
+                                  )
+                                }
+                              />
+                            </View>
+                          </View>
+                          <Text className={c.settingsSection}>
+                            {tr("appearance.layout")}
+                          </Text>
+                          {FRAME_SIDES.map((side) => (
+                            <View key={side} className={c.settingsAction}>
+                              <View className={c.settingsToggleCopy}>
+                                <Text className={c.optionTitle}>
+                                  {tr("appearance.framePadding", {
+                                    side: tr(`side.${side}`),
+                                  })}
+                                </Text>
+                                <Text className={c.optionDescription}>
+                                  {tr("appearance.frameDetail")}
+                                </Text>
+                              </View>
+                              <View className={c.stepperRow}>
+                                <IconButton
+                                  label={tr("appearance.decreaseFrame", {
+                                    side: tr(`side.${side}`),
+                                  })}
+                                  icon="minus"
+                                  disabled={
+                                    !uiHydrated ||
+                                    ui.framePx[side] <= FRAME_PX_MIN
+                                  }
+                                  onPress={() =>
+                                    updateUi({
+                                      type: "setFramePx",
+                                      side,
+                                      value: ui.framePx[side] - FRAME_PX_STEP,
+                                    })
+                                  }
+                                />
+                                <Text className={c.stepperValue}>
+                                  {ui.framePx[side]}px
+                                </Text>
+                                <IconButton
+                                  label={tr("appearance.increaseFrame", {
+                                    side: tr(`side.${side}`),
+                                  })}
+                                  icon="plus"
+                                  disabled={
+                                    !uiHydrated ||
+                                    ui.framePx[side] >= FRAME_PX_MAX
+                                  }
+                                  onPress={() =>
+                                    updateUi({
+                                      type: "setFramePx",
+                                      side,
+                                      value: ui.framePx[side] + FRAME_PX_STEP,
+                                    })
+                                  }
+                                />
+                              </View>
+                            </View>
+                          ))}
+                          <Text className={c.settingsSection}>
+                            {tr("appearance.display")}
+                          </Text>
+                          <Pressable
+                            accessibilityRole="switch"
+                            accessibilityLabel={tr("appearance.hideStatus")}
                             accessibilityState={{
-                              checked: ui.searchEngine === searchEngine,
+                              checked: ui.fullscreen,
                               disabled: !uiHydrated,
                             }}
                             disabled={!uiHydrated}
-                            style={[
-                              s.settingsAction,
-                              ui.searchEngine === searchEngine && {
-                                backgroundColor: theme.sunkenStrong,
-                              },
-                            ]}
+                            className={cn(
+                              c.settingsToggle,
+                              "active:opacity-pressed"
+                            )}
                             onPress={() =>
                               updateUi({
-                                type: "setSearchEngine",
-                                searchEngine,
+                                type: "setFullscreen",
+                                fullscreen: !ui.fullscreen,
                               })
                             }
                           >
-                            <Text style={s.optionTitle}>
-                              {SEARCH_ENGINES[searchEngine].label}
-                            </Text>
-                            {ui.searchEngine === searchEngine && (
-                              <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                                <ChromeIcon name="check" size={14} color={theme.accentStrong} />
-                                <Text style={s.optionTitle}>{tr("common.selected")}</Text>
-                              </View>
-                            )}
+                            <View className={c.settingsToggleCopy}>
+                              <Text className={c.optionTitle}>
+                                {tr("appearance.hideStatus")}
+                              </Text>
+                              <Text className={c.optionDescription}>
+                                {tr("appearance.hideStatusDetail")}
+                              </Text>
+                            </View>
+                            <View
+                              pointerEvents="none"
+                              importantForAccessibility="no-hide-descendants"
+                            >
+                              <Switch
+                                accessible={false}
+                                value={ui.fullscreen}
+                                trackColor={{
+                                  false: theme.switchOff,
+                                  true: theme.accent,
+                                }}
+                                thumbColor={theme.surfaceElevated}
+                              />
+                            </View>
                           </Pressable>
-                        )
-                      )}
-                    </>
-                  ),
-                },
-                {
-                  id: "appearance",
-                  title: tr("category.appearance"),
-                  description: tr("category.appearanceDetail"),
-                  keywords:
-                    "custom hex colour color theme palette space lavender warm padding px dp size layout display fullscreen 색 컬러 테마 여백 사이드바 크기 화면",
-                  content: (
-                    <>
-                      <AppearanceSettings
-                        ui={ui}
-                        hydrated={uiHydrated}
-                        spaceColor={activeWorkspace?.color ?? ""}
-                        spaceName={activeWorkspace?.name ?? "the current Space"}
-                        onChange={updateUi}
-                      />
-                      <Text style={s.settingsSection}>{tr("appearance.sidebar")}</Text>
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel={
-                          tr(ui.sidebarCollapsed ? "appearance.expandSidebar" : "appearance.collapseSidebar")
-                        }
-                        style={s.settingsAction}
-                        accessibilityState={{ disabled: !uiHydrated }}
-                        disabled={!uiHydrated}
-                        onPress={toggleSidebar}
-                      >
-                        <View style={s.settingsToggleCopy}>
-                          <Text style={s.optionTitle}>
-                            {tr(ui.sidebarCollapsed ? "appearance.expandSidebar" : "appearance.collapseSidebar")}
-                          </Text>
-                          <Text style={s.optionDescription}>
-                            {tr(ui.sidebarCollapsed ? "appearance.expandDetail" : "appearance.collapseDetail")}
-                          </Text>
-                        </View>
-                        <Text style={s.chevron}>›</Text>
-                      </Pressable>
-                      <View style={s.settingsAction}>
-                        <View style={s.settingsToggleCopy}>
-                          <Text style={s.optionTitle}>
-                            {tr("appearance.sidebarWidth")}
-                          </Text>
-                          <Text style={s.optionDescription}>
-                            {sidebarLimits.width < ui.sidebarWidth
-                              ? tr("appearance.fittedWidth", { width: ui.sidebarWidth })
-                              : tr("appearance.sidebarWidthDetail")}
-                          </Text>
-                        </View>
-                        <View style={s.stepperRow}>
-                          <IconButton
-                            label={tr("appearance.decreaseWidth")}
-                            icon="minus"
-                            disabled={
-                              !uiHydrated || sidebarLimits.width <= sidebarLimits.min
+                          <Pressable
+                            accessibilityRole="button"
+                            accessibilityState={{ disabled: !uiHydrated }}
+                            disabled={!uiHydrated}
+                            className={c.settingsAction}
+                            onPress={() => updateUi({ type: "resetLayout" })}
+                          >
+                            <Text className={c.optionTitle}>
+                              {tr("appearance.resetLayout")}
+                            </Text>
+                          </Pressable>
+                        </>
+                      ),
+                    },
+                    {
+                      id: "website",
+                      title: tr("category.website"),
+                      description: tr("category.websiteDetail"),
+                      keywords:
+                        "desktop reload connection certificate location camera microphone notifications autoplay 사이트 권한 카메라 마이크 위치 데스크톱",
+                      content: (
+                        <>
+                          <BrowserToolsPanel
+                            section="website"
+                            config={browser.config}
+                            onSave={browser.saveConfig}
+                            tabId={target ?? undefined}
+                            url={targetUrl}
+                            privateTab={
+                              !!state?.tabs.find((tab) => tab.id === target)
+                                ?.private
                             }
-                            onPress={() =>
-                              resizeSidebarTo(sidebarLimits.width - SIDEBAR_WIDTH_STEP)
+                            security={
+                              target ? browser.security[target] : undefined
                             }
+                            onError={setError}
+                            onNotice={flashNotice}
                           />
-                          <Text style={s.stepperValue}>
-                            {sidebarLimits.width}dp
-                          </Text>
-                          <IconButton
-                            label={tr("appearance.increaseWidth")}
-                            icon="plus"
-                            disabled={
-                              !uiHydrated || sidebarLimits.width >= sidebarLimits.max
+                        </>
+                      ),
+                    },
+                    {
+                      id: "permissions",
+                      title: tr("category.permissions"),
+                      description: tr("category.permissionsDetail"),
+                      keywords:
+                        "permission camera microphone location notifications autoplay 권한 허용 카메라 마이크 위치 알림 자동 재생",
+                      content: (
+                        <>
+                          <ConsentSettings
+                            rules={siteRules}
+                            siteUrl={targetUrl}
+                            privateSite={
+                              !!state?.tabs.find((tab) => tab.id === target)
+                                ?.private
                             }
-                            onPress={() =>
-                              resizeSidebarTo(sidebarLimits.width + SIDEBAR_WIDTH_STEP)
-                            }
-                          />
-                        </View>
-                      </View>
-                      <Text style={s.settingsSection}>{tr("appearance.layout")}</Text>
-                      {FRAME_SIDES.map((side) => (
-                        <View key={side} style={s.settingsAction}>
-                          <View style={s.settingsToggleCopy}>
-                            <Text style={s.optionTitle}>
-                              {tr("appearance.framePadding", { side: tr(`side.${side}`) })}
-                            </Text>
-                            <Text style={s.optionDescription}>
-                              {tr("appearance.frameDetail")}
-                            </Text>
-                          </View>
-                          <View style={s.stepperRow}>
-                            <IconButton
-                              label={tr("appearance.decreaseFrame", { side: tr(`side.${side}`) })}
-                              icon="minus"
-                              disabled={
-                                !uiHydrated || ui.framePx[side] <= FRAME_PX_MIN
-                              }
-                              onPress={() =>
-                                updateUi({
-                                  type: "setFramePx",
-                                  side,
-                                  value: ui.framePx[side] - FRAME_PX_STEP,
-                                })
-                              }
-                            />
-                            <Text style={s.stepperValue}>
-                              {ui.framePx[side]}px
-                            </Text>
-                            <IconButton
-                              label={tr("appearance.increaseFrame", { side: tr(`side.${side}`) })}
-                              icon="plus"
-                              disabled={
-                                !uiHydrated || ui.framePx[side] >= FRAME_PX_MAX
-                              }
-                              onPress={() =>
-                                updateUi({
-                                  type: "setFramePx",
-                                  side,
-                                  value: ui.framePx[side] + FRAME_PX_STEP,
-                                })
-                              }
-                            />
-                          </View>
-                        </View>
-                      ))}
-                      <Text style={s.settingsSection}>{tr("appearance.display")}</Text>
-                      <Pressable
-                        accessibilityRole="switch"
-                        accessibilityLabel={tr("appearance.hideStatus")}
-                        accessibilityState={{
-                          checked: ui.fullscreen,
-                          disabled: !uiHydrated,
-                        }}
-                        disabled={!uiHydrated}
-                        style={({ pressed }) => [
-                          s.settingsToggle,
-                          pressed && s.pressed,
-                        ]}
-                        onPress={() =>
-                          updateUi({
-                            type: "setFullscreen",
-                            fullscreen: !ui.fullscreen,
-                          })
-                        }
-                      >
-                        <View style={s.settingsToggleCopy}>
-                          <Text style={s.optionTitle}>{tr("appearance.hideStatus")}</Text>
-                          <Text style={s.optionDescription}>
-                            {tr("appearance.hideStatusDetail")}
-                          </Text>
-                        </View>
-                        <View
-                          pointerEvents="none"
-                          importantForAccessibility="no-hide-descendants"
-                        >
-                          <Switch
-                            accessible={false}
-                            value={ui.fullscreen}
-                            trackColor={{
-                              false: theme.switchOff,
-                              true: theme.accent,
+                            onAutoplayChange={async (origin, decision) => {
+                              if (!platform.resetSitePermission)
+                                throw new Error(tr("consent.rebuildRequired"));
+                              await platform.resetSitePermission(
+                                origin,
+                                "autoplay"
+                              );
+                              if (decision)
+                                await sitePermissions.decide(
+                                  origin,
+                                  "autoplay",
+                                  decision
+                                );
+                              else
+                                await sitePermissions.revoke(
+                                  origin,
+                                  "autoplay"
+                                );
+                              setPermissionRulesVersion((v) => v + 1);
                             }}
-                            thumbColor={theme.surfaceElevated}
+                            onRevoke={async (origin, kind) => {
+                              if (!platform.resetSitePermission)
+                                throw new Error(tr("consent.rebuildRequired"));
+                              await platform.resetSitePermission(origin, kind);
+                              await sitePermissions.revoke(origin, kind);
+                              setPermissionRulesVersion((v) => v + 1);
+                            }}
+                            onClearAll={async () => {
+                              if (!platform.resetSitePermission)
+                                throw new Error(tr("consent.rebuildRequired"));
+                              await platform.resetSitePermission(null, null);
+                              await sitePermissions.clearAll();
+                              setPermissionRulesVersion((v) => v + 1);
+                            }}
                           />
-                        </View>
-                      </Pressable>
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityState={{ disabled: !uiHydrated }}
-                        disabled={!uiHydrated}
-                        style={s.settingsAction}
-                        onPress={() => updateUi({ type: "resetLayout" })}
-                      >
-                        <Text style={s.optionTitle}>
-                          {tr("appearance.resetLayout")}
-                        </Text>
-                      </Pressable>
-                    </>
-                  ),
-                },
-                {
-                  id: "website",
-                  title: tr("category.website"),
-                  description: tr("category.websiteDetail"),
-                  keywords:
-                    "desktop reload connection certificate location camera microphone notifications autoplay 사이트 권한 카메라 마이크 위치 데스크톱",
-                  content: (
-                    <>
-                      <BrowserToolsPanel
-                        section="website"
-                        config={browser.config}
-                        onSave={browser.saveConfig}
-                        tabId={target ?? undefined}
-                        url={targetUrl}
-                        privateTab={
-                          !!state?.tabs.find((tab) => tab.id === target)
-                            ?.private
-                        }
-                        security={target ? browser.security[target] : undefined}
-                        onError={setError}
-                        onNotice={flashNotice}
-                      />
-                    </>
-                  ),
-                },
-                {
-                  id: "permissions",
-                  title: tr("category.permissions"),
-                  description: tr("category.permissionsDetail"),
-                  keywords: "permission camera microphone location notifications autoplay 권한 허용 카메라 마이크 위치 알림 자동 재생",
-                  content: (
-                    <>
-                      <ConsentSettings
-                        rules={siteRules}
-                        siteUrl={targetUrl}
-                        privateSite={!!state?.tabs.find((tab) => tab.id === target)?.private}
-                        onAutoplayChange={async (origin, decision) => {
-                          if (!platform.resetSitePermission) throw new Error(tr("consent.rebuildRequired"));
-                          await platform.resetSitePermission(origin, "autoplay");
-                          if (decision) await sitePermissions.decide(origin, "autoplay", decision);
-                          else await sitePermissions.revoke(origin, "autoplay");
-                          setPermissionRulesVersion((v) => v + 1);
-                        }}
-                        onRevoke={async (origin, kind) => {
-                          if (!platform.resetSitePermission)
-                            throw new Error(
-                              tr("consent.rebuildRequired")
-                            );
-                          await platform.resetSitePermission(origin, kind);
-                          await sitePermissions.revoke(origin, kind);
-                          setPermissionRulesVersion((v) => v + 1);
-                        }}
-                        onClearAll={async () => {
-                          if (!platform.resetSitePermission)
-                            throw new Error(
-                              tr("consent.rebuildRequired")
-                            );
-                          await platform.resetSitePermission(null, null);
-                          await sitePermissions.clearAll();
-                          setPermissionRulesVersion((v) => v + 1);
-                        }}
-                      />
-                    </>
-                  ),
-                },
-                {
-                  id: "extensions",
-                  title: tr("category.extensions"),
-                  description: tr("category.extensionsDetail"),
-                  keywords:
-                    "extension addons ublock ads blocker permissions 확장 광고 차단 설치 권한",
-                  content: (
-                    <ExtensionsSettings
-                      tabId={target ?? null}
-                      privateTab={
-                        !!state?.tabs.find((tab) => tab.id === target)?.private
-                      }
-                    />
-                  ),
-                },
-                {
-                  id: "privacy",
-                  title: tr("category.privacy"),
-                  description: tr("category.privacyDetail"),
-                  keywords:
-                    "cookies storage cache clear standard strict tracking protection 개인정보 보안 쿠키 추적 데이터 삭제",
-                  content: (
-                    <>
-                      <BrowserToolsPanel
-                        section="privacy"
-                        config={browser.config}
-                        onSave={browser.saveConfig}
-                        tabId={target ?? undefined}
-                        url={targetUrl}
-                        privateTab={
-                          !!state?.tabs.find((tab) => tab.id === target)
-                            ?.private
-                        }
-                        security={target ? browser.security[target] : undefined}
-                        onError={setError}
-                        onNotice={flashNotice}
-                      />
-                    </>
-                  ),
-                },
-                {
-                  id: "data",
-                  title: tr("category.data"),
-                  description: tr("category.dataDetail"),
-                  keywords:
-                    "downloads history bookmarks favorites archive backup restore 파일 다운로드 기록 북마크 백업 내보내기 가져오기",
-                  content: (
-                    <>
-                      <BrowserToolsPanel
-                        section="downloads"
-                        config={browser.config}
-                        onSave={browser.saveConfig}
-                        tabId={target ?? undefined}
-                        url={targetUrl}
-                        privateTab={
-                          !!state?.tabs.find((tab) => tab.id === target)
-                            ?.private
-                        }
-                        security={target ? browser.security[target] : undefined}
-                        onError={setError}
-                        onNotice={flashNotice}
-                      />
-                      <BrowserDataPanel
-                        controller={controller}
-                        ui={ui}
-                        hydrated={uiHydrated}
-                        onPresentation={async ({
-                          schema: _schema,
-                          ...appearance
-                        }) => {
-                          const {
-                            colorSource: _source,
-                            customColor: _color,
-                            ...current
-                          } = currentUi.current;
-                          const next = { ...current, ...appearance };
-                          await uiPersistence.persist(next);
-                          // Keep non-presentation changes made while the import was saving.
-                          const {
-                            colorSource: _latestSource,
-                            customColor: _latestColor,
-                            ...latest
-                          } = currentUi.current;
-                          updateUi({
-                            type: "restore",
-                            preferences: { ...latest, ...appearance },
-                          });
-                        }}
-                        onError={setError}
-                        onNotice={flashNotice}
-                      />
-                      <Text style={s.settingsSection}>{tr("data.title")}</Text>
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel={tr("data.history")}
-                        style={s.settingsAction}
-                        onPress={() => {
-                          openSettingsChild("history");
-                          setHistoryOpen(true);
-                        }}
-                      >
-                        <View style={s.settingsToggleCopy}>
-                          <Text style={s.optionTitle}>{tr("data.history")}</Text>
-                          <Text style={s.optionDescription}>
-                            {tr("data.historyDetail")}
+                        </>
+                      ),
+                    },
+                    {
+                      id: "extensions",
+                      title: tr("category.extensions"),
+                      description: tr("category.extensionsDetail"),
+                      keywords:
+                        "extension addons ublock ads blocker permissions 확장 광고 차단 설치 권한",
+                      content: (
+                        <ExtensionsSettings
+                          tabId={target ?? null}
+                          privateTab={
+                            !!state?.tabs.find((tab) => tab.id === target)
+                              ?.private
+                          }
+                        />
+                      ),
+                    },
+                    {
+                      id: "privacy",
+                      title: tr("category.privacy"),
+                      description: tr("category.privacyDetail"),
+                      keywords:
+                        "cookies storage cache clear standard strict tracking protection 개인정보 보안 쿠키 추적 데이터 삭제",
+                      content: (
+                        <>
+                          <BrowserToolsPanel
+                            section="privacy"
+                            config={browser.config}
+                            onSave={browser.saveConfig}
+                            tabId={target ?? undefined}
+                            url={targetUrl}
+                            privateTab={
+                              !!state?.tabs.find((tab) => tab.id === target)
+                                ?.private
+                            }
+                            security={
+                              target ? browser.security[target] : undefined
+                            }
+                            onError={setError}
+                            onNotice={flashNotice}
+                          />
+                        </>
+                      ),
+                    },
+                    {
+                      id: "data",
+                      title: tr("category.data"),
+                      description: tr("category.dataDetail"),
+                      keywords:
+                        "downloads history bookmarks favorites archive backup restore 파일 다운로드 기록 북마크 백업 내보내기 가져오기",
+                      content: (
+                        <>
+                          <BrowserToolsPanel
+                            section="downloads"
+                            config={browser.config}
+                            onSave={browser.saveConfig}
+                            tabId={target ?? undefined}
+                            url={targetUrl}
+                            privateTab={
+                              !!state?.tabs.find((tab) => tab.id === target)
+                                ?.private
+                            }
+                            security={
+                              target ? browser.security[target] : undefined
+                            }
+                            onError={setError}
+                            onNotice={flashNotice}
+                          />
+                          <BrowserDataPanel
+                            controller={controller}
+                            ui={ui}
+                            hydrated={uiHydrated}
+                            onPresentation={async ({
+                              schema: _schema,
+                              ...appearance
+                            }) => {
+                              const {
+                                colorSource: _source,
+                                customColor: _color,
+                                ...current
+                              } = currentUi.current;
+                              const next = { ...current, ...appearance };
+                              await uiPersistence.persist(next);
+                              // Keep non-presentation changes made while the import was saving.
+                              const {
+                                colorSource: _latestSource,
+                                customColor: _latestColor,
+                                ...latest
+                              } = currentUi.current;
+                              updateUi({
+                                type: "restore",
+                                preferences: { ...latest, ...appearance },
+                              });
+                            }}
+                            onError={setError}
+                            onNotice={flashNotice}
+                          />
+                          <Text className={c.settingsSection}>
+                            {tr("data.title")}
                           </Text>
-                        </View>
-                        <Text style={s.chevron}>›</Text>
-                      </Pressable>
-                      <Text style={s.settingsSection}>{tr("data.bookmarksTitle")}</Text>
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel={tr("data.bookmarks")}
-                        style={s.settingsAction}
-                        onPress={() => {
-                          openSettingsChild("bookmarks");
-                          setBookmarkManager(true);
-                        }}
-                      >
-                        <View style={s.settingsToggleCopy}>
-                          <Text style={s.optionTitle}>{tr("data.bookmarks")}</Text>
-                          <Text style={s.optionDescription}>
-                            {tr("data.bookmarksDetail")}
+                          <Pressable
+                            accessibilityRole="button"
+                            accessibilityLabel={tr("data.history")}
+                            className={c.settingsAction}
+                            onPress={() => {
+                              openSettingsChild("history");
+                              setHistoryOpen(true);
+                            }}
+                          >
+                            <View className={c.settingsToggleCopy}>
+                              <Text className={c.optionTitle}>
+                                {tr("data.history")}
+                              </Text>
+                              <Text className={c.optionDescription}>
+                                {tr("data.historyDetail")}
+                              </Text>
+                            </View>
+                            <Text className={c.chevron}>›</Text>
+                          </Pressable>
+                          <Text className={c.settingsSection}>
+                            {tr("data.bookmarksTitle")}
                           </Text>
-                        </View>
-                        <Text style={s.chevron}>›</Text>
-                      </Pressable>
-                    </>
-                  ),
-                },
-                {
-                  id: "media",
-                  title: tr("category.media"),
-                  description: tr("category.mediaDetail"),
-                  keywords:
-                    "video pip auto media picture in picture playback 영상 비디오 미디어 재생",
-                  content: (
-                    <>
-                      <PictureInPictureSettings
-                        state={pip.state}
-                        externalBusy={externalPipBusy}
-                        enabled={ui.autoPictureInPicture}
-                        hydrated={uiHydrated}
-                        hasTab={!!pipTab && browser.ready}
-                        onToggle={() =>
-                          updateUi({
-                            type: "setAutoPictureInPicture",
-                            enabled: !ui.autoPictureInPicture,
-                          })
-                        }
-                        onEnter={enterPictureInPicture}
-                        onOpenSettings={() => {
-                          void pip.openSettings();
-                        }}
-                      />
-                    </>
-                  ),
-                },
-                {
-                  id: "advanced",
-                  title: tr("category.advanced"),
-                  description: tr("category.advancedDetail"),
-                  keywords:
-                    "memory keep alive release tabs boosts css commands keyboard shortcuts 메모리 탭 단축키 키보드",
-                  content: (
-                    <>
-                      <BrowserToolsPanel
-                        section="memory"
-                        config={browser.config}
-                        onSave={browser.saveConfig}
-                        tabId={target ?? undefined}
-                        url={targetUrl}
-                        privateTab={
-                          !!state?.tabs.find((tab) => tab.id === target)
-                            ?.private
-                        }
-                        security={target ? browser.security[target] : undefined}
-                        onError={setError}
-                        onNotice={flashNotice}
-                      />
-                      <Text style={s.settingsSection}>{tr("advanced.boostsTitle")}</Text>
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel={tr("advanced.boosts")}
-                        style={s.settingsAction}
-                        onPress={() => {
-                          openSettingsChild("boosts");
-                          setBoostsOpen(true);
-                        }}
-                      >
-                        <View style={s.settingsToggleCopy}>
-                          <Text style={s.optionTitle}>{tr("advanced.boosts")}</Text>
-                          <Text style={s.optionDescription}>
-                            {tr("advanced.boostsDetail")}
+                          <Pressable
+                            accessibilityRole="button"
+                            accessibilityLabel={tr("data.bookmarks")}
+                            className={c.settingsAction}
+                            onPress={() => {
+                              openSettingsChild("bookmarks");
+                              setBookmarkManager(true);
+                            }}
+                          >
+                            <View className={c.settingsToggleCopy}>
+                              <Text className={c.optionTitle}>
+                                {tr("data.bookmarks")}
+                              </Text>
+                              <Text className={c.optionDescription}>
+                                {tr("data.bookmarksDetail")}
+                              </Text>
+                            </View>
+                            <Text className={c.chevron}>›</Text>
+                          </Pressable>
+                        </>
+                      ),
+                    },
+                    {
+                      id: "media",
+                      title: tr("category.media"),
+                      description: tr("category.mediaDetail"),
+                      keywords:
+                        "video pip auto media picture in picture playback 영상 비디오 미디어 재생",
+                      content: (
+                        <>
+                          <PictureInPictureSettings
+                            state={pip.state}
+                            externalBusy={externalPipBusy}
+                            enabled={ui.autoPictureInPicture}
+                            hydrated={uiHydrated}
+                            hasTab={!!pipTab && browser.ready}
+                            onToggle={() =>
+                              updateUi({
+                                type: "setAutoPictureInPicture",
+                                enabled: !ui.autoPictureInPicture,
+                              })
+                            }
+                            onEnter={enterPictureInPicture}
+                            onOpenSettings={() => {
+                              void pip.openSettings();
+                            }}
+                          />
+                        </>
+                      ),
+                    },
+                    {
+                      id: "advanced",
+                      title: tr("category.advanced"),
+                      description: tr("category.advancedDetail"),
+                      keywords:
+                        "memory keep alive release tabs boosts css commands keyboard shortcuts 메모리 탭 단축키 키보드",
+                      content: (
+                        <>
+                          <BrowserToolsPanel
+                            section="memory"
+                            config={browser.config}
+                            onSave={browser.saveConfig}
+                            tabId={target ?? undefined}
+                            url={targetUrl}
+                            privateTab={
+                              !!state?.tabs.find((tab) => tab.id === target)
+                                ?.private
+                            }
+                            security={
+                              target ? browser.security[target] : undefined
+                            }
+                            onError={setError}
+                            onNotice={flashNotice}
+                          />
+                          <Text className={c.settingsSection}>
+                            {tr("advanced.boostsTitle")}
                           </Text>
-                        </View>
-                        <Text style={s.chevron}>
-                          {ui.boosts.length > 0 ? `${ui.boosts.length} ›` : "›"}
-                        </Text>
-                      </Pressable>
-                      <Text style={s.settingsSection}>{tr("advanced.commandsTitle")}</Text>
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel={tr("advanced.commands")}
-                        style={s.settingsAction}
-                        onPress={() => {
-                          setSettings(false);
-                          setPalette(true);
-                        }}
-                      >
-                        <View style={s.settingsToggleCopy}>
-                          <Text style={s.optionTitle}>{tr("advanced.commands")}</Text>
-                          <Text style={s.optionDescription}>
-                            {tr("advanced.commandsDetail")}
+                          <Pressable
+                            accessibilityRole="button"
+                            accessibilityLabel={tr("advanced.boosts")}
+                            className={c.settingsAction}
+                            onPress={() => {
+                              openSettingsChild("boosts");
+                              setBoostsOpen(true);
+                            }}
+                          >
+                            <View className={c.settingsToggleCopy}>
+                              <Text className={c.optionTitle}>
+                                {tr("advanced.boosts")}
+                              </Text>
+                              <Text className={c.optionDescription}>
+                                {tr("advanced.boostsDetail")}
+                              </Text>
+                            </View>
+                            <Text className={c.chevron}>
+                              {ui.boosts.length > 0
+                                ? `${ui.boosts.length} ›`
+                                : "›"}
+                            </Text>
+                          </Pressable>
+                          <Text className={c.settingsSection}>
+                            {tr("advanced.commandsTitle")}
                           </Text>
-                        </View>
-                        <Text style={s.chevron}>›</Text>
-                      </Pressable>
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel={tr("advanced.keyboard")}
-                        style={s.settingsAction}
-                        onPress={openKeyboard}
-                      >
-                        <View style={s.settingsToggleCopy}>
-                          <Text style={s.optionTitle}>{tr("advanced.keyboard")}</Text>
-                          <Text style={s.optionDescription}>
-                            {tr("advanced.keyboardDetail")}
-                          </Text>
-                        </View>
-                        <Text style={s.chevron}>›</Text>
-                      </Pressable>
-                    </>
-                  ),
-                },
-              ]}
-            />
-          )
-        )}
-        {sheet(
-          !!boostsOpen,
-          () => closeSettingsChild("boosts", () => setBoostsOpen(false)),
-          <BoostsDialog
-            boosts={ui.boosts}
-            onSave={(boosts) => {
-              updateUi({ type: "setBoosts", boosts });
-              closeSettingsChild("boosts", () => setBoostsOpen(false));
-            }}
-            onClose={() =>
-              closeSettingsChild("boosts", () => setBoostsOpen(false))
-            }
+                          <Pressable
+                            accessibilityRole="button"
+                            accessibilityLabel={tr("advanced.commands")}
+                            className={c.settingsAction}
+                            onPress={() => {
+                              setSettings(false);
+                              setPalette(true);
+                            }}
+                          >
+                            <View className={c.settingsToggleCopy}>
+                              <Text className={c.optionTitle}>
+                                {tr("advanced.commands")}
+                              </Text>
+                              <Text className={c.optionDescription}>
+                                {tr("advanced.commandsDetail")}
+                              </Text>
+                            </View>
+                            <Text className={c.chevron}>›</Text>
+                          </Pressable>
+                          <Pressable
+                            accessibilityRole="button"
+                            accessibilityLabel={tr("advanced.keyboard")}
+                            className={c.settingsAction}
+                            onPress={openKeyboard}
+                          >
+                            <View className={c.settingsToggleCopy}>
+                              <Text className={c.optionTitle}>
+                                {tr("advanced.keyboard")}
+                              </Text>
+                              <Text className={c.optionDescription}>
+                                {tr("advanced.keyboardDetail")}
+                              </Text>
+                            </View>
+                            <Text className={c.chevron}>›</Text>
+                          </Pressable>
+                        </>
+                      ),
+                    },
+                  ]}
+                />
+              )
+            )}
+            {sheet(
+              !!boostsOpen,
+              () => closeSettingsChild("boosts", () => setBoostsOpen(false)),
+              <BoostsDialog
+                boosts={ui.boosts}
+                onSave={(boosts) => {
+                  updateUi({ type: "setBoosts", boosts });
+                  closeSettingsChild("boosts", () => setBoostsOpen(false));
+                }}
+                onClose={() =>
+                  closeSettingsChild("boosts", () => setBoostsOpen(false))
+                }
+              />
+            )}
+            {sheet(
+              !!keys,
+              () => closeSettingsChild("keyboard", () => setKeys(false)),
+              keys && (
+                <KeyboardSettings
+                  bindings={state?.keyBindings ?? []}
+                  commands={registry.entries(language)}
+                  onDefaults={() => controller.defaultKeymap()}
+                  onSave={(bindings) => controller.keymap(bindings)}
+                  onClose={() =>
+                    closeSettingsChild("keyboard", () => setKeys(false))
+                  }
+                />
+              )
+            )}
+          </SafeAreaView>
+          <BrowserContentMenu
+            request={browser.context}
+            onClose={browser.closeContext}
+            onChoose={browser.selectContext}
           />
-        )}
-        {sheet(
-          !!keys,
-          () => closeSettingsChild("keyboard", () => setKeys(false)),
-          keys && (
-            <KeyboardSettings
-              bindings={state?.keyBindings ?? []}
-              commands={registry.entries(language)}
-              onDefaults={() => controller.defaultKeymap()}
-              onSave={(bindings) => controller.keymap(bindings)}
-              onClose={() =>
-                closeSettingsChild("keyboard", () => setKeys(false))
-              }
-            />
-          )
-        )}
-      </SafeAreaView>
-      <BrowserContentMenu
-        request={browser.context}
-        onClose={browser.closeContext}
-        onChoose={browser.selectContext}
-      />
-    </ThemeContext.Provider>
+        </ThemeScope>
+      </ThemeContext.Provider>
     </I18nContext.Provider>
   );
 }

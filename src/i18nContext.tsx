@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useCallback } from "react";
-import { translate, type AppLanguage, type TranslationKey } from "./i18n";
+import { translate, type AppLanguage, type TranslationKey } from "@/i18n";
 
 export const I18nContext = createContext<AppLanguage>("en");
 

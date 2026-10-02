@@ -8,6 +8,8 @@ This document describes the current public source. It deliberately avoids promot
 
 - Workspace/Space model with ordinary tabs, cross-Space Favorites, per-Space pinned tabs, folders, bookmarks, history, and editable shortcuts.
 - Expanded and collapsed tablet chrome, quick open, command palette, context menus, and horizontal/vertical split views.
+- Uniwind/Tailwind UI with shared CVA variants, `cn` class merging, and root-scoped themes for independent window/Space colors.
+- Keyboard-aware address overlays, reliable quick-open focus and suggestion selection, and bounded find/settings controls on narrow windows.
 - GeckoView session registry with navigation, popup, permission, file, download, external-link, media, and Android PiP integration.
 - Rust-owned revisioned snapshots with validation, corruption quarantine, ordered persistence, and import preparation/commit separation.
 - Private tabs with private Gecko sessions, non-persistent history/permissions, local favicon placeholders, and explicit persistence warnings.
@@ -16,6 +18,7 @@ This document describes the current public source. It deliberately avoids promot
 - Korean/English app UI, adaptive settings, device-permission preparation, remembered site decisions, and muted-allow/audible-block autoplay defaults.
 - Same-document suppression of dismissed permission requests and reuse of successfully saved decisions for queued requests.
 - Android separate windows, share input, background media controls, download recovery, and live-runtime web notifications.
+- Shared React-host lifecycle coordination for simultaneously resumed windows, stable window/tab bindings, and owner-scoped permissions and file-picker results.
 - Compatible Mozilla extension search/install, toolbar actions, permission review/revocation, and extension-page controls.
 
 ## Reproducible repository gates
@@ -37,6 +40,7 @@ These gates establish source and build behavior. They do not, by themselves, est
 - The mini player and Android PiP move the full browser surface/session; they do not extract a service-independent video overlay.
 - Automatic memory release stays conservative when the app cannot prove that page state is safely restorable. No general memory-saving claim is made.
 - Passkeys, autofill, OAuth, DRM media, accessibility, downloads under process death, and provider-specific behavior require dedicated device/account validation.
+- Automated accessibility and layout checks do not establish manual TalkBack speech/gesture acceptance or long-duration device reliability. Device acceptance must identify the exact source and APK being exercised.
 - Engine upgrades require fresh compilation, session restoration, permission, media, surface, and device checks.
 
 ## Evidence policy

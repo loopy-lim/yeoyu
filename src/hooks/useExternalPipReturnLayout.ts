@@ -1,8 +1,8 @@
 import { useLayoutEffect, useMemo, useRef, type RefObject } from "react";
-import type { Snapshot, Tab } from "../../generated/types";
-import type { BrowserController } from "../BrowserController";
-import type { SplitLayout } from "../splitLayout";
-import type { ExternalPictureInPictureState } from "./useExternalPictureInPicture";
+import type { Snapshot, Tab } from "@generated/types";
+import type { BrowserController } from "@/BrowserController";
+import type { SplitLayout } from "@/splitLayout";
+import type { ExternalPictureInPictureState } from "@/hooks/useExternalPictureInPicture";
 
 type Origin = {
   layout: SplitLayout | null;

@@ -5,27 +5,57 @@ import { createRequire } from "node:module";
 import { URL } from "node:url";
 import { sidebarPresentation } from "../src/sidebarPresentation";
 import { translate, type TranslationKey } from "../src/i18n";
+import { parse } from "@babel/parser";
+import { appClasses as c } from "../src/chrome/appStyles";
+import { cn } from "../src/ui/cn";
 const require = createRequire(import.meta.url);
 const { transformSync } = require("@babel/core");
 const source = readFileSync(new URL("../src/App.tsx", import.meta.url), "utf8");
+const ast = parse(source, {
+  sourceType: "module",
+  plugins: ["typescript", "jsx"],
+});
+
+function listElement(rail: boolean): string {
+  const elements: string[] = [];
+  const visit = (node: any) => {
+    if (!node || typeof node !== "object") return;
+    if (node.type === "JSXElement") {
+      const opening = node.openingElement;
+      const isExpanded = opening.attributes.some(
+        (attribute: any) =>
+          attribute.name?.name === "ref" &&
+          attribute.value?.expression?.name === "tabListRef"
+      );
+      const isRail =
+        opening.name?.name === "View" &&
+        opening.attributes.some(
+          (attribute: any) =>
+            attribute.name?.name === "className" &&
+            attribute.value?.expression?.object?.name === "c" &&
+            attribute.value?.expression?.property?.name === "tabScrollWrap"
+        );
+      if (rail ? isRail : isExpanded)
+        elements.push(source.slice(node.start, node.end));
+    }
+    for (const value of Object.values(node)) {
+      if (Array.isArray(value)) value.forEach(visit);
+      else if (value && typeof value === "object") visit(value);
+    }
+  };
+  visit(ast);
+  if (elements.length !== 1)
+    throw new Error(
+      `Expected one ${rail ? "rail" : "expanded"} App list, found ${
+        elements.length
+      }`
+    );
+  return elements[0]!;
+}
 
 // Execute the actual App list expressions. Eager .map() used to create every
 // tab row before the incoming GeckoView could mount in the same native batch.
 function renderList(rail: boolean, grouped = false) {
-  const start = rail
-    ? source.indexOf(
-        "<View style={s.tabScrollWrap}>",
-        source.indexOf("s.sidebarLayerRail")
-      )
-    : source.indexOf("<Animated.View\n                ref={tabListRef}");
-  const end = source.indexOf(
-    rail
-      ? "<View style={s.sidebarBottomCollapsed}>"
-      : "<View style={s.sidebarBottom}>",
-    start
-  );
-  if (start < 0 || end < 0)
-    throw new Error("App sidebar list boundary changed");
   const tabs = Array.from({ length: 1000 }, (_, i) => ({
     id: `tab-${i}`,
     workspaceId: "a",
@@ -53,6 +83,7 @@ function renderList(rail: boolean, grouped = false) {
   const bindings = {
     React,
     Animated: { View: "View" },
+    AnimatedView: "View",
     View: "View",
     Text: "Text",
     FlatList: "FlatList",
@@ -73,7 +104,8 @@ function renderList(rail: boolean, grouped = false) {
     tabListRef: null,
     pinnedSectionRef: null,
     ordinarySectionRef: null,
-    s: {},
+    c,
+    cn,
     spaceStyle: {},
     theme: {},
     space: { lg: 8 },
@@ -98,18 +130,16 @@ function renderList(rail: boolean, grouped = false) {
     cancelDrag: () => {},
     reducedMotion: false,
     tabLabel: (tab: (typeof tabs)[number]) => tab.title,
-    tr: (key: TranslationKey, values?: Record<string, string | number>) => translate("en", key, values),
+    tr: (key: TranslationKey, values?: Record<string, string | number>) =>
+      translate("en", key, values),
   };
-  const code = transformSync(
-    "return (" + source.slice(start, end).trim() + ");",
-    {
-      filename: "App.tsx",
-      babelrc: false,
-      configFile: false,
-      parserOpts: { allowReturnOutsideFunction: true },
-      presets: [require.resolve("@react-native/babel-preset")],
-    }
-  ).code;
+  const code = transformSync("return (" + listElement(rail) + ");", {
+    filename: "App.tsx",
+    babelrc: false,
+    configFile: false,
+    parserOpts: { allowReturnOutsideFunction: true },
+    presets: [require.resolve("@react-native/babel-preset")],
+  }).code;
   const tree = new Function("require", ...Object.keys(bindings), code)(
     require,
     ...Object.values(bindings)

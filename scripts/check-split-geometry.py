@@ -14,16 +14,14 @@ import tempfile
 
 def main():
     repo = Path(__file__).resolve().parent.parent
-    # Load the actual style builder in an isolated process. Only StyleSheet's
-    # registration is stubbed; pane properties come from the app, not this probe.
+    # Resolve the production pane classes with the installed CSS compiler and
+    # native Uniwind store. The Yoga probe consumes that result, not a copied
+    # layout table or an RN StyleSheet registration stub.
     read_style = """
-import { mock } from "bun:test";
-mock.module("react-native", () => ({
-  StyleSheet: { create: (styles) => styles, hairlineWidth: 1 },
-}));
-const { useStyles } = await import("./src/chrome/appStyles");
+const { resolveTestClassNames } = await import("./tests/uniwindTestHarness");
+const { appClasses } = await import("./src/chrome/appStyles");
 const { themes } = await import("./src/theme");
-console.log(JSON.stringify(useStyles(Object.values(themes)[0]).pane));
+console.log(JSON.stringify(resolveTestClassNames(appClasses.pane, Object.values(themes)[0])));
 """
     pane = json.loads(subprocess.check_output(
         ["bun", "-e", read_style], cwd=repo, text=True

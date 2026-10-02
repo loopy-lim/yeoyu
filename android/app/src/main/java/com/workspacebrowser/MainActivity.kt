@@ -2,8 +2,6 @@ package com.workspacebrowser
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
-import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnabled
-import com.facebook.react.defaults.DefaultReactActivityDelegate
 
 class MainActivity : ReactActivity() {
   companion object {
@@ -39,6 +37,7 @@ class MainActivity : ReactActivity() {
       android.view.ViewGroup.LayoutParams.MATCH_PARENT,
       android.view.ViewGroup.LayoutParams.MATCH_PARENT
     ))
+    dev.browser.BrowserInputViewport.attach(this, gateway, { "main" })
     browserPip.attach(gateway)
     dev.browser.ExternalPictureInPicture.attachBrowser(this)
     attachPredictiveBackBridge()
@@ -112,6 +111,7 @@ class MainActivity : ReactActivity() {
   override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
     super.onConfigurationChanged(newConfig)
     dev.browser.BrowserAppearance.refreshSystemBars(this)
+    dev.browser.BrowserInputViewport.refresh(this)
   }
 
   override fun onSaveInstanceState(outState: android.os.Bundle) {
@@ -173,7 +173,11 @@ class MainActivity : ReactActivity() {
   }
 
   override fun onDestroy() {
+    dev.browser.BrowserInputViewport.detach(this)
+    dev.browser.BrowserDataModule.cancelForActivity(this)
+    dev.browser.FilePromptCoordinator.cancelForActivity(this)
     if (current === this) current = null
+    dev.browser.PermissionCoordinator.cancelForActivity(this)
     dev.browser.SpaceTransitionCover.activityStopped(this, destroyed = true)
     dev.browser.ExternalPictureInPicture.browserDestroyed(this)
     browserPip.destroy()
@@ -196,6 +200,7 @@ class MainActivity : ReactActivity() {
 
   override fun onResume() {
     super.onResume()
+    dev.browser.BrowserInputViewport.refresh(this)
     dev.browser.BrowserWebNotifications.onHostResumed()
     dev.browser.ExternalPictureInPicture.browserResumed(this)
     browserPip.onResume()
@@ -237,9 +242,9 @@ class MainActivity : ReactActivity() {
   override fun getMainComponentName(): String = "Yeoyu"
 
   /**
-   * Returns the instance of the [ReactActivityDelegate]. We use [DefaultReactActivityDelegate]
-   * which allows you to enable New Architecture with a single boolean flags [fabricEnabled]
+   * Keep normal RN surface/permission callbacks while arbitrating the shared
+   * ReactHost's single lifecycle owner across multi-resumed OS windows.
    */
   override fun createReactActivityDelegate(): ReactActivityDelegate =
-      DefaultReactActivityDelegate(this, mainComponentName, fabricEnabled)
+      dev.browser.BrowserReactActivityDelegate(this, mainComponentName)
 }

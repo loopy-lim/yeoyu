@@ -1,5 +1,5 @@
 import { NativeModules } from "react-native";
-import { translate, type AppLanguage } from "./i18n";
+import { translate, type AppLanguage } from "@/i18n";
 export type ExtensionOperation = "enabled" | "private" | "update" | "remove";
 export type ExtensionOptionalKind = "permission" | "origin" | "data";
 export interface BrowserExtensionsBridge {

@@ -22,7 +22,7 @@ def sha256(path):
 def source_inputs():
     paths = subprocess.check_output(["git", "ls-files", "--cached", "--others", "--exclude-standard", "-z"], cwd=ROOT).decode().split("\0")
     roots = ("src/", "native/", "generated/", "modules/", "android/", "tests/", "scripts/")
-    root_files = {"Cargo.toml", "Cargo.lock", "package.json", "bun.lock", "rustra.json", "index.js", "babel.config.js", "metro.config.js", "tsconfig.json"}
+    root_files = {"Cargo.toml", "Cargo.lock", "package.json", "bun.lock", "rustra.json", "index.js", "babel.config.js", "metro.config.js", "tsconfig.json", "global.css"}
     return {name: sha256(ROOT / name) for name in sorted(set(paths)) if name and (name.startswith(roots) or name in root_files) and (ROOT / name).is_file()}
 
 

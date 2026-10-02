@@ -32,6 +32,8 @@
 
 Split layout은 React의 화면 상태이며 저장되는 split group은 아닙니다. 보이는 tab, private tab, media 재생, recording, upload, dialog, permission 처리 등 안전하게 복원할 수 없는 상태는 release하지 않도록 보호합니다.
 
+Android 별도 창은 하나의 React host를 공유하면서 안정적인 window/tab 소유권을 유지합니다. 각 Activity는 자신의 surface와 lifecycle을 유지하고, host는 활성 owner를 따르며 resumed root가 없어질 때만 pause합니다. 권한 요청과 file-picker 결과는 소유한 창으로 전달하고 닫혔거나 오래된 owner의 응답은 거부합니다. 입력 viewport도 Activity별로 측정하므로 화면 키보드는 해당 창의 overlay에만 영향을 줍니다.
+
 ## Privacy 경계
 
 비공개 tab은 Gecko private session과 별도 in-memory collection을 사용하며 일반 snapshot과 history에서 제외됩니다. 비공개 permission은 일회성이고, private page에서는 persistent site setting을 저장할 수 없습니다. 다만 download 저장이나 bookmark 같은 명시적 action은 durable data를 만들 수 있으므로 UI에서 이를 설명해야 합니다.
@@ -49,7 +51,9 @@ bun run codegen --check
 
 ## UI quality gate
 
-Theme role, spacing, motion, contrast는 `src/theme.ts`, `src/themeGates.ts`, `src/chrome/motion.ts`에 있습니다. `scripts/contrast-check.ts`, TypeScript test, geometry check가 기계적으로 확인 가능한 범위를 강제합니다. 기기 screenshot은 특정 build를 보여줄 수 있지만 현재 source check를 대신하지 않습니다.
+React Native chrome은 Uniwind로 `global.css`의 Tailwind class를 컴파일합니다. 공통 component variant는 `src/ui/variants.ts`의 CVA를 사용하고, `cn`은 조건부 class를 합치고 충돌하는 utility를 정리합니다. `ThemeScope`는 semantic theme role을 각 React root 또는 중첩 Space의 scoped variable로 바꾸어 창별 색상을 독립적으로 유지합니다.
+
+Theme role, contrast, motion은 `src/theme.ts`, `src/themeGates.ts`, `src/chrome/motion.ts`에 있습니다. Runtime style은 animation, 측정한 geometry, 키보드 bounds, native view adapter처럼 실행 중 결정되는 값에 사용합니다. `scripts/contrast-check.ts`, TypeScript test, 컴파일된 style의 layout 검사, geometry check가 기계적으로 확인 가능한 범위를 강제합니다. 기기 screenshot은 특정 build를 보여줄 수 있지만 현재 source check를 대신하지 않습니다.
 
 ## Test seam
 

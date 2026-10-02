@@ -1,4 +1,4 @@
-import type { PermissionKind } from "./uiPreferences";
+import type { PermissionKind } from "@/uiPreferences";
 
 export const ANDROID_PERMISSION_KINDS = [
   "camera",

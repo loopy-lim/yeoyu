@@ -1,4 +1,8 @@
 import { afterEach, expect, mock, spyOn, test } from "bun:test";
+import "../uniwindTestHarness";
+import { appClasses } from "../../src/chrome/appStyles";
+import { cn } from "../../src/ui/cn";
+import { rowVariants } from "../../src/ui/variants";
 import React, { Profiler } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
 import { readFileSync } from "node:fs";
@@ -94,6 +98,9 @@ function exactBookmarkRows(
     bookmarkTabs: new Map(),
     splitPaneIds: [],
     s: {},
+    c: appClasses,
+    cn,
+    rowVariants,
     playing: [],
     sidebarMenu: null,
     validSplit: null,
@@ -102,7 +109,8 @@ function exactBookmarkRows(
     openBookmark() {},
     setSidebarMenu() {},
     closeTab() {},
-    tr: (_key: string, values?: { name?: string }) => `Pinned tab ${String(values?.name ?? "")}`,
+    tr: (_key: string, values?: { name?: string }) =>
+      `Pinned tab ${String(values?.name ?? "")}`,
     windowedTabs: [],
     revealTab() {},
   };

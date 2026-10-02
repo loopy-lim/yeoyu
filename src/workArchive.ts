@@ -1,5 +1,5 @@
-import type { UiPreferences } from "./uiPreferences";
-import { normalizeCustomColor } from "./uiPreferences";
+import type { UiPreferences } from "@/uiPreferences";
+import { normalizeCustomColor } from "@/uiPreferences";
 
 export const MAX_ARCHIVE_BYTES = 8 * 1024 * 1024;
 const MAX_ITEMS = 10_000;

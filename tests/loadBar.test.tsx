@@ -34,10 +34,18 @@ async function render(state?: LoadState, reducedMotion?: boolean) {
 }
 function bar() {
   const [track, fill] = tree!.root.findAllByType("View" as React.ElementType);
+  const trackStyle = Object.assign(
+    {},
+    ...track.props.style.flat(Infinity).filter(Boolean)
+  );
+  const fillStyle = Object.assign(
+    {},
+    ...fill.props.style.flat(Infinity).filter(Boolean)
+  );
   return {
-    opacity: track.props.style.opacity as TestValue,
-    scale: fill.props.style.transform?.[0]?.scaleX as TestValue | undefined,
-    fillStyle: fill.props.style,
+    opacity: trackStyle.opacity as TestValue,
+    scale: fillStyle.transform?.[0]?.scaleX as TestValue | undefined,
+    fillStyle,
   };
 }
 
@@ -47,7 +55,7 @@ test("progress uses the native driver and grows from the left without animating 
     animations.every((animation) => animation.config.useNativeDriver)
   ).toBe(true);
   expect(bar().fillStyle.width).toBe("100%");
-  expect(bar().fillStyle.transformOrigin).toEqual([0, 0, 0]);
+  expect(bar().fillStyle.transformOrigin).toBe("0 0");
   await act(() => latestAnimation().finish());
   expect(bar().scale?.value).toBe(0.25);
 });
