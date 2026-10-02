@@ -12,6 +12,7 @@ import android.util.Log
 import com.facebook.react.bridge.Arguments
 import java.io.File
 import java.io.IOException
+import java.lang.ref.WeakReference
 import java.util.IdentityHashMap
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.Executors
@@ -37,8 +38,9 @@ object FilePromptCoordinator {
     private val retained = IdentityHashMap<GeckoSession, MutableList<StagedUpload>>()
     private val activeCopies = IdentityHashMap<GeckoSession, Int>()
     private var nextCode = 0x5000
-    private class Pending(val session: GeckoSession, val prompt: FilePrompt, val requestCode: Int,
+    private class Pending(activity: Activity, val session: GeckoSession, val prompt: FilePrompt, val requestCode: Int,
         val result: GeckoResult<PromptResponse>, val isCurrent: () -> Boolean) {
+        val owner = WeakReference(activity)
         val cancellation = UploadCancellation()
         @Volatile var canceled = false
         var copying = false
@@ -48,10 +50,11 @@ object FilePromptCoordinator {
 
     fun start(activity: Activity, session: GeckoSession, prompt: FilePrompt,
         isCurrent: () -> Boolean): GeckoResult<PromptResponse> {
+        if (activity.isFinishing || activity.isDestroyed) return GeckoResult.fromValue(prompt.dismiss())
         pending?.let { finish(it) { it.prompt.dismiss() } }
         // Never wrap: old picker answers cannot match a later request in this process.
         if (nextCode > 0x7fff) return GeckoResult.fromValue(prompt.dismiss())
-        val request = Pending(session, prompt, nextCode++, GeckoResult(), isCurrent)
+        val request = Pending(activity, session, prompt, nextCode++, GeckoResult(), isCurrent)
         pending = request
         prompt.setDelegate(object : PromptInstanceDelegate {
             override fun onPromptDismiss(prompt: BasePrompt) { finish(request) { request.prompt.dismiss() } }
@@ -76,6 +79,13 @@ object FilePromptCoordinator {
         pending?.takeIf { it.session === session }?.let { finish(it) { it.prompt.dismiss() } }
     }
     fun cancel(session: GeckoSession) = cancelPending(session)
+
+    fun cancelForActivity(activity: Activity) {
+        // Once selection is accepted, copying belongs to the app/session and
+        // must survive the picker Activity closing while another root lives.
+        pending?.takeIf { it.owner.get() === activity && !it.copying }
+            ?.let { finish(it) { it.prompt.dismiss() } }
+    }
 
     /** Call only after GeckoSession.close; navigation and React bridge reload keep approved copies. */
     fun releaseSession(session: GeckoSession) {
@@ -115,6 +125,7 @@ object FilePromptCoordinator {
 
     fun handle(activity: Activity, requestCode: Int, resultCode: Int, data: Intent?) {
         val request = pending?.takeIf { it.requestCode == requestCode } ?: return
+        if (request.owner.get() !== activity || activity.isFinishing || activity.isDestroyed) return
         if (request.copying) return
         val clip = data?.clipData
         if (clip != null && clip.itemCount > limits.maxFiles) {

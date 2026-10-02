@@ -14,10 +14,11 @@ import {
   type StyleProp,
   type ViewStyle,
 } from "react-native";
-import { motion } from "../theme";
-import { easing } from "./motion";
-import { useReducedMotion } from "./useReducedMotion";
-import { useSidebarActive } from "./SidebarInteraction";
+import { motion } from "@/theme";
+import { easing } from "@/chrome/motion";
+import { useReducedMotion } from "@/chrome/useReducedMotion";
+import { useSidebarActive } from "@/chrome/SidebarInteraction";
+import { useResolveClassNames } from "uniwind";
 type ContactEvent = {
   nativeEvent: {
     identifier?: number;
@@ -32,6 +33,7 @@ interface Props {
   accessibilityLabel: string;
   children: React.ReactNode;
   style?: StyleProp<ViewStyle>;
+  className?: string;
   onPress: () => void;
   onDragStart: (x: number, y: number) => void;
   onDragMove: (x: number, y: number) => void;
@@ -41,6 +43,7 @@ interface Props {
   reducedMotion?: boolean;
 }
 export function DragSource(props: Props) {
+  const resolved = useResolveClassNames(props.className ?? "");
   const active = useSidebarActive();
   // A visibility interval owns its handlers independently of each touch timer.
   // Old native callbacks must not affect a fresh drag after hide/show.
@@ -364,7 +367,9 @@ export function DragSource(props: Props) {
     ++gestureGeneration.current;
     // Android exposes a native timestamp even though NativePointerEvent omits it.
     const timestamp =
-      "timestamp" in event.nativeEvent ? event.nativeEvent.timestamp : undefined;
+      "timestamp" in event.nativeEvent
+        ? event.nativeEvent.timestamp
+        : undefined;
     contact.current = {
       pointerId: event.nativeEvent.pointerId,
       timestamp:
@@ -457,7 +462,13 @@ export function DragSource(props: Props) {
         cancel();
         phase.current = "idle";
       }}
-      style={[props.style, { opacity: press, transform: [{ scale }] }]}
+      // Gesture feedback stays on the native driver; static chrome is resolved
+      // from the caller's classes inside its current theme scope.
+      style={[
+        resolved,
+        props.style,
+        { opacity: press, transform: [{ scale }] },
+      ]}
     >
       {props.children}
     </Animated.View>

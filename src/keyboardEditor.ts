@@ -1,4 +1,4 @@
-import type { KeyBinding } from "../generated/types";
+import type { KeyBinding } from "@generated/types";
 
 export function parseKeymap(draft: string): KeyBinding[] {
   const value: unknown = JSON.parse(draft);

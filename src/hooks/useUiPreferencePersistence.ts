@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { platform } from "../platform";
-import { saveUiPreferences, type UiPreferences } from "../uiPreferences";
-import type { SettingsSaveStatus } from "../components/SettingsDialog";
+import { platform } from "@/platform";
+import { saveUiPreferences, type UiPreferences } from "@/uiPreferences";
+import type { SettingsSaveStatus } from "@/components/SettingsDialog";
 
 /** Serialize preference writes, including imports, and report only the newest save. */
 export function useUiPreferencePersistence(

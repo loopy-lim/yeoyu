@@ -1,4 +1,4 @@
-import { PERMISSION_KINDS, type PermissionKind } from "./uiPreferences";
+import { PERMISSION_KINDS, type PermissionKind } from "@/uiPreferences";
 
 // Per-site permission decisions. There is deliberately no global grant: a
 // site gets access only through a rule stored here (or a one-time dialog

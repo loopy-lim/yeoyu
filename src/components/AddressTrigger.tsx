@@ -1,11 +1,13 @@
 import React from "react";
 import { Text, View } from "react-native";
-import { SidebarPressable as Pressable } from "../chrome/SidebarInteraction";
-import { alpha, font, radius, size, space } from "../theme";
-import { ChromeIcon, type IconName } from "../chrome/ChromeIcon";
-import { useTheme } from "../themeContext";
-import { useI18n } from "../i18nContext";
-import type { BrowserSecurity } from "../hooks/useBrowserWorkflows";
+import { SidebarPressable as Pressable } from "@/chrome/SidebarInteraction";
+import { cn } from "@/ui/cn";
+import { textVariants } from "@/ui/variants";
+import { ChromeIcon, type IconName } from "@/chrome/ChromeIcon";
+import { useTheme } from "@/themeContext";
+import { useI18n } from "@/i18nContext";
+import { sidebarAddressLabel } from "@/sidebarModel";
+import type { BrowserSecurity } from "@/hooks/useBrowserWorkflows";
 
 export type AddressShield = "secure" | "attention" | "loading";
 
@@ -50,7 +52,8 @@ export function AddressTrigger({
 }) {
   const t = useTheme();
   const { tr } = useI18n();
-  const empty = url === "";
+  const label = sidebarAddressLabel(url);
+  const empty = label === "";
   const shield = addressShield(url, security);
   const shieldGlyph: IconName | null =
     shield === "secure" ? "lock" : shield === "attention" ? "warning" : null;
@@ -65,34 +68,14 @@ export function AddressTrigger({
       }
       hitSlop={8}
       onPress={onPress}
-      style={({ pressed }) => [
+      className={cn(
+        "justify-center rounded-control px-xl active:opacity-pressed",
         compact
-          ? {
-              flex: 1,
-              height: size.addressCompact,
-              marginLeft: space.sm,
-              paddingHorizontal: space.xl,
-              borderRadius: radius.control,
-              backgroundColor: t.sunken,
-              justifyContent: "center",
-            }
-          : {
-              // alignSelf stretch, not flex:1 — the trigger lives in the
-              // sidebar's auto-height column now, where a flex basis of 0
-              // would collapse it to nothing.
-              alignSelf: "stretch",
-              height: size.address,
-              paddingHorizontal: space.xl,
-              borderRadius: radius.control,
-              backgroundColor: t.fieldOnChrome,
-              justifyContent: "center",
-            },
-        pressed && { opacity: alpha.pressed },
-      ]}
+          ? "flex-1 h-address-compact ml-sm bg-sunken"
+          : "self-stretch h-address bg-field-on-chrome"
+      )}
     >
-      <View
-        style={{ flexDirection: "row", alignItems: "center", gap: space.lg }}
-      >
+      <View className="flex-row items-center gap-lg">
         {shieldGlyph && (
           <ChromeIcon
             name={shieldGlyph}
@@ -104,16 +87,12 @@ export function AddressTrigger({
         <Text
           numberOfLines={1}
           maxFontSizeMultiplier={1.35}
-          style={[
-            {
-              flex: 1,
-              color: t.ink,
-              fontSize: font.input,
-            },
-            empty && { color: t.inkFaint },
-          ]}
+          className={cn(
+            "flex-1",
+            textVariants({ size: "input", tone: empty ? "faint" : "ink" })
+          )}
         >
-          {empty ? tr("address.placeholder") : url}
+          {empty ? tr("address.placeholder") : label}
         </Text>
       </View>
     </Pressable>

@@ -1,16 +1,11 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { cva } from "class-variance-authority";
+import { cn } from "@/ui/cn";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
   AppState,
   Image,
   Pressable,
-  StyleSheet,
   Switch,
   Text,
   TextInput,
@@ -31,11 +26,39 @@ import {
   type ExtensionOptionalKind,
   type ExtensionSearchResult,
   type InstalledBrowserExtension,
-} from "../browserExtensions";
-import { useTheme } from "../themeContext";
-import { useI18n } from "../i18nContext";
-import { mozillaExtensionSource } from "../extensionLinks";
-import { HapticSwitch } from "../chrome/HapticSwitch";
+} from "@/browserExtensions";
+import { useTheme } from "@/themeContext";
+import { useI18n } from "@/i18nContext";
+import { mozillaExtensionSource } from "@/extensionLinks";
+import { HapticSwitch } from "@/chrome/HapticSwitch";
+
+const c = {
+  section: "mt-[20px] mb-lg text-icon-size font-bold text-ink",
+  card: "my-lg p-[14px] gap-xl rounded-tile bg-surface border-hairline border-hairline-width",
+  title: "text-icon-size font-semibold text-ink",
+  text: "text-input-plus leading-[21px] text-ink",
+  detail: "text-input-plus leading-[21px] text-ink-muted",
+  error: "text-input-plus leading-[21px] text-error-ink",
+  row: "min-h-action-row flex-row items-center gap-xxl",
+  grow: "flex-1 min-w-0",
+  actions: "flex-row flex-wrap gap-lg",
+  action:
+    "min-h-action-row shrink justify-center px-xxl py-xl rounded-[8px] bg-sunken active:opacity-pressed",
+  linkInput:
+    "min-h-action-row px-xxl py-xl border border-hairline rounded-[8px] bg-sunken text-ink text-input-plus",
+  permissionGroup: "gap-sm mt-lg",
+  resultRow: "flex-row gap-xxl mt-xl",
+  resultIcon: "size-[40px] rounded-[10px] bg-sunken",
+  resultGrow: "flex-1 min-w-0 gap-xs",
+  resultName: "text-[15px] font-semibold text-ink",
+  headlineRow: "flex-row gap-xxl items-center",
+  headlineIcon: "size-[36px] rounded-control bg-sunken",
+} as const;
+const actionClasses = cva(c.action, {
+  variants: {
+    disabled: { true: "opacity-50", false: "" },
+  },
+});
 
 export function ExtensionsSettings({
   tabId,
@@ -48,78 +71,6 @@ export function ExtensionsSettings({
 }) {
   const theme = useTheme();
   const { language, tr } = useI18n();
-  const s = useMemo(
-    () =>
-      StyleSheet.create({
-        section: {
-          marginTop: 20,
-          marginBottom: 8,
-          fontSize: 16,
-          fontWeight: "700",
-          color: theme.ink,
-        },
-        card: {
-          marginVertical: 8,
-          padding: 14,
-          gap: 10,
-          borderRadius: 12,
-          backgroundColor: theme.surface,
-          borderWidth: StyleSheet.hairlineWidth,
-          borderColor: theme.hairline,
-        },
-        title: { fontSize: 16, fontWeight: "600", color: theme.ink },
-        text: { fontSize: 14, lineHeight: 21, color: theme.ink },
-        detail: { fontSize: 14, lineHeight: 21, color: theme.inkMuted },
-        error: { fontSize: 14, lineHeight: 21, color: theme.errorInk },
-        row: {
-          minHeight: 48,
-          flexDirection: "row",
-          alignItems: "center",
-          gap: 12,
-        },
-        grow: { flex: 1, minWidth: 0 },
-        actions: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-        action: {
-          minHeight: 48,
-          flexShrink: 1,
-          justifyContent: "center",
-          paddingHorizontal: 12,
-          paddingVertical: 10,
-          borderRadius: 8,
-          backgroundColor: theme.sunken,
-        },
-        disabled: { opacity: 0.5 },
-        linkInput: {
-          minHeight: 48,
-          paddingHorizontal: 12,
-          paddingVertical: 10,
-          borderWidth: 1,
-          borderColor: theme.hairline,
-          borderRadius: 8,
-          backgroundColor: theme.sunken,
-          color: theme.ink,
-          fontSize: 14,
-        },
-        permissionGroup: { gap: 4, marginTop: 8 },
-        resultRow: { flexDirection: "row", gap: 12, marginTop: 10 },
-        resultIcon: {
-          width: 40,
-          height: 40,
-          borderRadius: 10,
-          backgroundColor: theme.sunken,
-        },
-        resultGrow: { flex: 1, minWidth: 0, gap: 2 },
-        resultName: { fontSize: 15, fontWeight: "600", color: theme.ink },
-        headlineRow: { flexDirection: "row", gap: 12, alignItems: "center" },
-        headlineIcon: {
-          width: 36,
-          height: 36,
-          borderRadius: 9,
-          backgroundColor: theme.sunken,
-        },
-      }),
-    [theme]
-  );
   const [state, setState] = useState<BrowserExtensionsState | null>(null);
   const [pending, setPending] = useState<string | null>(null);
   const [error, setError] = useState("");
@@ -143,12 +94,17 @@ export function ExtensionsSettings({
   useEffect(() => {
     errorCallback.current = onError;
   }, [onError]);
-  const report = useCallback((failure: unknown) => {
-    const message = extensionErrorMessage(failure);
-    const localized = tr("extension.error", { detail: localizeExtensionError(message, language) });
-    setError(localized);
-    errorCallback.current?.(localized);
-  }, [tr, language]);
+  const report = useCallback(
+    (failure: unknown) => {
+      const message = extensionErrorMessage(failure);
+      const localized = tr("extension.error", {
+        detail: localizeExtensionError(message, language),
+      });
+      setError(localized);
+      errorCallback.current?.(localized);
+    },
+    [tr, language]
+  );
 
   const refresh = useCallback(async () => {
     if (operation.current) return;
@@ -239,14 +195,20 @@ export function ExtensionsSettings({
     value: boolean
   ) => {
     perform(
-      tr(kind === "update" ? "extension.checkingUpdates" : "extension.saving", { name: extension.name }),
+      tr(kind === "update" ? "extension.checkingUpdates" : "extension.saving", {
+        name: extension.name,
+      }),
       () => requireBrowserExtensions().modify(extension.id, kind, value),
       (next) =>
         kind === "remove" &&
         !next.extensions.some((entry) => entry.id === extension.id)
           ? tr("extension.removed", { name: extension.name })
           : kind === "update"
-          ? tr("extension.updateDone", { version: next.extensions.find((entry) => entry.id === extension.id)?.version ?? extension.version })
+          ? tr("extension.updateDone", {
+              version:
+                next.extensions.find((entry) => entry.id === extension.id)
+                  ?.version ?? extension.version,
+            })
           : tr("extension.preferencesRefreshed")
     );
   };
@@ -283,8 +245,7 @@ export function ExtensionsSettings({
     perform(
       tr("extension.compatibility"),
       () => requireBrowserExtensions().install(source),
-      () =>
-        tr("extension.installDone")
+      () => tr("extension.installDone")
     );
   };
   const runSearch = async () => {
@@ -299,23 +260,37 @@ export function ExtensionsSettings({
     } catch (failure) {
       if (live.current) {
         setSearchResults(null);
-        setSearchError(tr("extension.error", { detail: localizeExtensionError(extensionErrorMessage(failure), language) }));
+        setSearchError(
+          tr("extension.error", {
+            detail: localizeExtensionError(
+              extensionErrorMessage(failure),
+              language
+            ),
+          })
+        );
       }
     } finally {
       if (live.current) setSearching(false);
     }
   };
-  const searchEntry = (result: ExtensionSearchResult): ExtensionCatalogEntry => ({
+  const searchEntry = (
+    result: ExtensionSearchResult
+  ): ExtensionCatalogEntry => ({
     slug: result.slug,
     id: result.guid ?? "",
     name: result.name,
     description: result.summary,
     sourceUrl: `https://addons.mozilla.org/firefox/addon/${result.slug}/`,
   });
-  const revoke = (extension: InstalledBrowserExtension, kind: ExtensionOptionalKind, value: string) =>
+  const revoke = (
+    extension: InstalledBrowserExtension,
+    kind: ExtensionOptionalKind,
+    value: string
+  ) =>
     perform(
       tr("extension.revoking", { name: extension.name }),
-      () => requireBrowserExtensions().revokeOptional(extension.id, kind, value),
+      () =>
+        requireBrowserExtensions().revokeOptional(extension.id, kind, value),
       () => tr("extension.revoked")
     );
   const setPrivate = (
@@ -347,7 +322,8 @@ export function ExtensionsSettings({
     perform(tr("extension.opening", { name: extension.name }), async () => {
       const native = requireBrowserExtensions();
       native.setActiveTab(target);
-      if (kind === "action") await native.openAction(extension.id, anchor.x, anchor.y);
+      if (kind === "action")
+        await native.openAction(extension.id, anchor.x, anchor.y);
       else await native.openOptions(extension.id);
     });
   };
@@ -368,9 +344,9 @@ export function ExtensionsSettings({
           y: event?.nativeEvent?.pageY ?? 0,
         })
       }
-      style={[s.action, disabled && s.disabled]}
+      className={cn(actionClasses({ disabled: disabled }))}
     >
-      <Text style={s.text}>{label}</Text>
+      <Text className={c.text}>{label}</Text>
     </Pressable>
   );
   const permissionGroup = (
@@ -378,16 +354,16 @@ export function ExtensionsSettings({
     values: string[],
     format = (value: string) => extensionPermissionLabel(value, language)
   ) => (
-    <View style={s.permissionGroup}>
-      <Text style={s.title}>{label}</Text>
+    <View className={c.permissionGroup}>
+      <Text className={c.title}>{label}</Text>
       {values.length ? (
         [...new Set(values)].map((value) => (
-          <Text key={value} selectable style={s.detail}>
+          <Text key={value} selectable className={c.detail}>
             • {format(value)}
           </Text>
         ))
       ) : (
-        <Text style={s.detail}>{tr("extension.none")}</Text>
+        <Text className={c.detail}>{tr("extension.none")}</Text>
       )}
     </View>
   );
@@ -400,12 +376,12 @@ export function ExtensionsSettings({
   ) => {
     const uniqueValues = [...new Set(values)];
     return (
-      <View style={s.permissionGroup}>
-        <Text style={s.title}>{label}</Text>
+      <View className={c.permissionGroup}>
+        <Text className={c.title}>{label}</Text>
         {uniqueValues.length ? (
           uniqueValues.map((value) => (
-            <View key={value} style={s.row}>
-              <Text selectable style={[s.detail, s.grow]}>
+            <View key={value} className={c.row}>
+              <Text selectable className={cn(c.detail, c.grow)}>
                 • {format(value)}
               </Text>
               <Pressable
@@ -416,14 +392,14 @@ export function ExtensionsSettings({
                 })}
                 disabled={locked}
                 onPress={() => revoke(extension, kind, value)}
-                style={[s.action, locked && s.disabled]}
+                className={cn(actionClasses({ disabled: locked }))}
               >
-                <Text style={s.text}>{tr("extension.revoke")}</Text>
+                <Text className={c.text}>{tr("extension.revoke")}</Text>
               </Pressable>
             </View>
           ))
         ) : (
-          <Text style={s.detail}>{tr("extension.none")}</Text>
+          <Text className={c.detail}>{tr("extension.none")}</Text>
         )}
       </View>
     );
@@ -435,46 +411,40 @@ export function ExtensionsSettings({
 
   return (
     <View>
-      <Text style={s.text}>
-        {tr("extension.intro")}
-      </Text>
-      <Text style={[s.detail, { marginTop: 8 }]}>
-        {tr("extension.storage")}
-      </Text>
+      <Text className={c.text}>{tr("extension.intro")}</Text>
+      <Text className={cn(c.detail, "mt-lg")}>{tr("extension.storage")}</Text>
       {!!pending && (
         <Text
           accessibilityLiveRegion="polite"
-          style={[s.detail, { marginVertical: 10 }]}
+          className={cn(c.detail, "my-xl")}
         >
           {pending}
         </Text>
       )}
       {!!state?.busy && !pending && (
-        <Text accessibilityLiveRegion="polite" style={s.detail}>
+        <Text accessibilityLiveRegion="polite" className={c.detail}>
           {tr("extension.busy")}
         </Text>
       )}
       {!!error && (
-        <View style={s.card}>
-          <Text accessibilityRole="alert" style={s.error}>
+        <View className={c.card}>
+          <Text accessibilityRole="alert" className={c.error}>
             {error}
           </Text>
           {stale && !!state && (
-            <Text style={s.detail}>
-              {tr("extension.stale")}
-            </Text>
+            <Text className={c.detail}>{tr("extension.stale")}</Text>
           )}
         </View>
       )}
       {!!notice && (
         <Text
           accessibilityLiveRegion="polite"
-          style={[s.detail, { marginVertical: 10 }]}
+          className={cn(c.detail, "my-xl")}
         >
           {notice}
         </Text>
       )}
-      <View style={[s.actions, { marginVertical: 10 }]}>
+      <View className={cn(c.actions, "my-xl")}>
         {button(
           tr(error ? "extension.retry" : "extension.refresh"),
           () => {
@@ -486,18 +456,16 @@ export function ExtensionsSettings({
 
       {!!state && (
         <>
-          <Text accessibilityRole="header" style={s.section}>
+          <Text accessibilityRole="header" className={c.section}>
             {tr("extension.searchTitle")}
           </Text>
-          <View style={s.card}>
-            <Text style={s.detail}>
-              {tr("extension.searchHelp")}
-            </Text>
+          <View className={c.card}>
+            <Text className={c.detail}>{tr("extension.searchHelp")}</Text>
             <TextInput
               accessibilityLabel={tr("extension.searchLabel")}
               placeholder={tr("extension.searchPlaceholder")}
               placeholderTextColor={theme.inkMuted}
-              style={s.linkInput}
+              className={c.linkInput}
               value={searchQuery}
               onChangeText={setSearchQuery}
               editable={!locked && !searching}
@@ -515,46 +483,52 @@ export function ExtensionsSettings({
               tr("extension.searchSubmitLabel")
             )}
             {searching && (
-              <Text accessibilityLiveRegion="polite" style={s.detail}>
+              <Text accessibilityLiveRegion="polite" className={c.detail}>
                 {tr("extension.searching")}
               </Text>
             )}
             {!!searchError && (
-              <Text accessibilityRole="alert" style={s.error}>
+              <Text accessibilityRole="alert" className={c.error}>
                 {searchError}
               </Text>
             )}
             {searchResults !== null && searchResults.length === 0 && (
-              <Text style={s.detail}>{tr("extension.searchEmpty")}</Text>
+              <Text className={c.detail}>{tr("extension.searchEmpty")}</Text>
             )}
             {searchResults !== null &&
               searchResults.map((result) => {
-                const installedHere = !!result.guid &&
+                const installedHere =
+                  !!result.guid &&
                   state.extensions.some((entry) => entry.id === result.guid);
                 return (
-                  <View key={result.slug} style={s.resultRow}>
+                  <View key={result.slug} className={c.resultRow}>
                     {result.iconUrl ? (
                       <Image
                         source={{ uri: result.iconUrl }}
-                        style={s.resultIcon}
+                        className={c.resultIcon}
                       />
                     ) : (
-                      <View style={[s.resultIcon, { alignItems: "center", justifyContent: "center" }]}>
-                        <Text style={{ fontSize: 17, fontWeight: "600", color: theme.ink }}>
+                      <View
+                        className={cn(
+                          c.resultIcon,
+                          "items-center justify-center"
+                        )}
+                      >
+                        <Text className="text-[17px] font-semibold text-ink">
                           {result.name.trim().slice(0, 1).toUpperCase()}
                         </Text>
                       </View>
                     )}
-                    <View style={s.resultGrow}>
-                      <Text style={s.resultName}>{result.name}</Text>
+                    <View className={c.resultGrow}>
+                      <Text className={c.resultName}>{result.name}</Text>
                       {!!result.summary && (
-                        <Text numberOfLines={2} style={s.detail}>
+                        <Text numberOfLines={2} className={c.detail}>
                           {result.summary}
                         </Text>
                       )}
-                      <View style={s.actions}>
+                      <View className={c.actions}>
                         {installedHere ? (
-                          <Text style={[s.detail, { paddingVertical: 10 }]}>
+                          <Text className={cn(c.detail, "py-xl")}>
                             {tr("extension.installedShort")}
                           </Text>
                         ) : (
@@ -571,7 +545,10 @@ export function ExtensionsSettings({
                 );
               })}
             {state.catalog.length > 0 && (
-              <Text accessibilityRole="header" style={[s.section, { marginTop: 8, fontSize: 14 }]}>
+              <Text
+                accessibilityRole="header"
+                className={cn(c.section, "mt-lg text-input-plus")}
+              >
                 {tr("extension.recommended")}
               </Text>
             )}
@@ -580,22 +557,24 @@ export function ExtensionsSettings({
                 (extension) => extension.id === entry.id
               );
               return (
-                <View key={entry.slug} style={s.resultRow}>
-                  <View style={[s.resultIcon, { alignItems: "center", justifyContent: "center" }]}>
-                    <Text style={{ fontSize: 17, fontWeight: "600", color: theme.ink }}>
+                <View key={entry.slug} className={c.resultRow}>
+                  <View
+                    className={cn(c.resultIcon, "items-center justify-center")}
+                  >
+                    <Text className="text-[17px] font-semibold text-ink">
                       {entry.name.trim().slice(0, 1).toUpperCase()}
                     </Text>
                   </View>
-                  <View style={s.resultGrow}>
-                    <Text style={s.resultName}>{entry.name}</Text>
+                  <View className={c.resultGrow}>
+                    <Text className={c.resultName}>{entry.name}</Text>
                     {!!entry.description && (
-                      <Text numberOfLines={2} style={s.detail}>
+                      <Text numberOfLines={2} className={c.detail}>
                         {entry.description}
                       </Text>
                     )}
-                    <View style={s.actions}>
+                    <View className={c.actions}>
                       {installedHere ? (
-                        <Text style={[s.detail, { paddingVertical: 10 }]}>
+                        <Text className={cn(c.detail, "py-xl")}>
                           {tr("extension.installedShort")}
                         </Text>
                       ) : (
@@ -612,45 +591,63 @@ export function ExtensionsSettings({
               );
             })}
           </View>
-          <Text accessibilityRole="header" style={s.section}>
+          <Text accessibilityRole="header" className={c.section}>
             {tr("extension.installedTitle")}
           </Text>
           {state.extensions.length === 0 && (
-            <Text style={s.detail}>{tr("extension.empty")}</Text>
+            <Text className={c.detail}>{tr("extension.empty")}</Text>
           )}
           {state.extensions.map((extension) => {
             const usableHere =
               extension.enabled && (!privateTab || extension.privateAllowed);
             return (
-              <View key={extension.id} style={s.card}>
-                <View style={s.headlineRow}>
+              <View key={extension.id} className={c.card}>
+                <View className={c.headlineRow}>
                   {extension.icon !== "" ? (
-                    <Image source={{ uri: extension.icon }} style={s.headlineIcon} />
+                    <Image
+                      source={{ uri: extension.icon }}
+                      className={c.headlineIcon}
+                    />
                   ) : (
-                    <View style={[s.headlineIcon, { alignItems: "center", justifyContent: "center" }]}>
-                      <Text style={{ fontSize: 15, fontWeight: "600", color: theme.ink }}>
+                    <View
+                      className={cn(
+                        c.headlineIcon,
+                        "items-center justify-center"
+                      )}
+                    >
+                      <Text className="text-[15px] font-semibold text-ink">
                         {extension.name.trim().slice(0, 1).toUpperCase()}
                       </Text>
                     </View>
                   )}
-                  <View style={s.grow}>
-                    <Text style={s.title}>{extension.name}</Text>
-                    <Text style={s.detail}>
-                      {tr("extension.version", { version: extension.version,
-                        status: tr(extension.enabled ? "extension.enabled" : "extension.disabled") })}
+                  <View className={c.grow}>
+                    <Text className={c.title}>{extension.name}</Text>
+                    <Text className={c.detail}>
+                      {tr("extension.version", {
+                        version: extension.version,
+                        status: tr(
+                          extension.enabled
+                            ? "extension.enabled"
+                            : "extension.disabled"
+                        ),
+                      })}
                     </Text>
                   </View>
                 </View>
                 {!!extension.description && (
-                  <Text numberOfLines={4} style={s.detail}>
+                  <Text numberOfLines={4} className={c.detail}>
                     {extension.description}
                   </Text>
                 )}
-                <View style={s.row}>
-                  <Text style={[s.text, s.grow]}>{tr("extension.enabled")}</Text>
+                <View className={c.row}>
+                  <Text className={cn(c.text, c.grow)}>
+                    {tr("extension.enabled")}
+                  </Text>
                   <HapticSwitch
                     {...switchColors}
-                    accessibilityLabel={tr("extension.enableLabel", { name: extension.name })}
+                    accessibilityLabel={tr("extension.enableLabel", {
+                      name: extension.name,
+                    })}
                     disabled={locked}
                     value={extension.enabled}
                     onValueChange={(enabled) =>
@@ -658,42 +655,42 @@ export function ExtensionsSettings({
                     }
                   />
                 </View>
-                <View style={s.row}>
-                  <View style={s.grow}>
-                    <Text style={s.text}>{tr("extension.private")}</Text>
-                    <Text style={s.detail}>
+                <View className={c.row}>
+                  <View className={c.grow}>
+                    <Text className={c.text}>{tr("extension.private")}</Text>
+                    <Text className={c.detail}>
                       {tr("extension.privateDetail")}
                     </Text>
                   </View>
                   <HapticSwitch
                     {...switchColors}
-                    accessibilityLabel={tr("extension.privateLabel", { name: extension.name })}
+                    accessibilityLabel={tr("extension.privateLabel", {
+                      name: extension.name,
+                    })}
                     disabled={locked}
                     value={extension.privateAllowed}
                     onValueChange={(allowed) => setPrivate(extension, allowed)}
                   />
                 </View>
                 {!extension.enabled && extension.disabledFlags !== 0 && (
-                  <Text style={s.detail}>
+                  <Text className={c.detail}>
                     {tr("extension.disabledHelp")}
                   </Text>
                 )}
                 {privateTab && !extension.privateAllowed && (
-                  <Text style={s.detail}>
+                  <Text className={c.detail}>
                     {tr("extension.privateUnavailable")}
                   </Text>
                 )}
                 {!tabId && (
-                  <Text style={s.detail}>
-                    {tr("extension.openPage")}
-                  </Text>
+                  <Text className={c.detail}>{tr("extension.openPage")}</Text>
                 )}
                 {!!extension.badge && usableHere && (
-                  <Text style={s.detail}>
+                  <Text className={c.detail}>
                     {tr("extension.badge", { badge: extension.badge })}
                   </Text>
                 )}
-                <View style={s.actions}>
+                <View className={c.actions}>
                   {button(
                     tr("extension.controls"),
                     (anchor) => open(extension, "action", anchor),
@@ -744,18 +741,25 @@ export function ExtensionsSettings({
                       [extension.id]: !current[extension.id],
                     }))
                   }
-                  style={s.action}
+                  className={c.action}
                 >
-                  <Text style={s.text}>
-                    {tr(expanded[extension.id] ? "extension.hidePermissions" : "extension.viewPermissions")}
+                  <Text className={c.text}>
+                    {tr(
+                      expanded[extension.id]
+                        ? "extension.hidePermissions"
+                        : "extension.viewPermissions"
+                    )}
                   </Text>
                 </Pressable>
                 {!!expanded[extension.id] && (
                   <>
-                    <Text style={s.detail}>
+                    <Text className={c.detail}>
                       {tr("extension.permissionsHelp")}
                     </Text>
-                    {permissionGroup(tr("extension.capabilities"), extension.permissions)}
+                    {permissionGroup(
+                      tr("extension.capabilities"),
+                      extension.permissions
+                    )}
                     {permissionGroup(
                       tr("extension.websites"),
                       extension.origins,
@@ -770,7 +774,8 @@ export function ExtensionsSettings({
                       tr("extension.optionalCapabilities"),
                       extension.optionalPermissions,
                       "permission",
-                      (permission) => extensionPermissionLabel(permission, language)
+                      (permission) =>
+                        extensionPermissionLabel(permission, language)
                     )}
                     {optionalGroup(
                       extension,
@@ -784,25 +789,24 @@ export function ExtensionsSettings({
                       tr("extension.optionalData"),
                       extension.optionalDataPermissions,
                       "data",
-                      (permission) => extensionPermissionLabel(permission, language)
+                      (permission) =>
+                        extensionPermissionLabel(permission, language)
                     )}
                   </>
                 )}
               </View>
             );
           })}
-          <Text accessibilityRole="header" style={s.section}>
+          <Text accessibilityRole="header" className={c.section}>
             {tr("extension.linkTitle")}
           </Text>
-          <View style={s.card}>
-            <Text style={s.detail}>
-              {tr("extension.linkHelp")}
-            </Text>
+          <View className={c.card}>
+            <Text className={c.detail}>{tr("extension.linkHelp")}</Text>
             <TextInput
               accessibilityLabel={tr("extension.linkLabel")}
               placeholder="https://addons.mozilla.org/…/addon/…/"
               placeholderTextColor={theme.inkMuted}
-              style={s.linkInput}
+              className={c.linkInput}
               value={link}
               onChangeText={setLink}
               editable={!locked}
@@ -821,17 +825,17 @@ export function ExtensionsSettings({
               tr("extension.reviewLabel")
             )}
           </View>
-          <Text accessibilityRole="header" style={s.section}>
+          <Text accessibilityRole="header" className={c.section}>
             {tr("extension.compatTitle")}
           </Text>
-          <View style={s.card}>
-            <Text style={s.detail}>
-              {tr("extension.compatIntro")}
+          <View className={c.card}>
+            <Text className={c.detail}>{tr("extension.compatIntro")}</Text>
+            <Text className={c.detail}>• {tr("extension.compatStore")}</Text>
+            <Text className={c.detail}>
+              • {tr("extension.compatServiceWorker")}
             </Text>
-            <Text style={s.detail}>• {tr("extension.compatStore")}</Text>
-            <Text style={s.detail}>• {tr("extension.compatServiceWorker")}</Text>
-            <Text style={s.detail}>• {tr("extension.compatApis")}</Text>
-            <Text style={s.detail}>• {tr("extension.compatGrant")}</Text>
+            <Text className={c.detail}>• {tr("extension.compatApis")}</Text>
+            <Text className={c.detail}>• {tr("extension.compatGrant")}</Text>
           </View>
         </>
       )}

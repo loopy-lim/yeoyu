@@ -1,18 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
-import { font, radius, size, space } from "../theme";
-import { useTheme } from "../themeContext";
-import { useI18n } from "../i18nContext";
-
-// Round 28dp hit target for the strip's glyph buttons; pressed opacity is
-// applied per-Pressable.
-const roundButton = {
-  width: size.iconButton,
-  height: size.iconButton,
-  borderRadius: radius.control,
-  alignItems: "center" as const,
-  justifyContent: "center" as const,
-};
+import { cn } from "@/ui/cn";
+import { controlVariants, textVariants } from "@/ui/variants";
+import { useTheme } from "@/themeContext";
+import { useI18n } from "@/i18nContext";
 
 // In-page find strip pinned to the top of the content card. Debounces the
 // query into the native Gecko finder and shows current/total matches.
@@ -30,6 +21,10 @@ export function FindBar({
   const t = useTheme();
   const { tr } = useI18n();
   const [query, setQuery] = useState("");
+  const canStep = query.trim() !== "" && result?.total !== 0;
+  const step = (backward: boolean) => {
+    if (canStep) onStep(backward);
+  };
   const input = useRef<React.ComponentRef<typeof TextInput>>(null);
   useEffect(() => {
     input.current?.focus();
@@ -39,49 +34,32 @@ export function FindBar({
     return () => clearTimeout(timer);
   }, [query]);
   return (
-    <View
-      style={{
-        position: "absolute",
-        top: space.md,
-        alignSelf: "center",
-        zIndex: 30,
-        flexDirection: "row",
-        alignItems: "center",
-        gap: space.md,
-        paddingHorizontal: space.lg,
-        height: size.input,
-        borderRadius: radius.tile,
-        backgroundColor: t.white,
-        shadowColor: t.ringShadow,
-        shadowOpacity: 0.2,
-        shadowRadius: 12,
-        shadowOffset: { width: 0, height: 4 },
-        elevation: 8,
-      }}
-    >
+    <View className="absolute top-md self-center w-[94%] max-w-[400px] z-30 flex-row items-center gap-md px-lg h-input rounded-tile bg-white shadow-find-bar">
       <TextInput
         ref={input}
         accessibilityLabel={tr("find.inPage")}
         value={query}
         onChangeText={setQuery}
-        onSubmitEditing={() => onStep(false)}
+        onSubmitEditing={() => step(false)}
         autoCapitalize="none"
         autoCorrect={false}
         disableFullscreenUI
         placeholder={tr("find.inPage")}
         placeholderTextColor={t.inkFaint}
-        style={{
-          width: 200,
-          height: size.address,
-          paddingHorizontal: space.xl,
-          borderRadius: radius.control,
-          backgroundColor: t.sunken,
-          color: t.ink,
-          fontSize: font.bodyPlus,
-        }}
+        className="flex-1 min-w-0 h-address px-xl rounded-control bg-sunken text-ink text-body-plus"
       />
-      <Text style={{ color: t.inkFaint, fontSize: font.small, minWidth: 34 }}>
-        {result ? `${result.current + 1}/${result.total}` : ""}
+      <Text
+        accessibilityLiveRegion="polite"
+        numberOfLines={1}
+        maxFontSizeMultiplier={1.35}
+        className={cn(
+          "min-w-address",
+          textVariants({ size: "small", tone: "faint" })
+        )}
+      >
+        {result
+          ? `${result.current}/${result.total < 0 ? "?" : result.total}`
+          : ""}
       </Text>
       {(
         [
@@ -93,14 +71,22 @@ export function FindBar({
           key={label}
           accessibilityRole="button"
           accessibilityLabel={tr(label)}
+          accessibilityState={{ disabled: !canStep }}
+          disabled={!canStep}
           hitSlop={8}
-          onPress={() => onStep(backward)}
-          style={({ pressed }) => [
-            roundButton,
-            { opacity: pressed ? 0.6 : 1 },
-          ]}
+          onPress={() => step(backward)}
+          className={cn(
+            controlVariants({ disabled: !canStep }),
+            canStep && "active:opacity-pressed"
+          )}
         >
-          <Text style={{ color: t.icon, fontSize: font.icon, fontWeight: "600" }}>
+          <Text
+            className={textVariants({
+              size: "icon",
+              tone: "icon",
+              weight: "semibold",
+            })}
+          >
             {symbol}
           </Text>
         </Pressable>
@@ -110,12 +96,9 @@ export function FindBar({
         accessibilityLabel={tr("find.close")}
         hitSlop={8}
         onPress={onClose}
-        style={({ pressed }) => [
-          roundButton,
-          { opacity: pressed ? 0.6 : 1 },
-        ]}
+        className={cn(controlVariants(), "active:opacity-pressed")}
       >
-        <Text style={{ color: t.icon, fontSize: font.icon }}>×</Text>
+        <Text className={textVariants({ size: "icon", tone: "icon" })}>×</Text>
       </Pressable>
     </View>
   );

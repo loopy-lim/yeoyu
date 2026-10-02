@@ -422,10 +422,7 @@ test("closing a transformed overlay shields the full parent until the visual exi
   const style = Object.assign({}, ...guard!.props.style);
   expect(style).toMatchObject({
     position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    inset: 0,
     zIndex: 30,
   });
   expect(style.transform).toBeUndefined();

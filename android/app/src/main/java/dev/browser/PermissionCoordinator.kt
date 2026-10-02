@@ -8,12 +8,13 @@ import com.facebook.react.bridge.Promise
 /** Bridges Activity.requestPermissions results back to the JS promise that asked. */
 object PermissionCoordinator {
     private var nextCode = 1
-    private data class Request(val permissions: Array<String>, val promise: Promise)
+    private data class Request(val activity: Activity, val permissions: Array<String>, val promise: Promise)
     private val pending = mutableMapOf<Int, Request>()
 
     fun request(activity: Activity, permissions: Array<String>, promise: Promise) {
+        if (activity.isFinishing || activity.isDestroyed) { promise.resolve(false); return }
         val code = nextCode++
-        pending[code] = Request(permissions.copyOf(), promise)
+        pending[code] = Request(activity, permissions.copyOf(), promise)
         try {
             activity.requestPermissions(permissions, code)
         } catch (_: Exception) {
@@ -30,6 +31,12 @@ object PermissionCoordinator {
                     grantResults[request.permissions.indexOf(permission)] == PackageManager.PERMISSION_GRANTED
                 }
         )
+    }
+
+    fun cancelForActivity(activity: Activity) {
+        val codes = pending.filterValues { it.activity === activity }.keys.toList()
+        val cancelled = codes.mapNotNull { pending.remove(it) }
+        cancelled.forEach { it.promise.resolve(false) }
     }
 }
 

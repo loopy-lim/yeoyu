@@ -1,4 +1,4 @@
-import { clampSidebarWidth } from "./sidebarSizing";
+import { clampSidebarWidth } from "@/sidebarSizing";
 
 export type Appearance = "lavender" | "warm";
 export type ColorSource = "appearance" | "space" | "custom";

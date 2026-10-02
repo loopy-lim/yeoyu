@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { AppState, NativeEventEmitter } from "react-native";
-import { platform } from "../platform";
+import { platform } from "@/platform";
 
 export interface ExternalPictureInPictureState {
   supported: boolean;

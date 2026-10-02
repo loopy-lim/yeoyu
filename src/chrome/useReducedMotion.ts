@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from "react";
 import { AccessibilityInfo } from "react-native";
-import { ReducedMotionStore } from "./reducedMotionStore";
+import { ReducedMotionStore } from "@/chrome/reducedMotionStore";
 
 const preference = new ReducedMotionStore({
   read: () => AccessibilityInfo.isReduceMotionEnabled(),

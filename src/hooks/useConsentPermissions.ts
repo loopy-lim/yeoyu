@@ -5,7 +5,7 @@ import {
   parseAndroidPermissionStatus,
   type AndroidPermissionSnapshot,
   type ConsentRuntime,
-} from "../consent";
+} from "@/consent";
 
 /** Read-only status: opening settings never requests or grants a permission. */
 export function useConsentPermissions(runtime: ConsentRuntime) {

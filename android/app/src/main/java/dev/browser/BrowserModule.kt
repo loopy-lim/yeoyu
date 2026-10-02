@@ -33,6 +33,9 @@ class BrowserModule(context:ReactApplicationContext):ReactContextBaseJavaModule(
    try { operation() } catch(failure:Exception) { promise.reject("BROWSER",failure) }
   }
  }
+ private fun requireUiActivity(): android.app.Activity =
+  reactApplicationContext.currentActivity?.takeUnless { it.isFinishing || it.isDestroyed }
+   ?: throw IllegalStateException("No active browser window")
  private fun pictureInPicture(): BrowserPictureInPicture =
   (reactApplicationContext.currentActivity as? com.workspacebrowser.MainActivity)?.browserPip
    ?: com.workspacebrowser.MainActivity.current?.browserPip
@@ -107,13 +110,26 @@ class BrowserModule(context:ReactApplicationContext):ReactContextBaseJavaModule(
  }
  /** OS-level windows (tablet free-form). tabId=null opens a fresh tab window. */
  @ReactMethod fun openInNewWindow(tabId:String?,promise:Promise) = onUi(promise) {
-  val activity=reactApplicationContext.currentActivity ?: throw IllegalStateException("No active browser window")
+  val activity=requireUiActivity()
   if(!BrowserWindowCoordinator.launch(activity,tabId?.takeIf{it.isNotBlank()})) promise.reject("WINDOW","A new window could not be opened") else promise.resolve(null)
  }
  @ReactMethod fun bindWindowTab(tabId:String,promise:Promise) = onUi(promise) {
   val activity=reactApplicationContext.currentActivity
   if(activity != null) BrowserWindowCoordinator.bind(activity,tabId)
   promise.resolve(null)
+ }
+ @ReactMethod fun windowMissionFor(windowId:String,promise:Promise) = onUi(promise) {
+  val mission=BrowserWindowCoordinator.missionFor(windowId)
+  if(mission == null) promise.reject("WINDOW","The browser window is closed") else promise.resolve(mission)
+ }
+ @ReactMethod fun bindWindowTabFor(windowId:String,tabId:String,promise:Promise) = onUi(promise) {
+  if(!BrowserWindowCoordinator.bindFor(windowId,tabId))
+   promise.reject("WINDOW","The browser window is closed or the tab belongs to another window")
+  else promise.resolve(null)
+ }
+ @ReactMethod fun closeWindowFor(windowId:String,promise:Promise) = onUi(promise) {
+  if(!BrowserWindowCoordinator.closeFor(windowId)) promise.reject("WINDOW","The browser window is closed")
+  else promise.resolve(null)
  }
  @ReactMethod fun closeWindowForTab(tabId:String,promise:Promise) = onUi(promise) {
   promise.resolve(BrowserWindowCoordinator.closeForTab(tabId))
@@ -122,8 +138,14 @@ class BrowserModule(context:ReactApplicationContext):ReactContextBaseJavaModule(
   reactApplicationContext.currentActivity?.finish()
   promise.resolve(null)
  }
+ @ReactMethod fun getInputViewport(scope:String,promise:Promise) = onUi(promise) {
+  promise.resolve(BrowserInputViewport.snapshot(scope).json())
+ }
  @ReactMethod fun windowTabs(promise:Promise) {
   try { promise.resolve(BrowserWindowCoordinator.tabsJson()) } catch(failure:Exception) { promise.reject("WINDOW",failure) }
+ }
+ @ReactMethod fun configureWindowPermissionPrompt(tabId:String,enabled:Boolean) {
+  UiThreadUtil.runOnUiThread { BrowserWindowCoordinator.setPermissionPrompt(tabId,enabled) }
  }
  @ReactMethod fun windowMission(promise:Promise) {
   val activity=reactApplicationContext.currentActivity
@@ -139,7 +161,7 @@ class BrowserModule(context:ReactApplicationContext):ReactContextBaseJavaModule(
   try { promise.resolve(DefaultBrowserCoordinator.status(reactApplicationContext)) } catch(failure:Exception) { promise.reject("BROWSER_ROLE",failure) }
  }
  @ReactMethod fun requestDefaultBrowser(promise:Promise) = onUi(promise) {
-  val activity=reactApplicationContext.currentActivity ?: throw IllegalStateException("No active browser window")
+  val activity=requireUiActivity()
   DefaultBrowserCoordinator.request(activity) { promise.resolve(it) }
  }
  @ReactMethod fun setAppearance(mode:String,resolvedMode:String,chromeColor:String,promise:Promise) = onUi(promise) {
@@ -166,7 +188,7 @@ class BrowserModule(context:ReactApplicationContext):ReactContextBaseJavaModule(
   } catch(failure:Exception) { promise.reject("DOWNLOAD",failure) }
  }
  @ReactMethod fun shareUrl(url:String,promise:Promise) = onUi(promise) {
-  val activity=reactApplicationContext.currentActivity ?: throw IllegalStateException("No active browser window")
+  val activity=requireUiActivity()
   ExternalNavigationCoordinator.share(activity,url)
   promise.resolve(null)
  }
@@ -361,7 +383,7 @@ class BrowserModule(context:ReactApplicationContext):ReactContextBaseJavaModule(
   }.toString())
  }
  @ReactMethod fun openAndroidPermissionSettings(promise:Promise) = onUi(promise) {
-  val activity=reactApplicationContext.currentActivity ?: throw IllegalStateException("No active browser window")
+  val activity=requireUiActivity()
   activity.startActivity(android.content.Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,android.net.Uri.parse("package:${reactApplicationContext.packageName}")))
   promise.resolve(null)
  }

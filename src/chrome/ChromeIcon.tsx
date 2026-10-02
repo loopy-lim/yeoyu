@@ -1,6 +1,7 @@
 import React, { memo } from "react";
 import Svg, { Path } from "react-native-svg";
-import { useTheme } from "../themeContext";
+import { useResolveClassNames } from "uniwind";
+import { cn } from "@/ui/cn";
 
 const paths = {
   sidebar: "M4 4h16v16H4z M9 4v16",
@@ -47,20 +48,37 @@ export type IconName = keyof typeof paths;
 /** One geometry and stroke weight for all browser controls, independent of fonts. */
 export const ChromeIcon = memo(function ChromeIcon({
   name,
-  size = 18,
+  size,
   color,
+  className,
 }: {
   name: IconName;
   size?: number;
   color?: string;
+  className?: string;
 }) {
-  const theme = useTheme();
+  const resolved = useResolveClassNames(cn("size-[18px] text-icon", className));
+  const width = size ?? resolved.width;
+  const height = size ?? resolved.height;
   return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" accessible={false}>
+    <Svg
+      width={
+        typeof width === "number" || typeof width === "string"
+          ? width
+          : undefined
+      }
+      height={
+        typeof height === "number" || typeof height === "string"
+          ? height
+          : undefined
+      }
+      viewBox="0 0 24 24"
+      accessible={false}
+    >
       <Path
         d={paths[name]}
         fill="none"
-        stroke={color ?? theme.icon}
+        stroke={color ?? resolved.color}
         strokeWidth={1.65}
         strokeLinecap="round"
         strokeLinejoin="round"

@@ -1,10 +1,16 @@
+import { cva } from "class-variance-authority";
+import { cn } from "@/ui/cn";
 import React from "react";
 import { Pressable, Switch, Text, View } from "react-native";
-import { useStyles } from "../chrome/appStyles";
-import { ChromeIcon } from "../chrome/ChromeIcon";
-import type { PictureInPictureState } from "../hooks/usePictureInPicture";
-import { useTheme } from "../themeContext";
-import { useI18n } from "../i18nContext";
+import { appClasses as c } from "@/chrome/appStyles";
+import { ChromeIcon } from "@/chrome/ChromeIcon";
+import type { PictureInPictureState } from "@/hooks/usePictureInPicture";
+import { useTheme } from "@/themeContext";
+import { useI18n } from "@/i18nContext";
+
+const actionState = cva("active:opacity-pressed", {
+  variants: { disabled: { true: "opacity-disabled", false: "" } },
+});
 
 interface Props {
   state: PictureInPictureState;
@@ -29,7 +35,6 @@ export function PictureInPictureSettings({
 }: Props) {
   const theme = useTheme();
   const { tr } = useI18n();
-  const s = useStyles(theme);
   const toggleDisabled = !hydrated || !state.supported;
   const enterDisabled =
     !state.supported || !state.allowed || !hasTab || externalBusy;
@@ -41,18 +46,15 @@ export function PictureInPictureSettings({
         accessibilityLabel={tr("pip.automatic")}
         accessibilityState={{ checked: enabled, disabled: toggleDisabled }}
         disabled={toggleDisabled}
-        style={({ pressed }) => [
-          s.settingsToggle,
-          pressed && s.pressed,
-          toggleDisabled && s.disabled,
-        ]}
+        className={cn(
+          c.settingsToggle,
+          actionState({ disabled: toggleDisabled })
+        )}
         onPress={onToggle}
       >
-        <View style={s.settingsToggleCopy}>
-          <Text style={s.optionTitle}>{tr("pip.automatic")}</Text>
-          <Text style={s.optionDescription}>
-            {tr("pip.automaticHelp")}
-          </Text>
+        <View className={c.settingsToggleCopy}>
+          <Text className={c.optionTitle}>{tr("pip.automatic")}</Text>
+          <Text className={c.optionDescription}>{tr("pip.automaticHelp")}</Text>
         </View>
         <View
           pointerEvents="none"
@@ -68,22 +70,18 @@ export function PictureInPictureSettings({
         </View>
       </Pressable>
       {!state.supported && (
-        <Text style={s.optionDescription}>
-          {tr("pip.unsupported")}
-        </Text>
+        <Text className={c.optionDescription}>{tr("pip.unsupported")}</Text>
       )}
       {state.supported && !state.allowed && (
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={tr("pip.androidSettings")}
-          style={({ pressed }) => [s.settingsAction, pressed && s.pressed]}
+          className={cn(c.settingsAction, actionState())}
           onPress={onOpenSettings}
         >
-          <View style={s.settingsToggleCopy}>
-            <Text style={s.optionTitle}>{tr("pip.androidSettings")}</Text>
-            <Text style={s.optionDescription}>
-              {tr("pip.androidHelp")}
-            </Text>
+          <View className={c.settingsToggleCopy}>
+            <Text className={c.optionTitle}>{tr("pip.androidSettings")}</Text>
+            <Text className={c.optionDescription}>{tr("pip.androidHelp")}</Text>
           </View>
           <ChromeIcon name="external" />
         </Pressable>
@@ -93,19 +91,16 @@ export function PictureInPictureSettings({
         accessibilityLabel={tr("pip.open")}
         accessibilityState={{ disabled: enterDisabled }}
         disabled={enterDisabled}
-        style={({ pressed }) => [
-          s.settingsAction,
-          pressed && s.pressed,
-          enterDisabled && s.disabled,
-        ]}
+        className={cn(
+          c.settingsAction,
+          actionState({ disabled: enterDisabled })
+        )}
         onPress={onEnter}
       >
-        <View style={s.settingsToggleCopy}>
-          <Text style={s.optionTitle}>{tr("pip.open")}</Text>
-          <Text style={s.optionDescription}>
-            {hasTab
-              ? tr("pip.openNow")
-              : tr("pip.openTab")}
+        <View className={c.settingsToggleCopy}>
+          <Text className={c.optionTitle}>{tr("pip.open")}</Text>
+          <Text className={c.optionDescription}>
+            {hasTab ? tr("pip.openNow") : tr("pip.openTab")}
           </Text>
         </View>
         <ChromeIcon name="external" />

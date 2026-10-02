@@ -1,4 +1,5 @@
 import { mock } from "bun:test";
+import "../uniwindTestHarness";
 import assert from "node:assert/strict";
 import React from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
@@ -85,16 +86,23 @@ try {
   );
   const denial = renderer.root
     .findAllByType("Text" as React.ElementType)
-    .find((node) => String(node.props.children).includes("Access was not granted"));
+    .find((node) =>
+      String(node.props.children).includes("Access was not granted")
+    );
   assert(denial, "denial feedback is visible");
   let feedbackArea = denial.parent;
   while (
     feedbackArea &&
-    !feedbackArea.findAllByProps({ accessibilityLabel: "Allow Camera in Android" }).length
-  ) feedbackArea = feedbackArea.parent;
+    !feedbackArea.findAllByProps({
+      accessibilityLabel: "Allow Camera in Android",
+    }).length
+  )
+    feedbackArea = feedbackArea.parent;
   assert(feedbackArea, "denial feedback accompanies the requested permission");
   assert.equal(
-    feedbackArea.findAllByProps({ accessibilityLabel: "Allow Microphone in Android" }).length,
+    feedbackArea.findAllByProps({
+      accessibilityLabel: "Allow Microphone in Android",
+    }).length,
     0,
     "denial feedback belongs to the camera row instead of the bottom of the device list"
   );

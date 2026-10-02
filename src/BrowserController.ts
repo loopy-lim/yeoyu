@@ -1,11 +1,11 @@
-import type { Snapshot } from "../generated/types";
-import type { Navigation } from "../modules/browser-surface/src/BrowserSurfaceNativeComponent";
-import { SerialQueue } from "./policy";
-import { persistableSnapshot } from "./privateTabs";
-import { BrowserPerformance, utf8Bytes } from "./browserPerformance";
+import type { Snapshot } from "@generated/types";
+import type { Navigation } from "@modules/browser-surface/src/BrowserSurfaceNativeComponent";
+import { SerialQueue } from "@/policy";
+import { persistableSnapshot } from "@/privateTabs";
+import { BrowserPerformance, utf8Bytes } from "@/browserPerformance";
 
 type GeneratedCommands = Pick<
-  typeof import("../generated/commands"),
+  typeof import("@generated/commands"),
   | "browserSnapshot"
   | "snapshotRestore"
   | "workspaceCreate"
@@ -31,7 +31,7 @@ type GeneratedCommands = Pick<
   | "bookmarkSetFolder"
 >;
 type ArchiveCommands = Pick<
-  typeof import("../generated/commands"),
+  typeof import("@generated/commands"),
   | "workArchiveExport"
   | "workArchivePreview"
   | "workArchivePrepare"
@@ -43,8 +43,8 @@ export type BrowserCommands = {
   ) => ReturnType<GeneratedCommands[Name]>;
 } & {
   ready(): Promise<unknown>;
-  keymapDefaults?: typeof import("../generated/commands").keymapDefaults;
-  tabOpenExternal?: typeof import("../generated/commands").tabOpenExternal;
+  keymapDefaults?: typeof import("@generated/commands").keymapDefaults;
+  tabOpenExternal?: typeof import("@generated/commands").tabOpenExternal;
 } & {
   [Name in keyof ArchiveCommands]?: (
     ...args: Parameters<ArchiveCommands[Name]>

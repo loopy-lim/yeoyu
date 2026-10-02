@@ -6,6 +6,8 @@ import { parse } from "@babel/parser";
 import { permissionSupportsOnce, type PermissionChoice } from "../src/permissionRequests";
 import { translate } from "../src/i18n";
 import { PERMISSION_KINDS } from "../src/uiPreferences";
+import { cva } from "class-variance-authority";
+import { cn } from "../src/ui/cn";
 
 // Execute the real dialog with plain host elements; no global React Native
 // mock or native rendering claim is needed to verify labels and choices.
@@ -18,8 +20,11 @@ const javascript = transformSync(source.slice(declaration.start!, declaration.en
   babelrc: false, configFile: false,
   plugins: [["@babel/plugin-transform-typescript", { isTSX: true }], ["@babel/plugin-transform-react-jsx", { runtime: "classic" }]],
 }).code;
-const PermissionDialog = new Function("React", "useStyles", "useI18n", "permissionSupportsOnce", "PERMISSION_KINDS", "View", "Text", "Pressable", "DialogHeader", "ScrollView", `${javascript}; return PermissionDialog;`)(
-  React, () => ({ styles: {} }), () => ({ tr: (key: Parameters<typeof translate>[1], values?: Parameters<typeof translate>[2]) => translate("en", key, values) }), permissionSupportsOnce, PERMISSION_KINDS, "View", "Text", "Pressable", "DialogHeader", "ScrollView",
+const classDeclarations = tree.program.body.filter((entry) => entry.type === "VariableDeclaration" && entry.declarations.some((item) => item.id.type === "Identifier" && ["spaceRowVariants", "dialogClasses"].includes(item.id.name)));
+const classesJavascript = transformSync(classDeclarations.map((entry) => source.slice(entry.start!, entry.end!)).join("\n"), { babelrc: false, configFile: false, plugins: ["@babel/plugin-transform-typescript"] }).code;
+const dialogClasses = new Function("cva", `${classesJavascript}; return dialogClasses;`)(cva);
+const PermissionDialog = new Function("React", "dialogClasses", "cn", "useI18n", "permissionSupportsOnce", "PERMISSION_KINDS", "View", "Text", "Pressable", "DialogHeader", "ScrollView", `${javascript}; return PermissionDialog;`)(
+  React, dialogClasses, cn, () => ({ tr: (key: Parameters<typeof translate>[1], values?: Parameters<typeof translate>[2]) => translate("en", key, values) }), permissionSupportsOnce, PERMISSION_KINDS, "View", "Text", "Pressable", "DialogHeader", "ScrollView",
 ) as (props: { request: { kinds: string[]; origin: string; ephemeral?: boolean }; onDecide(choice: PermissionChoice): void; onDismiss(): void }) => ReactNode;
 
 type Props = { children?: ReactNode; accessibilityLabel?: string; onPress?: () => void };

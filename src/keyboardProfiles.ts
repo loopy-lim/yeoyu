@@ -1,5 +1,5 @@
-import { parseKeymap } from "./keyboardEditor";
-import type { KeyBinding } from "../generated/types";
+import { parseKeymap } from "@/keyboardEditor";
+import type { KeyBinding } from "@generated/types";
 /** Optional user preset for devices whose OS reserves Meta chords. Rust validates/saves it. */
 export function withCtrlAlternatives(bindings: KeyBinding[]): KeyBinding[] {
   const result = [...bindings];

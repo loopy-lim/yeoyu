@@ -1,8 +1,8 @@
 import React, { useCallback, useSyncExternalStore } from "react";
 import { DeviceEventEmitter } from "react-native";
-import { TabProgressStore } from "../tabProgress";
-import type { Theme } from "../theme";
-import { LoadBar } from "./LoadBar";
+import { TabProgressStore } from "@/tabProgress";
+import type { Theme } from "@/theme";
+import { LoadBar } from "@/chrome/LoadBar";
 
 const progress = new TabProgressStore((listener) => {
   const subscription = DeviceEventEmitter.addListener(

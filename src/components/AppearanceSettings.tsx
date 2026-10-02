@@ -1,9 +1,12 @@
+import { cva } from "class-variance-authority";
+import { cn } from "@/ui/cn";
+import { ThemeScope } from "@/ui/ThemeScope";
 import React, { useMemo, useState } from "react";
-import { Pressable, StyleSheet, Text, TextInput, useColorScheme, View } from "react-native";
-import { resolveTheme, WORKSPACE_PALETTE, type Theme } from "../theme";
-import { useTheme } from "../themeContext";
-import { ChromeIcon } from "../chrome/ChromeIcon";
-import { useI18n } from "../i18nContext";
+import { Pressable, Text, TextInput, useColorScheme, View } from "react-native";
+import { resolveTheme, WORKSPACE_PALETTE } from "@/theme";
+import { useTheme } from "@/themeContext";
+import { ChromeIcon } from "@/chrome/ChromeIcon";
+import { useI18n } from "@/i18nContext";
 import {
   normalizeCustomColor,
   resolveColorMode,
@@ -11,60 +14,34 @@ import {
   type ColorSource,
   type UiPreferenceAction,
   type UiPreferences,
-} from "../uiPreferences";
+} from "@/uiPreferences";
 
 const PRESETS = [...WORKSPACE_PALETTE, "#808080", "#202020"];
 
-const makeStyles = (t: Theme) =>
-  StyleSheet.create({
-    group: { gap: 10, marginBottom: 24 },
-    title: { fontSize: 16, fontWeight: "600", color: t.ink },
-    text: { fontSize: 14, color: t.ink, lineHeight: 21 },
-    textRow: { flexDirection: "row", alignItems: "center", gap: 6 },
-    detail: { fontSize: 14, color: t.inkMuted, lineHeight: 21 },
-    choices: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-    choice: {
-      maxWidth: "100%",
-      minHeight: 48,
-      padding: 12,
-      borderRadius: 10,
-      borderWidth: 1,
-      borderColor: t.hairline,
-      justifyContent: "center",
-      backgroundColor: t.surfaceElevated,
-    },
-    selected: { borderColor: t.ink, backgroundColor: t.sunkenStrong },
-    disabled: { opacity: 0.5 },
-    input: {
-      minHeight: 48,
-      borderWidth: 1,
-      borderColor: t.inkMuted,
-      borderRadius: 10,
-      paddingHorizontal: 12,
-      color: t.ink,
-      backgroundColor: t.surfaceElevated,
-      fontSize: 16,
-    },
-    swatch: {
-      width: 48,
-      height: 48,
-      padding: 8,
-      borderRadius: 10,
-      borderWidth: 1,
-      borderColor: t.hairline,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    swatchFill: {
-      width: 30,
-      height: 30,
-      borderRadius: 7,
-      borderWidth: 1,
-      borderColor: t.inkMuted,
-    },
-    preview: { padding: 16, borderRadius: 12, gap: 12 },
-    previewCard: { padding: 16, borderRadius: 10, gap: 8, borderWidth: 1 },
-  });
+const c = {
+  group: "gap-xl mb-[24px]",
+  title: "text-icon-size font-semibold text-ink",
+  text: "text-input-plus text-ink leading-[21px]",
+  textRow: "flex-row items-center gap-md",
+  detail: "text-input-plus text-ink-muted leading-[21px]",
+  choices: "flex-row flex-wrap gap-lg",
+  choice:
+    "max-w-full min-h-action-row p-xxl rounded-[10px] border border-hairline justify-center bg-surface-elevated active:opacity-pressed",
+  input:
+    "min-h-action-row border border-ink-muted rounded-[10px] px-xxl text-ink bg-surface-elevated text-icon-size",
+  swatch:
+    "size-[48px] p-lg rounded-[10px] border border-hairline items-center justify-center active:opacity-pressed",
+  swatchFill: "size-[30px] rounded-[7px] border border-ink-muted bg-accent",
+  preview: "p-xxxl rounded-tile gap-xxl bg-sidebar",
+  previewCard:
+    "p-xxxl rounded-[10px] gap-lg border border-pane-focus bg-surface",
+} as const;
+const choiceClasses = cva("", {
+  variants: {
+    selected: { true: "border-ink bg-sunken-strong", false: "" },
+    disabled: { true: "opacity-50", false: "" },
+  },
+});
 
 export function AppearanceSettings({
   ui,
@@ -84,12 +61,14 @@ export function AppearanceSettings({
   const systemScheme = useColorScheme();
   const resolvedMode = resolveColorMode(ui.colorMode, systemScheme);
   const [editorVersion, setEditorVersion] = useState(0);
-  const s = useMemo(() => makeStyles(t), [t]);
   // A new saved seed remounts the editor below, while ordinary app renders
   // preserve the draft. Typing never changes the persisted appearance.
   const source = ui.colorSource ?? "space";
   const sourceDescriptions: Record<ColorSource, string> = {
-    space: tr("color.spaceHelp", { space: spaceName, color: spaceColor ? ` (${spaceColor})` : tr("color.basePalette") }),
+    space: tr("color.spaceHelp", {
+      space: spaceName,
+      color: spaceColor ? ` (${spaceColor})` : tr("color.basePalette"),
+    }),
     custom: tr("color.customHelp", { color: ui.customColor ?? "" }),
     appearance: tr("color.baseSourceHelp"),
   };
@@ -105,27 +84,26 @@ export function AppearanceSettings({
       accessibilityState={{ checked, disabled: !hydrated || disabled }}
       disabled={!hydrated || disabled}
       onPress={onPress}
-      style={[
-        s.choice,
-        checked && s.selected,
-        (!hydrated || disabled) && s.disabled,
-      ]}
+      className={cn(
+        c.choice,
+        choiceClasses({ selected: checked, disabled: !hydrated || disabled })
+      )}
     >
-      <View style={s.textRow}>
+      <View className={c.textRow}>
         {checked && (
           <ChromeIcon name="check" size={14} color={t.accentStrong} />
         )}
-        <Text style={s.text}>{label}</Text>
+        <Text className={c.text}>{label}</Text>
       </View>
     </Pressable>
   );
   return (
     <>
-      <View style={s.group}>
-        <Text accessibilityRole="header" style={s.title}>
+      <View className={c.group}>
+        <Text accessibilityRole="header" className={c.title}>
           {tr("color.mode")}
         </Text>
-        <View style={s.choices}>
+        <View className={c.choices}>
           {(["system", "light", "dark"] as const).map((colorMode) => (
             <React.Fragment key={colorMode}>
               {choice(
@@ -136,15 +114,20 @@ export function AppearanceSettings({
             </React.Fragment>
           ))}
         </View>
-        <Text style={s.detail}>
-          {tr((ui.colorMode ?? "system") === "system" ? "color.modeSystemHelp" : "color.modeManualHelp", { mode: tr(`color.${resolvedMode}`) })}
+        <Text className={c.detail}>
+          {tr(
+            (ui.colorMode ?? "system") === "system"
+              ? "color.modeSystemHelp"
+              : "color.modeManualHelp",
+            { mode: tr(`color.${resolvedMode}`) }
+          )}
         </Text>
       </View>
-      <View style={s.group}>
-        <Text accessibilityRole="header" style={s.title}>
+      <View className={c.group}>
+        <Text accessibilityRole="header" className={c.title}>
           {tr("color.base")}
         </Text>
-        <View style={s.choices}>
+        <View className={c.choices}>
           {(["lavender", "warm"] as const).map((appearance) => (
             <React.Fragment key={appearance}>
               {choice(
@@ -155,15 +138,13 @@ export function AppearanceSettings({
             </React.Fragment>
           ))}
         </View>
-        <Text style={s.detail}>
-          {tr("color.baseHelp")}
-        </Text>
+        <Text className={c.detail}>{tr("color.baseHelp")}</Text>
       </View>
-      <View style={s.group}>
-        <Text accessibilityRole="header" style={s.title}>
+      <View className={c.group}>
+        <Text accessibilityRole="header" className={c.title}>
           {tr("color.source")}
         </Text>
-        <View style={s.choices}>
+        <View className={c.choices}>
           {(
             [
               ["appearance", tr("color.sourceBase")],
@@ -181,17 +162,16 @@ export function AppearanceSettings({
             </React.Fragment>
           ))}
         </View>
-        <Text style={s.detail}>{sourceDescriptions[source]}</Text>
+        <Text className={c.detail}>{sourceDescriptions[source]}</Text>
       </View>
       <CustomColorEditor
         key={`${ui.customColor ?? "unset"}:${editorVersion}`}
         ui={ui}
         hydrated={hydrated}
         onChange={onChange}
-        styles={s}
         resolvedMode={resolvedMode}
       />
-      <View style={s.group}>
+      <View className={c.group}>
         <Pressable
           accessibilityRole="button"
           disabled={!hydrated}
@@ -200,13 +180,11 @@ export function AppearanceSettings({
             onChange({ type: "resetColors" });
             setEditorVersion((version) => version + 1);
           }}
-          style={[s.choice, !hydrated && s.disabled]}
+          className={cn(c.choice, choiceClasses({ disabled: !hydrated }))}
         >
-          <Text style={s.text}>{tr("color.reset")}</Text>
+          <Text className={c.text}>{tr("color.reset")}</Text>
         </Pressable>
-        <Text style={s.detail}>
-          {tr("color.resetHelp")}
-        </Text>
+        <Text className={c.detail}>{tr("color.resetHelp")}</Text>
       </View>
     </>
   );
@@ -216,13 +194,11 @@ function CustomColorEditor({
   ui,
   hydrated,
   onChange,
-  styles: s,
   resolvedMode,
 }: {
   ui: UiPreferences;
   hydrated: boolean;
   onChange(action: UiPreferenceAction): void;
-  styles: ReturnType<typeof makeStyles>;
   resolvedMode: ResolvedColorMode;
 }) {
   const initial = ui.customColor ?? WORKSPACE_PALETTE[0];
@@ -241,14 +217,12 @@ function CustomColorEditor({
   );
   const applied = ui.colorSource === "custom" && color === ui.customColor;
   return (
-    <View style={s.group}>
-      <Text accessibilityRole="header" style={s.title}>
+    <View className={c.group}>
+      <Text accessibilityRole="header" className={c.title}>
         {tr("color.choose")}
       </Text>
-      <Text style={s.detail}>
-        {tr("color.chooseHelp")}
-      </Text>
-      <View style={s.choices}>
+      <Text className={c.detail}>{tr("color.chooseHelp")}</Text>
+      <View className={c.choices}>
         {PRESETS.map((preset) => (
           <Pressable
             key={preset}
@@ -260,17 +234,18 @@ function CustomColorEditor({
             }}
             disabled={!hydrated}
             onPress={() => setDraft(preset)}
-            style={[
-              s.swatch,
-              color === preset && s.selected,
-              !hydrated && s.disabled,
-            ]}
+            className={cn(
+              c.swatch,
+              choiceClasses({ selected: color === preset, disabled: !hydrated })
+            )}
           >
-            <View style={[s.swatchFill, { backgroundColor: preset }]} />
+            <ThemeScope theme={{ ...preview, accent: preset }}>
+              <View className={c.swatchFill} />
+            </ThemeScope>
           </Pressable>
         ))}
       </View>
-      <Text style={s.text}>{tr("color.hex")}</Text>
+      <Text className={c.text}>{tr("color.hex")}</Text>
       <TextInput
         accessibilityLabel={tr("color.customHex")}
         accessibilityHint={tr("color.hexHint")}
@@ -285,63 +260,45 @@ function CustomColorEditor({
         importantForAutofill="no"
         spellCheck={false}
         maxLength={32}
-        style={s.input}
+        className={c.input}
         onSubmitEditing={() => {
           if (hydrated && color) onChange({ type: "setCustomColor", color });
         }}
       />
       {!color && (
-        <Text accessibilityRole="alert" style={s.detail}>
+        <Text accessibilityRole="alert" className={c.detail}>
           {tr("color.invalid")}
         </Text>
       )}
-      <View style={[s.preview, { backgroundColor: preview.sidebar }]}>
-        <Text style={[s.title, { color: preview.ink }]}>
-          {tr("color.preview", { color: color ?? initial })}
-        </Text>
-        <Text style={[s.detail, { color: preview.inkMuted }]}>
-          {tr("color.sidebar")}
-        </Text>
-        <View
-          style={[
-            s.previewCard,
-            {
-              backgroundColor: preview.surface,
-              borderColor: preview.paneFocus,
-            },
-          ]}
-        >
-          <Text style={[s.text, { color: preview.ink }]}>
-            {tr("color.tabs")}
+      <ThemeScope theme={preview}>
+        <View className={c.preview}>
+          <Text className={c.title}>
+            {tr("color.preview", { color: color ?? initial })}
           </Text>
-          <Text style={[s.detail, { color: preview.inkMuted }]}>
-            {tr("color.tones")}
-          </Text>
-          <View
-            style={{
-              height: 4,
-              borderRadius: 2,
-              backgroundColor: preview.accent,
-            }}
-          />
+          <Text className={c.detail}>{tr("color.sidebar")}</Text>
+          <View className={c.previewCard}>
+            <Text className={c.text}>{tr("color.tabs")}</Text>
+            <Text className={c.detail}>{tr("color.tones")}</Text>
+            <View className="h-sm rounded-[2px] bg-accent" />
+          </View>
         </View>
-      </View>
-      <Text style={s.detail}>
-        {tr("color.seedHelp")}
-      </Text>
-      <View style={s.choices}>
+      </ThemeScope>
+      <Text className={c.detail}>{tr("color.seedHelp")}</Text>
+      <View className={c.choices}>
         <Pressable
           accessibilityRole="button"
           disabled={!hydrated || !color || applied}
           accessibilityState={{ disabled: !hydrated || !color || applied }}
           onPress={() => color && onChange({ type: "setCustomColor", color })}
-          style={[
-            s.choice,
-            s.selected,
-            (!hydrated || !color || applied) && s.disabled,
-          ]}
+          className={cn(
+            c.choice,
+            choiceClasses({
+              selected: true,
+              disabled: !hydrated || !color || applied,
+            })
+          )}
         >
-          <Text style={s.text}>
+          <Text className={c.text}>
             {tr(applied ? "color.applied" : "color.apply")}
           </Text>
         </Pressable>
@@ -350,9 +307,12 @@ function CustomColorEditor({
           disabled={!hydrated || draft === initial}
           accessibilityState={{ disabled: !hydrated || draft === initial }}
           onPress={() => setDraft(initial)}
-          style={[s.choice, (!hydrated || draft === initial) && s.disabled]}
+          className={cn(
+            c.choice,
+            choiceClasses({ disabled: !hydrated || draft === initial })
+          )}
         >
-          <Text style={s.text}>{tr("color.discard")}</Text>
+          <Text className={c.text}>{tr("color.discard")}</Text>
         </Pressable>
       </View>
     </View>

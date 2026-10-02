@@ -1,4 +1,4 @@
-import type { Snapshot } from "../generated/types";
+import type { Snapshot } from "@generated/types";
 
 /** The persisted snapshot must never carry private tabs: strip them from the
  * save payload and repair the active pointers that referenced them. The

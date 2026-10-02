@@ -1,10 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Animated } from "react-native";
-import { motion } from "../theme";
-import { easing } from "./motion";
-import type { Theme } from "../theme";
-import type { TabLoadState } from "../tabProgress";
-import { useReducedMotion } from "./useReducedMotion";
+import { motion } from "@/theme";
+import { easing } from "@/chrome/motion";
+import type { Theme } from "@/theme";
+import type { TabLoadState } from "@/tabProgress";
+import { useReducedMotion } from "@/chrome/useReducedMotion";
+import { useResolveClassNames } from "uniwind";
+import { ThemeScope } from "@/ui/ThemeScope";
 
 export type LoadState = TabLoadState;
 
@@ -19,6 +21,26 @@ export function LoadBar({
   theme: Theme;
   reducedMotion?: boolean;
 }) {
+  return (
+    <ThemeScope theme={theme}>
+      <LoadBarFill state={state} reducedMotion={overrideReducedMotion} />
+    </ThemeScope>
+  );
+}
+
+function LoadBarFill({
+  state,
+  reducedMotion: overrideReducedMotion,
+}: {
+  state?: LoadState;
+  reducedMotion?: boolean;
+}) {
+  const trackStyle = useResolveClassNames(
+    "absolute top-0 left-0 right-0 z-[5]"
+  );
+  const fillStyle = useResolveClassNames(
+    "h-[2px] w-full origin-top-left bg-accent"
+  );
   const systemReducedMotion = useReducedMotion();
   const reducedMotion = overrideReducedMotion ?? systemReducedMotion;
   const [opacity] = useState(() => new Animated.Value(0));
@@ -86,23 +108,11 @@ export function LoadBar({
     <Animated.View
       accessible={false}
       pointerEvents="none"
-      style={{
-        position: "absolute",
-        top: 0,
-        left: 0,
-        right: 0,
-        zIndex: 5,
-        opacity,
-      }}
+      style={[trackStyle, { opacity }]}
     >
       <Animated.View
-        style={{
-          height: 2,
-          width: "100%",
-          transformOrigin: [0, 0, 0],
-          transform: [{ scaleX: fill }],
-          backgroundColor: theme.accent,
-        }}
+        // Fill and completion opacity remain native animated values.
+        style={[fillStyle, { transform: [{ scaleX: fill }] }]}
       />
     </Animated.View>
   );

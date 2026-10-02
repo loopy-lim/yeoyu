@@ -4,7 +4,7 @@ import {
   browserExtensions,
   parseBrowserExtensions,
   type InstalledBrowserExtension,
-} from "./browserExtensions";
+} from "@/browserExtensions";
 
 export interface ExtensionToolbarAction {
   id: string;

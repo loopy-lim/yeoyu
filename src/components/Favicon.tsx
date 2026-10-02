@@ -6,8 +6,7 @@ import React, {
   useState,
 } from "react";
 import { Image, Text } from "react-native";
-import { favicons } from "../favicons";
-import { useTheme } from "../themeContext";
+import { favicons } from "@/favicons";
 
 export function Favicon({
   url,
@@ -23,7 +22,6 @@ export function Favicon({
   /** Private tabs use a local fallback outside the ordinary fetch/cache path. */
   persist?: boolean;
 }) {
-  const t = useTheme();
   const request = useMemo(() => ({ url, persist }), [url, persist]);
   const committed = useRef<typeof request | null>(null);
   const failed = useRef<typeof request | null>(null);
@@ -32,8 +30,11 @@ export function Favicon({
     source: persist ? favicons.peekForUrl(url) : null,
   }));
   // A new URL must never borrow the previous URL's resolved image.
-  const source =
-    persist ? (image.request === request ? image.source : favicons.peekForUrl(url)) : null;
+  const source = persist
+    ? image.request === request
+      ? image.source
+      : favicons.peekForUrl(url)
+    : null;
   useLayoutEffect(() => {
     committed.current = request;
     return () => {
@@ -61,10 +62,8 @@ export function Favicon({
   if (!source)
     return (
       <Text
-        style={[
-          { color: t.inkMuted, fontWeight: "700" },
-          { fontSize: Math.round(size * 0.5) },
-        ]}
+        className="text-ink-muted font-bold"
+        style={{ fontSize: Math.round(size * 0.5) }}
       >
         {fallback}
       </Text>

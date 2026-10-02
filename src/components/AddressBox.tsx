@@ -15,21 +15,22 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { Favicon } from "./Favicon";
-import { ChromeIcon } from "../chrome/ChromeIcon";
-import { josaRo } from "../i18n";
+import { Favicon } from "@/components/Favicon";
+import { ChromeIcon } from "@/chrome/ChromeIcon";
+import { josaRo } from "@/i18n";
 import {
   normalizeInput,
   suggest,
   type SearchEngineId,
   type Suggestion,
-} from "../suggestions";
-import { matchingCommands, type ProductCommand } from "../commandRegistry";
-import type { HistoryEntry } from "../history";
-import { platform } from "../platform";
-import { font, radius, space } from "../theme";
-import { useTheme } from "../themeContext";
-import { useI18n } from "../i18nContext";
+} from "@/suggestions";
+import { matchingCommands, type ProductCommand } from "@/commandRegistry";
+import type { HistoryEntry } from "@/history";
+import { platform } from "@/platform";
+import { cn } from "@/ui/cn";
+import { rowVariants, textVariants } from "@/ui/variants";
+import { useTheme } from "@/themeContext";
+import { useI18n } from "@/i18nContext";
 
 interface Props {
   engine: SearchEngineId;
@@ -54,6 +55,10 @@ interface Props {
 type Result =
   | { kind: "command"; command: ProductCommand }
   | { kind: "page"; page: Suggestion };
+const resultKey = (result: Result) =>
+  result.kind === "command"
+    ? `command:${result.command.id}`
+    : `page:${result.page.source}:${result.page.url}`;
 
 /** URL/search, existing tabs and product commands share one keyboard selection model. */
 export const AddressBox = forwardRef<
@@ -64,8 +69,18 @@ export const AddressBox = forwardRef<
   const { tr } = useI18n();
   const [query, setQuery] = useState(props.value ?? "");
   const [focused, setFocused] = useState(false);
-  const [highlight, setHighlight] = useState(-1);
+  const [highlightedKey, setHighlightedKey] = useState<string | null>(null);
+  // Native key events can arrive together before React commits a render.
+  const selectedKey = useRef<string | null>(null);
+  const updateSelection = (key: string | null) => {
+    selectedKey.current = key;
+    setHighlightedKey(key);
+  };
   const inputRef = useRef<React.ComponentRef<typeof TextInput> | null>(null);
+  const resultsRef = useRef<React.ComponentRef<typeof ScrollView> | null>(null);
+  const rowBounds = useRef(new Map<string, { y: number; height: number }>());
+  const viewportHeight = useRef(0);
+  const scrollOffset = useRef(0);
   const setRefs = (instance: React.ComponentRef<typeof TextInput> | null) => {
     inputRef.current = instance;
     if (typeof ref === "function") ref(instance);
@@ -94,6 +109,41 @@ export const AddressBox = forwardRef<
     [query, props.suggestions, props.commands, props.onCommand]
   );
   const visible = focused && results.length > 0;
+  const highlight = results.findIndex(
+    (result) => resultKey(result) === highlightedKey
+  );
+  const revealSelection = (index: number) => {
+    const result = results[index];
+    const bounds = result && rowBounds.current.get(resultKey(result));
+    const height = viewportHeight.current;
+    if (!bounds || height <= 0) return;
+    const top = scrollOffset.current;
+    const bottom = bounds.y + bounds.height;
+    const next =
+      bounds.y < top ? bounds.y : bottom > top + height ? bottom - height : top;
+    if (next === top) return;
+    scrollOffset.current = Math.max(0, next);
+    resultsRef.current?.scrollTo({
+      y: scrollOffset.current,
+      animated: !props.reducedMotion,
+    });
+  };
+  useLayoutEffect(() => {
+    const retained = new Set(results.map(resultKey));
+    for (const key of rowBounds.current.keys()) {
+      if (!retained.has(key)) rowBounds.current.delete(key);
+    }
+  }, [results]);
+  useLayoutEffect(() => {
+    if (!visible) {
+      rowBounds.current.clear();
+      viewportHeight.current = 0;
+      scrollOffset.current = 0;
+    }
+  }, [visible]);
+  useEffect(() => {
+    if (visible) revealSelection(highlight);
+  }, [highlight, visible, results]);
   const select = (result?: Result) => {
     if (result?.kind === "command") {
       props.onCommand?.(result.command.id);
@@ -110,12 +160,23 @@ export const AddressBox = forwardRef<
     if (url) props.onSubmit(url);
   };
   const onKey = (key: string) => {
+    const currentHighlight = results.findIndex(
+      (result) => resultKey(result) === selectedKey.current
+    );
     if (key === "ArrowDown")
-      setHighlight((value) => Math.min(value + 1, results.length - 1));
+      updateSelection(
+        results[Math.min(currentHighlight + 1, results.length - 1)]
+          ? resultKey(
+              results[Math.min(currentHighlight + 1, results.length - 1)]
+            )
+          : null
+      );
     else if (key === "ArrowUp")
-      setHighlight((value) => Math.max(value - 1, -1));
+      updateSelection(
+        currentHighlight > 0 ? resultKey(results[currentHighlight - 1]) : null
+      );
     else if (key === "Enter")
-      select(highlight >= 0 ? results[highlight] : undefined);
+      select(currentHighlight >= 0 ? results[currentHighlight] : undefined);
     else if (key === "Escape") props.onDismiss?.();
   };
   const keyHandler = useRef(onKey);
@@ -150,34 +211,20 @@ export const AddressBox = forwardRef<
     };
   }, [focused]);
   return (
-    <View style={{ alignSelf: "stretch" }}>
-      <View
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          gap: 10,
-          paddingHorizontal: space.xxl,
-          minHeight: 48,
-          borderRadius: radius.tile,
-          backgroundColor: t.sunken,
-        }}
-      >
+    <View className="self-stretch min-h-0 shrink">
+      <View className="flex-row items-center gap-xl px-xxl min-h-action-row rounded-tile bg-sunken">
         <ChromeIcon name="search" size={18} color={t.inkMuted} />
         <TextInput
           ref={setRefs}
           accessibilityLabel={tr("address.label")}
           maxFontSizeMultiplier={1.35}
-          style={{
-            height: 48,
-            flex: 1,
-            padding: 0,
-            fontSize: 15,
-            color: t.ink,
-          }}
+          className="h-action-row flex-1 min-w-0 p-0 text-[15px] text-ink"
           value={query}
           onChangeText={(value) => {
             setQuery(value);
-            setHighlight(-1);
+            updateSelection(null);
+            scrollOffset.current = 0;
+            resultsRef.current?.scrollTo({ y: 0, animated: false });
           }}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
@@ -190,9 +237,7 @@ export const AddressBox = forwardRef<
           selectTextOnFocus
           placeholder={props.placeholder ?? tr("address.placeholder")}
           placeholderTextColor={t.inkMuted}
-          onSubmitEditing={() =>
-            select(highlight >= 0 ? results[highlight] : undefined)
-          }
+          onSubmitEditing={() => onKey("Enter")}
           onKeyPress={({ nativeEvent }) => {
             if (nativeEvent.key !== "Enter") onKey(nativeEvent.key);
           }}
@@ -200,8 +245,17 @@ export const AddressBox = forwardRef<
       </View>
       {visible && (
         <ScrollView
+          ref={resultsRef}
           keyboardShouldPersistTaps="always"
-          style={{ maxHeight: 340, marginTop: 6 }}
+          className="max-h-[340px] mt-md shrink"
+          onLayout={({ nativeEvent }) => {
+            viewportHeight.current = nativeEvent.layout.height;
+            revealSelection(highlight);
+          }}
+          onScroll={({ nativeEvent }) => {
+            scrollOffset.current = nativeEvent.contentOffset.y;
+          }}
+          scrollEventThrottle={16}
         >
           {results.map((result, index) => {
             const command = result.kind === "command" ? result.command : null;
@@ -209,22 +263,24 @@ export const AddressBox = forwardRef<
             const title = command?.title ?? page!.title;
             return (
               <Pressable
-                key={command ? command.id : `${page!.source}:${page!.url}`}
+                key={resultKey(result)}
                 accessibilityRole="button"
-                accessibilityLabel={command ? title : tr("address.go", { title, ro: josaRo(title) })}
+                accessibilityLabel={
+                  command
+                    ? title
+                    : tr("address.go", { title, ro: josaRo(title) })
+                }
                 accessibilityState={{ selected: highlight === index }}
                 onPress={() => select(result)}
-                style={({ pressed }) => ({
-                  minHeight: 44,
-                  paddingHorizontal: 12,
-                  paddingVertical: 6,
-                  borderRadius: 8,
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: 10,
-                  backgroundColor:
-                    highlight === index || pressed ? t.sunken : "transparent",
-                })}
+                onLayout={({ nativeEvent }) => {
+                  rowBounds.current.set(resultKey(result), nativeEvent.layout);
+                  if (index === highlight) revealSelection(index);
+                }}
+                className={cn(
+                  rowVariants({ density: "bookmark" }),
+                  "px-xxl py-md rounded-[8px] gap-xl active:bg-sunken",
+                  highlight === index && "bg-sunken"
+                )}
               >
                 {command ? (
                   <ChromeIcon name="chevronRight" size={16} />
@@ -236,11 +292,11 @@ export const AddressBox = forwardRef<
                     radius={4}
                   />
                 )}
-                <View style={{ flex: 1 }}>
+                <View className="flex-1 min-w-0">
                   <Text
                     numberOfLines={1}
                     maxFontSizeMultiplier={1.35}
-                    style={{ color: t.ink, fontSize: font.bodyPlus }}
+                    className={textVariants({ size: "bodyPlus" })}
                   >
                     {title}
                   </Text>
@@ -248,14 +304,14 @@ export const AddressBox = forwardRef<
                     <Text
                       numberOfLines={1}
                       maxFontSizeMultiplier={1.35}
-                      style={{ color: t.inkMuted, fontSize: 11 }}
+                      className={textVariants({ tone: "muted" })}
                     >
                       {page.tabId ? tr("address.switchTab") : page.url}
                     </Text>
                   )}
                 </View>
                 {highlight === index && (
-                  <Text style={{ color: t.inkMuted, fontSize: 11 }}>↵</Text>
+                  <Text className={textVariants({ tone: "muted" })}>↵</Text>
                 )}
               </Pressable>
             );

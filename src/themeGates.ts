@@ -5,7 +5,7 @@ import {
   themes,
   WORKSPACE_PALETTE,
   type Theme,
-} from "./theme";
+} from "@/theme";
 
 // Numeric acceptance gates for the palette (docs/reference/design-gates.md). Every
 // text/icon role must hold its ratio in BOTH appearances — including every

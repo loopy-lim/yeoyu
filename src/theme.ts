@@ -3,7 +3,7 @@
 // consistent and the acceptance gates (docs/reference/design-gates.md,
 // scripts/contrast-check.ts) have a single source of truth.
 
-import { resolveColorMode, type ResolvedColorMode, type UiPreferences } from "./uiPreferences";
+import { resolveColorMode, type ResolvedColorMode, type UiPreferences } from "@/uiPreferences";
 
 export type Appearance = "lavender" | "warm";
 

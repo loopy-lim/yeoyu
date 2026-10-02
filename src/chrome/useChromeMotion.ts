@@ -1,8 +1,8 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import { Animated } from "react-native";
-import type { SplitLayout } from "../splitLayout";
-import { motion } from "../theme";
-import { easing } from "./motion";
+import type { SplitLayout } from "@/splitLayout";
+import { motion } from "@/theme";
+import { easing } from "@/chrome/motion";
 
 type SplitInSpace = { layout: SplitLayout; space: string };
 

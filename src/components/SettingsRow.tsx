@@ -1,7 +1,15 @@
 import React, { useState } from "react";
 import { Pressable, Text, useWindowDimensions, View } from "react-native";
-import { useTheme } from "../themeContext";
-import { useI18n } from "../i18nContext";
+import { cva } from "class-variance-authority";
+import { cn } from "@/ui/cn";
+import { useI18n } from "@/i18nContext";
+
+const rowClasses = cva("gap-xl min-h-[56px] py-xxl border-b border-hairline", {
+  variants: { horizontal: { true: "flex-row", false: "flex-col" } },
+});
+const controlClasses = cva("gap-lg justify-center max-w-full shrink", {
+  variants: { horizontal: { true: "items-end", false: "items-start" } },
+});
 
 /** A settings row owns presentation only; callers still own state and persistence. */
 export function SettingsRow({
@@ -17,7 +25,6 @@ export function SettingsRow({
   help?: string;
   children?: React.ReactNode;
 }) {
-  const theme = useTheme();
   const { fontScale } = useWindowDimensions();
   const { tr } = useI18n();
   const [expanded, setExpanded] = useState(false);
@@ -26,21 +33,12 @@ export function SettingsRow({
   return (
     <View
       onLayout={({ nativeEvent }) => setPanelWidth(nativeEvent.layout.width)}
-      style={{
-        flexDirection: horizontal ? "row" : "column",
-        gap: 10,
-        minHeight: 56,
-        paddingVertical: 12,
-        borderBottomWidth: 1,
-        borderBottomColor: theme.hairline,
-      }}
+      className={cn(rowClasses({ horizontal }))}
     >
-      <View style={{ flex: 1, minWidth: 0, gap: 4 }}>
-        <Text style={{ color: theme.ink, fontSize: 16, fontWeight: "600" }}>
-          {title}
-        </Text>
+      <View className="flex-1 min-w-0 gap-sm">
+        <Text className="text-ink text-icon-size font-semibold">{title}</Text>
         {!!summary && (
-          <Text style={{ color: theme.inkMuted, fontSize: 14, lineHeight: 20 }}>
+          <Text className="text-ink-muted text-input-plus leading-[20px]">
             {summary}
           </Text>
         )}
@@ -50,16 +48,14 @@ export function SettingsRow({
               accessibilityRole="button"
               accessibilityState={{ expanded }}
               onPress={() => setExpanded(!expanded)}
-              style={{ minHeight: 48, justifyContent: "center" }}
+              className="min-h-action-row justify-center active:opacity-pressed"
             >
-              <Text style={{ color: theme.accent, fontSize: 14 }}>
+              <Text className="text-accent text-input-plus">
                 {tr(expanded ? "common.hideDetails" : "common.moreDetails")}
               </Text>
             </Pressable>
             {expanded && (
-              <Text
-                style={{ color: theme.inkMuted, fontSize: 14, lineHeight: 21 }}
-              >
+              <Text className="text-ink-muted text-input-plus leading-[21px]">
                 {help}
               </Text>
             )}
@@ -67,17 +63,9 @@ export function SettingsRow({
         )}
       </View>
       {(value || children) && (
-        <View
-          style={{
-            gap: 8,
-            alignItems: horizontal ? "flex-end" : "flex-start",
-            justifyContent: "center",
-            maxWidth: "100%",
-            flexShrink: 1,
-          }}
-        >
+        <View className={cn(controlClasses({ horizontal }))}>
           {!!value && (
-            <Text style={{ color: theme.inkMuted, fontSize: 14 }}>{value}</Text>
+            <Text className="text-ink-muted text-input-plus">{value}</Text>
           )}
           {children}
         </View>

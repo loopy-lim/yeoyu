@@ -1,0 +1,197 @@
+@import "tailwindcss";
+@import "uniwind";
+
+/* src/theme.ts remains the palette/token source. These defaults let Metro
+   compile semantic utilities; ThemeScope supplies each root's resolved colors. */
+@theme static {
+  --color-chrome: #d9cedf;
+  --color-sidebar: #ddd1e1;
+  --color-canvas: #ded4e2;
+  --color-surface: #fbfafb;
+  --color-surface-elevated: #fffefe;
+  --color-white: #ffffff;
+  --color-sunken: #f4eff5;
+  --color-sunken-strong: #ece3ee;
+  --color-field-on-chrome: rgba(255, 255, 255, 0.46);
+  --color-pill: rgba(255, 255, 255, 0.6);
+  --color-fav-chip: rgba(255, 255, 255, 0.58);
+  --color-pinned-row: rgba(255, 255, 255, 0.35);
+  --color-rail-icon-tile: rgba(255, 255, 255, 0.75);
+  --color-manage-tile: rgba(255, 255, 255, 0.72);
+  --color-ghost: rgba(255, 255, 255, 0.96);
+  --color-accent: #9d7f9e;
+  --color-accent-strong: #8a6f92;
+  --color-pane-focus: #bba8c2;
+  --color-ring-shadow: #79667d;
+  --color-ink: #43384a;
+  --color-ink-muted: #5b4d60;
+  --color-ink-faint: #65536a;
+  --color-icon: #574d5c;
+  --color-card-border: #cfc1d5;
+  --color-hairline: #e7dfe9;
+  --color-hairline-on-chrome: #cbbdce;
+  --color-tile-border: rgba(90, 70, 96, 0.16);
+  --color-switch-off: #e3dae6;
+  --color-scrim: rgba(55, 44, 59, 0.36);
+  --color-notice-bg: rgba(68, 56, 72, 0.92);
+  --color-notice-ink: #fffafd;
+  --color-error-bg: #f5dfe4;
+  --color-error-ink: #7b2934;
+  --color-drop-border: #9475a1;
+  --color-drop-fill: rgba(180, 151, 191, 0.22);
+
+  --spacing: 4px;
+  --spacing-hairline: hairlineWidth();
+  --spacing-xs: 2px;
+  --spacing-sm: 4px;
+  --spacing-md: 6px;
+  --spacing-lg: 8px;
+  --spacing-xl: 10px;
+  --spacing-xxl: 12px;
+  --spacing-xxxl: 16px;
+  --spacing-frame: 8px;
+  --spacing-sidebar: 240px;
+  --spacing-rail: 48px;
+  --spacing-row: 30px;
+  --spacing-tab-row: 34px;
+  --spacing-workspace-row: 28px;
+  --spacing-rail-item: 36px;
+  --spacing-tile: 38px;
+  --spacing-favorite: 40px;
+  --spacing-icon-button: 32px;
+  --spacing-avatar: 28px;
+  --spacing-toolbar: 44px;
+  --spacing-address: 34px;
+  --spacing-address-compact: 34px;
+  --spacing-input: 44px;
+  --spacing-action-row: 48px;
+  --spacing-bookmark-row: 44px;
+
+  --radius-chip: 5px;
+  --radius-control: 9px;
+  --radius-field: 11px;
+  --radius-tile: 12px;
+  --radius-card: 16px;
+  --radius-dialog: 18px;
+
+  --text-micro: 9px;
+  --text-small: 10px;
+  --text-body: 11px;
+  --text-body-plus: 12px;
+  --text-input: 13px;
+  --text-input-plus: 14px;
+  --text-icon-size: 16px;
+  --text-title: 18px;
+}
+
+@utility opacity-pressed {
+  opacity: 0.58;
+}
+@utility opacity-disabled {
+  opacity: 0.38;
+}
+
+/* Uniwind resolves this native metric from StyleSheet.hairlineWidth. */
+@utility border-hairline-width {
+  border-width: hairlineWidth();
+}
+@utility border-b-hairline-width {
+  border-bottom-width: hairlineWidth();
+}
+@utility border-t-hairline-width {
+  border-top-width: hairlineWidth();
+}
+@utility border-l-hairline-width {
+  border-left-width: hairlineWidth();
+}
+@utility border-r-hairline-width {
+  border-right-width: hairlineWidth();
+}
+
+/* Raised chrome keeps the existing offsets, blur radii, opacity and Android
+   elevation. Palette tint resolves inside each ScopedVariables boundary. */
+@utility shadow-favorite-active {
+  --yeoyu-shadow-color: color-mix(
+    in srgb,
+    var(--color-ring-shadow) 13%,
+    transparent
+  );
+  box-shadow: 0px 1px 3px var(--yeoyu-shadow-color);
+  elevation: 1;
+}
+@utility shadow-content {
+  --yeoyu-shadow-color: color-mix(
+    in srgb,
+    var(--color-ring-shadow) 14%,
+    transparent
+  );
+  box-shadow: 0px 4px 14px var(--yeoyu-shadow-color);
+  elevation: 4;
+}
+@utility shadow-content-fullscreen {
+  box-shadow: none;
+  elevation: 0;
+}
+@utility shadow-drag-ghost {
+  --yeoyu-shadow-color: color-mix(
+    in srgb,
+    var(--color-ring-shadow) 20%,
+    transparent
+  );
+  box-shadow: 0px 4px 10px var(--yeoyu-shadow-color);
+  elevation: 10;
+}
+@utility shadow-new-tab-tile-icon {
+  --yeoyu-shadow-color: color-mix(
+    in srgb,
+    var(--color-ring-shadow) 8%,
+    transparent
+  );
+  box-shadow: 0px 2px 6px var(--yeoyu-shadow-color);
+  elevation: 2;
+}
+@utility shadow-quick-open-tile-icon {
+  --yeoyu-shadow-color: color-mix(
+    in srgb,
+    var(--color-ring-shadow) 8%,
+    transparent
+  );
+  box-shadow: 0px 2px 5px var(--yeoyu-shadow-color);
+  elevation: 2;
+}
+@utility shadow-mini {
+  --yeoyu-shadow-color: color-mix(
+    in srgb,
+    var(--color-ring-shadow) 22%,
+    transparent
+  );
+  box-shadow: 0px 6px 16px var(--yeoyu-shadow-color);
+  elevation: 7;
+}
+@utility shadow-dialog {
+  --yeoyu-shadow-color: color-mix(
+    in srgb,
+    var(--color-ring-shadow) 24%,
+    transparent
+  );
+  box-shadow: 0px 10px 24px var(--yeoyu-shadow-color);
+  elevation: 10;
+}
+@utility shadow-action-menu {
+  --yeoyu-shadow-color: color-mix(
+    in srgb,
+    var(--color-ring-shadow) 20%,
+    transparent
+  );
+  box-shadow: 0px 6px 18px var(--yeoyu-shadow-color);
+  elevation: 12;
+}
+@utility shadow-find-bar {
+  --yeoyu-shadow-color: color-mix(
+    in srgb,
+    var(--color-ring-shadow) 20%,
+    transparent
+  );
+  box-shadow: 0px 4px 12px var(--yeoyu-shadow-color);
+  elevation: 8;
+}

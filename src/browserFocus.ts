@@ -1,5 +1,5 @@
-import type { Snapshot } from "../generated/types";
-import type { BrowserController } from "./BrowserController";
+import type { Snapshot } from "@generated/types";
+import type { BrowserController } from "@/BrowserController";
 
 /** Native focus is a request to an existing live tab, never permission to resume it. */
 export function focusBrowserWindow(

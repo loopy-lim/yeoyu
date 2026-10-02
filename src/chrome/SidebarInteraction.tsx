@@ -6,6 +6,8 @@ import React, {
   useState,
 } from "react";
 import { Animated, Pressable } from "react-native";
+import { useResolveClassNames } from "uniwind";
+import { cn } from "@/ui/cn";
 
 const SidebarActive = createContext(true);
 export const useSidebarActive = () => useContext(SidebarActive);
@@ -16,12 +18,15 @@ export function SidebarLayer({
   active,
   children,
   style,
+  className,
 }: {
   visible: boolean;
   active: boolean;
   children: React.ReactNode;
   style?: React.ComponentProps<typeof Animated.View>["style"];
+  className?: string;
 }) {
+  const resolved = useResolveClassNames(cn(className, !visible && "hidden"));
   const visited = useRef(false);
   useLayoutEffect(() => {
     if (visible) visited.current = true;
@@ -36,7 +41,7 @@ export function SidebarLayer({
         importantForAccessibility={
           active && visible ? "auto" : "no-hide-descendants"
         }
-        style={[style, !visible && { display: "none" }]}
+        style={[resolved, style]}
       >
         {children}
       </Animated.View>

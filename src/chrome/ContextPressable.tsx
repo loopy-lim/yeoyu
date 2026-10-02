@@ -3,8 +3,8 @@ import { type PressableProps } from "react-native";
 import {
   SidebarPressable as Pressable,
   useSidebarActive,
-} from "./SidebarInteraction";
-import { ContextPressGuard } from "../pressIntent";
+} from "@/chrome/SidebarInteraction";
+import { ContextPressGuard } from "@/pressIntent";
 
 interface Props
   extends Omit<PressableProps, "onPress" | "onLongPress" | "onPointerDown"> {

@@ -1,4 +1,4 @@
-import { translate, type AppLanguage, type TranslationKey } from "./i18n";
+import { translate, type AppLanguage, type TranslationKey } from "@/i18n";
 
 export interface ProductCommand {
   id: string;

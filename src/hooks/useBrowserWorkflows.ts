@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { AppState, DeviceEventEmitter } from "react-native";
-import { controller } from "../controllerRuntime";
-import { platform } from "../platform";
-import { BrowserToolsStore, ExternalLinkDrain, parseBrowserTools, parseExternalLinks, retainLiveTabs, type BrowserToolsConfig, type BrowserToolsUpdate } from "../browserWorkflows";
-import type { Snapshot } from "../../generated/types";
+import { controller } from "@/controllerRuntime";
+import { platform } from "@/platform";
+import { BrowserToolsStore, ExternalLinkDrain, parseBrowserTools, parseExternalLinks, retainLiveTabs, type BrowserToolsConfig, type BrowserToolsUpdate } from "@/browserWorkflows";
+import type { Snapshot } from "@generated/types";
 
 export interface BrowserSecurity {
   tabId: string;

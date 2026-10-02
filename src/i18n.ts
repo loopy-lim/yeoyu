@@ -1,4 +1,4 @@
-import type { LanguagePreference } from "./uiPreferences";
+import type { LanguagePreference } from "@/uiPreferences";
 
 export type AppLanguage = "ko" | "en";
 
@@ -667,6 +667,7 @@ const en = {
     "Search or enter a link. Add favorite sites from a tab’s menu.",
   "chrome.startupError": "Browser settings could not be read",
   "chrome.opening": "Opening browser…",
+  "window.preferencesFailed": "This window could not be loaded. Retry to open it.",
   "chrome.tab": "Tab",
   "chrome.privateTab": "Private tab",
   "chrome.pinnedTab": "Pinned tab",
@@ -1463,6 +1464,7 @@ const ko: { [K in keyof typeof en]: string } = {
     "검색하거나 링크를 입력하세요. 탭 메뉴에서 즐겨찾기를 추가할 수 있습니다.",
   "chrome.startupError": "브라우저 설정을 읽지 못했습니다",
   "chrome.opening": "브라우저를 여는 중…",
+  "window.preferencesFailed": "창을 불러오지 못했습니다. 다시 시도해 주세요.",
   "chrome.tab": "탭",
   "chrome.privateTab": "비공개 탭",
   "chrome.pinnedTab": "고정된 탭",

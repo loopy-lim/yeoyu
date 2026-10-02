@@ -1,6 +1,6 @@
-import type { Bookmark, BookmarkFolder, Tab } from "../generated/types";
-import type { SplitLayout } from "./splitLayout";
-import { bookmarkTabsForSpace, libraryItemsForSpace } from "./sidebarModel";
+import type { Bookmark, BookmarkFolder, Tab } from "@generated/types";
+import type { SplitLayout } from "@/splitLayout";
+import { bookmarkTabsForSpace, libraryItemsForSpace } from "@/sidebarModel";
 
 export interface SidebarSplit {
   key: string;

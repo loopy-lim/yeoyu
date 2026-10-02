@@ -1,8 +1,8 @@
 import {
   permissionKindsFromEvent,
   type PermissionDecision,
-} from "./permissions";
-import { PERMISSION_LABELS, type PermissionKind } from "./uiPreferences";
+} from "@/permissions";
+import { PERMISSION_LABELS, type PermissionKind } from "@/uiPreferences";
 
 export interface PermissionRequest {
   requestId: number;
@@ -29,6 +29,10 @@ export class PermissionRequests {
   private listeners = new Set<() => void>();
   getSnapshot = (): PermissionRequest | null =>
     this.processing === null ? this.requests[0] ?? null : null;
+  getSnapshotFor = (
+    owns: (request: PermissionRequest) => boolean
+  ): PermissionRequest | null =>
+    this.processing === null ? this.requests.find(owns) ?? null : null;
   subscribe = (listener: () => void) => {
     this.listeners.add(listener);
     return () => {
@@ -48,8 +52,9 @@ export class PermissionRequests {
     this.changed();
   }
   begin(id: number): PermissionRequest | null {
-    const request = this.getSnapshot();
-    if (!request || request.requestId !== id) return null;
+    if (this.processing !== null) return null;
+    const request = this.requests.find((item) => item.requestId === id);
+    if (!request) return null;
     this.processing = id;
     this.changed();
     return request;

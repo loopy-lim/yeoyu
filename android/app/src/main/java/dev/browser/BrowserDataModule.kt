@@ -7,13 +7,18 @@ import android.os.Looper
 import com.facebook.react.bridge.*
 import java.io.Closeable
 import java.io.IOException
+import java.lang.ref.WeakReference
+import java.util.Collections
+import java.util.WeakHashMap
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
 /** User-selected portable files only. Browser state validation belongs to Rust. */
 class BrowserDataModule(context: ReactApplicationContext) : ReactContextBaseJavaModule(context), LifecycleEventListener {
-    private class Operation(val requestCode: Int, val promise: Promise, val bytes: ByteArray?) {
+    private class Operation(owner: Activity, val requestCode: Int, val promise: Promise, val bytes: ByteArray?) {
+        val owner = WeakReference(owner)
+        var awaitingResult = true
         val cancelled = AtomicBoolean(false)
         val stream = AtomicReference<Closeable?>()
         fun cancel() { cancelled.set(true); try { stream.getAndSet(null)?.close() } catch (_: Exception) {} }
@@ -26,7 +31,9 @@ class BrowserDataModule(context: ReactApplicationContext) : ReactContextBaseJava
     private val listener = object : BaseActivityEventListener() {
         override fun onActivityResult(activity: Activity, requestCode: Int, resultCode: Int, data: Intent?) {
             val operation = pending ?: return
-            if (requestCode != operation.requestCode) return
+            if (requestCode != operation.requestCode || operation.owner.get() !== activity || !operation.awaitingResult) return
+            if (activity.isFinishing || activity.isDestroyed) { cancelPending(); return }
+            operation.awaitingResult = false
             if (resultCode != Activity.RESULT_OK) { finish(operation, Result.success(null)); return }
             val uri = data?.data
             if (uri == null || uri.scheme != "content") { finish(operation, Result.failure(IOException("No supported document was selected"))); return }
@@ -52,6 +59,7 @@ class BrowserDataModule(context: ReactApplicationContext) : ReactContextBaseJava
     }
     override fun getName() = "BrowserData"
     override fun initialize() {
+        synchronized(instances) { instances.add(this) }
         reactApplicationContext.addActivityEventListener(listener)
         reactApplicationContext.addLifecycleEventListener(this)
     }
@@ -76,9 +84,11 @@ class BrowserDataModule(context: ReactApplicationContext) : ReactContextBaseJava
         UiThreadUtil.runOnUiThread {
             if (pending != null) { promise.reject("PORTABLE_FILE", "Another file operation is still open"); return@runOnUiThread }
             val activity = reactApplicationContext.currentActivity
-            if (activity == null) { promise.reject("PORTABLE_FILE", "Open the browser window and try again"); return@runOnUiThread }
+            if (activity == null || activity.isFinishing || activity.isDestroyed) {
+                promise.reject("PORTABLE_FILE", "Open the browser window and try again"); return@runOnUiThread
+            }
             if (nextRequest > 65530) { promise.reject("PORTABLE_FILE", "Restart the browser before opening another file"); return@runOnUiThread }
-            val operation = Operation(nextRequest++, promise, bytes)
+            val operation = Operation(activity, nextRequest++, promise, bytes)
             pending = operation
             main.postDelayed(timeout, 5 * 60_000L)
             try { activity.startActivityForResult(intent(), operation.requestCode) }
@@ -105,11 +115,27 @@ class BrowserDataModule(context: ReactApplicationContext) : ReactContextBaseJava
     override fun onHostPause() {} // The document picker legitimately pauses the browser.
     override fun onHostDestroy() { cancelPending() }
     override fun invalidate() {
+        synchronized(instances) { instances.remove(this) }
         reactApplicationContext.removeActivityEventListener(listener)
         reactApplicationContext.removeLifecycleEventListener(this)
         UiThreadUtil.runOnUiThread { cancelPending() }
         io.shutdownNow()
         super.invalidate()
     }
-    companion object { private const val MAX_BYTES = 8 * 1024 * 1024 }
+    companion object {
+        private const val MAX_BYTES = 8 * 1024 * 1024
+        private val instances = Collections.newSetFromMap(WeakHashMap<BrowserDataModule, Boolean>())
+
+        /** A shared ReactHost survives other roots. Retire only this owner's waiting picker;
+         * once a document was selected, application-owned I/O keeps its normal lifetime. */
+        internal fun cancelForActivity(activity: Activity) {
+            UiThreadUtil.runOnUiThread {
+                val modules = synchronized(instances) { instances.toList() }
+                modules.forEach { module ->
+                    val operation = module.pending
+                    if (operation?.awaitingResult == true && operation.owner.get() === activity) module.cancelPending()
+                }
+            }
+        }
+    }
 }

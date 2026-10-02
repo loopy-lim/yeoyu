@@ -1,30 +1,89 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
   Pressable,
   FlatList,
-  StyleSheet,
   Text,
   View,
   useWindowDimensions,
   type ListRenderItemInfo,
 } from "react-native";
-import { SidebarPressable } from "../chrome/SidebarInteraction";
-import { ContextPressable } from "../chrome/ContextPressable";
-import { ChromeIcon, type IconName } from "../chrome/ChromeIcon";
-import { menuPosition, type MenuAnchor } from "../menuLayout";
-import { sidebarAddressLabel } from "../sidebarModel";
-import type { SidebarSplit } from "../sidebarPresentation";
-import { useTheme } from "../themeContext";
-import type { Theme } from "../theme";
-import { useI18n } from "../i18nContext";
-import { Favicon } from "./Favicon";
+import { SidebarPressable } from "@/chrome/SidebarInteraction";
+import { ContextPressable } from "@/chrome/ContextPressable";
+import { ChromeIcon, type IconName } from "@/chrome/ChromeIcon";
+import { menuPosition, type MenuAnchor } from "@/menuLayout";
+import { sidebarAddressLabel } from "@/sidebarModel";
+import type { SidebarSplit } from "@/sidebarPresentation";
+import { cva } from "class-variance-authority";
+import { cn } from "@/ui/cn";
+import { useI18n } from "@/i18nContext";
+import { Favicon } from "@/components/Favicon";
 
 const pageTitle = (page: { title: string; url: string }) =>
   page.title || sidebarAddressLabel(page.url) || "New tab";
 const compactCount = (count: number) => (count > 99 ? "99+" : String(count));
-const useCollectionStyles = () => {
-  const theme = useTheme();
-  return useMemo(() => stylesFor(theme), [theme]);
+const splitItemVariants = cva(
+  "flex-row items-center bg-pill rounded-control active:bg-field-on-chrome",
+  {
+    variants: {
+      collapsed: {
+        true: "size-input justify-center",
+        false: "min-h-[52px] px-lg py-md gap-lg my-[3px]",
+      },
+    },
+  }
+);
+const folderItemVariants = cva(
+  "flex-row items-center rounded-[8px] gap-md active:bg-field-on-chrome",
+  {
+    variants: {
+      collapsed: {
+        true: "size-input justify-center",
+        false: "min-h-tile px-lg",
+      },
+      selected: { true: "bg-field-on-chrome", false: "" },
+    },
+  }
+);
+const stackedIconVariants = cva(
+  "absolute size-[24px] rounded-[6px] items-center justify-center border",
+  {
+    variants: {
+      front: {
+        true: "bottom-0 right-0 bg-surface-elevated border-accent-strong",
+        false: "top-0 left-0 bg-sidebar border-hairline-on-chrome",
+      },
+    },
+  }
+);
+const collectionClasses = {
+  stack: "size-address shrink-0",
+  splitTitles: "flex-1 min-w-0 gap-xs",
+  titleLine: "flex-row items-center gap-[5px]",
+  focusDot: "size-sm rounded-[2px] bg-accent-strong",
+  title: "flex-1 text-ink text-input font-normal",
+  secondaryTitle: "text-ink-muted",
+  folderGlyph: "size-[26px] items-center justify-center",
+  folderDot:
+    "absolute left-0 bottom-0 size-[5px] rounded-[3px] bg-accent-strong",
+  count: "text-ink-muted text-body tabular-nums",
+  railCount:
+    "absolute right-[1px] bottom-[1px] bg-sidebar rounded-[4px] px-[3px]",
+  menu: "absolute p-md rounded-tile bg-surface-elevated border border-hairline",
+  menuHeading: "flex-row items-center pl-lg",
+  menuTitle: "flex-1 text-ink-muted text-body-plus font-medium",
+  menuIcon: "size-input items-center justify-center",
+  menuScroll: "grow-0 shrink",
+  choiceRow: "flex-row items-center rounded-[8px]",
+  choiceSelected: "bg-sunken",
+  choice:
+    "flex-1 min-h-[56px] flex-row items-center gap-[9px] px-lg py-[7px] rounded-[8px] active:bg-field-on-chrome",
+  choiceIcon: "w-[24px] items-center",
+  choiceCopy: "flex-1 min-w-0 gap-[3px]",
+  detail: "text-ink-muted text-body",
+  empty: "p-xxl text-ink-muted text-input",
+  menuActions: "border-t-hairline-width border-hairline mt-sm pt-sm",
+  action:
+    "min-h-input flex-row items-center gap-[9px] px-[9px] rounded-[8px] active:bg-field-on-chrome",
 };
 
 export function SplitSidebarItem({
@@ -38,8 +97,6 @@ export function SplitSidebarItem({
   open?: boolean;
   onOpen: (anchor: MenuAnchor) => void;
 }) {
-  const s = useCollectionStyles();
-  const t = useTheme();
   const { tr } = useI18n();
   const front =
     split.pages.find((page) => page.id === split.focusedId) ?? split.pages[0];
@@ -57,14 +114,10 @@ export function SplitSidebarItem({
       onPress={({ nativeEvent }) =>
         onOpen({ x: nativeEvent.pageX, y: nativeEvent.pageY })
       }
-      style={({ pressed }) => [
-        s.split,
-        collapsed ? s.splitRail : s.splitExpanded,
-        pressed && s.pressed,
-      ]}
+      className={cn(splitItemVariants({ collapsed }))}
     >
       <View
-        style={s.stack}
+        className={collectionClasses.stack}
         pointerEvents="none"
         accessibilityElementsHidden
         importantForAccessibility="no-hide-descendants"
@@ -74,7 +127,7 @@ export function SplitSidebarItem({
             key={page.id}
             testID={index ? "split-favicon-front" : "split-favicon-back"}
             accessibilityLabel={pageTitle(page)}
-            style={[s.stackedIcon, index ? s.frontIcon : s.backIcon]}
+            className={cn(stackedIconVariants({ front: !!index }))}
           >
             <Favicon
               url={page.url}
@@ -88,21 +141,22 @@ export function SplitSidebarItem({
       </View>
       {!collapsed && (
         <>
-          <View style={s.splitTitles}>
+          <View className={collectionClasses.splitTitles}>
             {split.pages.map((page) => (
-              <View key={page.id} style={s.titleLine}>
+              <View key={page.id} className={collectionClasses.titleLine}>
                 <View
-                  style={[
-                    s.focusDot,
-                    page.id !== split.focusedId && s.inactiveDot,
-                  ]}
+                  className={cn(
+                    collectionClasses.focusDot,
+                    page.id !== split.focusedId && "bg-transparent"
+                  )}
                 />
                 <Text
                   numberOfLines={1}
-                  style={[
-                    s.title,
-                    page.id !== split.focusedId && s.secondaryTitle,
-                  ]}
+                  className={cn(
+                    collectionClasses.title,
+                    page.id !== split.focusedId &&
+                      collectionClasses.secondaryTitle
+                  )}
                 >
                   {pageTitle(page)}
                 </Text>
@@ -111,8 +165,7 @@ export function SplitSidebarItem({
           </View>
           <ChromeIcon
             name={front.private ? "private" : "chevronDown"}
-            size={13}
-            color={t.inkMuted}
+            className="size-[13px] text-ink-muted"
           />
         </>
       )}
@@ -139,8 +192,6 @@ export function SidebarFolderItem({
   onPress: () => void;
   onContextMenu: (x: number, y: number) => void;
 }) {
-  const s = useCollectionStyles();
-  const t = useTheme();
   return (
     <ContextPressable
       accessibilityRole="button"
@@ -150,37 +201,40 @@ export function SidebarFolderItem({
         containsFocused ? ", contains selected page" : ""
       }`}
       accessibilityState={{ expanded: open, selected: containsFocused }}
-      style={({ pressed }) => [
-        s.folder,
-        collapsed ? s.folderRail : s.folderExpanded,
-        containsFocused && s.folderSelected,
-        pressed && s.pressed,
-      ]}
+      className={cn(
+        folderItemVariants({ collapsed, selected: containsFocused })
+      )}
       onPress={onPress}
       onContextMenu={onContextMenu}
       contextOpen={contextOpen}
     >
-      <View style={s.folderGlyph}>
+      <View className={collectionClasses.folderGlyph}>
         <ChromeIcon
           name={open ? "folderOpen" : "folder"}
-          size={collapsed ? 25 : 22}
-          color={containsFocused ? t.accentStrong : t.icon}
+          className={cn(
+            collapsed ? "size-[25px]" : "size-[22px]",
+            containsFocused ? "text-accent-strong" : "text-icon"
+          )}
         />
-        {containsFocused && <View style={s.folderDot} />}
+        {containsFocused && <View className={collectionClasses.folderDot} />}
       </View>
       {!collapsed && (
-        <Text numberOfLines={1} style={s.title}>
+        <Text numberOfLines={1} className={collectionClasses.title}>
           {title}
         </Text>
       )}
-      <Text style={[s.count, collapsed && s.railCount]}>
+      <Text
+        className={cn(
+          collectionClasses.count,
+          collapsed && collectionClasses.railCount
+        )}
+      >
         {compactCount(count)}
       </Text>
       {!collapsed && (
         <ChromeIcon
           name={open ? "chevronDown" : "chevronRight"}
-          size={11}
-          color={t.inkMuted}
+          className="size-[11px] text-ink-muted"
         />
       )}
     </ContextPressable>
@@ -217,7 +271,6 @@ export function SidebarPageMenu({
   onClose: () => void;
 }) {
   const { tr } = useI18n();
-  const s = useCollectionStyles();
   const window = useWindowDimensions();
   const [height, setHeight] = useState(
     50 + pages.length * 56 + actions.length * 44
@@ -233,19 +286,21 @@ export function SidebarPageMenu({
       accessibilityViewIsModal
       accessibilityLabel={title}
       onLayout={({ nativeEvent }) => setHeight(nativeEvent.layout.height)}
-      style={[s.menu, menuPosition(anchor, window, 300, height)]}
+      className={collectionClasses.menu}
+      // Anchored placement tracks the measured menu and native window bounds.
+      style={menuPosition(anchor, window, 300, height)}
     >
-      <View style={s.menuHeading}>
-        <Text numberOfLines={1} style={s.menuTitle}>
+      <View className={collectionClasses.menuHeading}>
+        <Text numberOfLines={1} className={collectionClasses.menuTitle}>
           {title}
         </Text>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={`Close ${title}`}
           onPress={onClose}
-          style={s.menuIcon}
+          className={collectionClasses.menuIcon}
         >
-          <ChromeIcon name="close" size={16} />
+          <ChromeIcon name="close" className="size-[16px]" />
         </Pressable>
       </View>
       <FlatList
@@ -256,11 +311,15 @@ export function SidebarPageMenu({
         maxToRenderPerBatch={8}
         windowSize={3}
         keyboardShouldPersistTaps="handled"
-        style={s.menuScroll}
-        ListEmptyComponent={<Text style={s.empty}>{tr("collections.noSavedPages")}</Text>}
+        className={collectionClasses.menuScroll}
+        ListEmptyComponent={
+          <Text className={collectionClasses.empty}>
+            {tr("collections.noSavedPages")}
+          </Text>
+        }
         ListFooterComponent={
           actions.length > 0 ? (
-            <View style={s.menuActions}>
+            <View className={collectionClasses.menuActions}>
               {actions.map((action) => (
                 <Pressable
                   key={action.id}
@@ -270,10 +329,12 @@ export function SidebarPageMenu({
                     onClose();
                     action.onPress();
                   }}
-                  style={({ pressed }) => [s.action, pressed && s.pressed]}
+                  className={collectionClasses.action}
                 >
-                  <ChromeIcon name={action.icon} size={16} />
-                  <Text style={s.title}>{action.label}</Text>
+                  <ChromeIcon name={action.icon} className="size-[16px]" />
+                  <Text className={collectionClasses.title}>
+                    {action.label}
+                  </Text>
                 </Pressable>
               ))}
             </View>
@@ -291,10 +352,13 @@ function SidebarPageRow({
   page: SidebarPageChoice;
   onClose: () => void;
 }) {
-  const s = useCollectionStyles();
-  const t = useTheme();
   return (
-    <View style={[s.choiceRow, page.selected && s.choiceSelected]}>
+    <View
+      className={cn(
+        collectionClasses.choiceRow,
+        page.selected && collectionClasses.choiceSelected
+      )}
+    >
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`${
@@ -305,9 +369,9 @@ function SidebarPageRow({
           onClose();
           page.onPress();
         }}
-        style={({ pressed }) => [s.choice, pressed && s.pressed]}
+        className={collectionClasses.choice}
       >
-        <View style={s.choiceIcon}>
+        <View className={collectionClasses.choiceIcon}>
           <Favicon
             url={page.url}
             fallback={pageTitle(page).slice(0, 1).toUpperCase()}
@@ -316,165 +380,33 @@ function SidebarPageRow({
             persist={!page.private}
           />
         </View>
-        <View style={s.choiceCopy}>
-          <Text numberOfLines={1} style={s.title}>
+        <View className={collectionClasses.choiceCopy}>
+          <Text numberOfLines={1} className={collectionClasses.title}>
             {pageTitle(page)}
           </Text>
-          <Text numberOfLines={1} style={s.detail}>
+          <Text numberOfLines={1} className={collectionClasses.detail}>
             {[page.detail, sidebarAddressLabel(page.url)]
               .filter(Boolean)
               .join(" · ") || "New tab"}
           </Text>
         </View>
         {page.selected && (
-          <ChromeIcon name="check" size={14} color={t.accentStrong} />
+          <ChromeIcon name="check" className="size-[14px] text-accent-strong" />
         )}
       </Pressable>
       {page.onMenu && (
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={`Actions for ${pageTitle(page)}`}
-          style={s.menuIcon}
+          className={collectionClasses.menuIcon}
           onPress={({ nativeEvent }) => {
             onClose();
             page.onMenu?.({ x: nativeEvent.pageX, y: nativeEvent.pageY });
           }}
         >
-          <ChromeIcon name="more" size={17} />
+          <ChromeIcon name="more" className="size-[17px]" />
         </Pressable>
       )}
     </View>
   );
 }
-
-const stylesFor = (t: Theme) =>
-  StyleSheet.create({
-    split: {
-      flexDirection: "row",
-      alignItems: "center",
-      backgroundColor: t.pill,
-      borderRadius: 9,
-    },
-    splitRail: { width: 44, height: 44, justifyContent: "center" },
-    splitExpanded: {
-      minHeight: 52,
-      paddingHorizontal: 8,
-      paddingVertical: 6,
-      gap: 8,
-      marginVertical: 3,
-    },
-    stack: { width: 34, height: 34, flexShrink: 0 },
-    stackedIcon: {
-      position: "absolute",
-      width: 24,
-      height: 24,
-      borderRadius: 6,
-      alignItems: "center",
-      justifyContent: "center",
-      borderWidth: 1,
-    },
-    backIcon: {
-      top: 0,
-      left: 0,
-      backgroundColor: t.sidebar,
-      borderColor: t.hairlineOnChrome,
-    },
-    frontIcon: {
-      bottom: 0,
-      right: 0,
-      backgroundColor: t.surfaceElevated,
-      borderColor: t.accentStrong,
-    },
-    splitTitles: { flex: 1, minWidth: 0, gap: 2 },
-    titleLine: { flexDirection: "row", alignItems: "center", gap: 5 },
-    focusDot: {
-      width: 4,
-      height: 4,
-      borderRadius: 2,
-      backgroundColor: t.accentStrong,
-    },
-    inactiveDot: { backgroundColor: "transparent" },
-    title: { flex: 1, color: t.ink, fontSize: 13, fontWeight: "400" },
-    secondaryTitle: { color: t.inkMuted },
-    pressed: { backgroundColor: t.fieldOnChrome },
-    folder: {
-      flexDirection: "row",
-      alignItems: "center",
-      borderRadius: 8,
-      gap: 6,
-    },
-    folderExpanded: { minHeight: 38, paddingHorizontal: 8 },
-    folderRail: { width: 44, height: 44, justifyContent: "center" },
-    folderSelected: { backgroundColor: t.fieldOnChrome },
-    folderGlyph: {
-      width: 26,
-      height: 26,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    folderDot: {
-      position: "absolute",
-      left: 0,
-      bottom: 0,
-      width: 5,
-      height: 5,
-      borderRadius: 3,
-      backgroundColor: t.accentStrong,
-    },
-    count: { color: t.inkMuted, fontSize: 11, fontVariant: ["tabular-nums"] },
-    railCount: {
-      position: "absolute",
-      right: 1,
-      bottom: 1,
-      backgroundColor: t.sidebar,
-      borderRadius: 4,
-      paddingHorizontal: 3,
-    },
-    menu: {
-      position: "absolute",
-      padding: 6,
-      borderRadius: 12,
-      backgroundColor: t.surfaceElevated,
-      borderWidth: 1,
-      borderColor: t.hairline,
-    },
-    menuHeading: { flexDirection: "row", alignItems: "center", paddingLeft: 8 },
-    menuTitle: { flex: 1, color: t.inkMuted, fontSize: 12, fontWeight: "500" },
-    menuIcon: {
-      width: 44,
-      height: 44,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    menuScroll: { flexGrow: 0, flexShrink: 1 },
-    choiceRow: { flexDirection: "row", alignItems: "center", borderRadius: 8 },
-    choiceSelected: { backgroundColor: t.sunken },
-    choice: {
-      flex: 1,
-      minHeight: 56,
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 9,
-      paddingHorizontal: 8,
-      paddingVertical: 7,
-      borderRadius: 8,
-    },
-    choiceIcon: { width: 24, alignItems: "center" },
-    choiceCopy: { flex: 1, minWidth: 0, gap: 3 },
-    detail: { color: t.inkMuted, fontSize: 11 },
-    empty: { padding: 12, color: t.inkMuted, fontSize: 13 },
-    menuActions: {
-      borderTopWidth: StyleSheet.hairlineWidth,
-      borderTopColor: t.hairline,
-      marginTop: 4,
-      paddingTop: 4,
-    },
-    action: {
-      minHeight: 44,
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 9,
-      paddingHorizontal: 9,
-      borderRadius: 8,
-    },
-  });
