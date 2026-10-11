@@ -13,7 +13,7 @@ import java.security.MessageDigest
 import org.json.JSONArray
 import org.json.JSONObject
 
-internal const val SESSION_ENGINE_VERSION = "155.0.20260903215306"
+internal const val SESSION_ENGINE_VERSION = "157.0.20261005135250"
 internal const val MAX_SESSION_STATE_BYTES = 2 * 1024 * 1024
 
 internal data class StoredSessionState(val id: String, val url: String, val state: String, val savedAt: Long) {
