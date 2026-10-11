@@ -29,8 +29,8 @@ jobs:
           java-version: '21'
       - name: Install pinned toolchain and Android packages
         run: |
-          rustup toolchain install 1.98.0 --profile minimal --component rustfmt --component clippy
-          rustup default 1.98.0
+          rustup toolchain install 1.99.0 --profile minimal --component rustfmt --component clippy
+          rustup default 1.99.0
           rustup target add aarch64-linux-android
           cargo install cargo-ndk --version 4.1.2 --locked
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses < <(yes)
