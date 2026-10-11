@@ -2,7 +2,7 @@
   "name": "yeoyu",
   "version": "0.0.1",
   "private": true,
-  "packageManager": "bun@1.4.1",
+  "packageManager": "bun@1.4.3",
   "scripts": {
     "android": "react-native run-android",
     "ios": "react-native run-ios",
@@ -17,34 +17,34 @@
     "@rustra/types": "file:.deps/rustra-main/packages/types",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
-    "react": "19.2.3",
+    "react": "19.3.0",
     "react-native": "0.87.1",
-    "react-native-safe-area-context": "^5.5.2",
+    "react-native-safe-area-context": "^5.10.1",
     "react-native-svg": "15.15.5",
     "react-native-url-polyfill": "4.0.0",
     "tailwind-merge": "3.7.0",
     "tailwindcss": "4.3.3",
-    "uniwind": "1.12.1"
+    "uniwind": "1.12.2"
   },
   "devDependencies": {
-    "@babel/core": "^7.25.2",
-    "@babel/preset-env": "^7.25.3",
-    "@babel/runtime": "^7.25.0",
+    "@babel/core": "^7.29.0",
+    "@babel/preset-env": "^7.29.0",
+    "@babel/runtime": "^7.29.0",
     "@react-native-community/cli": "20.2.0",
     "@react-native-community/cli-platform-android": "20.2.0",
     "@react-native-community/cli-platform-ios": "20.2.0",
     "@react-native/babel-preset": "0.87.1",
     "@react-native/metro-config": "0.87.1",
     "@react-native/typescript-config": "0.87.1",
-    "@types/bun": "^1.2.0",
-    "@types/react": "^19.2.0",
-    "@types/react-test-renderer": "^19.1.0",
-    "prettier": "2.8.8",
-    "react-test-renderer": "19.2.3",
-    "typescript": "^6.0.3"
+    "@types/bun": "^1.4.2",
+    "@types/react": "^19.3.0",
+    "@types/react-test-renderer": "^19.3.0",
+    "prettier": "3.9.10",
+    "react-test-renderer": "19.3.0",
+    "typescript": "7.0.2"
   },
   "engines": {
-    "node": ">= 22.11.0"
+    "node": ">= 26.0.0"
   },
   "overrides": {
     "@rustra/types": "file:.deps/rustra-main/packages/types"
