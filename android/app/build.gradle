@@ -140,7 +140,7 @@ tasks.configureEach { task ->
 
 dependencies {
     implementation project(":rustra-jsi")
-    implementation("org.mozilla.geckoview:geckoview:155.0.20260903215306")
+    implementation("org.mozilla.geckoview:geckoview:157.0.20261005135250")
     // MediaStyle notification + MediaSessionCompat for background media controls.
     implementation("androidx.media:media:1.7.0")
     testImplementation("junit:junit:4.13.2")
