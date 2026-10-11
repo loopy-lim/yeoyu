@@ -8,8 +8,8 @@
 
 필요한 도구:
 
-- Node.js 22, Bun 1.4.1
-- `rustfmt`, `clippy`, `aarch64-linux-android`가 포함된 Rust 1.98
+- Node.js 26, Bun 1.4.3
+- `rustfmt`, `clippy`, `aarch64-linux-android`가 포함된 Rust 1.99.0
 - `cargo-ndk` 4.1.2
 - JDK 17 이상
 - Android SDK 37.1, Build Tools 37.0.0, NDK 27.1.12297006

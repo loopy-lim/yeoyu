@@ -8,8 +8,8 @@ The repository pins Node, Bun, Rust, GeckoView, Android SDK, Build Tools, and ND
 
 Required tools:
 
-- Node.js 22 and Bun 1.4.1
-- Rust 1.98 with `rustfmt`, `clippy`, and `aarch64-linux-android`
+- Node.js 26 and Bun 1.4.3
+- Rust 1.99.0 with `rustfmt`, `clippy`, and `aarch64-linux-android`
 - `cargo-ndk` 4.1.2
 - JDK 17 or newer
 - Android SDK 37.1, Build Tools 37.0.0, and NDK 27.1.12297006

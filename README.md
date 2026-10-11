@@ -49,8 +49,8 @@ The browser engine and the durable browser model are intentionally separate. And
 ## Requirements
 
 - Android 8 / API 26 or newer; the UI currently targets landscape tablets
-- Node.js 22 (`.node-version`) and Bun 1.4.1 (`.bun-version`)
-- Rust 1.98 (`rust-toolchain.toml`) with the `aarch64-linux-android` target
+- Node.js 26 (`.node-version`) and Bun 1.4.3 (`.bun-version`)
+- Rust 1.99.0 (`rust-toolchain.toml`) with the `aarch64-linux-android` target
 - JDK 17 or newer, Android SDK 37.1, Build Tools 37.0.0, and NDK 27.1.12297006
 - `cargo-ndk` 4.1.2 for Android builds
 

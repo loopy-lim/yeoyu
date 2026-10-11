@@ -49,8 +49,8 @@ BrowserController와 typed port
 ## 요구 사항
 
 - Android 8 / API 26 이상. 현재 UI 대상은 가로 화면 태블릿입니다.
-- Node.js 22 (`.node-version`), Bun 1.4.1 (`.bun-version`)
-- Rust 1.98 (`rust-toolchain.toml`), `aarch64-linux-android` target
+- Node.js 26 (`.node-version`), Bun 1.4.3 (`.bun-version`)
+- Rust 1.99.0 (`rust-toolchain.toml`), `aarch64-linux-android` target
 - JDK 17 이상, Android SDK 37.1, Build Tools 37.0.0, NDK 27.1.12297006
 - Android 빌드용 `cargo-ndk` 4.1.2
 
