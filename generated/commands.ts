@@ -6,24 +6,35 @@
 // DO NOT EDIT — changes will be overwritten and fail codegen --check.
 // ────────────────────────────────────────────────────────────
 
-import type { BookmarkCreateInput, BookmarkFolderCreateInput, BookmarkFolderIdInput, BookmarkFolderRenameInput, BookmarkIdInput, BookmarkMoveInput, BookmarkOpenInput, BookmarkSetFolderInput, BookmarkUpdateInput, BrowserSnapshotInput, KeymapSetInput, Snapshot, SnapshotRestoreInput, String, TabCreateInput, TabFavoriteInput, TabIdInput, TabMoveInput, TabNavigatedInput, TabOpenExternalInput, TabPinnedInput, TabWorkspaceInput, WorkArchiveExportInput, WorkArchiveImportInput, WorkArchivePrepareInput, WorkArchivePreview, WorkArchivePreviewInput, WorkspaceCreateInput, WorkspaceIdInput } from './types.js';
-import { createGeneratedFields2, invokeGenerated, invokeGeneratedFields1, invokeGeneratedFields3 } from '@rustra/types';
-import type { InvokeOptions } from '@rustra/types';
+import type { BookmarkCreateInput, BookmarkFolderCreateInput, BookmarkFolderIdInput, BookmarkFolderRenameInput, BookmarkIdInput, BookmarkMoveInput, BookmarkOpenInput, BookmarkSetFolderInput, BookmarkUpdateInput, BrowserSnapshotInput, KeymapSetInput, Snapshot, SnapshotRestoreInput, TabCreateInput, TabFavoriteInput, TabIdInput, TabMoveInput, TabNavigatedInput, TabOpenExternalInput, TabPinnedInput, TabWorkspaceInput, WorkArchiveExportInput, WorkArchiveImportInput, WorkArchivePrepareInput, WorkArchivePreview, WorkArchivePreviewInput, WorkspaceCreateInput, WorkspaceIdInput } from './types.js';
+import { createGeneratedFields1, createGeneratedFields2, invokeGenerated, invokeGeneratedFields3 } from '@rustra/types';
+import type { InvokeOptions as CoreInvokeOptions } from '@rustra/types';
+
+/**
+ * 이 패키지 생성 명령의 호출 옵션 — 모든 생성 함수의 마지막 파라미터.
+ *
+ * ⚠️ **얕은 취소**: `signal` 이 실행 중에 abort 되면 **JS 프라미스만 거부되고**
+ * (shallow cancellation) Rust 명령은 끝까지 실행되거나 이미 완료됐을 수 있습니다.
+ * 취소/타임아웃은 "명령이 실행되지 않았음"을 보장하지 않습니다.
+ *
+ * ⚠️ **`retryable: true` ≠ 재실행 안전**: `transport.timeout`·`cancelled` 등
+ * retryable 오류는 재시도 시 실패 유형이 사라질 수 있음을 뜻할 뿐, 명령을 다시
+ * 실행해도 안전하다는 뜻이 아닙니다. 비멱등 명령의 재시도는 상태를 재조회해 이전
+ * 시도가 반영되지 않았음을 확인한 뒤에만 하세요.
+ *
+ * 전체 의미론은 docs/compatibility-matrix.md "Signal semantics in detail" 및
+ * 원본 타입(`InvokeOptions`(@rustra/types)) 문서를 참고하세요.
+ */
+export type InvokeOptions = CoreInvokeOptions;
 
 export function bookmarkCreate(input: BookmarkCreateInput, options?: InvokeOptions): Promise<Snapshot> {
   return invokeGeneratedFields3<Snapshot>(20, 'bookmarkCreate', input, input["title"], input["url"], input["folderId"], options);
 }
 bookmarkCreate.commandId = 'bookmarkCreate';
 
-export function bookmarkFolderCreate(input: BookmarkFolderCreateInput, options?: InvokeOptions): Promise<Snapshot> {
-  return invokeGeneratedFields1<Snapshot>(24, 'bookmarkFolderCreate', input, input["title"], options);
-}
-bookmarkFolderCreate.commandId = 'bookmarkFolderCreate';
+export const bookmarkFolderCreate = createGeneratedFields1<BookmarkFolderCreateInput, Snapshot>(24, 'bookmarkFolderCreate', "title", 'bookmarkFolderCreate');
 
-export function bookmarkFolderRemove(input: BookmarkFolderIdInput, options?: InvokeOptions): Promise<Snapshot> {
-  return invokeGeneratedFields1<Snapshot>(26, 'bookmarkFolderRemove', input, input["folderId"], options);
-}
-bookmarkFolderRemove.commandId = 'bookmarkFolderRemove';
+export const bookmarkFolderRemove = createGeneratedFields1<BookmarkFolderIdInput, Snapshot>(26, 'bookmarkFolderRemove', "folderId", 'bookmarkFolderRemove');
 
 export const bookmarkFolderRename = createGeneratedFields2<BookmarkFolderRenameInput, Snapshot>(25, 'bookmarkFolderRename', "folderId", "title", 'bookmarkFolderRename');
 
@@ -34,10 +45,7 @@ export function bookmarkOpen(input: BookmarkOpenInput, options?: InvokeOptions):
 }
 bookmarkOpen.commandId = 'bookmarkOpen';
 
-export function bookmarkRemove(input: BookmarkIdInput, options?: InvokeOptions): Promise<Snapshot> {
-  return invokeGeneratedFields1<Snapshot>(22, 'bookmarkRemove', input, input["bookmarkId"], options);
-}
-bookmarkRemove.commandId = 'bookmarkRemove';
+export const bookmarkRemove = createGeneratedFields1<BookmarkIdInput, Snapshot>(22, 'bookmarkRemove', "bookmarkId", 'bookmarkRemove');
 
 export const bookmarkSetFolder = createGeneratedFields2<BookmarkSetFolderInput, Snapshot>(27, 'bookmarkSetFolder', "bookmarkId", "folderId", 'bookmarkSetFolder');
 
@@ -61,20 +69,11 @@ export function keymapSet(input: KeymapSetInput, options?: InvokeOptions): Promi
 }
 keymapSet.commandId = 'keymapSet';
 
-export function snapshotRestore(input: SnapshotRestoreInput, options?: InvokeOptions): Promise<Snapshot> {
-  return invokeGeneratedFields1<Snapshot>(17, 'snapshotRestore', input, input["json"], options);
-}
-snapshotRestore.commandId = 'snapshotRestore';
+export const snapshotRestore = createGeneratedFields1<SnapshotRestoreInput, Snapshot>(17, 'snapshotRestore', "json", 'snapshotRestore');
 
-export function tabActivate(input: TabIdInput, options?: InvokeOptions): Promise<Snapshot> {
-  return invokeGeneratedFields1<Snapshot>(9, 'tabActivate', input, input["tabId"], options);
-}
-tabActivate.commandId = 'tabActivate';
+export const tabActivate = createGeneratedFields1<TabIdInput, Snapshot>(9, 'tabActivate', "tabId", 'tabActivate');
 
-export function tabClose(input: TabIdInput, options?: InvokeOptions): Promise<Snapshot> {
-  return invokeGeneratedFields1<Snapshot>(10, 'tabClose', input, input["tabId"], options);
-}
-tabClose.commandId = 'tabClose';
+export const tabClose = createGeneratedFields1<TabIdInput, Snapshot>(10, 'tabClose', "tabId", 'tabClose');
 
 export function tabCreate(input: TabCreateInput, options?: InvokeOptions): Promise<Snapshot> {
   return invokeGeneratedFields3<Snapshot>(7, 'tabCreate', input, input["workspaceId"], input["url"], input["private"], options);
@@ -90,10 +89,7 @@ tabNavigated.commandId = 'tabNavigated';
 
 export const tabOpenExternal = createGeneratedFields2<TabOpenExternalInput, Snapshot>(8, 'tabOpenExternal', "requestId", "url", 'tabOpenExternal');
 
-export function tabReset(input: TabIdInput, options?: InvokeOptions): Promise<Snapshot> {
-  return invokeGeneratedFields1<Snapshot>(28, 'tabReset', input, input["tabId"], options);
-}
-tabReset.commandId = 'tabReset';
+export const tabReset = createGeneratedFields1<TabIdInput, Snapshot>(28, 'tabReset', "tabId", 'tabReset');
 
 export const tabSetFavorite = createGeneratedFields2<TabFavoriteInput, Snapshot>(12, 'tabSetFavorite', "tabId", "favorite", 'tabSetFavorite');
 
@@ -101,8 +97,8 @@ export const tabSetPinned = createGeneratedFields2<TabPinnedInput, Snapshot>(13,
 
 export const tabSetWorkspace = createGeneratedFields2<TabWorkspaceInput, Snapshot>(15, 'tabSetWorkspace', "tabId", "workspaceId", 'tabSetWorkspace');
 
-export function workArchiveExport(input: WorkArchiveExportInput, options?: InvokeOptions): Promise<String> {
-  return invokeGenerated<String>(2, 'workArchiveExport', input, options);
+export function workArchiveExport(input: WorkArchiveExportInput, options?: InvokeOptions): Promise<string> {
+  return invokeGenerated<string>(2, 'workArchiveExport', input, options);
 }
 workArchiveExport.commandId = 'workArchiveExport';
 
@@ -116,17 +112,8 @@ export function workArchivePrepare(input: WorkArchivePrepareInput, options?: Inv
 }
 workArchivePrepare.commandId = 'workArchivePrepare';
 
-export function workArchivePreview(input: WorkArchivePreviewInput, options?: InvokeOptions): Promise<WorkArchivePreview> {
-  return invokeGeneratedFields1<WorkArchivePreview>(3, 'workArchivePreview', input, input["json"], options);
-}
-workArchivePreview.commandId = 'workArchivePreview';
+export const workArchivePreview = createGeneratedFields1<WorkArchivePreviewInput, WorkArchivePreview>(3, 'workArchivePreview', "json", 'workArchivePreview');
 
-export function workspaceActivate(input: WorkspaceIdInput, options?: InvokeOptions): Promise<Snapshot> {
-  return invokeGeneratedFields1<Snapshot>(16, 'workspaceActivate', input, input["workspaceId"], options);
-}
-workspaceActivate.commandId = 'workspaceActivate';
+export const workspaceActivate = createGeneratedFields1<WorkspaceIdInput, Snapshot>(16, 'workspaceActivate', "workspaceId", 'workspaceActivate');
 
-export function workspaceCreate(input: WorkspaceCreateInput, options?: InvokeOptions): Promise<Snapshot> {
-  return invokeGeneratedFields1<Snapshot>(6, 'workspaceCreate', input, input["name"], options);
-}
-workspaceCreate.commandId = 'workspaceCreate';
+export const workspaceCreate = createGeneratedFields1<WorkspaceCreateInput, Snapshot>(6, 'workspaceCreate', "name", 'workspaceCreate');

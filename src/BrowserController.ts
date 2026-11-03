@@ -38,7 +38,7 @@ type ArchiveCommands = Pick<
   | "workArchiveImport"
 >;
 export type BrowserCommands = {
-  [Name in keyof GeneratedCommands]: (
+  -readonly [Name in keyof GeneratedCommands]: (
     ...args: Parameters<GeneratedCommands[Name]>
   ) => ReturnType<GeneratedCommands[Name]>;
 } & {

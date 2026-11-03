@@ -1,5 +1,5 @@
 // ── rustra generated ────────────────────────────────────────
-// File:   rkyv-codecs.ts
+// File:   frame-codecs.ts
 // Source: schema.json (single source of truth for this file)
 // Regen:  rustra codegen --config rustra.json
 // Stage:  schema → ts codec renderer
@@ -160,12 +160,14 @@ function _pcDecodeF64(buf: Uint8Array, offset: number): { value: number; bytesRe
 function _pcEncodeF32(n: number): Uint8Array { const buf = new ArrayBuffer(4); new DataView(buf).setFloat32(0, n, true); return new Uint8Array(buf); }
 function _pcDecodeF32(buf: Uint8Array, offset: number): { value: number; bytesRead: number } { return { value: new DataView(buf.buffer, buf.byteOffset + offset, 4).getFloat32(0, true), bytesRead: 4 }; }
 
-import { createComplexCodec } from '@rustra/types';
-import type { RkyvV2Codec, RustraError, ComplexSchema } from '@rustra/types';
+import { createComplexCodec, createSchemaPostcardCodec } from '@rustra/types';
+import type { FrameCodec, RustraError, ComplexSchema } from '@rustra/types';
 import type { Bookmark, BookmarkCreateInput, BookmarkFolder, BookmarkFolderCreateInput, BookmarkFolderIdInput, BookmarkFolderRenameInput, BookmarkIdInput, BookmarkMoveInput, BookmarkOpenInput, BookmarkSetFolderInput, BookmarkUpdateInput, BrowserSnapshotInput, KeyBinding, KeymapSetInput, Snapshot, SnapshotRestoreInput, String, Tab, TabCreateInput, TabFavoriteInput, TabIdInput, TabMoveInput, TabNavigatedInput, TabOpenExternalInput, TabPinnedInput, TabWorkspaceInput, WorkArchiveExportInput, WorkArchiveImportInput, WorkArchivePrepareInput, WorkArchivePreview, WorkArchivePreviewInput, Workspace, WorkspaceCreateInput, WorkspaceIdInput } from './types.js';
 
-export const bookmarkCreateCodec: RkyvV2Codec<BookmarkCreateInput, Snapshot> = {
+export const bookmarkCreateCodec: FrameCodec<BookmarkCreateInput, Snapshot> = {
   commandId: 20,
+  execution: "sync",
+  syncFields: ["title","url","folderId"],
 
   encode(args: BookmarkCreateInput): ArrayBuffer {
     // [cmd_id: u16 LE][postcard(BookmarkCreateInput)]
@@ -468,8 +470,10 @@ export const bookmarkCreateCodec: RkyvV2Codec<BookmarkCreateInput, Snapshot> = {
   },
 };
 
-export const bookmarkFolderCreateCodec: RkyvV2Codec<BookmarkFolderCreateInput, Snapshot> = {
+export const bookmarkFolderCreateCodec: FrameCodec<BookmarkFolderCreateInput, Snapshot> = {
   commandId: 24,
+  execution: "sync",
+  syncFields: ["title"],
 
   encode(args: BookmarkFolderCreateInput): ArrayBuffer {
     // [cmd_id: u16 LE][postcard(BookmarkFolderCreateInput)]
@@ -768,8 +772,10 @@ export const bookmarkFolderCreateCodec: RkyvV2Codec<BookmarkFolderCreateInput, S
   },
 };
 
-export const bookmarkFolderRemoveCodec: RkyvV2Codec<BookmarkFolderIdInput, Snapshot> = {
+export const bookmarkFolderRemoveCodec: FrameCodec<BookmarkFolderIdInput, Snapshot> = {
   commandId: 26,
+  execution: "sync",
+  syncFields: ["folderId"],
 
   encode(args: BookmarkFolderIdInput): ArrayBuffer {
     // [cmd_id: u16 LE][postcard(BookmarkFolderIdInput)]
@@ -1068,8 +1074,10 @@ export const bookmarkFolderRemoveCodec: RkyvV2Codec<BookmarkFolderIdInput, Snaps
   },
 };
 
-export const bookmarkFolderRenameCodec: RkyvV2Codec<BookmarkFolderRenameInput, Snapshot> = {
+export const bookmarkFolderRenameCodec: FrameCodec<BookmarkFolderRenameInput, Snapshot> = {
   commandId: 25,
+  execution: "sync",
+  syncFields: ["folderId","title"],
 
   encode(args: BookmarkFolderRenameInput): ArrayBuffer {
     // [cmd_id: u16 LE][postcard(BookmarkFolderRenameInput)]
@@ -1370,8 +1378,10 @@ export const bookmarkFolderRenameCodec: RkyvV2Codec<BookmarkFolderRenameInput, S
   },
 };
 
-export const bookmarkMoveCodec: RkyvV2Codec<BookmarkMoveInput, Snapshot> = {
+export const bookmarkMoveCodec: FrameCodec<BookmarkMoveInput, Snapshot> = {
   commandId: 23,
+  execution: "sync",
+  syncFields: ["bookmarkId","index"],
 
   encode(args: BookmarkMoveInput): ArrayBuffer {
     // [cmd_id: u16 LE][postcard(BookmarkMoveInput)]
@@ -1672,8 +1682,10 @@ export const bookmarkMoveCodec: RkyvV2Codec<BookmarkMoveInput, Snapshot> = {
   },
 };
 
-export const bookmarkOpenCodec: RkyvV2Codec<BookmarkOpenInput, Snapshot> = {
+export const bookmarkOpenCodec: FrameCodec<BookmarkOpenInput, Snapshot> = {
   commandId: 29,
+  execution: "sync",
+  syncFields: ["bookmarkId","reuseTabId","private"],
 
   encode(args: BookmarkOpenInput): ArrayBuffer {
     // [cmd_id: u16 LE][postcard(BookmarkOpenInput)]
@@ -1976,8 +1988,10 @@ export const bookmarkOpenCodec: RkyvV2Codec<BookmarkOpenInput, Snapshot> = {
   },
 };
 
-export const bookmarkRemoveCodec: RkyvV2Codec<BookmarkIdInput, Snapshot> = {
+export const bookmarkRemoveCodec: FrameCodec<BookmarkIdInput, Snapshot> = {
   commandId: 22,
+  execution: "sync",
+  syncFields: ["bookmarkId"],
 
   encode(args: BookmarkIdInput): ArrayBuffer {
     // [cmd_id: u16 LE][postcard(BookmarkIdInput)]
@@ -2276,8 +2290,10 @@ export const bookmarkRemoveCodec: RkyvV2Codec<BookmarkIdInput, Snapshot> = {
   },
 };
 
-export const bookmarkSetFolderCodec: RkyvV2Codec<BookmarkSetFolderInput, Snapshot> = {
+export const bookmarkSetFolderCodec: FrameCodec<BookmarkSetFolderInput, Snapshot> = {
   commandId: 27,
+  execution: "sync",
+  syncFields: ["bookmarkId","folderId"],
 
   encode(args: BookmarkSetFolderInput): ArrayBuffer {
     // [cmd_id: u16 LE][postcard(BookmarkSetFolderInput)]
@@ -2578,8 +2594,10 @@ export const bookmarkSetFolderCodec: RkyvV2Codec<BookmarkSetFolderInput, Snapsho
   },
 };
 
-export const bookmarkUpdateCodec: RkyvV2Codec<BookmarkUpdateInput, Snapshot> = {
+export const bookmarkUpdateCodec: FrameCodec<BookmarkUpdateInput, Snapshot> = {
   commandId: 21,
+  execution: "sync",
+  syncFields: ["bookmarkId","title","url"],
 
   encode(args: BookmarkUpdateInput): ArrayBuffer {
     // [cmd_id: u16 LE][postcard(BookmarkUpdateInput)]
@@ -2882,8 +2900,9 @@ export const bookmarkUpdateCodec: RkyvV2Codec<BookmarkUpdateInput, Snapshot> = {
   },
 };
 
-export const browserSnapshotCodec: RkyvV2Codec<BrowserSnapshotInput, Snapshot> = {
+export const browserSnapshotCodec: FrameCodec<BrowserSnapshotInput, Snapshot> = {
   commandId: 1,
+  execution: "sync",
 
   encode(args: BrowserSnapshotInput): ArrayBuffer {
     // [cmd_id: u16 LE][postcard(BrowserSnapshotInput)]
@@ -3180,8 +3199,9 @@ export const browserSnapshotCodec: RkyvV2Codec<BrowserSnapshotInput, Snapshot> =
   },
 };
 
-export const keymapDefaultsCodec: RkyvV2Codec<BrowserSnapshotInput, KeymapSetInput> = {
+export const keymapDefaultsCodec: FrameCodec<BrowserSnapshotInput, KeymapSetInput> = {
   commandId: 19,
+  execution: "sync",
 
   encode(args: BrowserSnapshotInput): ArrayBuffer {
     // [cmd_id: u16 LE][postcard(BrowserSnapshotInput)]
@@ -3276,8 +3296,9 @@ export const keymapDefaultsCodec: RkyvV2Codec<BrowserSnapshotInput, KeymapSetInp
   },
 };
 
-export const keymapSetCodec: RkyvV2Codec<KeymapSetInput, Snapshot> = {
+export const keymapSetCodec: FrameCodec<KeymapSetInput, Snapshot> = {
   commandId: 18,
+  execution: "sync",
 
   encode(args: KeymapSetInput): ArrayBuffer {
     // [cmd_id: u16 LE][postcard(KeymapSetInput)]
@@ -3572,8 +3593,10 @@ export const keymapSetCodec: RkyvV2Codec<KeymapSetInput, Snapshot> = {
   },
 };
 
-export const snapshotRestoreCodec: RkyvV2Codec<SnapshotRestoreInput, Snapshot> = {
+export const snapshotRestoreCodec: FrameCodec<SnapshotRestoreInput, Snapshot> = {
   commandId: 17,
+  execution: "sync",
+  syncFields: ["json"],
 
   encode(args: SnapshotRestoreInput): ArrayBuffer {
     // [cmd_id: u16 LE][postcard(SnapshotRestoreInput)]
@@ -3872,8 +3895,10 @@ export const snapshotRestoreCodec: RkyvV2Codec<SnapshotRestoreInput, Snapshot> =
   },
 };
 
-export const tabActivateCodec: RkyvV2Codec<TabIdInput, Snapshot> = {
+export const tabActivateCodec: FrameCodec<TabIdInput, Snapshot> = {
   commandId: 9,
+  execution: "sync",
+  syncFields: ["tabId"],
 
   encode(args: TabIdInput): ArrayBuffer {
     // [cmd_id: u16 LE][postcard(TabIdInput)]
@@ -4172,8 +4197,10 @@ export const tabActivateCodec: RkyvV2Codec<TabIdInput, Snapshot> = {
   },
 };
 
-export const tabCloseCodec: RkyvV2Codec<TabIdInput, Snapshot> = {
+export const tabCloseCodec: FrameCodec<TabIdInput, Snapshot> = {
   commandId: 10,
+  execution: "sync",
+  syncFields: ["tabId"],
 
   encode(args: TabIdInput): ArrayBuffer {
     // [cmd_id: u16 LE][postcard(TabIdInput)]
@@ -4472,8 +4499,10 @@ export const tabCloseCodec: RkyvV2Codec<TabIdInput, Snapshot> = {
   },
 };
 
-export const tabCreateCodec: RkyvV2Codec<TabCreateInput, Snapshot> = {
+export const tabCreateCodec: FrameCodec<TabCreateInput, Snapshot> = {
   commandId: 7,
+  execution: "sync",
+  syncFields: ["workspaceId","url","private"],
 
   encode(args: TabCreateInput): ArrayBuffer {
     // [cmd_id: u16 LE][postcard(TabCreateInput)]
@@ -4776,8 +4805,10 @@ export const tabCreateCodec: RkyvV2Codec<TabCreateInput, Snapshot> = {
   },
 };
 
-export const tabMoveCodec: RkyvV2Codec<TabMoveInput, Snapshot> = {
+export const tabMoveCodec: FrameCodec<TabMoveInput, Snapshot> = {
   commandId: 14,
+  execution: "sync",
+  syncFields: ["tabId","index"],
 
   encode(args: TabMoveInput): ArrayBuffer {
     // [cmd_id: u16 LE][postcard(TabMoveInput)]
@@ -5078,8 +5109,10 @@ export const tabMoveCodec: RkyvV2Codec<TabMoveInput, Snapshot> = {
   },
 };
 
-export const tabNavigatedCodec: RkyvV2Codec<TabNavigatedInput, Snapshot> = {
+export const tabNavigatedCodec: FrameCodec<TabNavigatedInput, Snapshot> = {
   commandId: 11,
+  execution: "sync",
+  syncFields: ["tabId","url","title"],
 
   encode(args: TabNavigatedInput): ArrayBuffer {
     // [cmd_id: u16 LE][postcard(TabNavigatedInput)]
@@ -5382,8 +5415,10 @@ export const tabNavigatedCodec: RkyvV2Codec<TabNavigatedInput, Snapshot> = {
   },
 };
 
-export const tabOpenExternalCodec: RkyvV2Codec<TabOpenExternalInput, Snapshot> = {
+export const tabOpenExternalCodec: FrameCodec<TabOpenExternalInput, Snapshot> = {
   commandId: 8,
+  execution: "sync",
+  syncFields: ["requestId","url"],
 
   encode(args: TabOpenExternalInput): ArrayBuffer {
     // [cmd_id: u16 LE][postcard(TabOpenExternalInput)]
@@ -5684,8 +5719,10 @@ export const tabOpenExternalCodec: RkyvV2Codec<TabOpenExternalInput, Snapshot> =
   },
 };
 
-export const tabResetCodec: RkyvV2Codec<TabIdInput, Snapshot> = {
+export const tabResetCodec: FrameCodec<TabIdInput, Snapshot> = {
   commandId: 28,
+  execution: "sync",
+  syncFields: ["tabId"],
 
   encode(args: TabIdInput): ArrayBuffer {
     // [cmd_id: u16 LE][postcard(TabIdInput)]
@@ -5984,8 +6021,10 @@ export const tabResetCodec: RkyvV2Codec<TabIdInput, Snapshot> = {
   },
 };
 
-export const tabSetFavoriteCodec: RkyvV2Codec<TabFavoriteInput, Snapshot> = {
+export const tabSetFavoriteCodec: FrameCodec<TabFavoriteInput, Snapshot> = {
   commandId: 12,
+  execution: "sync",
+  syncFields: ["tabId","favorite"],
 
   encode(args: TabFavoriteInput): ArrayBuffer {
     // [cmd_id: u16 LE][postcard(TabFavoriteInput)]
@@ -6286,8 +6325,10 @@ export const tabSetFavoriteCodec: RkyvV2Codec<TabFavoriteInput, Snapshot> = {
   },
 };
 
-export const tabSetPinnedCodec: RkyvV2Codec<TabPinnedInput, Snapshot> = {
+export const tabSetPinnedCodec: FrameCodec<TabPinnedInput, Snapshot> = {
   commandId: 13,
+  execution: "sync",
+  syncFields: ["tabId","pinned"],
 
   encode(args: TabPinnedInput): ArrayBuffer {
     // [cmd_id: u16 LE][postcard(TabPinnedInput)]
@@ -6588,8 +6629,10 @@ export const tabSetPinnedCodec: RkyvV2Codec<TabPinnedInput, Snapshot> = {
   },
 };
 
-export const tabSetWorkspaceCodec: RkyvV2Codec<TabWorkspaceInput, Snapshot> = {
+export const tabSetWorkspaceCodec: FrameCodec<TabWorkspaceInput, Snapshot> = {
   commandId: 15,
+  execution: "sync",
+  syncFields: ["tabId","workspaceId"],
 
   encode(args: TabWorkspaceInput): ArrayBuffer {
     // [cmd_id: u16 LE][postcard(TabWorkspaceInput)]
@@ -6890,18 +6933,11 @@ export const tabSetWorkspaceCodec: RkyvV2Codec<TabWorkspaceInput, Snapshot> = {
   },
 };
 
-/** route: complex-binary; RN uses native C++ when the schema is native-safe, otherwise JS. */
-export const workArchiveExportComplexCodec: RkyvV2Codec<WorkArchiveExportInput, String> = createComplexCodec<WorkArchiveExportInput, String>({
-  commandId: 2,
-  inputSchema: {"title":"WorkArchiveExportInput","type":"object","properties":{"presentation":{"type":["string","null"]}}} as ComplexSchema,
-  outputSchema: {"title":"String","type":"string"} as ComplexSchema,
-  definitions: {"Workspace":{"type":"object","required":["id","name"],"properties":{"id":{"type":"string"},"name":{"type":"string"},"color":{"description":"Space tint as #rrggbb. Empty means \"follow the appearance hue\" — the default space stays appearance-colored so existing snapshots keep their look; created spaces pick from the palette round-robin.","default":"","type":"string"},"lastActiveTabId":{"description":"The space's most recently used tab; activate_workspace reopens the space where the user left off (Arc's working-set behavior). Dangling values are rejected on restore like the other active pointers.","default":null,"type":["string","null"]}}},"Tab":{"type":"object","required":["id","title","url","workspaceId"],"properties":{"id":{"type":"string"},"workspaceId":{"type":"string"},"url":{"type":"string"},"title":{"type":"string"},"favorite":{"description":"Favorites appear in every space without changing the selected space. Older snapshots restore without the field as non-favorites.","default":false,"type":"boolean"},"pinned":{"description":"Pinned tabs keep their own section under favorites, per space.","default":false,"type":"boolean"},"private":{"description":"Private tabs run engine-private sessions and never persist: the controller strips them from saved copies and restore drops them.","default":false,"type":"boolean"},"bookmarkId":{"description":"The persistent sidebar item owning this tab, independent of its live URL.","default":"","type":"string"},"homeUrl":{"description":"Saved destination, independent of navigation in the live session.","default":"","type":"string"},"homeTitle":{"default":"","type":"string"},"suspended":{"description":"The saved row remains while its browser session is closed.","default":false,"type":"boolean"},"updatedAt":{"description":"Last touch in epoch ms; drives the Today/Earlier split (12h archive).","default":0,"type":"integer","format":"uint64","minimum":0}}},"Bookmark":{"type":"object","required":["id","title","url"],"properties":{"id":{"type":"string"},"workspaceId":{"description":"Empty only in legacy snapshots, assigned to a Space during restore.","default":"","type":"string"},"title":{"type":"string"},"url":{"type":"string"},"folderId":{"default":"","type":"string"}}},"BookmarkFolder":{"type":"object","required":["id","title"],"properties":{"id":{"type":"string"},"workspaceId":{"default":"","type":"string"},"title":{"type":"string"}}},"KeyBinding":{"type":"object","required":["alt","command","ctrl","key","meta","shift"],"properties":{"key":{"type":"string"},"meta":{"type":"boolean"},"ctrl":{"type":"boolean"},"alt":{"type":"boolean"},"shift":{"type":"boolean"},"command":{"type":"string"}}}} as Record<string, ComplexSchema>,
-});
+export const workArchiveExportCodec = createSchemaPostcardCodec(2, {"title":"WorkArchiveExportInput","type":"object","properties":{"presentation":{"type":["string","null"]}}} as ComplexSchema, {"title":"String","type":"string"} as ComplexSchema, {"Workspace":{"type":"object","required":["id","name"],"properties":{"id":{"type":"string"},"name":{"type":"string"},"color":{"description":"Space tint as #rrggbb. Empty means \"follow the appearance hue\" — the default space stays appearance-colored so existing snapshots keep their look; created spaces pick from the palette round-robin.","default":"","type":"string"},"lastActiveTabId":{"description":"The space's most recently used tab; activate_workspace reopens the space where the user left off (Arc's working-set behavior). Dangling values are rejected on restore like the other active pointers.","default":null,"type":["string","null"]}}},"Tab":{"type":"object","required":["id","title","url","workspaceId"],"properties":{"id":{"type":"string"},"workspaceId":{"type":"string"},"url":{"type":"string"},"title":{"type":"string"},"favorite":{"description":"Favorites appear in every space without changing the selected space. Older snapshots restore without the field as non-favorites.","default":false,"type":"boolean"},"pinned":{"description":"Pinned tabs keep their own section under favorites, per space.","default":false,"type":"boolean"},"private":{"description":"Private tabs run engine-private sessions and never persist: the controller strips them from saved copies and restore drops them.","default":false,"type":"boolean"},"bookmarkId":{"description":"The persistent sidebar item owning this tab, independent of its live URL.","default":"","type":"string"},"homeUrl":{"description":"Saved destination, independent of navigation in the live session.","default":"","type":"string"},"homeTitle":{"default":"","type":"string"},"suspended":{"description":"The saved row remains while its browser session is closed.","default":false,"type":"boolean"},"updatedAt":{"description":"Last touch in epoch ms; drives the Today/Earlier split (12h archive).","default":0,"type":"integer","format":"uint64","minimum":0}}},"Bookmark":{"type":"object","required":["id","title","url"],"properties":{"id":{"type":"string"},"workspaceId":{"description":"Empty only in legacy snapshots, assigned to a Space during restore.","default":"","type":"string"},"title":{"type":"string"},"url":{"type":"string"},"folderId":{"default":"","type":"string"}}},"BookmarkFolder":{"type":"object","required":["id","title"],"properties":{"id":{"type":"string"},"workspaceId":{"default":"","type":"string"},"title":{"type":"string"}}},"KeyBinding":{"type":"object","required":["alt","command","ctrl","key","meta","shift"],"properties":{"key":{"type":"string"},"meta":{"type":"boolean"},"ctrl":{"type":"boolean"},"alt":{"type":"boolean"},"shift":{"type":"boolean"},"command":{"type":"string"}}}} as Record<string, ComplexSchema>, true)! as FrameCodec<WorkArchiveExportInput, String>;
 
-export const workArchiveExportCodec = workArchiveExportComplexCodec;
-
-export const workArchiveImportCodec: RkyvV2Codec<WorkArchiveImportInput, Snapshot> = {
+export const workArchiveImportCodec: FrameCodec<WorkArchiveImportInput, Snapshot> = {
   commandId: 5,
+  execution: "sync",
 
   encode(args: WorkArchiveImportInput): ArrayBuffer {
     // [cmd_id: u16 LE][postcard(WorkArchiveImportInput)]
@@ -7206,8 +7242,10 @@ export const workArchiveImportCodec: RkyvV2Codec<WorkArchiveImportInput, Snapsho
   },
 };
 
-export const workArchivePrepareCodec: RkyvV2Codec<WorkArchivePrepareInput, Snapshot> = {
+export const workArchivePrepareCodec: FrameCodec<WorkArchivePrepareInput, Snapshot> = {
   commandId: 4,
+  execution: "sync",
+  syncFields: ["json","includeFavorites","restoreKeymap"],
 
   encode(args: WorkArchivePrepareInput): ArrayBuffer {
     // [cmd_id: u16 LE][postcard(WorkArchivePrepareInput)]
@@ -7510,8 +7548,10 @@ export const workArchivePrepareCodec: RkyvV2Codec<WorkArchivePrepareInput, Snaps
   },
 };
 
-export const workArchivePreviewCodec: RkyvV2Codec<WorkArchivePreviewInput, WorkArchivePreview> = {
+export const workArchivePreviewCodec: FrameCodec<WorkArchivePreviewInput, WorkArchivePreview> = {
   commandId: 3,
+  execution: "sync",
+  syncFields: ["json"],
 
   encode(args: WorkArchivePreviewInput): ArrayBuffer {
     // [cmd_id: u16 LE][postcard(WorkArchivePreviewInput)]
@@ -7619,8 +7659,10 @@ export const workArchivePreviewCodec: RkyvV2Codec<WorkArchivePreviewInput, WorkA
   },
 };
 
-export const workspaceActivateCodec: RkyvV2Codec<WorkspaceIdInput, Snapshot> = {
+export const workspaceActivateCodec: FrameCodec<WorkspaceIdInput, Snapshot> = {
   commandId: 16,
+  execution: "sync",
+  syncFields: ["workspaceId"],
 
   encode(args: WorkspaceIdInput): ArrayBuffer {
     // [cmd_id: u16 LE][postcard(WorkspaceIdInput)]
@@ -7919,8 +7961,10 @@ export const workspaceActivateCodec: RkyvV2Codec<WorkspaceIdInput, Snapshot> = {
   },
 };
 
-export const workspaceCreateCodec: RkyvV2Codec<WorkspaceCreateInput, Snapshot> = {
+export const workspaceCreateCodec: FrameCodec<WorkspaceCreateInput, Snapshot> = {
   commandId: 6,
+  execution: "sync",
+  syncFields: ["name"],
 
   encode(args: WorkspaceCreateInput): ArrayBuffer {
     // [cmd_id: u16 LE][postcard(WorkspaceCreateInput)]

@@ -1,14 +1,14 @@
 // ── rustra generated ────────────────────────────────────────
-// File:   rkyv-registry.ts
+// File:   frame-registry.ts
 // Source: schema.json (single source of truth for this file)
 // Regen:  rustra codegen --config rustra.json
 // Stage:  schema → ts codec renderer
 // DO NOT EDIT — changes will be overwritten and fail codegen --check.
 // ────────────────────────────────────────────────────────────
 
-import { bookmarkCreateCodec, bookmarkFolderCreateCodec, bookmarkFolderRemoveCodec, bookmarkFolderRenameCodec, bookmarkMoveCodec, bookmarkOpenCodec, bookmarkRemoveCodec, bookmarkSetFolderCodec, bookmarkUpdateCodec, browserSnapshotCodec, keymapDefaultsCodec, keymapSetCodec, snapshotRestoreCodec, tabActivateCodec, tabCloseCodec, tabCreateCodec, tabMoveCodec, tabNavigatedCodec, tabOpenExternalCodec, tabResetCodec, tabSetFavoriteCodec, tabSetPinnedCodec, tabSetWorkspaceCodec, workArchiveExportComplexCodec, workArchiveImportCodec, workArchivePrepareCodec, workArchivePreviewCodec, workspaceActivateCodec, workspaceCreateCodec } from './rkyv-codecs.js';
+import { bookmarkCreateCodec, bookmarkFolderCreateCodec, bookmarkFolderRemoveCodec, bookmarkFolderRenameCodec, bookmarkMoveCodec, bookmarkOpenCodec, bookmarkRemoveCodec, bookmarkSetFolderCodec, bookmarkUpdateCodec, browserSnapshotCodec, keymapDefaultsCodec, keymapSetCodec, snapshotRestoreCodec, tabActivateCodec, tabCloseCodec, tabCreateCodec, tabMoveCodec, tabNavigatedCodec, tabOpenExternalCodec, tabResetCodec, tabSetFavoriteCodec, tabSetPinnedCodec, tabSetWorkspaceCodec, workArchiveExportCodec, workArchiveImportCodec, workArchivePrepareCodec, workArchivePreviewCodec, workspaceActivateCodec, workspaceCreateCodec } from './frame-codecs.js';
 
-export const rkyvV2Registry = new Map<string, import('@rustra/types').RkyvV2Codec<any, any>>([
+export const frameRegistry = new Map<string, import('@rustra/types').FrameCodec<any, any>>([
   // route: postcard
   ['bookmarkCreate', bookmarkCreateCodec],
   // route: postcard
@@ -55,8 +55,8 @@ export const rkyvV2Registry = new Map<string, import('@rustra/types').RkyvV2Code
   ['tabSetPinned', tabSetPinnedCodec],
   // route: postcard
   ['tabSetWorkspace', tabSetWorkspaceCodec],
-  // route: complex
-  ['workArchiveExport', workArchiveExportComplexCodec],
+  // route: postcard
+  ['workArchiveExport', workArchiveExportCodec],
   // route: postcard
   ['workArchiveImport', workArchiveImportCodec],
   // route: postcard

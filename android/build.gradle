@@ -30,6 +30,14 @@ subprojects { sub ->
             sub.android.sourceSets.main.java.setSrcDirs([
                 rootProject.file('compat/rustra-jsi/src/main/java')
             ])
+            // rustra path dependency(.deps/rustra-main) lives outside the generated
+            // task's native/ input watch — track its revision explicitly so a pin
+            // bump rebuilds libyeoyu_core.a instead of linking a stale archive.
+            sub.tasks.matching { it.name == 'buildRustAndroid' }.configureEach {
+                inputs.property('rustraRev', providers.exec {
+                    commandLine 'git', '-C', rootProject.file('../.deps/rustra-main'), 'rev-parse', 'HEAD'
+                }.standardOutput.asText.get().trim())
+            }
             sub.android.defaultConfig.ndk.abiFilters.clear()
             sub.android.defaultConfig.ndk.abiFilters.addAll(
                 (rootProject.findProperty('reactNativeArchitectures') ?: 'arm64-v8a').split(',') as List)

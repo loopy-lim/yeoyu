@@ -7,60 +7,55 @@
 // ────────────────────────────────────────────────────────────
 // C++ postcard codec for the RN JSI fast path (B1).
 #include "rustra-generated-codecs.hpp"
+#include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstring>
 #include <jsi/jsi.h>
+#include <initializer_list>
 #include <limits>
-#include <memory>
 #include <stdexcept>
 #include <string>
-#include <unordered_map>
 #include <utility>
+#include <vector>
 
 using namespace facebook::jsi;
 namespace jsi = facebook::jsi;
 namespace rc = rustra::codec;
+namespace rustra::generated {
+const char* compiled_contract_hash() { return "fec406eea1f970376fcf23907a0c5a4e022d5576078d360b57544ec294dfc4b4"; }
+}
 
-namespace rustra { namespace generated {
-#ifdef RUSTRA_TEST_JSI_SHIM
-  using RuntimePropNameCache = std::unordered_map<std::string, jsi::PropNameID>;
-  std::shared_ptr<RuntimePropNameCache> runtimePropNameCache(jsi::Runtime&) {
-    static auto cache = std::make_shared<RuntimePropNameCache>();
-    return cache;
+// Each invocation owns its captured map values until canonical encoding finishes.
+// Small maps avoid a vector allocation; larger maps retain bounded reservation.
+class RustraMapEntries {
+public:
+  using Entry = std::pair<std::string, jsi::Value>;
+  RustraMapEntries(jsi::Runtime& rt, size_t count) : use_inline_(count <= inline_entries_.size()) {
+    if (count > heap_entries_.max_size()) throw jsi::JSError(rt, "rustra: map size exceeds native capacity");
+    if (!use_inline_) heap_entries_.reserve(std::min<size_t>(count, 64));
   }
-#else
-  class RuntimePropNameCache final : public jsi::NativeState {
-  public:
-    std::unordered_map<std::string, jsi::PropNameID> values;
-  };
-  std::shared_ptr<RuntimePropNameCache> runtimePropNameCache(jsi::Runtime& rt) {
-    static std::unordered_map<jsi::Runtime*, std::weak_ptr<RuntimePropNameCache>> caches;
-    auto found = caches.find(&rt);
-    if (found != caches.end()) {
-      if (auto cache = found->second.lock()) return cache;
-    }
-    auto cache = std::make_shared<RuntimePropNameCache>();
-    jsi::Object holder(rt);
-    holder.setNativeState(rt, cache);
-    rt.global().setProperty(rt, "__rustraPropNameCache", std::move(holder));
-    caches[&rt] = cache;
-    return cache;
+  void emplace_back(std::string&& key, jsi::Value&& value) {
+    if (use_inline_) inline_entries_[size_] = Entry(std::move(key), std::move(value));
+    else heap_entries_.emplace_back(std::move(key), std::move(value));
+    ++size_;
   }
-#endif
-  const jsi::PropNameID& cachedProp(jsi::Runtime& rt, const char* name) {
-    auto cache = runtimePropNameCache(rt);
-#ifdef RUSTRA_TEST_JSI_SHIM
-    auto& values = *cache;
-#else
-    auto& values = cache->values;
-#endif
-    auto it = values.find(name);
-    if (it == values.end()) {
-      it = values.emplace(name, jsi::PropNameID::forAscii(rt, name)).first;
-    }
-    return it->second;
-  }
-}}
+  Entry* begin() { return use_inline_ ? inline_entries_.data() : heap_entries_.data(); }
+  Entry* end() { return begin() + size_; }
+  size_t size() const { return size_; }
+private:
+  std::array<Entry, 4> inline_entries_;
+  std::vector<Entry> heap_entries_;
+  size_t size_ = 0;
+  bool use_inline_;
+};
+
+// UTF8 may replace lone UTF16 surrogates. Preserve the prior normalized lookup
+// for replacement-containing keys; ordinary keys retain their original JSI string.
+[[maybe_unused]] static jsi::Value rustra_map_value(jsi::Runtime& rt, const jsi::Object& object, const jsi::String& key, const std::string& utf8) {
+  if (utf8.find("\xEF\xBF\xBD") == std::string::npos) return object.getProperty(rt, key);
+  return object.getProperty(rt, jsi::String::createFromUtf8(rt, reinterpret_cast<const uint8_t*>(utf8.data()), utf8.size()));
+}
 
 [[maybe_unused]] static double rustra_f64(jsi::Runtime& rt, const jsi::Value& value, const char* field) {
   if (!value.isNumber()) throw jsi::JSError(rt, std::string("rustra: '") + field + "' must be a number");
@@ -132,6 +127,56 @@ struct RustraByteSpan { const uint8_t* data; size_t size; };
     throw jsi::JSError(rt, std::string("rustra: '") + field + "' is outside the f32 range");
   return static_cast<float>(number);
 }
+
+namespace rustra::generated {
+struct BoundCodecContext {
+  const uint16_t commandId;
+  const std::vector<jsi::PropNameID> input;
+  const std::vector<jsi::PropNameID> output;
+private:
+  static std::vector<jsi::PropNameID> ownNames(Runtime& rt, std::initializer_list<const char*> names) {
+    std::vector<jsi::PropNameID> result; result.reserve(names.size());
+    for (auto name : names) result.push_back(jsi::PropNameID::forAscii(rt, name));
+    return result;
+  }
+  BoundCodecContext(Runtime& rt, uint16_t id, std::initializer_list<const char*> in, std::initializer_list<const char*> out)
+    : commandId(id), input(ownNames(rt, in)), output(ownNames(rt, out)) {}
+  friend std::shared_ptr<const BoundCodecContext> make_bound_codec_context(Runtime&, uint16_t);
+};
+std::shared_ptr<const BoundCodecContext> make_bound_codec_context(Runtime& rt, uint16_t commandId) {
+  switch (commandId) {
+    case 20: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"title", "url", "folderId"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 24: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"title"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 26: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"folderId"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 25: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"folderId", "title"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 23: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"bookmarkId", "index"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 29: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"bookmarkId", "reuseTabId", "private"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 22: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"bookmarkId"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 27: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"bookmarkId", "folderId"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 21: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"bookmarkId", "title", "url"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 1: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 19: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {}, {"bindings", "key", "meta", "ctrl", "alt", "shift", "command"}));
+    case 18: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"bindings", "key", "meta", "ctrl", "alt", "shift", "command"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 17: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"json"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 9: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"tabId"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 10: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"tabId"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 7: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"workspaceId", "url", "private"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 14: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"tabId", "index"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 11: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"tabId", "url", "title"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 8: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"requestId", "url"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 28: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"tabId"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 12: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"tabId", "favorite"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 13: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"tabId", "pinned"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 15: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"tabId", "workspaceId"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 5: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"json", "includeFavorites", "restoreKeymap", "expectedRevision"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 4: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"json", "includeFavorites", "restoreKeymap"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 3: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"json"}, {"spaces", "tabs", "bookmarks", "folders", "favorites", "duplicateUrls", "hasKeyBindings", "presentation"}));
+    case 16: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"workspaceId"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 6: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"name"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    default: throw JSError(rt, "rustra: no bound codec for cmd_id " + std::to_string(commandId));
+  }
+}
+} // namespace rustra::generated
 
 static void complex_encode_ref_Workspace(jsi::Runtime&, const jsi::Value&, rc::Writer&, size_t);
 static jsi::Value complex_decode_ref_Workspace(jsi::Runtime&, rc::Reader&, size_t);
@@ -278,12 +323,19 @@ static void complex_encode_ref_KeyBinding(jsi::Runtime& rt, const jsi::Value& va
   }
 }
 static jsi::Value complex_decode_ref_KeyBinding(jsi::Runtime& rt, rc::Reader& r, size_t _depth) { if (_depth > 32) throw std::runtime_error("complex value depth exceeds 32"); return [&]() -> jsi::Value { auto _cx0 = jsi::Object(rt); _cx0.setProperty(rt, "key", [&]() -> jsi::Value { auto _s = r.read_string_view(); return jsi::String::createFromUtf8(rt, _s.data, _s.size); }()); _cx0.setProperty(rt, "meta", jsi::Value(r.read_bool())); _cx0.setProperty(rt, "ctrl", jsi::Value(r.read_bool())); _cx0.setProperty(rt, "alt", jsi::Value(r.read_bool())); _cx0.setProperty(rt, "shift", jsi::Value(r.read_bool())); _cx0.setProperty(rt, "command", [&]() -> jsi::Value { auto _s = r.read_string_view(); return jsi::String::createFromUtf8(rt, _s.data, _s.size); }()); return _cx0; }(); }
+static void encode_body_bookmarkCreate(jsi::Runtime& rt, const jsi::Object& argsObj, rc::Writer& w, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  const auto& _prop_1 = _properties[1];
+  const auto& _prop_2 = _properties[2];
+  { auto _v = argsObj.getProperty(rt, _prop_0).getString(rt).utf8(rt); w.push_string(_v); }
+  { auto _v = argsObj.getProperty(rt, _prop_1).getString(rt).utf8(rt); w.push_string(_v); }
+  { auto _v = argsObj.getProperty(rt, _prop_2).getString(rt).utf8(rt); w.push_string(_v); }
+}
 static void encode_bookmarkCreate(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
   w.push_u8(20); w.push_u8(0); // cmd_id = 20 LE
   auto argsObj = args.asObject(rt);
-  { auto _v = argsObj.getProperty(rt, "title").getString(rt).utf8(rt); w.push_string(_v); }
-  { auto _v = argsObj.getProperty(rt, "url").getString(rt).utf8(rt); w.push_string(_v); }
-  { auto _v = argsObj.getProperty(rt, "folderId").getString(rt).utf8(rt); w.push_string(_v); }
+  const std::array<jsi::PropNameID, 3> _properties{jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "folderId")};
+  encode_body_bookmarkCreate(rt, argsObj, w, _properties.data());
 }
 
 // (Tier 1 positional) 개별 인자 → 직접 인코딩. argsObj 경유 대비 JSI 프로퍼티 조회 3회 제거.
@@ -295,71 +347,113 @@ static void encode_pos_bookmarkCreate(jsi::Runtime& rt, const jsi::Value* argv, 
   { auto _s = argv[2].asString(rt).utf8(rt); w.push_string(_s); }
 }
 
-static jsi::Value decode_bookmarkCreate(jsi::Runtime& rt, rc::Reader& r) {
-  auto resultObj = jsi::Object(rt);
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "version"), (double)r.read_uvar());
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "revision"), (double)r.read_uvar());
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "lastExternalRequestId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+static jsi::Value decode_body_bookmarkCreate(jsi::Runtime& rt, jsi::Object& resultObj, rc::Reader& r, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  const auto& _prop_1 = _properties[1];
+  const auto& _prop_2 = _properties[2];
+  const auto& _prop_3 = _properties[3];
+  const auto& _prop_4 = _properties[4];
+  const auto& _prop_5 = _properties[5];
+  const auto& _prop_6 = _properties[6];
+  const auto& _prop_7 = _properties[7];
+  const auto& _prop_8 = _properties[8];
+  const auto& _prop_9 = _properties[9];
+  const auto& _prop_10 = _properties[10];
+  const auto& _prop_11 = _properties[11];
+  const auto& _prop_12 = _properties[12];
+  const auto& _prop_13 = _properties[13];
+  const auto& _prop_14 = _properties[14];
+  const auto& _prop_15 = _properties[15];
+  const auto& _prop_16 = _properties[16];
+  const auto& _prop_17 = _properties[17];
+  const auto& _prop_18 = _properties[18];
+  const auto& _prop_19 = _properties[19];
+  const auto& _prop_20 = _properties[20];
+  const auto& _prop_21 = _properties[21];
+  const auto& _prop_22 = _properties[22];
+  const auto& _prop_23 = _properties[23];
+  const auto& _prop_24 = _properties[24];
+  const auto& _prop_25 = _properties[25];
+  const auto& _prop_26 = _properties[26];
+  const auto& _prop_27 = _properties[27];
+  const auto& _prop_28 = _properties[28];
+  const auto& _prop_29 = _properties[29];
+  const auto& _prop_30 = _properties[30];
+  const auto& _prop_31 = _properties[31];
+  const auto& _prop_32 = _properties[32];
+  resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
+  resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "name"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "color"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _tag = r.read_u8(); if (_tag == 0) { _obj.setProperty(rt, rustra::generated::cachedProp(rt, "lastActiveTabId"), jsi::Value::null()); } else { { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "lastActiveTabId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_6, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _tag = r.read_u8(); if (_tag == 0) { _obj.setProperty(rt, _prop_7, jsi::Value::null()); } else { { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_7, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaces"), _arr); }
+    resultObj.setProperty(rt, _prop_3, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "url"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "favorite"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "pinned"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "private"), r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarkId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "homeUrl"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "homeTitle"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "suspended"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "updatedAt"), [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_12, r.read_bool());
+      _obj.setProperty(rt, _prop_13, r.read_bool());
+      _obj.setProperty(rt, _prop_14, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_15, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_18, r.read_bool());
+      _obj.setProperty(rt, _prop_19, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "tabs"), _arr); }
+    resultObj.setProperty(rt, _prop_8, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "url"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "folderId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_21, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarks"), _arr); }
+    resultObj.setProperty(rt, _prop_20, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarkFolders"), _arr); }
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeWorkspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeTabId"), jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeTabId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+    resultObj.setProperty(rt, _prop_22, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_23, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_24, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_24, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "key"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "meta"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "ctrl"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "alt"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "shift"), r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "command"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_26, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_27, r.read_bool());
+      _obj.setProperty(rt, _prop_28, r.read_bool());
+      _obj.setProperty(rt, _prop_29, r.read_bool());
+      _obj.setProperty(rt, _prop_30, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "keyBindings"), _arr); }
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "keymapVersion"), (double)r.read_uvar());
+    resultObj.setProperty(rt, _prop_25, _arr); }
+  resultObj.setProperty(rt, _prop_32, (double)r.read_uvar());
   return std::move(resultObj);
 }
+static jsi::Value decode_bookmarkCreate(jsi::Runtime& rt, rc::Reader& r) {
+  auto resultObj = jsi::Object(rt);
+  const std::array<jsi::PropNameID, 33> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  return decode_body_bookmarkCreate(rt, resultObj, r, _properties.data());
+}
 
+static void encode_body_bookmarkFolderCreate(jsi::Runtime& rt, const jsi::Object& argsObj, rc::Writer& w, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  { auto _v = argsObj.getProperty(rt, _prop_0).getString(rt).utf8(rt); w.push_string(_v); }
+}
 static void encode_bookmarkFolderCreate(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
   w.push_u8(24); w.push_u8(0); // cmd_id = 24 LE
   auto argsObj = args.asObject(rt);
-  { auto _v = argsObj.getProperty(rt, "title").getString(rt).utf8(rt); w.push_string(_v); }
+  const std::array<jsi::PropNameID, 1> _properties{jsi::PropNameID::forAscii(rt, "title")};
+  encode_body_bookmarkFolderCreate(rt, argsObj, w, _properties.data());
 }
 
 // (Tier 1 positional) 개별 인자 → 직접 인코딩. argsObj 경유 대비 JSI 프로퍼티 조회 1회 제거.
@@ -369,71 +463,113 @@ static void encode_pos_bookmarkFolderCreate(jsi::Runtime& rt, const jsi::Value* 
   { auto _s = argv[0].asString(rt).utf8(rt); w.push_string(_s); }
 }
 
-static jsi::Value decode_bookmarkFolderCreate(jsi::Runtime& rt, rc::Reader& r) {
-  auto resultObj = jsi::Object(rt);
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "version"), (double)r.read_uvar());
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "revision"), (double)r.read_uvar());
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "lastExternalRequestId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+static jsi::Value decode_body_bookmarkFolderCreate(jsi::Runtime& rt, jsi::Object& resultObj, rc::Reader& r, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  const auto& _prop_1 = _properties[1];
+  const auto& _prop_2 = _properties[2];
+  const auto& _prop_3 = _properties[3];
+  const auto& _prop_4 = _properties[4];
+  const auto& _prop_5 = _properties[5];
+  const auto& _prop_6 = _properties[6];
+  const auto& _prop_7 = _properties[7];
+  const auto& _prop_8 = _properties[8];
+  const auto& _prop_9 = _properties[9];
+  const auto& _prop_10 = _properties[10];
+  const auto& _prop_11 = _properties[11];
+  const auto& _prop_12 = _properties[12];
+  const auto& _prop_13 = _properties[13];
+  const auto& _prop_14 = _properties[14];
+  const auto& _prop_15 = _properties[15];
+  const auto& _prop_16 = _properties[16];
+  const auto& _prop_17 = _properties[17];
+  const auto& _prop_18 = _properties[18];
+  const auto& _prop_19 = _properties[19];
+  const auto& _prop_20 = _properties[20];
+  const auto& _prop_21 = _properties[21];
+  const auto& _prop_22 = _properties[22];
+  const auto& _prop_23 = _properties[23];
+  const auto& _prop_24 = _properties[24];
+  const auto& _prop_25 = _properties[25];
+  const auto& _prop_26 = _properties[26];
+  const auto& _prop_27 = _properties[27];
+  const auto& _prop_28 = _properties[28];
+  const auto& _prop_29 = _properties[29];
+  const auto& _prop_30 = _properties[30];
+  const auto& _prop_31 = _properties[31];
+  const auto& _prop_32 = _properties[32];
+  resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
+  resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "name"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "color"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _tag = r.read_u8(); if (_tag == 0) { _obj.setProperty(rt, rustra::generated::cachedProp(rt, "lastActiveTabId"), jsi::Value::null()); } else { { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "lastActiveTabId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_6, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _tag = r.read_u8(); if (_tag == 0) { _obj.setProperty(rt, _prop_7, jsi::Value::null()); } else { { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_7, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaces"), _arr); }
+    resultObj.setProperty(rt, _prop_3, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "url"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "favorite"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "pinned"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "private"), r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarkId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "homeUrl"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "homeTitle"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "suspended"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "updatedAt"), [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_12, r.read_bool());
+      _obj.setProperty(rt, _prop_13, r.read_bool());
+      _obj.setProperty(rt, _prop_14, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_15, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_18, r.read_bool());
+      _obj.setProperty(rt, _prop_19, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "tabs"), _arr); }
+    resultObj.setProperty(rt, _prop_8, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "url"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "folderId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_21, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarks"), _arr); }
+    resultObj.setProperty(rt, _prop_20, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarkFolders"), _arr); }
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeWorkspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeTabId"), jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeTabId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+    resultObj.setProperty(rt, _prop_22, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_23, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_24, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_24, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "key"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "meta"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "ctrl"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "alt"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "shift"), r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "command"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_26, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_27, r.read_bool());
+      _obj.setProperty(rt, _prop_28, r.read_bool());
+      _obj.setProperty(rt, _prop_29, r.read_bool());
+      _obj.setProperty(rt, _prop_30, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "keyBindings"), _arr); }
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "keymapVersion"), (double)r.read_uvar());
+    resultObj.setProperty(rt, _prop_25, _arr); }
+  resultObj.setProperty(rt, _prop_32, (double)r.read_uvar());
   return std::move(resultObj);
 }
+static jsi::Value decode_bookmarkFolderCreate(jsi::Runtime& rt, rc::Reader& r) {
+  auto resultObj = jsi::Object(rt);
+  const std::array<jsi::PropNameID, 33> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  return decode_body_bookmarkFolderCreate(rt, resultObj, r, _properties.data());
+}
 
+static void encode_body_bookmarkFolderRemove(jsi::Runtime& rt, const jsi::Object& argsObj, rc::Writer& w, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  { auto _v = argsObj.getProperty(rt, _prop_0).getString(rt).utf8(rt); w.push_string(_v); }
+}
 static void encode_bookmarkFolderRemove(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
   w.push_u8(26); w.push_u8(0); // cmd_id = 26 LE
   auto argsObj = args.asObject(rt);
-  { auto _v = argsObj.getProperty(rt, "folderId").getString(rt).utf8(rt); w.push_string(_v); }
+  const std::array<jsi::PropNameID, 1> _properties{jsi::PropNameID::forAscii(rt, "folderId")};
+  encode_body_bookmarkFolderRemove(rt, argsObj, w, _properties.data());
 }
 
 // (Tier 1 positional) 개별 인자 → 직접 인코딩. argsObj 경유 대비 JSI 프로퍼티 조회 1회 제거.
@@ -443,72 +579,115 @@ static void encode_pos_bookmarkFolderRemove(jsi::Runtime& rt, const jsi::Value* 
   { auto _s = argv[0].asString(rt).utf8(rt); w.push_string(_s); }
 }
 
-static jsi::Value decode_bookmarkFolderRemove(jsi::Runtime& rt, rc::Reader& r) {
-  auto resultObj = jsi::Object(rt);
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "version"), (double)r.read_uvar());
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "revision"), (double)r.read_uvar());
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "lastExternalRequestId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+static jsi::Value decode_body_bookmarkFolderRemove(jsi::Runtime& rt, jsi::Object& resultObj, rc::Reader& r, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  const auto& _prop_1 = _properties[1];
+  const auto& _prop_2 = _properties[2];
+  const auto& _prop_3 = _properties[3];
+  const auto& _prop_4 = _properties[4];
+  const auto& _prop_5 = _properties[5];
+  const auto& _prop_6 = _properties[6];
+  const auto& _prop_7 = _properties[7];
+  const auto& _prop_8 = _properties[8];
+  const auto& _prop_9 = _properties[9];
+  const auto& _prop_10 = _properties[10];
+  const auto& _prop_11 = _properties[11];
+  const auto& _prop_12 = _properties[12];
+  const auto& _prop_13 = _properties[13];
+  const auto& _prop_14 = _properties[14];
+  const auto& _prop_15 = _properties[15];
+  const auto& _prop_16 = _properties[16];
+  const auto& _prop_17 = _properties[17];
+  const auto& _prop_18 = _properties[18];
+  const auto& _prop_19 = _properties[19];
+  const auto& _prop_20 = _properties[20];
+  const auto& _prop_21 = _properties[21];
+  const auto& _prop_22 = _properties[22];
+  const auto& _prop_23 = _properties[23];
+  const auto& _prop_24 = _properties[24];
+  const auto& _prop_25 = _properties[25];
+  const auto& _prop_26 = _properties[26];
+  const auto& _prop_27 = _properties[27];
+  const auto& _prop_28 = _properties[28];
+  const auto& _prop_29 = _properties[29];
+  const auto& _prop_30 = _properties[30];
+  const auto& _prop_31 = _properties[31];
+  const auto& _prop_32 = _properties[32];
+  resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
+  resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "name"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "color"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _tag = r.read_u8(); if (_tag == 0) { _obj.setProperty(rt, rustra::generated::cachedProp(rt, "lastActiveTabId"), jsi::Value::null()); } else { { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "lastActiveTabId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_6, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _tag = r.read_u8(); if (_tag == 0) { _obj.setProperty(rt, _prop_7, jsi::Value::null()); } else { { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_7, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaces"), _arr); }
+    resultObj.setProperty(rt, _prop_3, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "url"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "favorite"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "pinned"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "private"), r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarkId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "homeUrl"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "homeTitle"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "suspended"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "updatedAt"), [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_12, r.read_bool());
+      _obj.setProperty(rt, _prop_13, r.read_bool());
+      _obj.setProperty(rt, _prop_14, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_15, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_18, r.read_bool());
+      _obj.setProperty(rt, _prop_19, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "tabs"), _arr); }
+    resultObj.setProperty(rt, _prop_8, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "url"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "folderId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_21, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarks"), _arr); }
+    resultObj.setProperty(rt, _prop_20, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarkFolders"), _arr); }
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeWorkspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeTabId"), jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeTabId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+    resultObj.setProperty(rt, _prop_22, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_23, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_24, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_24, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "key"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "meta"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "ctrl"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "alt"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "shift"), r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "command"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_26, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_27, r.read_bool());
+      _obj.setProperty(rt, _prop_28, r.read_bool());
+      _obj.setProperty(rt, _prop_29, r.read_bool());
+      _obj.setProperty(rt, _prop_30, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "keyBindings"), _arr); }
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "keymapVersion"), (double)r.read_uvar());
+    resultObj.setProperty(rt, _prop_25, _arr); }
+  resultObj.setProperty(rt, _prop_32, (double)r.read_uvar());
   return std::move(resultObj);
 }
+static jsi::Value decode_bookmarkFolderRemove(jsi::Runtime& rt, rc::Reader& r) {
+  auto resultObj = jsi::Object(rt);
+  const std::array<jsi::PropNameID, 33> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  return decode_body_bookmarkFolderRemove(rt, resultObj, r, _properties.data());
+}
 
+static void encode_body_bookmarkFolderRename(jsi::Runtime& rt, const jsi::Object& argsObj, rc::Writer& w, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  const auto& _prop_1 = _properties[1];
+  { auto _v = argsObj.getProperty(rt, _prop_0).getString(rt).utf8(rt); w.push_string(_v); }
+  { auto _v = argsObj.getProperty(rt, _prop_1).getString(rt).utf8(rt); w.push_string(_v); }
+}
 static void encode_bookmarkFolderRename(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
   w.push_u8(25); w.push_u8(0); // cmd_id = 25 LE
   auto argsObj = args.asObject(rt);
-  { auto _v = argsObj.getProperty(rt, "folderId").getString(rt).utf8(rt); w.push_string(_v); }
-  { auto _v = argsObj.getProperty(rt, "title").getString(rt).utf8(rt); w.push_string(_v); }
+  const std::array<jsi::PropNameID, 2> _properties{jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "title")};
+  encode_body_bookmarkFolderRename(rt, argsObj, w, _properties.data());
 }
 
 // (Tier 1 positional) 개별 인자 → 직접 인코딩. argsObj 경유 대비 JSI 프로퍼티 조회 2회 제거.
@@ -519,72 +698,115 @@ static void encode_pos_bookmarkFolderRename(jsi::Runtime& rt, const jsi::Value* 
   { auto _s = argv[1].asString(rt).utf8(rt); w.push_string(_s); }
 }
 
-static jsi::Value decode_bookmarkFolderRename(jsi::Runtime& rt, rc::Reader& r) {
-  auto resultObj = jsi::Object(rt);
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "version"), (double)r.read_uvar());
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "revision"), (double)r.read_uvar());
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "lastExternalRequestId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+static jsi::Value decode_body_bookmarkFolderRename(jsi::Runtime& rt, jsi::Object& resultObj, rc::Reader& r, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  const auto& _prop_1 = _properties[1];
+  const auto& _prop_2 = _properties[2];
+  const auto& _prop_3 = _properties[3];
+  const auto& _prop_4 = _properties[4];
+  const auto& _prop_5 = _properties[5];
+  const auto& _prop_6 = _properties[6];
+  const auto& _prop_7 = _properties[7];
+  const auto& _prop_8 = _properties[8];
+  const auto& _prop_9 = _properties[9];
+  const auto& _prop_10 = _properties[10];
+  const auto& _prop_11 = _properties[11];
+  const auto& _prop_12 = _properties[12];
+  const auto& _prop_13 = _properties[13];
+  const auto& _prop_14 = _properties[14];
+  const auto& _prop_15 = _properties[15];
+  const auto& _prop_16 = _properties[16];
+  const auto& _prop_17 = _properties[17];
+  const auto& _prop_18 = _properties[18];
+  const auto& _prop_19 = _properties[19];
+  const auto& _prop_20 = _properties[20];
+  const auto& _prop_21 = _properties[21];
+  const auto& _prop_22 = _properties[22];
+  const auto& _prop_23 = _properties[23];
+  const auto& _prop_24 = _properties[24];
+  const auto& _prop_25 = _properties[25];
+  const auto& _prop_26 = _properties[26];
+  const auto& _prop_27 = _properties[27];
+  const auto& _prop_28 = _properties[28];
+  const auto& _prop_29 = _properties[29];
+  const auto& _prop_30 = _properties[30];
+  const auto& _prop_31 = _properties[31];
+  const auto& _prop_32 = _properties[32];
+  resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
+  resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "name"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "color"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _tag = r.read_u8(); if (_tag == 0) { _obj.setProperty(rt, rustra::generated::cachedProp(rt, "lastActiveTabId"), jsi::Value::null()); } else { { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "lastActiveTabId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_6, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _tag = r.read_u8(); if (_tag == 0) { _obj.setProperty(rt, _prop_7, jsi::Value::null()); } else { { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_7, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaces"), _arr); }
+    resultObj.setProperty(rt, _prop_3, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "url"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "favorite"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "pinned"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "private"), r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarkId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "homeUrl"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "homeTitle"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "suspended"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "updatedAt"), [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_12, r.read_bool());
+      _obj.setProperty(rt, _prop_13, r.read_bool());
+      _obj.setProperty(rt, _prop_14, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_15, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_18, r.read_bool());
+      _obj.setProperty(rt, _prop_19, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "tabs"), _arr); }
+    resultObj.setProperty(rt, _prop_8, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "url"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "folderId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_21, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarks"), _arr); }
+    resultObj.setProperty(rt, _prop_20, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarkFolders"), _arr); }
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeWorkspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeTabId"), jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeTabId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+    resultObj.setProperty(rt, _prop_22, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_23, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_24, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_24, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "key"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "meta"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "ctrl"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "alt"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "shift"), r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "command"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_26, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_27, r.read_bool());
+      _obj.setProperty(rt, _prop_28, r.read_bool());
+      _obj.setProperty(rt, _prop_29, r.read_bool());
+      _obj.setProperty(rt, _prop_30, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "keyBindings"), _arr); }
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "keymapVersion"), (double)r.read_uvar());
+    resultObj.setProperty(rt, _prop_25, _arr); }
+  resultObj.setProperty(rt, _prop_32, (double)r.read_uvar());
   return std::move(resultObj);
 }
+static jsi::Value decode_bookmarkFolderRename(jsi::Runtime& rt, rc::Reader& r) {
+  auto resultObj = jsi::Object(rt);
+  const std::array<jsi::PropNameID, 33> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  return decode_body_bookmarkFolderRename(rt, resultObj, r, _properties.data());
+}
 
+static void encode_body_bookmarkMove(jsi::Runtime& rt, const jsi::Object& argsObj, rc::Writer& w, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  const auto& _prop_1 = _properties[1];
+  { auto _v = argsObj.getProperty(rt, _prop_0).getString(rt).utf8(rt); w.push_string(_v); }
+  w.push_uvar(rustra_u64(rt, argsObj.getProperty(rt, _prop_1), "index"));
+}
 static void encode_bookmarkMove(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
   w.push_u8(23); w.push_u8(0); // cmd_id = 23 LE
   auto argsObj = args.asObject(rt);
-  { auto _v = argsObj.getProperty(rt, "bookmarkId").getString(rt).utf8(rt); w.push_string(_v); }
-  w.push_uvar(rustra_u64(rt, argsObj.getProperty(rt, "index"), "index"));
+  const std::array<jsi::PropNameID, 2> _properties{jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "index")};
+  encode_body_bookmarkMove(rt, argsObj, w, _properties.data());
 }
 
 // (Tier 1 positional) 개별 인자 → 직접 인코딩. argsObj 경유 대비 JSI 프로퍼티 조회 2회 제거.
@@ -595,73 +817,117 @@ static void encode_pos_bookmarkMove(jsi::Runtime& rt, const jsi::Value* argv, si
   w.push_uvar(rustra_u64(rt, argv[1], "index"));
 }
 
-static jsi::Value decode_bookmarkMove(jsi::Runtime& rt, rc::Reader& r) {
-  auto resultObj = jsi::Object(rt);
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "version"), (double)r.read_uvar());
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "revision"), (double)r.read_uvar());
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "lastExternalRequestId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+static jsi::Value decode_body_bookmarkMove(jsi::Runtime& rt, jsi::Object& resultObj, rc::Reader& r, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  const auto& _prop_1 = _properties[1];
+  const auto& _prop_2 = _properties[2];
+  const auto& _prop_3 = _properties[3];
+  const auto& _prop_4 = _properties[4];
+  const auto& _prop_5 = _properties[5];
+  const auto& _prop_6 = _properties[6];
+  const auto& _prop_7 = _properties[7];
+  const auto& _prop_8 = _properties[8];
+  const auto& _prop_9 = _properties[9];
+  const auto& _prop_10 = _properties[10];
+  const auto& _prop_11 = _properties[11];
+  const auto& _prop_12 = _properties[12];
+  const auto& _prop_13 = _properties[13];
+  const auto& _prop_14 = _properties[14];
+  const auto& _prop_15 = _properties[15];
+  const auto& _prop_16 = _properties[16];
+  const auto& _prop_17 = _properties[17];
+  const auto& _prop_18 = _properties[18];
+  const auto& _prop_19 = _properties[19];
+  const auto& _prop_20 = _properties[20];
+  const auto& _prop_21 = _properties[21];
+  const auto& _prop_22 = _properties[22];
+  const auto& _prop_23 = _properties[23];
+  const auto& _prop_24 = _properties[24];
+  const auto& _prop_25 = _properties[25];
+  const auto& _prop_26 = _properties[26];
+  const auto& _prop_27 = _properties[27];
+  const auto& _prop_28 = _properties[28];
+  const auto& _prop_29 = _properties[29];
+  const auto& _prop_30 = _properties[30];
+  const auto& _prop_31 = _properties[31];
+  const auto& _prop_32 = _properties[32];
+  resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
+  resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "name"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "color"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _tag = r.read_u8(); if (_tag == 0) { _obj.setProperty(rt, rustra::generated::cachedProp(rt, "lastActiveTabId"), jsi::Value::null()); } else { { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "lastActiveTabId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_6, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _tag = r.read_u8(); if (_tag == 0) { _obj.setProperty(rt, _prop_7, jsi::Value::null()); } else { { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_7, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaces"), _arr); }
+    resultObj.setProperty(rt, _prop_3, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "url"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "favorite"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "pinned"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "private"), r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarkId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "homeUrl"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "homeTitle"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "suspended"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "updatedAt"), [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_12, r.read_bool());
+      _obj.setProperty(rt, _prop_13, r.read_bool());
+      _obj.setProperty(rt, _prop_14, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_15, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_18, r.read_bool());
+      _obj.setProperty(rt, _prop_19, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "tabs"), _arr); }
+    resultObj.setProperty(rt, _prop_8, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "url"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "folderId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_21, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarks"), _arr); }
+    resultObj.setProperty(rt, _prop_20, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarkFolders"), _arr); }
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeWorkspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeTabId"), jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeTabId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+    resultObj.setProperty(rt, _prop_22, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_23, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_24, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_24, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "key"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "meta"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "ctrl"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "alt"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "shift"), r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "command"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_26, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_27, r.read_bool());
+      _obj.setProperty(rt, _prop_28, r.read_bool());
+      _obj.setProperty(rt, _prop_29, r.read_bool());
+      _obj.setProperty(rt, _prop_30, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "keyBindings"), _arr); }
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "keymapVersion"), (double)r.read_uvar());
+    resultObj.setProperty(rt, _prop_25, _arr); }
+  resultObj.setProperty(rt, _prop_32, (double)r.read_uvar());
   return std::move(resultObj);
 }
+static jsi::Value decode_bookmarkMove(jsi::Runtime& rt, rc::Reader& r) {
+  auto resultObj = jsi::Object(rt);
+  const std::array<jsi::PropNameID, 33> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  return decode_body_bookmarkMove(rt, resultObj, r, _properties.data());
+}
 
+static void encode_body_bookmarkOpen(jsi::Runtime& rt, const jsi::Object& argsObj, rc::Writer& w, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  const auto& _prop_1 = _properties[1];
+  const auto& _prop_2 = _properties[2];
+  { auto _v = argsObj.getProperty(rt, _prop_0).getString(rt).utf8(rt); w.push_string(_v); }
+  { auto _v = argsObj.getProperty(rt, _prop_1).getString(rt).utf8(rt); w.push_string(_v); }
+  { auto _v = argsObj.getProperty(rt, _prop_2).getBool(); w.push_bool(_v); }
+}
 static void encode_bookmarkOpen(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
   w.push_u8(29); w.push_u8(0); // cmd_id = 29 LE
   auto argsObj = args.asObject(rt);
-  { auto _v = argsObj.getProperty(rt, "bookmarkId").getString(rt).utf8(rt); w.push_string(_v); }
-  { auto _v = argsObj.getProperty(rt, "reuseTabId").getString(rt).utf8(rt); w.push_string(_v); }
-  { auto _v = argsObj.getProperty(rt, "private").getBool(); w.push_bool(_v); }
+  const std::array<jsi::PropNameID, 3> _properties{jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "reuseTabId"), jsi::PropNameID::forAscii(rt, "private")};
+  encode_body_bookmarkOpen(rt, argsObj, w, _properties.data());
 }
 
 // (Tier 1 positional) 개별 인자 → 직접 인코딩. argsObj 경유 대비 JSI 프로퍼티 조회 3회 제거.
@@ -673,71 +939,113 @@ static void encode_pos_bookmarkOpen(jsi::Runtime& rt, const jsi::Value* argv, si
   w.push_bool(argv[2].asBool());
 }
 
-static jsi::Value decode_bookmarkOpen(jsi::Runtime& rt, rc::Reader& r) {
-  auto resultObj = jsi::Object(rt);
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "version"), (double)r.read_uvar());
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "revision"), (double)r.read_uvar());
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "lastExternalRequestId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+static jsi::Value decode_body_bookmarkOpen(jsi::Runtime& rt, jsi::Object& resultObj, rc::Reader& r, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  const auto& _prop_1 = _properties[1];
+  const auto& _prop_2 = _properties[2];
+  const auto& _prop_3 = _properties[3];
+  const auto& _prop_4 = _properties[4];
+  const auto& _prop_5 = _properties[5];
+  const auto& _prop_6 = _properties[6];
+  const auto& _prop_7 = _properties[7];
+  const auto& _prop_8 = _properties[8];
+  const auto& _prop_9 = _properties[9];
+  const auto& _prop_10 = _properties[10];
+  const auto& _prop_11 = _properties[11];
+  const auto& _prop_12 = _properties[12];
+  const auto& _prop_13 = _properties[13];
+  const auto& _prop_14 = _properties[14];
+  const auto& _prop_15 = _properties[15];
+  const auto& _prop_16 = _properties[16];
+  const auto& _prop_17 = _properties[17];
+  const auto& _prop_18 = _properties[18];
+  const auto& _prop_19 = _properties[19];
+  const auto& _prop_20 = _properties[20];
+  const auto& _prop_21 = _properties[21];
+  const auto& _prop_22 = _properties[22];
+  const auto& _prop_23 = _properties[23];
+  const auto& _prop_24 = _properties[24];
+  const auto& _prop_25 = _properties[25];
+  const auto& _prop_26 = _properties[26];
+  const auto& _prop_27 = _properties[27];
+  const auto& _prop_28 = _properties[28];
+  const auto& _prop_29 = _properties[29];
+  const auto& _prop_30 = _properties[30];
+  const auto& _prop_31 = _properties[31];
+  const auto& _prop_32 = _properties[32];
+  resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
+  resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "name"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "color"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _tag = r.read_u8(); if (_tag == 0) { _obj.setProperty(rt, rustra::generated::cachedProp(rt, "lastActiveTabId"), jsi::Value::null()); } else { { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "lastActiveTabId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_6, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _tag = r.read_u8(); if (_tag == 0) { _obj.setProperty(rt, _prop_7, jsi::Value::null()); } else { { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_7, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaces"), _arr); }
+    resultObj.setProperty(rt, _prop_3, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "url"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "favorite"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "pinned"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "private"), r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarkId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "homeUrl"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "homeTitle"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "suspended"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "updatedAt"), [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_12, r.read_bool());
+      _obj.setProperty(rt, _prop_13, r.read_bool());
+      _obj.setProperty(rt, _prop_14, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_15, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_18, r.read_bool());
+      _obj.setProperty(rt, _prop_19, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "tabs"), _arr); }
+    resultObj.setProperty(rt, _prop_8, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "url"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "folderId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_21, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarks"), _arr); }
+    resultObj.setProperty(rt, _prop_20, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarkFolders"), _arr); }
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeWorkspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeTabId"), jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeTabId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+    resultObj.setProperty(rt, _prop_22, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_23, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_24, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_24, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "key"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "meta"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "ctrl"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "alt"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "shift"), r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "command"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_26, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_27, r.read_bool());
+      _obj.setProperty(rt, _prop_28, r.read_bool());
+      _obj.setProperty(rt, _prop_29, r.read_bool());
+      _obj.setProperty(rt, _prop_30, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "keyBindings"), _arr); }
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "keymapVersion"), (double)r.read_uvar());
+    resultObj.setProperty(rt, _prop_25, _arr); }
+  resultObj.setProperty(rt, _prop_32, (double)r.read_uvar());
   return std::move(resultObj);
 }
+static jsi::Value decode_bookmarkOpen(jsi::Runtime& rt, rc::Reader& r) {
+  auto resultObj = jsi::Object(rt);
+  const std::array<jsi::PropNameID, 33> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  return decode_body_bookmarkOpen(rt, resultObj, r, _properties.data());
+}
 
+static void encode_body_bookmarkRemove(jsi::Runtime& rt, const jsi::Object& argsObj, rc::Writer& w, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  { auto _v = argsObj.getProperty(rt, _prop_0).getString(rt).utf8(rt); w.push_string(_v); }
+}
 static void encode_bookmarkRemove(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
   w.push_u8(22); w.push_u8(0); // cmd_id = 22 LE
   auto argsObj = args.asObject(rt);
-  { auto _v = argsObj.getProperty(rt, "bookmarkId").getString(rt).utf8(rt); w.push_string(_v); }
+  const std::array<jsi::PropNameID, 1> _properties{jsi::PropNameID::forAscii(rt, "bookmarkId")};
+  encode_body_bookmarkRemove(rt, argsObj, w, _properties.data());
 }
 
 // (Tier 1 positional) 개별 인자 → 직접 인코딩. argsObj 경유 대비 JSI 프로퍼티 조회 1회 제거.
@@ -747,72 +1055,115 @@ static void encode_pos_bookmarkRemove(jsi::Runtime& rt, const jsi::Value* argv, 
   { auto _s = argv[0].asString(rt).utf8(rt); w.push_string(_s); }
 }
 
-static jsi::Value decode_bookmarkRemove(jsi::Runtime& rt, rc::Reader& r) {
-  auto resultObj = jsi::Object(rt);
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "version"), (double)r.read_uvar());
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "revision"), (double)r.read_uvar());
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "lastExternalRequestId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+static jsi::Value decode_body_bookmarkRemove(jsi::Runtime& rt, jsi::Object& resultObj, rc::Reader& r, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  const auto& _prop_1 = _properties[1];
+  const auto& _prop_2 = _properties[2];
+  const auto& _prop_3 = _properties[3];
+  const auto& _prop_4 = _properties[4];
+  const auto& _prop_5 = _properties[5];
+  const auto& _prop_6 = _properties[6];
+  const auto& _prop_7 = _properties[7];
+  const auto& _prop_8 = _properties[8];
+  const auto& _prop_9 = _properties[9];
+  const auto& _prop_10 = _properties[10];
+  const auto& _prop_11 = _properties[11];
+  const auto& _prop_12 = _properties[12];
+  const auto& _prop_13 = _properties[13];
+  const auto& _prop_14 = _properties[14];
+  const auto& _prop_15 = _properties[15];
+  const auto& _prop_16 = _properties[16];
+  const auto& _prop_17 = _properties[17];
+  const auto& _prop_18 = _properties[18];
+  const auto& _prop_19 = _properties[19];
+  const auto& _prop_20 = _properties[20];
+  const auto& _prop_21 = _properties[21];
+  const auto& _prop_22 = _properties[22];
+  const auto& _prop_23 = _properties[23];
+  const auto& _prop_24 = _properties[24];
+  const auto& _prop_25 = _properties[25];
+  const auto& _prop_26 = _properties[26];
+  const auto& _prop_27 = _properties[27];
+  const auto& _prop_28 = _properties[28];
+  const auto& _prop_29 = _properties[29];
+  const auto& _prop_30 = _properties[30];
+  const auto& _prop_31 = _properties[31];
+  const auto& _prop_32 = _properties[32];
+  resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
+  resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "name"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "color"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _tag = r.read_u8(); if (_tag == 0) { _obj.setProperty(rt, rustra::generated::cachedProp(rt, "lastActiveTabId"), jsi::Value::null()); } else { { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "lastActiveTabId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_6, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _tag = r.read_u8(); if (_tag == 0) { _obj.setProperty(rt, _prop_7, jsi::Value::null()); } else { { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_7, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaces"), _arr); }
+    resultObj.setProperty(rt, _prop_3, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "url"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "favorite"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "pinned"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "private"), r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarkId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "homeUrl"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "homeTitle"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "suspended"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "updatedAt"), [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_12, r.read_bool());
+      _obj.setProperty(rt, _prop_13, r.read_bool());
+      _obj.setProperty(rt, _prop_14, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_15, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_18, r.read_bool());
+      _obj.setProperty(rt, _prop_19, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "tabs"), _arr); }
+    resultObj.setProperty(rt, _prop_8, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "url"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "folderId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_21, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarks"), _arr); }
+    resultObj.setProperty(rt, _prop_20, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarkFolders"), _arr); }
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeWorkspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeTabId"), jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeTabId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+    resultObj.setProperty(rt, _prop_22, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_23, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_24, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_24, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "key"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "meta"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "ctrl"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "alt"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "shift"), r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "command"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_26, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_27, r.read_bool());
+      _obj.setProperty(rt, _prop_28, r.read_bool());
+      _obj.setProperty(rt, _prop_29, r.read_bool());
+      _obj.setProperty(rt, _prop_30, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "keyBindings"), _arr); }
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "keymapVersion"), (double)r.read_uvar());
+    resultObj.setProperty(rt, _prop_25, _arr); }
+  resultObj.setProperty(rt, _prop_32, (double)r.read_uvar());
   return std::move(resultObj);
 }
+static jsi::Value decode_bookmarkRemove(jsi::Runtime& rt, rc::Reader& r) {
+  auto resultObj = jsi::Object(rt);
+  const std::array<jsi::PropNameID, 33> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  return decode_body_bookmarkRemove(rt, resultObj, r, _properties.data());
+}
 
+static void encode_body_bookmarkSetFolder(jsi::Runtime& rt, const jsi::Object& argsObj, rc::Writer& w, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  const auto& _prop_1 = _properties[1];
+  { auto _v = argsObj.getProperty(rt, _prop_0).getString(rt).utf8(rt); w.push_string(_v); }
+  { auto _v = argsObj.getProperty(rt, _prop_1).getString(rt).utf8(rt); w.push_string(_v); }
+}
 static void encode_bookmarkSetFolder(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
   w.push_u8(27); w.push_u8(0); // cmd_id = 27 LE
   auto argsObj = args.asObject(rt);
-  { auto _v = argsObj.getProperty(rt, "bookmarkId").getString(rt).utf8(rt); w.push_string(_v); }
-  { auto _v = argsObj.getProperty(rt, "folderId").getString(rt).utf8(rt); w.push_string(_v); }
+  const std::array<jsi::PropNameID, 2> _properties{jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "folderId")};
+  encode_body_bookmarkSetFolder(rt, argsObj, w, _properties.data());
 }
 
 // (Tier 1 positional) 개별 인자 → 직접 인코딩. argsObj 경유 대비 JSI 프로퍼티 조회 2회 제거.
@@ -823,73 +1174,117 @@ static void encode_pos_bookmarkSetFolder(jsi::Runtime& rt, const jsi::Value* arg
   { auto _s = argv[1].asString(rt).utf8(rt); w.push_string(_s); }
 }
 
-static jsi::Value decode_bookmarkSetFolder(jsi::Runtime& rt, rc::Reader& r) {
-  auto resultObj = jsi::Object(rt);
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "version"), (double)r.read_uvar());
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "revision"), (double)r.read_uvar());
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "lastExternalRequestId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+static jsi::Value decode_body_bookmarkSetFolder(jsi::Runtime& rt, jsi::Object& resultObj, rc::Reader& r, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  const auto& _prop_1 = _properties[1];
+  const auto& _prop_2 = _properties[2];
+  const auto& _prop_3 = _properties[3];
+  const auto& _prop_4 = _properties[4];
+  const auto& _prop_5 = _properties[5];
+  const auto& _prop_6 = _properties[6];
+  const auto& _prop_7 = _properties[7];
+  const auto& _prop_8 = _properties[8];
+  const auto& _prop_9 = _properties[9];
+  const auto& _prop_10 = _properties[10];
+  const auto& _prop_11 = _properties[11];
+  const auto& _prop_12 = _properties[12];
+  const auto& _prop_13 = _properties[13];
+  const auto& _prop_14 = _properties[14];
+  const auto& _prop_15 = _properties[15];
+  const auto& _prop_16 = _properties[16];
+  const auto& _prop_17 = _properties[17];
+  const auto& _prop_18 = _properties[18];
+  const auto& _prop_19 = _properties[19];
+  const auto& _prop_20 = _properties[20];
+  const auto& _prop_21 = _properties[21];
+  const auto& _prop_22 = _properties[22];
+  const auto& _prop_23 = _properties[23];
+  const auto& _prop_24 = _properties[24];
+  const auto& _prop_25 = _properties[25];
+  const auto& _prop_26 = _properties[26];
+  const auto& _prop_27 = _properties[27];
+  const auto& _prop_28 = _properties[28];
+  const auto& _prop_29 = _properties[29];
+  const auto& _prop_30 = _properties[30];
+  const auto& _prop_31 = _properties[31];
+  const auto& _prop_32 = _properties[32];
+  resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
+  resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "name"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "color"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _tag = r.read_u8(); if (_tag == 0) { _obj.setProperty(rt, rustra::generated::cachedProp(rt, "lastActiveTabId"), jsi::Value::null()); } else { { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "lastActiveTabId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_6, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _tag = r.read_u8(); if (_tag == 0) { _obj.setProperty(rt, _prop_7, jsi::Value::null()); } else { { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_7, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaces"), _arr); }
+    resultObj.setProperty(rt, _prop_3, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "url"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "favorite"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "pinned"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "private"), r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarkId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "homeUrl"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "homeTitle"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "suspended"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "updatedAt"), [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_12, r.read_bool());
+      _obj.setProperty(rt, _prop_13, r.read_bool());
+      _obj.setProperty(rt, _prop_14, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_15, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_18, r.read_bool());
+      _obj.setProperty(rt, _prop_19, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "tabs"), _arr); }
+    resultObj.setProperty(rt, _prop_8, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "url"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "folderId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_21, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarks"), _arr); }
+    resultObj.setProperty(rt, _prop_20, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarkFolders"), _arr); }
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeWorkspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeTabId"), jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeTabId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+    resultObj.setProperty(rt, _prop_22, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_23, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_24, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_24, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "key"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "meta"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "ctrl"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "alt"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "shift"), r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "command"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_26, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_27, r.read_bool());
+      _obj.setProperty(rt, _prop_28, r.read_bool());
+      _obj.setProperty(rt, _prop_29, r.read_bool());
+      _obj.setProperty(rt, _prop_30, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "keyBindings"), _arr); }
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "keymapVersion"), (double)r.read_uvar());
+    resultObj.setProperty(rt, _prop_25, _arr); }
+  resultObj.setProperty(rt, _prop_32, (double)r.read_uvar());
   return std::move(resultObj);
 }
+static jsi::Value decode_bookmarkSetFolder(jsi::Runtime& rt, rc::Reader& r) {
+  auto resultObj = jsi::Object(rt);
+  const std::array<jsi::PropNameID, 33> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  return decode_body_bookmarkSetFolder(rt, resultObj, r, _properties.data());
+}
 
+static void encode_body_bookmarkUpdate(jsi::Runtime& rt, const jsi::Object& argsObj, rc::Writer& w, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  const auto& _prop_1 = _properties[1];
+  const auto& _prop_2 = _properties[2];
+  { auto _v = argsObj.getProperty(rt, _prop_0).getString(rt).utf8(rt); w.push_string(_v); }
+  { auto _v = argsObj.getProperty(rt, _prop_1).getString(rt).utf8(rt); w.push_string(_v); }
+  { auto _v = argsObj.getProperty(rt, _prop_2).getString(rt).utf8(rt); w.push_string(_v); }
+}
 static void encode_bookmarkUpdate(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
   w.push_u8(21); w.push_u8(0); // cmd_id = 21 LE
   auto argsObj = args.asObject(rt);
-  { auto _v = argsObj.getProperty(rt, "bookmarkId").getString(rt).utf8(rt); w.push_string(_v); }
-  { auto _v = argsObj.getProperty(rt, "title").getString(rt).utf8(rt); w.push_string(_v); }
-  { auto _v = argsObj.getProperty(rt, "url").getString(rt).utf8(rt); w.push_string(_v); }
+  const std::array<jsi::PropNameID, 3> _properties{jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "url")};
+  encode_body_bookmarkUpdate(rt, argsObj, w, _properties.data());
 }
 
 // (Tier 1 positional) 개별 인자 → 직접 인코딩. argsObj 경유 대비 JSI 프로퍼티 조회 3회 제거.
@@ -901,232 +1296,378 @@ static void encode_pos_bookmarkUpdate(jsi::Runtime& rt, const jsi::Value* argv, 
   { auto _s = argv[2].asString(rt).utf8(rt); w.push_string(_s); }
 }
 
-static jsi::Value decode_bookmarkUpdate(jsi::Runtime& rt, rc::Reader& r) {
-  auto resultObj = jsi::Object(rt);
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "version"), (double)r.read_uvar());
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "revision"), (double)r.read_uvar());
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "lastExternalRequestId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+static jsi::Value decode_body_bookmarkUpdate(jsi::Runtime& rt, jsi::Object& resultObj, rc::Reader& r, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  const auto& _prop_1 = _properties[1];
+  const auto& _prop_2 = _properties[2];
+  const auto& _prop_3 = _properties[3];
+  const auto& _prop_4 = _properties[4];
+  const auto& _prop_5 = _properties[5];
+  const auto& _prop_6 = _properties[6];
+  const auto& _prop_7 = _properties[7];
+  const auto& _prop_8 = _properties[8];
+  const auto& _prop_9 = _properties[9];
+  const auto& _prop_10 = _properties[10];
+  const auto& _prop_11 = _properties[11];
+  const auto& _prop_12 = _properties[12];
+  const auto& _prop_13 = _properties[13];
+  const auto& _prop_14 = _properties[14];
+  const auto& _prop_15 = _properties[15];
+  const auto& _prop_16 = _properties[16];
+  const auto& _prop_17 = _properties[17];
+  const auto& _prop_18 = _properties[18];
+  const auto& _prop_19 = _properties[19];
+  const auto& _prop_20 = _properties[20];
+  const auto& _prop_21 = _properties[21];
+  const auto& _prop_22 = _properties[22];
+  const auto& _prop_23 = _properties[23];
+  const auto& _prop_24 = _properties[24];
+  const auto& _prop_25 = _properties[25];
+  const auto& _prop_26 = _properties[26];
+  const auto& _prop_27 = _properties[27];
+  const auto& _prop_28 = _properties[28];
+  const auto& _prop_29 = _properties[29];
+  const auto& _prop_30 = _properties[30];
+  const auto& _prop_31 = _properties[31];
+  const auto& _prop_32 = _properties[32];
+  resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
+  resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "name"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "color"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _tag = r.read_u8(); if (_tag == 0) { _obj.setProperty(rt, rustra::generated::cachedProp(rt, "lastActiveTabId"), jsi::Value::null()); } else { { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "lastActiveTabId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_6, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _tag = r.read_u8(); if (_tag == 0) { _obj.setProperty(rt, _prop_7, jsi::Value::null()); } else { { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_7, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaces"), _arr); }
+    resultObj.setProperty(rt, _prop_3, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "url"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "favorite"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "pinned"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "private"), r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarkId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "homeUrl"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "homeTitle"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "suspended"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "updatedAt"), [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_12, r.read_bool());
+      _obj.setProperty(rt, _prop_13, r.read_bool());
+      _obj.setProperty(rt, _prop_14, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_15, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_18, r.read_bool());
+      _obj.setProperty(rt, _prop_19, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "tabs"), _arr); }
+    resultObj.setProperty(rt, _prop_8, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "url"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "folderId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_21, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarks"), _arr); }
+    resultObj.setProperty(rt, _prop_20, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarkFolders"), _arr); }
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeWorkspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeTabId"), jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeTabId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+    resultObj.setProperty(rt, _prop_22, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_23, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_24, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_24, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "key"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "meta"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "ctrl"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "alt"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "shift"), r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "command"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_26, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_27, r.read_bool());
+      _obj.setProperty(rt, _prop_28, r.read_bool());
+      _obj.setProperty(rt, _prop_29, r.read_bool());
+      _obj.setProperty(rt, _prop_30, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "keyBindings"), _arr); }
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "keymapVersion"), (double)r.read_uvar());
+    resultObj.setProperty(rt, _prop_25, _arr); }
+  resultObj.setProperty(rt, _prop_32, (double)r.read_uvar());
   return std::move(resultObj);
 }
+static jsi::Value decode_bookmarkUpdate(jsi::Runtime& rt, rc::Reader& r) {
+  auto resultObj = jsi::Object(rt);
+  const std::array<jsi::PropNameID, 33> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  return decode_body_bookmarkUpdate(rt, resultObj, r, _properties.data());
+}
 
+static void encode_body_browserSnapshot(jsi::Runtime& rt, const jsi::Object& argsObj, rc::Writer& w, const jsi::PropNameID* _properties) {
+}
 static void encode_browserSnapshot(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
   w.push_u8(1); w.push_u8(0); // cmd_id = 1 LE
   auto argsObj = args.asObject(rt);
+  const std::array<jsi::PropNameID, 0> _properties{};
+  encode_body_browserSnapshot(rt, argsObj, w, _properties.data());
 }
 
-static jsi::Value decode_browserSnapshot(jsi::Runtime& rt, rc::Reader& r) {
-  auto resultObj = jsi::Object(rt);
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "version"), (double)r.read_uvar());
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "revision"), (double)r.read_uvar());
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "lastExternalRequestId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+static jsi::Value decode_body_browserSnapshot(jsi::Runtime& rt, jsi::Object& resultObj, rc::Reader& r, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  const auto& _prop_1 = _properties[1];
+  const auto& _prop_2 = _properties[2];
+  const auto& _prop_3 = _properties[3];
+  const auto& _prop_4 = _properties[4];
+  const auto& _prop_5 = _properties[5];
+  const auto& _prop_6 = _properties[6];
+  const auto& _prop_7 = _properties[7];
+  const auto& _prop_8 = _properties[8];
+  const auto& _prop_9 = _properties[9];
+  const auto& _prop_10 = _properties[10];
+  const auto& _prop_11 = _properties[11];
+  const auto& _prop_12 = _properties[12];
+  const auto& _prop_13 = _properties[13];
+  const auto& _prop_14 = _properties[14];
+  const auto& _prop_15 = _properties[15];
+  const auto& _prop_16 = _properties[16];
+  const auto& _prop_17 = _properties[17];
+  const auto& _prop_18 = _properties[18];
+  const auto& _prop_19 = _properties[19];
+  const auto& _prop_20 = _properties[20];
+  const auto& _prop_21 = _properties[21];
+  const auto& _prop_22 = _properties[22];
+  const auto& _prop_23 = _properties[23];
+  const auto& _prop_24 = _properties[24];
+  const auto& _prop_25 = _properties[25];
+  const auto& _prop_26 = _properties[26];
+  const auto& _prop_27 = _properties[27];
+  const auto& _prop_28 = _properties[28];
+  const auto& _prop_29 = _properties[29];
+  const auto& _prop_30 = _properties[30];
+  const auto& _prop_31 = _properties[31];
+  const auto& _prop_32 = _properties[32];
+  resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
+  resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "name"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "color"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _tag = r.read_u8(); if (_tag == 0) { _obj.setProperty(rt, rustra::generated::cachedProp(rt, "lastActiveTabId"), jsi::Value::null()); } else { { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "lastActiveTabId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_6, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _tag = r.read_u8(); if (_tag == 0) { _obj.setProperty(rt, _prop_7, jsi::Value::null()); } else { { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_7, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaces"), _arr); }
+    resultObj.setProperty(rt, _prop_3, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "url"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "favorite"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "pinned"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "private"), r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarkId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "homeUrl"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "homeTitle"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "suspended"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "updatedAt"), [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_12, r.read_bool());
+      _obj.setProperty(rt, _prop_13, r.read_bool());
+      _obj.setProperty(rt, _prop_14, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_15, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_18, r.read_bool());
+      _obj.setProperty(rt, _prop_19, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "tabs"), _arr); }
+    resultObj.setProperty(rt, _prop_8, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "url"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "folderId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_21, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarks"), _arr); }
+    resultObj.setProperty(rt, _prop_20, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarkFolders"), _arr); }
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeWorkspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeTabId"), jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeTabId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+    resultObj.setProperty(rt, _prop_22, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_23, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_24, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_24, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "key"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "meta"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "ctrl"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "alt"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "shift"), r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "command"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_26, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_27, r.read_bool());
+      _obj.setProperty(rt, _prop_28, r.read_bool());
+      _obj.setProperty(rt, _prop_29, r.read_bool());
+      _obj.setProperty(rt, _prop_30, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "keyBindings"), _arr); }
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "keymapVersion"), (double)r.read_uvar());
+    resultObj.setProperty(rt, _prop_25, _arr); }
+  resultObj.setProperty(rt, _prop_32, (double)r.read_uvar());
   return std::move(resultObj);
 }
+static jsi::Value decode_browserSnapshot(jsi::Runtime& rt, rc::Reader& r) {
+  auto resultObj = jsi::Object(rt);
+  const std::array<jsi::PropNameID, 33> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  return decode_body_browserSnapshot(rt, resultObj, r, _properties.data());
+}
 
+static void encode_body_keymapDefaults(jsi::Runtime& rt, const jsi::Object& argsObj, rc::Writer& w, const jsi::PropNameID* _properties) {
+}
 static void encode_keymapDefaults(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
   w.push_u8(19); w.push_u8(0); // cmd_id = 19 LE
   auto argsObj = args.asObject(rt);
+  const std::array<jsi::PropNameID, 0> _properties{};
+  encode_body_keymapDefaults(rt, argsObj, w, _properties.data());
 }
 
-static jsi::Value decode_keymapDefaults(jsi::Runtime& rt, rc::Reader& r) {
-  auto resultObj = jsi::Object(rt);
+static jsi::Value decode_body_keymapDefaults(jsi::Runtime& rt, jsi::Object& resultObj, rc::Reader& r, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  const auto& _prop_1 = _properties[1];
+  const auto& _prop_2 = _properties[2];
+  const auto& _prop_3 = _properties[3];
+  const auto& _prop_4 = _properties[4];
+  const auto& _prop_5 = _properties[5];
+  const auto& _prop_6 = _properties[6];
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "key"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "meta"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "ctrl"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "alt"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "shift"), r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "command"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_1, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_2, r.read_bool());
+      _obj.setProperty(rt, _prop_3, r.read_bool());
+      _obj.setProperty(rt, _prop_4, r.read_bool());
+      _obj.setProperty(rt, _prop_5, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_6, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "bindings"), _arr); }
+    resultObj.setProperty(rt, _prop_0, _arr); }
   return std::move(resultObj);
 }
+static jsi::Value decode_keymapDefaults(jsi::Runtime& rt, rc::Reader& r) {
+  auto resultObj = jsi::Object(rt);
+  const std::array<jsi::PropNameID, 7> _properties{jsi::PropNameID::forAscii(rt, "bindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command")};
+  return decode_body_keymapDefaults(rt, resultObj, r, _properties.data());
+}
 
+static void encode_body_keymapSet(jsi::Runtime& rt, const jsi::Object& argsObj, rc::Writer& w, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  const auto& _prop_1 = _properties[1];
+  const auto& _prop_2 = _properties[2];
+  const auto& _prop_3 = _properties[3];
+  const auto& _prop_4 = _properties[4];
+  const auto& _prop_5 = _properties[5];
+  const auto& _prop_6 = _properties[6];
+  { auto _arr = argsObj.getProperty(rt, _prop_0).asObject(rt).getArray(rt); auto _n = _arr.length(rt); w.push_uvar(_n);
+    for (size_t _i = 0; _i < _n; _i++) { auto _obj = _arr.getValueAtIndex(rt, _i).getObject(rt);
+      { auto _v = _obj.getProperty(rt, _prop_1).getString(rt).utf8(rt); w.push_string(_v); }
+      { auto _v = _obj.getProperty(rt, _prop_2).getBool(); w.push_bool(_v); }
+      { auto _v = _obj.getProperty(rt, _prop_3).getBool(); w.push_bool(_v); }
+      { auto _v = _obj.getProperty(rt, _prop_4).getBool(); w.push_bool(_v); }
+      { auto _v = _obj.getProperty(rt, _prop_5).getBool(); w.push_bool(_v); }
+      { auto _v = _obj.getProperty(rt, _prop_6).getString(rt).utf8(rt); w.push_string(_v); }
+    } }
+}
 static void encode_keymapSet(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
   w.push_u8(18); w.push_u8(0); // cmd_id = 18 LE
   auto argsObj = args.asObject(rt);
-  { auto _arr = argsObj.getProperty(rt, "bindings").asObject(rt).getArray(rt); auto _n = _arr.length(rt); w.push_uvar(_n);
-    for (size_t _i = 0; _i < _n; _i++) { auto _obj = _arr.getValueAtIndex(rt, _i).getObject(rt);
-      { auto _v = _obj.getProperty(rt, "key").getString(rt).utf8(rt); w.push_string(_v); }
-      { auto _v = _obj.getProperty(rt, "meta").getBool(); w.push_bool(_v); }
-      { auto _v = _obj.getProperty(rt, "ctrl").getBool(); w.push_bool(_v); }
-      { auto _v = _obj.getProperty(rt, "alt").getBool(); w.push_bool(_v); }
-      { auto _v = _obj.getProperty(rt, "shift").getBool(); w.push_bool(_v); }
-      { auto _v = _obj.getProperty(rt, "command").getString(rt).utf8(rt); w.push_string(_v); }
-    } }
+  const std::array<jsi::PropNameID, 7> _properties{jsi::PropNameID::forAscii(rt, "bindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command")};
+  encode_body_keymapSet(rt, argsObj, w, _properties.data());
 }
 
-static jsi::Value decode_keymapSet(jsi::Runtime& rt, rc::Reader& r) {
-  auto resultObj = jsi::Object(rt);
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "version"), (double)r.read_uvar());
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "revision"), (double)r.read_uvar());
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "lastExternalRequestId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+static jsi::Value decode_body_keymapSet(jsi::Runtime& rt, jsi::Object& resultObj, rc::Reader& r, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  const auto& _prop_1 = _properties[1];
+  const auto& _prop_2 = _properties[2];
+  const auto& _prop_3 = _properties[3];
+  const auto& _prop_4 = _properties[4];
+  const auto& _prop_5 = _properties[5];
+  const auto& _prop_6 = _properties[6];
+  const auto& _prop_7 = _properties[7];
+  const auto& _prop_8 = _properties[8];
+  const auto& _prop_9 = _properties[9];
+  const auto& _prop_10 = _properties[10];
+  const auto& _prop_11 = _properties[11];
+  const auto& _prop_12 = _properties[12];
+  const auto& _prop_13 = _properties[13];
+  const auto& _prop_14 = _properties[14];
+  const auto& _prop_15 = _properties[15];
+  const auto& _prop_16 = _properties[16];
+  const auto& _prop_17 = _properties[17];
+  const auto& _prop_18 = _properties[18];
+  const auto& _prop_19 = _properties[19];
+  const auto& _prop_20 = _properties[20];
+  const auto& _prop_21 = _properties[21];
+  const auto& _prop_22 = _properties[22];
+  const auto& _prop_23 = _properties[23];
+  const auto& _prop_24 = _properties[24];
+  const auto& _prop_25 = _properties[25];
+  const auto& _prop_26 = _properties[26];
+  const auto& _prop_27 = _properties[27];
+  const auto& _prop_28 = _properties[28];
+  const auto& _prop_29 = _properties[29];
+  const auto& _prop_30 = _properties[30];
+  const auto& _prop_31 = _properties[31];
+  const auto& _prop_32 = _properties[32];
+  resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
+  resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "name"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "color"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _tag = r.read_u8(); if (_tag == 0) { _obj.setProperty(rt, rustra::generated::cachedProp(rt, "lastActiveTabId"), jsi::Value::null()); } else { { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "lastActiveTabId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_6, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _tag = r.read_u8(); if (_tag == 0) { _obj.setProperty(rt, _prop_7, jsi::Value::null()); } else { { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_7, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaces"), _arr); }
+    resultObj.setProperty(rt, _prop_3, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "url"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "favorite"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "pinned"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "private"), r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarkId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "homeUrl"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "homeTitle"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "suspended"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "updatedAt"), [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_12, r.read_bool());
+      _obj.setProperty(rt, _prop_13, r.read_bool());
+      _obj.setProperty(rt, _prop_14, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_15, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_18, r.read_bool());
+      _obj.setProperty(rt, _prop_19, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "tabs"), _arr); }
+    resultObj.setProperty(rt, _prop_8, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "url"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "folderId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_21, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarks"), _arr); }
+    resultObj.setProperty(rt, _prop_20, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarkFolders"), _arr); }
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeWorkspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeTabId"), jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeTabId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+    resultObj.setProperty(rt, _prop_22, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_23, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_24, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_24, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "key"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "meta"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "ctrl"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "alt"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "shift"), r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "command"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_26, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_27, r.read_bool());
+      _obj.setProperty(rt, _prop_28, r.read_bool());
+      _obj.setProperty(rt, _prop_29, r.read_bool());
+      _obj.setProperty(rt, _prop_30, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "keyBindings"), _arr); }
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "keymapVersion"), (double)r.read_uvar());
+    resultObj.setProperty(rt, _prop_25, _arr); }
+  resultObj.setProperty(rt, _prop_32, (double)r.read_uvar());
   return std::move(resultObj);
 }
+static jsi::Value decode_keymapSet(jsi::Runtime& rt, rc::Reader& r) {
+  auto resultObj = jsi::Object(rt);
+  const std::array<jsi::PropNameID, 33> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  return decode_body_keymapSet(rt, resultObj, r, _properties.data());
+}
 
+static void encode_body_snapshotRestore(jsi::Runtime& rt, const jsi::Object& argsObj, rc::Writer& w, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  { auto _v = argsObj.getProperty(rt, _prop_0).getString(rt).utf8(rt); w.push_string(_v); }
+}
 static void encode_snapshotRestore(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
   w.push_u8(17); w.push_u8(0); // cmd_id = 17 LE
   auto argsObj = args.asObject(rt);
-  { auto _v = argsObj.getProperty(rt, "json").getString(rt).utf8(rt); w.push_string(_v); }
+  const std::array<jsi::PropNameID, 1> _properties{jsi::PropNameID::forAscii(rt, "json")};
+  encode_body_snapshotRestore(rt, argsObj, w, _properties.data());
 }
 
 // (Tier 1 positional) 개별 인자 → 직접 인코딩. argsObj 경유 대비 JSI 프로퍼티 조회 1회 제거.
@@ -1136,71 +1677,113 @@ static void encode_pos_snapshotRestore(jsi::Runtime& rt, const jsi::Value* argv,
   { auto _s = argv[0].asString(rt).utf8(rt); w.push_string(_s); }
 }
 
-static jsi::Value decode_snapshotRestore(jsi::Runtime& rt, rc::Reader& r) {
-  auto resultObj = jsi::Object(rt);
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "version"), (double)r.read_uvar());
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "revision"), (double)r.read_uvar());
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "lastExternalRequestId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+static jsi::Value decode_body_snapshotRestore(jsi::Runtime& rt, jsi::Object& resultObj, rc::Reader& r, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  const auto& _prop_1 = _properties[1];
+  const auto& _prop_2 = _properties[2];
+  const auto& _prop_3 = _properties[3];
+  const auto& _prop_4 = _properties[4];
+  const auto& _prop_5 = _properties[5];
+  const auto& _prop_6 = _properties[6];
+  const auto& _prop_7 = _properties[7];
+  const auto& _prop_8 = _properties[8];
+  const auto& _prop_9 = _properties[9];
+  const auto& _prop_10 = _properties[10];
+  const auto& _prop_11 = _properties[11];
+  const auto& _prop_12 = _properties[12];
+  const auto& _prop_13 = _properties[13];
+  const auto& _prop_14 = _properties[14];
+  const auto& _prop_15 = _properties[15];
+  const auto& _prop_16 = _properties[16];
+  const auto& _prop_17 = _properties[17];
+  const auto& _prop_18 = _properties[18];
+  const auto& _prop_19 = _properties[19];
+  const auto& _prop_20 = _properties[20];
+  const auto& _prop_21 = _properties[21];
+  const auto& _prop_22 = _properties[22];
+  const auto& _prop_23 = _properties[23];
+  const auto& _prop_24 = _properties[24];
+  const auto& _prop_25 = _properties[25];
+  const auto& _prop_26 = _properties[26];
+  const auto& _prop_27 = _properties[27];
+  const auto& _prop_28 = _properties[28];
+  const auto& _prop_29 = _properties[29];
+  const auto& _prop_30 = _properties[30];
+  const auto& _prop_31 = _properties[31];
+  const auto& _prop_32 = _properties[32];
+  resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
+  resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "name"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "color"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _tag = r.read_u8(); if (_tag == 0) { _obj.setProperty(rt, rustra::generated::cachedProp(rt, "lastActiveTabId"), jsi::Value::null()); } else { { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "lastActiveTabId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_6, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _tag = r.read_u8(); if (_tag == 0) { _obj.setProperty(rt, _prop_7, jsi::Value::null()); } else { { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_7, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaces"), _arr); }
+    resultObj.setProperty(rt, _prop_3, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "url"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "favorite"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "pinned"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "private"), r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarkId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "homeUrl"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "homeTitle"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "suspended"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "updatedAt"), [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_12, r.read_bool());
+      _obj.setProperty(rt, _prop_13, r.read_bool());
+      _obj.setProperty(rt, _prop_14, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_15, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_18, r.read_bool());
+      _obj.setProperty(rt, _prop_19, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "tabs"), _arr); }
+    resultObj.setProperty(rt, _prop_8, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "url"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "folderId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_21, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarks"), _arr); }
+    resultObj.setProperty(rt, _prop_20, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarkFolders"), _arr); }
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeWorkspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeTabId"), jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeTabId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+    resultObj.setProperty(rt, _prop_22, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_23, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_24, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_24, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "key"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "meta"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "ctrl"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "alt"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "shift"), r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "command"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_26, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_27, r.read_bool());
+      _obj.setProperty(rt, _prop_28, r.read_bool());
+      _obj.setProperty(rt, _prop_29, r.read_bool());
+      _obj.setProperty(rt, _prop_30, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "keyBindings"), _arr); }
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "keymapVersion"), (double)r.read_uvar());
+    resultObj.setProperty(rt, _prop_25, _arr); }
+  resultObj.setProperty(rt, _prop_32, (double)r.read_uvar());
   return std::move(resultObj);
 }
+static jsi::Value decode_snapshotRestore(jsi::Runtime& rt, rc::Reader& r) {
+  auto resultObj = jsi::Object(rt);
+  const std::array<jsi::PropNameID, 33> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  return decode_body_snapshotRestore(rt, resultObj, r, _properties.data());
+}
 
+static void encode_body_tabActivate(jsi::Runtime& rt, const jsi::Object& argsObj, rc::Writer& w, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  { auto _v = argsObj.getProperty(rt, _prop_0).getString(rt).utf8(rt); w.push_string(_v); }
+}
 static void encode_tabActivate(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
   w.push_u8(9); w.push_u8(0); // cmd_id = 9 LE
   auto argsObj = args.asObject(rt);
-  { auto _v = argsObj.getProperty(rt, "tabId").getString(rt).utf8(rt); w.push_string(_v); }
+  const std::array<jsi::PropNameID, 1> _properties{jsi::PropNameID::forAscii(rt, "tabId")};
+  encode_body_tabActivate(rt, argsObj, w, _properties.data());
 }
 
 // (Tier 1 positional) 개별 인자 → 직접 인코딩. argsObj 경유 대비 JSI 프로퍼티 조회 1회 제거.
@@ -1210,71 +1793,113 @@ static void encode_pos_tabActivate(jsi::Runtime& rt, const jsi::Value* argv, siz
   { auto _s = argv[0].asString(rt).utf8(rt); w.push_string(_s); }
 }
 
-static jsi::Value decode_tabActivate(jsi::Runtime& rt, rc::Reader& r) {
-  auto resultObj = jsi::Object(rt);
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "version"), (double)r.read_uvar());
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "revision"), (double)r.read_uvar());
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "lastExternalRequestId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+static jsi::Value decode_body_tabActivate(jsi::Runtime& rt, jsi::Object& resultObj, rc::Reader& r, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  const auto& _prop_1 = _properties[1];
+  const auto& _prop_2 = _properties[2];
+  const auto& _prop_3 = _properties[3];
+  const auto& _prop_4 = _properties[4];
+  const auto& _prop_5 = _properties[5];
+  const auto& _prop_6 = _properties[6];
+  const auto& _prop_7 = _properties[7];
+  const auto& _prop_8 = _properties[8];
+  const auto& _prop_9 = _properties[9];
+  const auto& _prop_10 = _properties[10];
+  const auto& _prop_11 = _properties[11];
+  const auto& _prop_12 = _properties[12];
+  const auto& _prop_13 = _properties[13];
+  const auto& _prop_14 = _properties[14];
+  const auto& _prop_15 = _properties[15];
+  const auto& _prop_16 = _properties[16];
+  const auto& _prop_17 = _properties[17];
+  const auto& _prop_18 = _properties[18];
+  const auto& _prop_19 = _properties[19];
+  const auto& _prop_20 = _properties[20];
+  const auto& _prop_21 = _properties[21];
+  const auto& _prop_22 = _properties[22];
+  const auto& _prop_23 = _properties[23];
+  const auto& _prop_24 = _properties[24];
+  const auto& _prop_25 = _properties[25];
+  const auto& _prop_26 = _properties[26];
+  const auto& _prop_27 = _properties[27];
+  const auto& _prop_28 = _properties[28];
+  const auto& _prop_29 = _properties[29];
+  const auto& _prop_30 = _properties[30];
+  const auto& _prop_31 = _properties[31];
+  const auto& _prop_32 = _properties[32];
+  resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
+  resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "name"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "color"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _tag = r.read_u8(); if (_tag == 0) { _obj.setProperty(rt, rustra::generated::cachedProp(rt, "lastActiveTabId"), jsi::Value::null()); } else { { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "lastActiveTabId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_6, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _tag = r.read_u8(); if (_tag == 0) { _obj.setProperty(rt, _prop_7, jsi::Value::null()); } else { { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_7, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaces"), _arr); }
+    resultObj.setProperty(rt, _prop_3, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "url"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "favorite"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "pinned"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "private"), r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarkId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "homeUrl"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "homeTitle"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "suspended"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "updatedAt"), [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_12, r.read_bool());
+      _obj.setProperty(rt, _prop_13, r.read_bool());
+      _obj.setProperty(rt, _prop_14, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_15, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_18, r.read_bool());
+      _obj.setProperty(rt, _prop_19, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "tabs"), _arr); }
+    resultObj.setProperty(rt, _prop_8, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "url"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "folderId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_21, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarks"), _arr); }
+    resultObj.setProperty(rt, _prop_20, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarkFolders"), _arr); }
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeWorkspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeTabId"), jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeTabId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+    resultObj.setProperty(rt, _prop_22, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_23, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_24, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_24, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "key"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "meta"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "ctrl"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "alt"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "shift"), r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "command"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_26, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_27, r.read_bool());
+      _obj.setProperty(rt, _prop_28, r.read_bool());
+      _obj.setProperty(rt, _prop_29, r.read_bool());
+      _obj.setProperty(rt, _prop_30, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "keyBindings"), _arr); }
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "keymapVersion"), (double)r.read_uvar());
+    resultObj.setProperty(rt, _prop_25, _arr); }
+  resultObj.setProperty(rt, _prop_32, (double)r.read_uvar());
   return std::move(resultObj);
 }
+static jsi::Value decode_tabActivate(jsi::Runtime& rt, rc::Reader& r) {
+  auto resultObj = jsi::Object(rt);
+  const std::array<jsi::PropNameID, 33> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  return decode_body_tabActivate(rt, resultObj, r, _properties.data());
+}
 
+static void encode_body_tabClose(jsi::Runtime& rt, const jsi::Object& argsObj, rc::Writer& w, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  { auto _v = argsObj.getProperty(rt, _prop_0).getString(rt).utf8(rt); w.push_string(_v); }
+}
 static void encode_tabClose(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
   w.push_u8(10); w.push_u8(0); // cmd_id = 10 LE
   auto argsObj = args.asObject(rt);
-  { auto _v = argsObj.getProperty(rt, "tabId").getString(rt).utf8(rt); w.push_string(_v); }
+  const std::array<jsi::PropNameID, 1> _properties{jsi::PropNameID::forAscii(rt, "tabId")};
+  encode_body_tabClose(rt, argsObj, w, _properties.data());
 }
 
 // (Tier 1 positional) 개별 인자 → 직접 인코딩. argsObj 경유 대비 JSI 프로퍼티 조회 1회 제거.
@@ -1284,73 +1909,117 @@ static void encode_pos_tabClose(jsi::Runtime& rt, const jsi::Value* argv, size_t
   { auto _s = argv[0].asString(rt).utf8(rt); w.push_string(_s); }
 }
 
-static jsi::Value decode_tabClose(jsi::Runtime& rt, rc::Reader& r) {
-  auto resultObj = jsi::Object(rt);
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "version"), (double)r.read_uvar());
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "revision"), (double)r.read_uvar());
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "lastExternalRequestId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+static jsi::Value decode_body_tabClose(jsi::Runtime& rt, jsi::Object& resultObj, rc::Reader& r, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  const auto& _prop_1 = _properties[1];
+  const auto& _prop_2 = _properties[2];
+  const auto& _prop_3 = _properties[3];
+  const auto& _prop_4 = _properties[4];
+  const auto& _prop_5 = _properties[5];
+  const auto& _prop_6 = _properties[6];
+  const auto& _prop_7 = _properties[7];
+  const auto& _prop_8 = _properties[8];
+  const auto& _prop_9 = _properties[9];
+  const auto& _prop_10 = _properties[10];
+  const auto& _prop_11 = _properties[11];
+  const auto& _prop_12 = _properties[12];
+  const auto& _prop_13 = _properties[13];
+  const auto& _prop_14 = _properties[14];
+  const auto& _prop_15 = _properties[15];
+  const auto& _prop_16 = _properties[16];
+  const auto& _prop_17 = _properties[17];
+  const auto& _prop_18 = _properties[18];
+  const auto& _prop_19 = _properties[19];
+  const auto& _prop_20 = _properties[20];
+  const auto& _prop_21 = _properties[21];
+  const auto& _prop_22 = _properties[22];
+  const auto& _prop_23 = _properties[23];
+  const auto& _prop_24 = _properties[24];
+  const auto& _prop_25 = _properties[25];
+  const auto& _prop_26 = _properties[26];
+  const auto& _prop_27 = _properties[27];
+  const auto& _prop_28 = _properties[28];
+  const auto& _prop_29 = _properties[29];
+  const auto& _prop_30 = _properties[30];
+  const auto& _prop_31 = _properties[31];
+  const auto& _prop_32 = _properties[32];
+  resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
+  resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "name"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "color"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _tag = r.read_u8(); if (_tag == 0) { _obj.setProperty(rt, rustra::generated::cachedProp(rt, "lastActiveTabId"), jsi::Value::null()); } else { { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "lastActiveTabId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_6, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _tag = r.read_u8(); if (_tag == 0) { _obj.setProperty(rt, _prop_7, jsi::Value::null()); } else { { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_7, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaces"), _arr); }
+    resultObj.setProperty(rt, _prop_3, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "url"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "favorite"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "pinned"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "private"), r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarkId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "homeUrl"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "homeTitle"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "suspended"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "updatedAt"), [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_12, r.read_bool());
+      _obj.setProperty(rt, _prop_13, r.read_bool());
+      _obj.setProperty(rt, _prop_14, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_15, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_18, r.read_bool());
+      _obj.setProperty(rt, _prop_19, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "tabs"), _arr); }
+    resultObj.setProperty(rt, _prop_8, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "url"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "folderId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_21, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarks"), _arr); }
+    resultObj.setProperty(rt, _prop_20, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarkFolders"), _arr); }
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeWorkspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeTabId"), jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeTabId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+    resultObj.setProperty(rt, _prop_22, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_23, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_24, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_24, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "key"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "meta"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "ctrl"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "alt"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "shift"), r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "command"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_26, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_27, r.read_bool());
+      _obj.setProperty(rt, _prop_28, r.read_bool());
+      _obj.setProperty(rt, _prop_29, r.read_bool());
+      _obj.setProperty(rt, _prop_30, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "keyBindings"), _arr); }
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "keymapVersion"), (double)r.read_uvar());
+    resultObj.setProperty(rt, _prop_25, _arr); }
+  resultObj.setProperty(rt, _prop_32, (double)r.read_uvar());
   return std::move(resultObj);
 }
+static jsi::Value decode_tabClose(jsi::Runtime& rt, rc::Reader& r) {
+  auto resultObj = jsi::Object(rt);
+  const std::array<jsi::PropNameID, 33> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  return decode_body_tabClose(rt, resultObj, r, _properties.data());
+}
 
+static void encode_body_tabCreate(jsi::Runtime& rt, const jsi::Object& argsObj, rc::Writer& w, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  const auto& _prop_1 = _properties[1];
+  const auto& _prop_2 = _properties[2];
+  { auto _v = argsObj.getProperty(rt, _prop_0).getString(rt).utf8(rt); w.push_string(_v); }
+  { auto _v = argsObj.getProperty(rt, _prop_1).getString(rt).utf8(rt); w.push_string(_v); }
+  { auto _v = argsObj.getProperty(rt, _prop_2).getBool(); w.push_bool(_v); }
+}
 static void encode_tabCreate(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
   w.push_u8(7); w.push_u8(0); // cmd_id = 7 LE
   auto argsObj = args.asObject(rt);
-  { auto _v = argsObj.getProperty(rt, "workspaceId").getString(rt).utf8(rt); w.push_string(_v); }
-  { auto _v = argsObj.getProperty(rt, "url").getString(rt).utf8(rt); w.push_string(_v); }
-  { auto _v = argsObj.getProperty(rt, "private").getBool(); w.push_bool(_v); }
+  const std::array<jsi::PropNameID, 3> _properties{jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "private")};
+  encode_body_tabCreate(rt, argsObj, w, _properties.data());
 }
 
 // (Tier 1 positional) 개별 인자 → 직접 인코딩. argsObj 경유 대비 JSI 프로퍼티 조회 3회 제거.
@@ -1362,72 +2031,115 @@ static void encode_pos_tabCreate(jsi::Runtime& rt, const jsi::Value* argv, size_
   w.push_bool(argv[2].asBool());
 }
 
-static jsi::Value decode_tabCreate(jsi::Runtime& rt, rc::Reader& r) {
-  auto resultObj = jsi::Object(rt);
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "version"), (double)r.read_uvar());
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "revision"), (double)r.read_uvar());
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "lastExternalRequestId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+static jsi::Value decode_body_tabCreate(jsi::Runtime& rt, jsi::Object& resultObj, rc::Reader& r, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  const auto& _prop_1 = _properties[1];
+  const auto& _prop_2 = _properties[2];
+  const auto& _prop_3 = _properties[3];
+  const auto& _prop_4 = _properties[4];
+  const auto& _prop_5 = _properties[5];
+  const auto& _prop_6 = _properties[6];
+  const auto& _prop_7 = _properties[7];
+  const auto& _prop_8 = _properties[8];
+  const auto& _prop_9 = _properties[9];
+  const auto& _prop_10 = _properties[10];
+  const auto& _prop_11 = _properties[11];
+  const auto& _prop_12 = _properties[12];
+  const auto& _prop_13 = _properties[13];
+  const auto& _prop_14 = _properties[14];
+  const auto& _prop_15 = _properties[15];
+  const auto& _prop_16 = _properties[16];
+  const auto& _prop_17 = _properties[17];
+  const auto& _prop_18 = _properties[18];
+  const auto& _prop_19 = _properties[19];
+  const auto& _prop_20 = _properties[20];
+  const auto& _prop_21 = _properties[21];
+  const auto& _prop_22 = _properties[22];
+  const auto& _prop_23 = _properties[23];
+  const auto& _prop_24 = _properties[24];
+  const auto& _prop_25 = _properties[25];
+  const auto& _prop_26 = _properties[26];
+  const auto& _prop_27 = _properties[27];
+  const auto& _prop_28 = _properties[28];
+  const auto& _prop_29 = _properties[29];
+  const auto& _prop_30 = _properties[30];
+  const auto& _prop_31 = _properties[31];
+  const auto& _prop_32 = _properties[32];
+  resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
+  resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "name"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "color"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _tag = r.read_u8(); if (_tag == 0) { _obj.setProperty(rt, rustra::generated::cachedProp(rt, "lastActiveTabId"), jsi::Value::null()); } else { { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "lastActiveTabId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_6, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _tag = r.read_u8(); if (_tag == 0) { _obj.setProperty(rt, _prop_7, jsi::Value::null()); } else { { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_7, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaces"), _arr); }
+    resultObj.setProperty(rt, _prop_3, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "url"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "favorite"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "pinned"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "private"), r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarkId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "homeUrl"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "homeTitle"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "suspended"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "updatedAt"), [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_12, r.read_bool());
+      _obj.setProperty(rt, _prop_13, r.read_bool());
+      _obj.setProperty(rt, _prop_14, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_15, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_18, r.read_bool());
+      _obj.setProperty(rt, _prop_19, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "tabs"), _arr); }
+    resultObj.setProperty(rt, _prop_8, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "url"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "folderId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_21, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarks"), _arr); }
+    resultObj.setProperty(rt, _prop_20, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarkFolders"), _arr); }
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeWorkspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeTabId"), jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeTabId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+    resultObj.setProperty(rt, _prop_22, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_23, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_24, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_24, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "key"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "meta"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "ctrl"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "alt"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "shift"), r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "command"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_26, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_27, r.read_bool());
+      _obj.setProperty(rt, _prop_28, r.read_bool());
+      _obj.setProperty(rt, _prop_29, r.read_bool());
+      _obj.setProperty(rt, _prop_30, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "keyBindings"), _arr); }
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "keymapVersion"), (double)r.read_uvar());
+    resultObj.setProperty(rt, _prop_25, _arr); }
+  resultObj.setProperty(rt, _prop_32, (double)r.read_uvar());
   return std::move(resultObj);
 }
+static jsi::Value decode_tabCreate(jsi::Runtime& rt, rc::Reader& r) {
+  auto resultObj = jsi::Object(rt);
+  const std::array<jsi::PropNameID, 33> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  return decode_body_tabCreate(rt, resultObj, r, _properties.data());
+}
 
+static void encode_body_tabMove(jsi::Runtime& rt, const jsi::Object& argsObj, rc::Writer& w, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  const auto& _prop_1 = _properties[1];
+  { auto _v = argsObj.getProperty(rt, _prop_0).getString(rt).utf8(rt); w.push_string(_v); }
+  w.push_uvar(rustra_u64(rt, argsObj.getProperty(rt, _prop_1), "index"));
+}
 static void encode_tabMove(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
   w.push_u8(14); w.push_u8(0); // cmd_id = 14 LE
   auto argsObj = args.asObject(rt);
-  { auto _v = argsObj.getProperty(rt, "tabId").getString(rt).utf8(rt); w.push_string(_v); }
-  w.push_uvar(rustra_u64(rt, argsObj.getProperty(rt, "index"), "index"));
+  const std::array<jsi::PropNameID, 2> _properties{jsi::PropNameID::forAscii(rt, "tabId"), jsi::PropNameID::forAscii(rt, "index")};
+  encode_body_tabMove(rt, argsObj, w, _properties.data());
 }
 
 // (Tier 1 positional) 개별 인자 → 직접 인코딩. argsObj 경유 대비 JSI 프로퍼티 조회 2회 제거.
@@ -1438,73 +2150,117 @@ static void encode_pos_tabMove(jsi::Runtime& rt, const jsi::Value* argv, size_t 
   w.push_uvar(rustra_u64(rt, argv[1], "index"));
 }
 
-static jsi::Value decode_tabMove(jsi::Runtime& rt, rc::Reader& r) {
-  auto resultObj = jsi::Object(rt);
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "version"), (double)r.read_uvar());
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "revision"), (double)r.read_uvar());
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "lastExternalRequestId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+static jsi::Value decode_body_tabMove(jsi::Runtime& rt, jsi::Object& resultObj, rc::Reader& r, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  const auto& _prop_1 = _properties[1];
+  const auto& _prop_2 = _properties[2];
+  const auto& _prop_3 = _properties[3];
+  const auto& _prop_4 = _properties[4];
+  const auto& _prop_5 = _properties[5];
+  const auto& _prop_6 = _properties[6];
+  const auto& _prop_7 = _properties[7];
+  const auto& _prop_8 = _properties[8];
+  const auto& _prop_9 = _properties[9];
+  const auto& _prop_10 = _properties[10];
+  const auto& _prop_11 = _properties[11];
+  const auto& _prop_12 = _properties[12];
+  const auto& _prop_13 = _properties[13];
+  const auto& _prop_14 = _properties[14];
+  const auto& _prop_15 = _properties[15];
+  const auto& _prop_16 = _properties[16];
+  const auto& _prop_17 = _properties[17];
+  const auto& _prop_18 = _properties[18];
+  const auto& _prop_19 = _properties[19];
+  const auto& _prop_20 = _properties[20];
+  const auto& _prop_21 = _properties[21];
+  const auto& _prop_22 = _properties[22];
+  const auto& _prop_23 = _properties[23];
+  const auto& _prop_24 = _properties[24];
+  const auto& _prop_25 = _properties[25];
+  const auto& _prop_26 = _properties[26];
+  const auto& _prop_27 = _properties[27];
+  const auto& _prop_28 = _properties[28];
+  const auto& _prop_29 = _properties[29];
+  const auto& _prop_30 = _properties[30];
+  const auto& _prop_31 = _properties[31];
+  const auto& _prop_32 = _properties[32];
+  resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
+  resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "name"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "color"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _tag = r.read_u8(); if (_tag == 0) { _obj.setProperty(rt, rustra::generated::cachedProp(rt, "lastActiveTabId"), jsi::Value::null()); } else { { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "lastActiveTabId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_6, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _tag = r.read_u8(); if (_tag == 0) { _obj.setProperty(rt, _prop_7, jsi::Value::null()); } else { { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_7, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaces"), _arr); }
+    resultObj.setProperty(rt, _prop_3, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "url"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "favorite"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "pinned"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "private"), r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarkId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "homeUrl"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "homeTitle"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "suspended"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "updatedAt"), [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_12, r.read_bool());
+      _obj.setProperty(rt, _prop_13, r.read_bool());
+      _obj.setProperty(rt, _prop_14, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_15, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_18, r.read_bool());
+      _obj.setProperty(rt, _prop_19, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "tabs"), _arr); }
+    resultObj.setProperty(rt, _prop_8, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "url"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "folderId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_21, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarks"), _arr); }
+    resultObj.setProperty(rt, _prop_20, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarkFolders"), _arr); }
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeWorkspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeTabId"), jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeTabId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+    resultObj.setProperty(rt, _prop_22, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_23, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_24, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_24, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "key"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "meta"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "ctrl"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "alt"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "shift"), r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "command"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_26, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_27, r.read_bool());
+      _obj.setProperty(rt, _prop_28, r.read_bool());
+      _obj.setProperty(rt, _prop_29, r.read_bool());
+      _obj.setProperty(rt, _prop_30, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "keyBindings"), _arr); }
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "keymapVersion"), (double)r.read_uvar());
+    resultObj.setProperty(rt, _prop_25, _arr); }
+  resultObj.setProperty(rt, _prop_32, (double)r.read_uvar());
   return std::move(resultObj);
 }
+static jsi::Value decode_tabMove(jsi::Runtime& rt, rc::Reader& r) {
+  auto resultObj = jsi::Object(rt);
+  const std::array<jsi::PropNameID, 33> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  return decode_body_tabMove(rt, resultObj, r, _properties.data());
+}
 
+static void encode_body_tabNavigated(jsi::Runtime& rt, const jsi::Object& argsObj, rc::Writer& w, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  const auto& _prop_1 = _properties[1];
+  const auto& _prop_2 = _properties[2];
+  { auto _v = argsObj.getProperty(rt, _prop_0).getString(rt).utf8(rt); w.push_string(_v); }
+  { auto _v = argsObj.getProperty(rt, _prop_1).getString(rt).utf8(rt); w.push_string(_v); }
+  { auto _v = argsObj.getProperty(rt, _prop_2).getString(rt).utf8(rt); w.push_string(_v); }
+}
 static void encode_tabNavigated(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
   w.push_u8(11); w.push_u8(0); // cmd_id = 11 LE
   auto argsObj = args.asObject(rt);
-  { auto _v = argsObj.getProperty(rt, "tabId").getString(rt).utf8(rt); w.push_string(_v); }
-  { auto _v = argsObj.getProperty(rt, "url").getString(rt).utf8(rt); w.push_string(_v); }
-  { auto _v = argsObj.getProperty(rt, "title").getString(rt).utf8(rt); w.push_string(_v); }
+  const std::array<jsi::PropNameID, 3> _properties{jsi::PropNameID::forAscii(rt, "tabId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title")};
+  encode_body_tabNavigated(rt, argsObj, w, _properties.data());
 }
 
 // (Tier 1 positional) 개별 인자 → 직접 인코딩. argsObj 경유 대비 JSI 프로퍼티 조회 3회 제거.
@@ -1516,72 +2272,115 @@ static void encode_pos_tabNavigated(jsi::Runtime& rt, const jsi::Value* argv, si
   { auto _s = argv[2].asString(rt).utf8(rt); w.push_string(_s); }
 }
 
-static jsi::Value decode_tabNavigated(jsi::Runtime& rt, rc::Reader& r) {
-  auto resultObj = jsi::Object(rt);
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "version"), (double)r.read_uvar());
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "revision"), (double)r.read_uvar());
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "lastExternalRequestId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+static jsi::Value decode_body_tabNavigated(jsi::Runtime& rt, jsi::Object& resultObj, rc::Reader& r, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  const auto& _prop_1 = _properties[1];
+  const auto& _prop_2 = _properties[2];
+  const auto& _prop_3 = _properties[3];
+  const auto& _prop_4 = _properties[4];
+  const auto& _prop_5 = _properties[5];
+  const auto& _prop_6 = _properties[6];
+  const auto& _prop_7 = _properties[7];
+  const auto& _prop_8 = _properties[8];
+  const auto& _prop_9 = _properties[9];
+  const auto& _prop_10 = _properties[10];
+  const auto& _prop_11 = _properties[11];
+  const auto& _prop_12 = _properties[12];
+  const auto& _prop_13 = _properties[13];
+  const auto& _prop_14 = _properties[14];
+  const auto& _prop_15 = _properties[15];
+  const auto& _prop_16 = _properties[16];
+  const auto& _prop_17 = _properties[17];
+  const auto& _prop_18 = _properties[18];
+  const auto& _prop_19 = _properties[19];
+  const auto& _prop_20 = _properties[20];
+  const auto& _prop_21 = _properties[21];
+  const auto& _prop_22 = _properties[22];
+  const auto& _prop_23 = _properties[23];
+  const auto& _prop_24 = _properties[24];
+  const auto& _prop_25 = _properties[25];
+  const auto& _prop_26 = _properties[26];
+  const auto& _prop_27 = _properties[27];
+  const auto& _prop_28 = _properties[28];
+  const auto& _prop_29 = _properties[29];
+  const auto& _prop_30 = _properties[30];
+  const auto& _prop_31 = _properties[31];
+  const auto& _prop_32 = _properties[32];
+  resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
+  resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "name"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "color"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _tag = r.read_u8(); if (_tag == 0) { _obj.setProperty(rt, rustra::generated::cachedProp(rt, "lastActiveTabId"), jsi::Value::null()); } else { { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "lastActiveTabId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_6, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _tag = r.read_u8(); if (_tag == 0) { _obj.setProperty(rt, _prop_7, jsi::Value::null()); } else { { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_7, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaces"), _arr); }
+    resultObj.setProperty(rt, _prop_3, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "url"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "favorite"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "pinned"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "private"), r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarkId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "homeUrl"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "homeTitle"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "suspended"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "updatedAt"), [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_12, r.read_bool());
+      _obj.setProperty(rt, _prop_13, r.read_bool());
+      _obj.setProperty(rt, _prop_14, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_15, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_18, r.read_bool());
+      _obj.setProperty(rt, _prop_19, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "tabs"), _arr); }
+    resultObj.setProperty(rt, _prop_8, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "url"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "folderId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_21, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarks"), _arr); }
+    resultObj.setProperty(rt, _prop_20, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarkFolders"), _arr); }
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeWorkspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeTabId"), jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeTabId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+    resultObj.setProperty(rt, _prop_22, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_23, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_24, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_24, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "key"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "meta"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "ctrl"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "alt"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "shift"), r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "command"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_26, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_27, r.read_bool());
+      _obj.setProperty(rt, _prop_28, r.read_bool());
+      _obj.setProperty(rt, _prop_29, r.read_bool());
+      _obj.setProperty(rt, _prop_30, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "keyBindings"), _arr); }
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "keymapVersion"), (double)r.read_uvar());
+    resultObj.setProperty(rt, _prop_25, _arr); }
+  resultObj.setProperty(rt, _prop_32, (double)r.read_uvar());
   return std::move(resultObj);
 }
+static jsi::Value decode_tabNavigated(jsi::Runtime& rt, rc::Reader& r) {
+  auto resultObj = jsi::Object(rt);
+  const std::array<jsi::PropNameID, 33> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  return decode_body_tabNavigated(rt, resultObj, r, _properties.data());
+}
 
+static void encode_body_tabOpenExternal(jsi::Runtime& rt, const jsi::Object& argsObj, rc::Writer& w, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  const auto& _prop_1 = _properties[1];
+  { auto _v = argsObj.getProperty(rt, _prop_0).getString(rt).utf8(rt); w.push_string(_v); }
+  { auto _v = argsObj.getProperty(rt, _prop_1).getString(rt).utf8(rt); w.push_string(_v); }
+}
 static void encode_tabOpenExternal(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
   w.push_u8(8); w.push_u8(0); // cmd_id = 8 LE
   auto argsObj = args.asObject(rt);
-  { auto _v = argsObj.getProperty(rt, "requestId").getString(rt).utf8(rt); w.push_string(_v); }
-  { auto _v = argsObj.getProperty(rt, "url").getString(rt).utf8(rt); w.push_string(_v); }
+  const std::array<jsi::PropNameID, 2> _properties{jsi::PropNameID::forAscii(rt, "requestId"), jsi::PropNameID::forAscii(rt, "url")};
+  encode_body_tabOpenExternal(rt, argsObj, w, _properties.data());
 }
 
 // (Tier 1 positional) 개별 인자 → 직접 인코딩. argsObj 경유 대비 JSI 프로퍼티 조회 2회 제거.
@@ -1592,71 +2391,113 @@ static void encode_pos_tabOpenExternal(jsi::Runtime& rt, const jsi::Value* argv,
   { auto _s = argv[1].asString(rt).utf8(rt); w.push_string(_s); }
 }
 
-static jsi::Value decode_tabOpenExternal(jsi::Runtime& rt, rc::Reader& r) {
-  auto resultObj = jsi::Object(rt);
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "version"), (double)r.read_uvar());
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "revision"), (double)r.read_uvar());
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "lastExternalRequestId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+static jsi::Value decode_body_tabOpenExternal(jsi::Runtime& rt, jsi::Object& resultObj, rc::Reader& r, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  const auto& _prop_1 = _properties[1];
+  const auto& _prop_2 = _properties[2];
+  const auto& _prop_3 = _properties[3];
+  const auto& _prop_4 = _properties[4];
+  const auto& _prop_5 = _properties[5];
+  const auto& _prop_6 = _properties[6];
+  const auto& _prop_7 = _properties[7];
+  const auto& _prop_8 = _properties[8];
+  const auto& _prop_9 = _properties[9];
+  const auto& _prop_10 = _properties[10];
+  const auto& _prop_11 = _properties[11];
+  const auto& _prop_12 = _properties[12];
+  const auto& _prop_13 = _properties[13];
+  const auto& _prop_14 = _properties[14];
+  const auto& _prop_15 = _properties[15];
+  const auto& _prop_16 = _properties[16];
+  const auto& _prop_17 = _properties[17];
+  const auto& _prop_18 = _properties[18];
+  const auto& _prop_19 = _properties[19];
+  const auto& _prop_20 = _properties[20];
+  const auto& _prop_21 = _properties[21];
+  const auto& _prop_22 = _properties[22];
+  const auto& _prop_23 = _properties[23];
+  const auto& _prop_24 = _properties[24];
+  const auto& _prop_25 = _properties[25];
+  const auto& _prop_26 = _properties[26];
+  const auto& _prop_27 = _properties[27];
+  const auto& _prop_28 = _properties[28];
+  const auto& _prop_29 = _properties[29];
+  const auto& _prop_30 = _properties[30];
+  const auto& _prop_31 = _properties[31];
+  const auto& _prop_32 = _properties[32];
+  resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
+  resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "name"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "color"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _tag = r.read_u8(); if (_tag == 0) { _obj.setProperty(rt, rustra::generated::cachedProp(rt, "lastActiveTabId"), jsi::Value::null()); } else { { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "lastActiveTabId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_6, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _tag = r.read_u8(); if (_tag == 0) { _obj.setProperty(rt, _prop_7, jsi::Value::null()); } else { { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_7, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaces"), _arr); }
+    resultObj.setProperty(rt, _prop_3, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "url"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "favorite"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "pinned"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "private"), r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarkId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "homeUrl"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "homeTitle"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "suspended"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "updatedAt"), [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_12, r.read_bool());
+      _obj.setProperty(rt, _prop_13, r.read_bool());
+      _obj.setProperty(rt, _prop_14, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_15, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_18, r.read_bool());
+      _obj.setProperty(rt, _prop_19, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "tabs"), _arr); }
+    resultObj.setProperty(rt, _prop_8, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "url"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "folderId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_21, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarks"), _arr); }
+    resultObj.setProperty(rt, _prop_20, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarkFolders"), _arr); }
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeWorkspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeTabId"), jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeTabId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+    resultObj.setProperty(rt, _prop_22, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_23, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_24, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_24, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "key"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "meta"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "ctrl"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "alt"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "shift"), r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "command"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_26, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_27, r.read_bool());
+      _obj.setProperty(rt, _prop_28, r.read_bool());
+      _obj.setProperty(rt, _prop_29, r.read_bool());
+      _obj.setProperty(rt, _prop_30, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "keyBindings"), _arr); }
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "keymapVersion"), (double)r.read_uvar());
+    resultObj.setProperty(rt, _prop_25, _arr); }
+  resultObj.setProperty(rt, _prop_32, (double)r.read_uvar());
   return std::move(resultObj);
 }
+static jsi::Value decode_tabOpenExternal(jsi::Runtime& rt, rc::Reader& r) {
+  auto resultObj = jsi::Object(rt);
+  const std::array<jsi::PropNameID, 33> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  return decode_body_tabOpenExternal(rt, resultObj, r, _properties.data());
+}
 
+static void encode_body_tabReset(jsi::Runtime& rt, const jsi::Object& argsObj, rc::Writer& w, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  { auto _v = argsObj.getProperty(rt, _prop_0).getString(rt).utf8(rt); w.push_string(_v); }
+}
 static void encode_tabReset(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
   w.push_u8(28); w.push_u8(0); // cmd_id = 28 LE
   auto argsObj = args.asObject(rt);
-  { auto _v = argsObj.getProperty(rt, "tabId").getString(rt).utf8(rt); w.push_string(_v); }
+  const std::array<jsi::PropNameID, 1> _properties{jsi::PropNameID::forAscii(rt, "tabId")};
+  encode_body_tabReset(rt, argsObj, w, _properties.data());
 }
 
 // (Tier 1 positional) 개별 인자 → 직접 인코딩. argsObj 경유 대비 JSI 프로퍼티 조회 1회 제거.
@@ -1666,72 +2507,115 @@ static void encode_pos_tabReset(jsi::Runtime& rt, const jsi::Value* argv, size_t
   { auto _s = argv[0].asString(rt).utf8(rt); w.push_string(_s); }
 }
 
-static jsi::Value decode_tabReset(jsi::Runtime& rt, rc::Reader& r) {
-  auto resultObj = jsi::Object(rt);
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "version"), (double)r.read_uvar());
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "revision"), (double)r.read_uvar());
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "lastExternalRequestId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+static jsi::Value decode_body_tabReset(jsi::Runtime& rt, jsi::Object& resultObj, rc::Reader& r, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  const auto& _prop_1 = _properties[1];
+  const auto& _prop_2 = _properties[2];
+  const auto& _prop_3 = _properties[3];
+  const auto& _prop_4 = _properties[4];
+  const auto& _prop_5 = _properties[5];
+  const auto& _prop_6 = _properties[6];
+  const auto& _prop_7 = _properties[7];
+  const auto& _prop_8 = _properties[8];
+  const auto& _prop_9 = _properties[9];
+  const auto& _prop_10 = _properties[10];
+  const auto& _prop_11 = _properties[11];
+  const auto& _prop_12 = _properties[12];
+  const auto& _prop_13 = _properties[13];
+  const auto& _prop_14 = _properties[14];
+  const auto& _prop_15 = _properties[15];
+  const auto& _prop_16 = _properties[16];
+  const auto& _prop_17 = _properties[17];
+  const auto& _prop_18 = _properties[18];
+  const auto& _prop_19 = _properties[19];
+  const auto& _prop_20 = _properties[20];
+  const auto& _prop_21 = _properties[21];
+  const auto& _prop_22 = _properties[22];
+  const auto& _prop_23 = _properties[23];
+  const auto& _prop_24 = _properties[24];
+  const auto& _prop_25 = _properties[25];
+  const auto& _prop_26 = _properties[26];
+  const auto& _prop_27 = _properties[27];
+  const auto& _prop_28 = _properties[28];
+  const auto& _prop_29 = _properties[29];
+  const auto& _prop_30 = _properties[30];
+  const auto& _prop_31 = _properties[31];
+  const auto& _prop_32 = _properties[32];
+  resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
+  resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "name"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "color"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _tag = r.read_u8(); if (_tag == 0) { _obj.setProperty(rt, rustra::generated::cachedProp(rt, "lastActiveTabId"), jsi::Value::null()); } else { { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "lastActiveTabId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_6, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _tag = r.read_u8(); if (_tag == 0) { _obj.setProperty(rt, _prop_7, jsi::Value::null()); } else { { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_7, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaces"), _arr); }
+    resultObj.setProperty(rt, _prop_3, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "url"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "favorite"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "pinned"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "private"), r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarkId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "homeUrl"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "homeTitle"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "suspended"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "updatedAt"), [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_12, r.read_bool());
+      _obj.setProperty(rt, _prop_13, r.read_bool());
+      _obj.setProperty(rt, _prop_14, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_15, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_18, r.read_bool());
+      _obj.setProperty(rt, _prop_19, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "tabs"), _arr); }
+    resultObj.setProperty(rt, _prop_8, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "url"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "folderId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_21, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarks"), _arr); }
+    resultObj.setProperty(rt, _prop_20, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarkFolders"), _arr); }
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeWorkspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeTabId"), jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeTabId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+    resultObj.setProperty(rt, _prop_22, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_23, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_24, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_24, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "key"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "meta"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "ctrl"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "alt"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "shift"), r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "command"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_26, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_27, r.read_bool());
+      _obj.setProperty(rt, _prop_28, r.read_bool());
+      _obj.setProperty(rt, _prop_29, r.read_bool());
+      _obj.setProperty(rt, _prop_30, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "keyBindings"), _arr); }
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "keymapVersion"), (double)r.read_uvar());
+    resultObj.setProperty(rt, _prop_25, _arr); }
+  resultObj.setProperty(rt, _prop_32, (double)r.read_uvar());
   return std::move(resultObj);
 }
+static jsi::Value decode_tabReset(jsi::Runtime& rt, rc::Reader& r) {
+  auto resultObj = jsi::Object(rt);
+  const std::array<jsi::PropNameID, 33> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  return decode_body_tabReset(rt, resultObj, r, _properties.data());
+}
 
+static void encode_body_tabSetFavorite(jsi::Runtime& rt, const jsi::Object& argsObj, rc::Writer& w, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  const auto& _prop_1 = _properties[1];
+  { auto _v = argsObj.getProperty(rt, _prop_0).getString(rt).utf8(rt); w.push_string(_v); }
+  { auto _v = argsObj.getProperty(rt, _prop_1).getBool(); w.push_bool(_v); }
+}
 static void encode_tabSetFavorite(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
   w.push_u8(12); w.push_u8(0); // cmd_id = 12 LE
   auto argsObj = args.asObject(rt);
-  { auto _v = argsObj.getProperty(rt, "tabId").getString(rt).utf8(rt); w.push_string(_v); }
-  { auto _v = argsObj.getProperty(rt, "favorite").getBool(); w.push_bool(_v); }
+  const std::array<jsi::PropNameID, 2> _properties{jsi::PropNameID::forAscii(rt, "tabId"), jsi::PropNameID::forAscii(rt, "favorite")};
+  encode_body_tabSetFavorite(rt, argsObj, w, _properties.data());
 }
 
 // (Tier 1 positional) 개별 인자 → 직접 인코딩. argsObj 경유 대비 JSI 프로퍼티 조회 2회 제거.
@@ -1742,72 +2626,115 @@ static void encode_pos_tabSetFavorite(jsi::Runtime& rt, const jsi::Value* argv, 
   w.push_bool(argv[1].asBool());
 }
 
-static jsi::Value decode_tabSetFavorite(jsi::Runtime& rt, rc::Reader& r) {
-  auto resultObj = jsi::Object(rt);
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "version"), (double)r.read_uvar());
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "revision"), (double)r.read_uvar());
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "lastExternalRequestId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+static jsi::Value decode_body_tabSetFavorite(jsi::Runtime& rt, jsi::Object& resultObj, rc::Reader& r, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  const auto& _prop_1 = _properties[1];
+  const auto& _prop_2 = _properties[2];
+  const auto& _prop_3 = _properties[3];
+  const auto& _prop_4 = _properties[4];
+  const auto& _prop_5 = _properties[5];
+  const auto& _prop_6 = _properties[6];
+  const auto& _prop_7 = _properties[7];
+  const auto& _prop_8 = _properties[8];
+  const auto& _prop_9 = _properties[9];
+  const auto& _prop_10 = _properties[10];
+  const auto& _prop_11 = _properties[11];
+  const auto& _prop_12 = _properties[12];
+  const auto& _prop_13 = _properties[13];
+  const auto& _prop_14 = _properties[14];
+  const auto& _prop_15 = _properties[15];
+  const auto& _prop_16 = _properties[16];
+  const auto& _prop_17 = _properties[17];
+  const auto& _prop_18 = _properties[18];
+  const auto& _prop_19 = _properties[19];
+  const auto& _prop_20 = _properties[20];
+  const auto& _prop_21 = _properties[21];
+  const auto& _prop_22 = _properties[22];
+  const auto& _prop_23 = _properties[23];
+  const auto& _prop_24 = _properties[24];
+  const auto& _prop_25 = _properties[25];
+  const auto& _prop_26 = _properties[26];
+  const auto& _prop_27 = _properties[27];
+  const auto& _prop_28 = _properties[28];
+  const auto& _prop_29 = _properties[29];
+  const auto& _prop_30 = _properties[30];
+  const auto& _prop_31 = _properties[31];
+  const auto& _prop_32 = _properties[32];
+  resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
+  resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "name"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "color"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _tag = r.read_u8(); if (_tag == 0) { _obj.setProperty(rt, rustra::generated::cachedProp(rt, "lastActiveTabId"), jsi::Value::null()); } else { { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "lastActiveTabId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_6, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _tag = r.read_u8(); if (_tag == 0) { _obj.setProperty(rt, _prop_7, jsi::Value::null()); } else { { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_7, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaces"), _arr); }
+    resultObj.setProperty(rt, _prop_3, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "url"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "favorite"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "pinned"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "private"), r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarkId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "homeUrl"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "homeTitle"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "suspended"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "updatedAt"), [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_12, r.read_bool());
+      _obj.setProperty(rt, _prop_13, r.read_bool());
+      _obj.setProperty(rt, _prop_14, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_15, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_18, r.read_bool());
+      _obj.setProperty(rt, _prop_19, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "tabs"), _arr); }
+    resultObj.setProperty(rt, _prop_8, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "url"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "folderId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_21, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarks"), _arr); }
+    resultObj.setProperty(rt, _prop_20, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarkFolders"), _arr); }
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeWorkspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeTabId"), jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeTabId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+    resultObj.setProperty(rt, _prop_22, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_23, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_24, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_24, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "key"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "meta"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "ctrl"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "alt"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "shift"), r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "command"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_26, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_27, r.read_bool());
+      _obj.setProperty(rt, _prop_28, r.read_bool());
+      _obj.setProperty(rt, _prop_29, r.read_bool());
+      _obj.setProperty(rt, _prop_30, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "keyBindings"), _arr); }
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "keymapVersion"), (double)r.read_uvar());
+    resultObj.setProperty(rt, _prop_25, _arr); }
+  resultObj.setProperty(rt, _prop_32, (double)r.read_uvar());
   return std::move(resultObj);
 }
+static jsi::Value decode_tabSetFavorite(jsi::Runtime& rt, rc::Reader& r) {
+  auto resultObj = jsi::Object(rt);
+  const std::array<jsi::PropNameID, 33> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  return decode_body_tabSetFavorite(rt, resultObj, r, _properties.data());
+}
 
+static void encode_body_tabSetPinned(jsi::Runtime& rt, const jsi::Object& argsObj, rc::Writer& w, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  const auto& _prop_1 = _properties[1];
+  { auto _v = argsObj.getProperty(rt, _prop_0).getString(rt).utf8(rt); w.push_string(_v); }
+  { auto _v = argsObj.getProperty(rt, _prop_1).getBool(); w.push_bool(_v); }
+}
 static void encode_tabSetPinned(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
   w.push_u8(13); w.push_u8(0); // cmd_id = 13 LE
   auto argsObj = args.asObject(rt);
-  { auto _v = argsObj.getProperty(rt, "tabId").getString(rt).utf8(rt); w.push_string(_v); }
-  { auto _v = argsObj.getProperty(rt, "pinned").getBool(); w.push_bool(_v); }
+  const std::array<jsi::PropNameID, 2> _properties{jsi::PropNameID::forAscii(rt, "tabId"), jsi::PropNameID::forAscii(rt, "pinned")};
+  encode_body_tabSetPinned(rt, argsObj, w, _properties.data());
 }
 
 // (Tier 1 positional) 개별 인자 → 직접 인코딩. argsObj 경유 대비 JSI 프로퍼티 조회 2회 제거.
@@ -1818,72 +2745,115 @@ static void encode_pos_tabSetPinned(jsi::Runtime& rt, const jsi::Value* argv, si
   w.push_bool(argv[1].asBool());
 }
 
-static jsi::Value decode_tabSetPinned(jsi::Runtime& rt, rc::Reader& r) {
-  auto resultObj = jsi::Object(rt);
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "version"), (double)r.read_uvar());
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "revision"), (double)r.read_uvar());
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "lastExternalRequestId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+static jsi::Value decode_body_tabSetPinned(jsi::Runtime& rt, jsi::Object& resultObj, rc::Reader& r, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  const auto& _prop_1 = _properties[1];
+  const auto& _prop_2 = _properties[2];
+  const auto& _prop_3 = _properties[3];
+  const auto& _prop_4 = _properties[4];
+  const auto& _prop_5 = _properties[5];
+  const auto& _prop_6 = _properties[6];
+  const auto& _prop_7 = _properties[7];
+  const auto& _prop_8 = _properties[8];
+  const auto& _prop_9 = _properties[9];
+  const auto& _prop_10 = _properties[10];
+  const auto& _prop_11 = _properties[11];
+  const auto& _prop_12 = _properties[12];
+  const auto& _prop_13 = _properties[13];
+  const auto& _prop_14 = _properties[14];
+  const auto& _prop_15 = _properties[15];
+  const auto& _prop_16 = _properties[16];
+  const auto& _prop_17 = _properties[17];
+  const auto& _prop_18 = _properties[18];
+  const auto& _prop_19 = _properties[19];
+  const auto& _prop_20 = _properties[20];
+  const auto& _prop_21 = _properties[21];
+  const auto& _prop_22 = _properties[22];
+  const auto& _prop_23 = _properties[23];
+  const auto& _prop_24 = _properties[24];
+  const auto& _prop_25 = _properties[25];
+  const auto& _prop_26 = _properties[26];
+  const auto& _prop_27 = _properties[27];
+  const auto& _prop_28 = _properties[28];
+  const auto& _prop_29 = _properties[29];
+  const auto& _prop_30 = _properties[30];
+  const auto& _prop_31 = _properties[31];
+  const auto& _prop_32 = _properties[32];
+  resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
+  resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "name"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "color"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _tag = r.read_u8(); if (_tag == 0) { _obj.setProperty(rt, rustra::generated::cachedProp(rt, "lastActiveTabId"), jsi::Value::null()); } else { { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "lastActiveTabId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_6, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _tag = r.read_u8(); if (_tag == 0) { _obj.setProperty(rt, _prop_7, jsi::Value::null()); } else { { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_7, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaces"), _arr); }
+    resultObj.setProperty(rt, _prop_3, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "url"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "favorite"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "pinned"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "private"), r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarkId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "homeUrl"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "homeTitle"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "suspended"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "updatedAt"), [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_12, r.read_bool());
+      _obj.setProperty(rt, _prop_13, r.read_bool());
+      _obj.setProperty(rt, _prop_14, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_15, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_18, r.read_bool());
+      _obj.setProperty(rt, _prop_19, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "tabs"), _arr); }
+    resultObj.setProperty(rt, _prop_8, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "url"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "folderId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_21, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarks"), _arr); }
+    resultObj.setProperty(rt, _prop_20, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarkFolders"), _arr); }
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeWorkspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeTabId"), jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeTabId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+    resultObj.setProperty(rt, _prop_22, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_23, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_24, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_24, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "key"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "meta"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "ctrl"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "alt"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "shift"), r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "command"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_26, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_27, r.read_bool());
+      _obj.setProperty(rt, _prop_28, r.read_bool());
+      _obj.setProperty(rt, _prop_29, r.read_bool());
+      _obj.setProperty(rt, _prop_30, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "keyBindings"), _arr); }
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "keymapVersion"), (double)r.read_uvar());
+    resultObj.setProperty(rt, _prop_25, _arr); }
+  resultObj.setProperty(rt, _prop_32, (double)r.read_uvar());
   return std::move(resultObj);
 }
+static jsi::Value decode_tabSetPinned(jsi::Runtime& rt, rc::Reader& r) {
+  auto resultObj = jsi::Object(rt);
+  const std::array<jsi::PropNameID, 33> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  return decode_body_tabSetPinned(rt, resultObj, r, _properties.data());
+}
 
+static void encode_body_tabSetWorkspace(jsi::Runtime& rt, const jsi::Object& argsObj, rc::Writer& w, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  const auto& _prop_1 = _properties[1];
+  { auto _v = argsObj.getProperty(rt, _prop_0).getString(rt).utf8(rt); w.push_string(_v); }
+  { auto _v = argsObj.getProperty(rt, _prop_1).getString(rt).utf8(rt); w.push_string(_v); }
+}
 static void encode_tabSetWorkspace(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
   w.push_u8(15); w.push_u8(0); // cmd_id = 15 LE
   auto argsObj = args.asObject(rt);
-  { auto _v = argsObj.getProperty(rt, "tabId").getString(rt).utf8(rt); w.push_string(_v); }
-  { auto _v = argsObj.getProperty(rt, "workspaceId").getString(rt).utf8(rt); w.push_string(_v); }
+  const std::array<jsi::PropNameID, 2> _properties{jsi::PropNameID::forAscii(rt, "tabId"), jsi::PropNameID::forAscii(rt, "workspaceId")};
+  encode_body_tabSetWorkspace(rt, argsObj, w, _properties.data());
 }
 
 // (Tier 1 positional) 개별 인자 → 직접 인코딩. argsObj 경유 대비 JSI 프로퍼티 조회 2회 제거.
@@ -1894,143 +2864,232 @@ static void encode_pos_tabSetWorkspace(jsi::Runtime& rt, const jsi::Value* argv,
   { auto _s = argv[1].asString(rt).utf8(rt); w.push_string(_s); }
 }
 
-static jsi::Value decode_tabSetWorkspace(jsi::Runtime& rt, rc::Reader& r) {
-  auto resultObj = jsi::Object(rt);
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "version"), (double)r.read_uvar());
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "revision"), (double)r.read_uvar());
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "lastExternalRequestId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+static jsi::Value decode_body_tabSetWorkspace(jsi::Runtime& rt, jsi::Object& resultObj, rc::Reader& r, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  const auto& _prop_1 = _properties[1];
+  const auto& _prop_2 = _properties[2];
+  const auto& _prop_3 = _properties[3];
+  const auto& _prop_4 = _properties[4];
+  const auto& _prop_5 = _properties[5];
+  const auto& _prop_6 = _properties[6];
+  const auto& _prop_7 = _properties[7];
+  const auto& _prop_8 = _properties[8];
+  const auto& _prop_9 = _properties[9];
+  const auto& _prop_10 = _properties[10];
+  const auto& _prop_11 = _properties[11];
+  const auto& _prop_12 = _properties[12];
+  const auto& _prop_13 = _properties[13];
+  const auto& _prop_14 = _properties[14];
+  const auto& _prop_15 = _properties[15];
+  const auto& _prop_16 = _properties[16];
+  const auto& _prop_17 = _properties[17];
+  const auto& _prop_18 = _properties[18];
+  const auto& _prop_19 = _properties[19];
+  const auto& _prop_20 = _properties[20];
+  const auto& _prop_21 = _properties[21];
+  const auto& _prop_22 = _properties[22];
+  const auto& _prop_23 = _properties[23];
+  const auto& _prop_24 = _properties[24];
+  const auto& _prop_25 = _properties[25];
+  const auto& _prop_26 = _properties[26];
+  const auto& _prop_27 = _properties[27];
+  const auto& _prop_28 = _properties[28];
+  const auto& _prop_29 = _properties[29];
+  const auto& _prop_30 = _properties[30];
+  const auto& _prop_31 = _properties[31];
+  const auto& _prop_32 = _properties[32];
+  resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
+  resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "name"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "color"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _tag = r.read_u8(); if (_tag == 0) { _obj.setProperty(rt, rustra::generated::cachedProp(rt, "lastActiveTabId"), jsi::Value::null()); } else { { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "lastActiveTabId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_6, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _tag = r.read_u8(); if (_tag == 0) { _obj.setProperty(rt, _prop_7, jsi::Value::null()); } else { { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_7, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaces"), _arr); }
+    resultObj.setProperty(rt, _prop_3, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "url"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "favorite"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "pinned"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "private"), r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarkId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "homeUrl"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "homeTitle"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "suspended"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "updatedAt"), [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_12, r.read_bool());
+      _obj.setProperty(rt, _prop_13, r.read_bool());
+      _obj.setProperty(rt, _prop_14, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_15, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_18, r.read_bool());
+      _obj.setProperty(rt, _prop_19, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "tabs"), _arr); }
+    resultObj.setProperty(rt, _prop_8, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "url"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "folderId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_21, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarks"), _arr); }
+    resultObj.setProperty(rt, _prop_20, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarkFolders"), _arr); }
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeWorkspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeTabId"), jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeTabId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+    resultObj.setProperty(rt, _prop_22, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_23, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_24, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_24, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "key"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "meta"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "ctrl"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "alt"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "shift"), r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "command"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_26, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_27, r.read_bool());
+      _obj.setProperty(rt, _prop_28, r.read_bool());
+      _obj.setProperty(rt, _prop_29, r.read_bool());
+      _obj.setProperty(rt, _prop_30, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "keyBindings"), _arr); }
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "keymapVersion"), (double)r.read_uvar());
+    resultObj.setProperty(rt, _prop_25, _arr); }
+  resultObj.setProperty(rt, _prop_32, (double)r.read_uvar());
   return std::move(resultObj);
 }
+static jsi::Value decode_tabSetWorkspace(jsi::Runtime& rt, rc::Reader& r) {
+  auto resultObj = jsi::Object(rt);
+  const std::array<jsi::PropNameID, 33> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  return decode_body_tabSetWorkspace(rt, resultObj, r, _properties.data());
+}
 
+static void encode_body_workArchiveImport(jsi::Runtime& rt, const jsi::Object& argsObj, rc::Writer& w, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  const auto& _prop_1 = _properties[1];
+  const auto& _prop_2 = _properties[2];
+  const auto& _prop_3 = _properties[3];
+  { auto _v = argsObj.getProperty(rt, _prop_0).getString(rt).utf8(rt); w.push_string(_v); }
+  { auto _v = argsObj.getProperty(rt, _prop_1).getBool(); w.push_bool(_v); }
+  { auto _v = argsObj.getProperty(rt, _prop_2).getBool(); w.push_bool(_v); }
+  w.push_uvar(rustra_u64(rt, argsObj.getProperty(rt, _prop_3), "expectedRevision"));
+}
 static void encode_workArchiveImport(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
   w.push_u8(5); w.push_u8(0); // cmd_id = 5 LE
   auto argsObj = args.asObject(rt);
-  { auto _v = argsObj.getProperty(rt, "json").getString(rt).utf8(rt); w.push_string(_v); }
-  { auto _v = argsObj.getProperty(rt, "includeFavorites").getBool(); w.push_bool(_v); }
-  { auto _v = argsObj.getProperty(rt, "restoreKeymap").getBool(); w.push_bool(_v); }
-  w.push_uvar(rustra_u64(rt, argsObj.getProperty(rt, "expectedRevision"), "expectedRevision"));
+  const std::array<jsi::PropNameID, 4> _properties{jsi::PropNameID::forAscii(rt, "json"), jsi::PropNameID::forAscii(rt, "includeFavorites"), jsi::PropNameID::forAscii(rt, "restoreKeymap"), jsi::PropNameID::forAscii(rt, "expectedRevision")};
+  encode_body_workArchiveImport(rt, argsObj, w, _properties.data());
 }
 
-static jsi::Value decode_workArchiveImport(jsi::Runtime& rt, rc::Reader& r) {
-  auto resultObj = jsi::Object(rt);
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "version"), (double)r.read_uvar());
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "revision"), (double)r.read_uvar());
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "lastExternalRequestId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+static jsi::Value decode_body_workArchiveImport(jsi::Runtime& rt, jsi::Object& resultObj, rc::Reader& r, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  const auto& _prop_1 = _properties[1];
+  const auto& _prop_2 = _properties[2];
+  const auto& _prop_3 = _properties[3];
+  const auto& _prop_4 = _properties[4];
+  const auto& _prop_5 = _properties[5];
+  const auto& _prop_6 = _properties[6];
+  const auto& _prop_7 = _properties[7];
+  const auto& _prop_8 = _properties[8];
+  const auto& _prop_9 = _properties[9];
+  const auto& _prop_10 = _properties[10];
+  const auto& _prop_11 = _properties[11];
+  const auto& _prop_12 = _properties[12];
+  const auto& _prop_13 = _properties[13];
+  const auto& _prop_14 = _properties[14];
+  const auto& _prop_15 = _properties[15];
+  const auto& _prop_16 = _properties[16];
+  const auto& _prop_17 = _properties[17];
+  const auto& _prop_18 = _properties[18];
+  const auto& _prop_19 = _properties[19];
+  const auto& _prop_20 = _properties[20];
+  const auto& _prop_21 = _properties[21];
+  const auto& _prop_22 = _properties[22];
+  const auto& _prop_23 = _properties[23];
+  const auto& _prop_24 = _properties[24];
+  const auto& _prop_25 = _properties[25];
+  const auto& _prop_26 = _properties[26];
+  const auto& _prop_27 = _properties[27];
+  const auto& _prop_28 = _properties[28];
+  const auto& _prop_29 = _properties[29];
+  const auto& _prop_30 = _properties[30];
+  const auto& _prop_31 = _properties[31];
+  const auto& _prop_32 = _properties[32];
+  resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
+  resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "name"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "color"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _tag = r.read_u8(); if (_tag == 0) { _obj.setProperty(rt, rustra::generated::cachedProp(rt, "lastActiveTabId"), jsi::Value::null()); } else { { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "lastActiveTabId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_6, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _tag = r.read_u8(); if (_tag == 0) { _obj.setProperty(rt, _prop_7, jsi::Value::null()); } else { { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_7, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaces"), _arr); }
+    resultObj.setProperty(rt, _prop_3, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "url"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "favorite"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "pinned"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "private"), r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarkId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "homeUrl"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "homeTitle"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "suspended"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "updatedAt"), [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_12, r.read_bool());
+      _obj.setProperty(rt, _prop_13, r.read_bool());
+      _obj.setProperty(rt, _prop_14, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_15, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_18, r.read_bool());
+      _obj.setProperty(rt, _prop_19, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "tabs"), _arr); }
+    resultObj.setProperty(rt, _prop_8, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "url"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "folderId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_21, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarks"), _arr); }
+    resultObj.setProperty(rt, _prop_20, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarkFolders"), _arr); }
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeWorkspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeTabId"), jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeTabId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+    resultObj.setProperty(rt, _prop_22, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_23, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_24, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_24, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "key"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "meta"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "ctrl"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "alt"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "shift"), r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "command"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_26, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_27, r.read_bool());
+      _obj.setProperty(rt, _prop_28, r.read_bool());
+      _obj.setProperty(rt, _prop_29, r.read_bool());
+      _obj.setProperty(rt, _prop_30, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "keyBindings"), _arr); }
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "keymapVersion"), (double)r.read_uvar());
+    resultObj.setProperty(rt, _prop_25, _arr); }
+  resultObj.setProperty(rt, _prop_32, (double)r.read_uvar());
   return std::move(resultObj);
 }
+static jsi::Value decode_workArchiveImport(jsi::Runtime& rt, rc::Reader& r) {
+  auto resultObj = jsi::Object(rt);
+  const std::array<jsi::PropNameID, 33> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  return decode_body_workArchiveImport(rt, resultObj, r, _properties.data());
+}
 
+static void encode_body_workArchivePrepare(jsi::Runtime& rt, const jsi::Object& argsObj, rc::Writer& w, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  const auto& _prop_1 = _properties[1];
+  const auto& _prop_2 = _properties[2];
+  { auto _v = argsObj.getProperty(rt, _prop_0).getString(rt).utf8(rt); w.push_string(_v); }
+  { auto _v = argsObj.getProperty(rt, _prop_1).getBool(); w.push_bool(_v); }
+  { auto _v = argsObj.getProperty(rt, _prop_2).getBool(); w.push_bool(_v); }
+}
 static void encode_workArchivePrepare(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
   w.push_u8(4); w.push_u8(0); // cmd_id = 4 LE
   auto argsObj = args.asObject(rt);
-  { auto _v = argsObj.getProperty(rt, "json").getString(rt).utf8(rt); w.push_string(_v); }
-  { auto _v = argsObj.getProperty(rt, "includeFavorites").getBool(); w.push_bool(_v); }
-  { auto _v = argsObj.getProperty(rt, "restoreKeymap").getBool(); w.push_bool(_v); }
+  const std::array<jsi::PropNameID, 3> _properties{jsi::PropNameID::forAscii(rt, "json"), jsi::PropNameID::forAscii(rt, "includeFavorites"), jsi::PropNameID::forAscii(rt, "restoreKeymap")};
+  encode_body_workArchivePrepare(rt, argsObj, w, _properties.data());
 }
 
 // (Tier 1 positional) 개별 인자 → 직접 인코딩. argsObj 경유 대비 JSI 프로퍼티 조회 3회 제거.
@@ -2042,71 +3101,113 @@ static void encode_pos_workArchivePrepare(jsi::Runtime& rt, const jsi::Value* ar
   w.push_bool(argv[2].asBool());
 }
 
-static jsi::Value decode_workArchivePrepare(jsi::Runtime& rt, rc::Reader& r) {
-  auto resultObj = jsi::Object(rt);
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "version"), (double)r.read_uvar());
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "revision"), (double)r.read_uvar());
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "lastExternalRequestId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+static jsi::Value decode_body_workArchivePrepare(jsi::Runtime& rt, jsi::Object& resultObj, rc::Reader& r, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  const auto& _prop_1 = _properties[1];
+  const auto& _prop_2 = _properties[2];
+  const auto& _prop_3 = _properties[3];
+  const auto& _prop_4 = _properties[4];
+  const auto& _prop_5 = _properties[5];
+  const auto& _prop_6 = _properties[6];
+  const auto& _prop_7 = _properties[7];
+  const auto& _prop_8 = _properties[8];
+  const auto& _prop_9 = _properties[9];
+  const auto& _prop_10 = _properties[10];
+  const auto& _prop_11 = _properties[11];
+  const auto& _prop_12 = _properties[12];
+  const auto& _prop_13 = _properties[13];
+  const auto& _prop_14 = _properties[14];
+  const auto& _prop_15 = _properties[15];
+  const auto& _prop_16 = _properties[16];
+  const auto& _prop_17 = _properties[17];
+  const auto& _prop_18 = _properties[18];
+  const auto& _prop_19 = _properties[19];
+  const auto& _prop_20 = _properties[20];
+  const auto& _prop_21 = _properties[21];
+  const auto& _prop_22 = _properties[22];
+  const auto& _prop_23 = _properties[23];
+  const auto& _prop_24 = _properties[24];
+  const auto& _prop_25 = _properties[25];
+  const auto& _prop_26 = _properties[26];
+  const auto& _prop_27 = _properties[27];
+  const auto& _prop_28 = _properties[28];
+  const auto& _prop_29 = _properties[29];
+  const auto& _prop_30 = _properties[30];
+  const auto& _prop_31 = _properties[31];
+  const auto& _prop_32 = _properties[32];
+  resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
+  resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "name"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "color"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _tag = r.read_u8(); if (_tag == 0) { _obj.setProperty(rt, rustra::generated::cachedProp(rt, "lastActiveTabId"), jsi::Value::null()); } else { { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "lastActiveTabId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_6, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _tag = r.read_u8(); if (_tag == 0) { _obj.setProperty(rt, _prop_7, jsi::Value::null()); } else { { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_7, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaces"), _arr); }
+    resultObj.setProperty(rt, _prop_3, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "url"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "favorite"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "pinned"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "private"), r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarkId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "homeUrl"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "homeTitle"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "suspended"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "updatedAt"), [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_12, r.read_bool());
+      _obj.setProperty(rt, _prop_13, r.read_bool());
+      _obj.setProperty(rt, _prop_14, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_15, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_18, r.read_bool());
+      _obj.setProperty(rt, _prop_19, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "tabs"), _arr); }
+    resultObj.setProperty(rt, _prop_8, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "url"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "folderId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_21, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarks"), _arr); }
+    resultObj.setProperty(rt, _prop_20, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarkFolders"), _arr); }
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeWorkspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeTabId"), jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeTabId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+    resultObj.setProperty(rt, _prop_22, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_23, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_24, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_24, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "key"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "meta"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "ctrl"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "alt"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "shift"), r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "command"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_26, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_27, r.read_bool());
+      _obj.setProperty(rt, _prop_28, r.read_bool());
+      _obj.setProperty(rt, _prop_29, r.read_bool());
+      _obj.setProperty(rt, _prop_30, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "keyBindings"), _arr); }
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "keymapVersion"), (double)r.read_uvar());
+    resultObj.setProperty(rt, _prop_25, _arr); }
+  resultObj.setProperty(rt, _prop_32, (double)r.read_uvar());
   return std::move(resultObj);
 }
+static jsi::Value decode_workArchivePrepare(jsi::Runtime& rt, rc::Reader& r) {
+  auto resultObj = jsi::Object(rt);
+  const std::array<jsi::PropNameID, 33> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  return decode_body_workArchivePrepare(rt, resultObj, r, _properties.data());
+}
 
+static void encode_body_workArchivePreview(jsi::Runtime& rt, const jsi::Object& argsObj, rc::Writer& w, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  { auto _v = argsObj.getProperty(rt, _prop_0).getString(rt).utf8(rt); w.push_string(_v); }
+}
 static void encode_workArchivePreview(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
   w.push_u8(3); w.push_u8(0); // cmd_id = 3 LE
   auto argsObj = args.asObject(rt);
-  { auto _v = argsObj.getProperty(rt, "json").getString(rt).utf8(rt); w.push_string(_v); }
+  const std::array<jsi::PropNameID, 1> _properties{jsi::PropNameID::forAscii(rt, "json")};
+  encode_body_workArchivePreview(rt, argsObj, w, _properties.data());
 }
 
 // (Tier 1 positional) 개별 인자 → 직접 인코딩. argsObj 경유 대비 JSI 프로퍼티 조회 1회 제거.
@@ -2116,23 +3217,40 @@ static void encode_pos_workArchivePreview(jsi::Runtime& rt, const jsi::Value* ar
   { auto _s = argv[0].asString(rt).utf8(rt); w.push_string(_s); }
 }
 
-static jsi::Value decode_workArchivePreview(jsi::Runtime& rt, rc::Reader& r) {
-  auto resultObj = jsi::Object(rt);
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "spaces"), (double)r.read_uvar());
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "tabs"), (double)r.read_uvar());
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarks"), (double)r.read_uvar());
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "folders"), (double)r.read_uvar());
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "favorites"), (double)r.read_uvar());
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "duplicateUrls"), (double)r.read_uvar());
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "hasKeyBindings"), r.read_bool());
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "presentation"), jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "presentation"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+static jsi::Value decode_body_workArchivePreview(jsi::Runtime& rt, jsi::Object& resultObj, rc::Reader& r, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  const auto& _prop_1 = _properties[1];
+  const auto& _prop_2 = _properties[2];
+  const auto& _prop_3 = _properties[3];
+  const auto& _prop_4 = _properties[4];
+  const auto& _prop_5 = _properties[5];
+  const auto& _prop_6 = _properties[6];
+  const auto& _prop_7 = _properties[7];
+  resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
+  resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
+  resultObj.setProperty(rt, _prop_2, (double)r.read_uvar());
+  resultObj.setProperty(rt, _prop_3, (double)r.read_uvar());
+  resultObj.setProperty(rt, _prop_4, (double)r.read_uvar());
+  resultObj.setProperty(rt, _prop_5, (double)r.read_uvar());
+  resultObj.setProperty(rt, _prop_6, r.read_bool());
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_7, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_7, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   return std::move(resultObj);
 }
+static jsi::Value decode_workArchivePreview(jsi::Runtime& rt, rc::Reader& r) {
+  auto resultObj = jsi::Object(rt);
+  const std::array<jsi::PropNameID, 8> _properties{jsi::PropNameID::forAscii(rt, "spaces"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folders"), jsi::PropNameID::forAscii(rt, "favorites"), jsi::PropNameID::forAscii(rt, "duplicateUrls"), jsi::PropNameID::forAscii(rt, "hasKeyBindings"), jsi::PropNameID::forAscii(rt, "presentation")};
+  return decode_body_workArchivePreview(rt, resultObj, r, _properties.data());
+}
 
+static void encode_body_workspaceActivate(jsi::Runtime& rt, const jsi::Object& argsObj, rc::Writer& w, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  { auto _v = argsObj.getProperty(rt, _prop_0).getString(rt).utf8(rt); w.push_string(_v); }
+}
 static void encode_workspaceActivate(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
   w.push_u8(16); w.push_u8(0); // cmd_id = 16 LE
   auto argsObj = args.asObject(rt);
-  { auto _v = argsObj.getProperty(rt, "workspaceId").getString(rt).utf8(rt); w.push_string(_v); }
+  const std::array<jsi::PropNameID, 1> _properties{jsi::PropNameID::forAscii(rt, "workspaceId")};
+  encode_body_workspaceActivate(rt, argsObj, w, _properties.data());
 }
 
 // (Tier 1 positional) 개별 인자 → 직접 인코딩. argsObj 경유 대비 JSI 프로퍼티 조회 1회 제거.
@@ -2142,71 +3260,113 @@ static void encode_pos_workspaceActivate(jsi::Runtime& rt, const jsi::Value* arg
   { auto _s = argv[0].asString(rt).utf8(rt); w.push_string(_s); }
 }
 
-static jsi::Value decode_workspaceActivate(jsi::Runtime& rt, rc::Reader& r) {
-  auto resultObj = jsi::Object(rt);
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "version"), (double)r.read_uvar());
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "revision"), (double)r.read_uvar());
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "lastExternalRequestId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+static jsi::Value decode_body_workspaceActivate(jsi::Runtime& rt, jsi::Object& resultObj, rc::Reader& r, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  const auto& _prop_1 = _properties[1];
+  const auto& _prop_2 = _properties[2];
+  const auto& _prop_3 = _properties[3];
+  const auto& _prop_4 = _properties[4];
+  const auto& _prop_5 = _properties[5];
+  const auto& _prop_6 = _properties[6];
+  const auto& _prop_7 = _properties[7];
+  const auto& _prop_8 = _properties[8];
+  const auto& _prop_9 = _properties[9];
+  const auto& _prop_10 = _properties[10];
+  const auto& _prop_11 = _properties[11];
+  const auto& _prop_12 = _properties[12];
+  const auto& _prop_13 = _properties[13];
+  const auto& _prop_14 = _properties[14];
+  const auto& _prop_15 = _properties[15];
+  const auto& _prop_16 = _properties[16];
+  const auto& _prop_17 = _properties[17];
+  const auto& _prop_18 = _properties[18];
+  const auto& _prop_19 = _properties[19];
+  const auto& _prop_20 = _properties[20];
+  const auto& _prop_21 = _properties[21];
+  const auto& _prop_22 = _properties[22];
+  const auto& _prop_23 = _properties[23];
+  const auto& _prop_24 = _properties[24];
+  const auto& _prop_25 = _properties[25];
+  const auto& _prop_26 = _properties[26];
+  const auto& _prop_27 = _properties[27];
+  const auto& _prop_28 = _properties[28];
+  const auto& _prop_29 = _properties[29];
+  const auto& _prop_30 = _properties[30];
+  const auto& _prop_31 = _properties[31];
+  const auto& _prop_32 = _properties[32];
+  resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
+  resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "name"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "color"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _tag = r.read_u8(); if (_tag == 0) { _obj.setProperty(rt, rustra::generated::cachedProp(rt, "lastActiveTabId"), jsi::Value::null()); } else { { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "lastActiveTabId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_6, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _tag = r.read_u8(); if (_tag == 0) { _obj.setProperty(rt, _prop_7, jsi::Value::null()); } else { { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_7, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaces"), _arr); }
+    resultObj.setProperty(rt, _prop_3, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "url"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "favorite"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "pinned"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "private"), r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarkId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "homeUrl"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "homeTitle"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "suspended"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "updatedAt"), [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_12, r.read_bool());
+      _obj.setProperty(rt, _prop_13, r.read_bool());
+      _obj.setProperty(rt, _prop_14, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_15, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_18, r.read_bool());
+      _obj.setProperty(rt, _prop_19, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "tabs"), _arr); }
+    resultObj.setProperty(rt, _prop_8, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "url"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "folderId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_21, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarks"), _arr); }
+    resultObj.setProperty(rt, _prop_20, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarkFolders"), _arr); }
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeWorkspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeTabId"), jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeTabId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+    resultObj.setProperty(rt, _prop_22, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_23, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_24, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_24, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "key"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "meta"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "ctrl"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "alt"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "shift"), r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "command"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_26, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_27, r.read_bool());
+      _obj.setProperty(rt, _prop_28, r.read_bool());
+      _obj.setProperty(rt, _prop_29, r.read_bool());
+      _obj.setProperty(rt, _prop_30, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "keyBindings"), _arr); }
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "keymapVersion"), (double)r.read_uvar());
+    resultObj.setProperty(rt, _prop_25, _arr); }
+  resultObj.setProperty(rt, _prop_32, (double)r.read_uvar());
   return std::move(resultObj);
 }
+static jsi::Value decode_workspaceActivate(jsi::Runtime& rt, rc::Reader& r) {
+  auto resultObj = jsi::Object(rt);
+  const std::array<jsi::PropNameID, 33> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  return decode_body_workspaceActivate(rt, resultObj, r, _properties.data());
+}
 
+static void encode_body_workspaceCreate(jsi::Runtime& rt, const jsi::Object& argsObj, rc::Writer& w, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  { auto _v = argsObj.getProperty(rt, _prop_0).getString(rt).utf8(rt); w.push_string(_v); }
+}
 static void encode_workspaceCreate(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
   w.push_u8(6); w.push_u8(0); // cmd_id = 6 LE
   auto argsObj = args.asObject(rt);
-  { auto _v = argsObj.getProperty(rt, "name").getString(rt).utf8(rt); w.push_string(_v); }
+  const std::array<jsi::PropNameID, 1> _properties{jsi::PropNameID::forAscii(rt, "name")};
+  encode_body_workspaceCreate(rt, argsObj, w, _properties.data());
 }
 
 // (Tier 1 positional) 개별 인자 → 직접 인코딩. argsObj 경유 대비 JSI 프로퍼티 조회 1회 제거.
@@ -2216,85 +3376,369 @@ static void encode_pos_workspaceCreate(jsi::Runtime& rt, const jsi::Value* argv,
   { auto _s = argv[0].asString(rt).utf8(rt); w.push_string(_s); }
 }
 
-static jsi::Value decode_workspaceCreate(jsi::Runtime& rt, rc::Reader& r) {
-  auto resultObj = jsi::Object(rt);
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "version"), (double)r.read_uvar());
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "revision"), (double)r.read_uvar());
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "lastExternalRequestId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+static jsi::Value decode_body_workspaceCreate(jsi::Runtime& rt, jsi::Object& resultObj, rc::Reader& r, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  const auto& _prop_1 = _properties[1];
+  const auto& _prop_2 = _properties[2];
+  const auto& _prop_3 = _properties[3];
+  const auto& _prop_4 = _properties[4];
+  const auto& _prop_5 = _properties[5];
+  const auto& _prop_6 = _properties[6];
+  const auto& _prop_7 = _properties[7];
+  const auto& _prop_8 = _properties[8];
+  const auto& _prop_9 = _properties[9];
+  const auto& _prop_10 = _properties[10];
+  const auto& _prop_11 = _properties[11];
+  const auto& _prop_12 = _properties[12];
+  const auto& _prop_13 = _properties[13];
+  const auto& _prop_14 = _properties[14];
+  const auto& _prop_15 = _properties[15];
+  const auto& _prop_16 = _properties[16];
+  const auto& _prop_17 = _properties[17];
+  const auto& _prop_18 = _properties[18];
+  const auto& _prop_19 = _properties[19];
+  const auto& _prop_20 = _properties[20];
+  const auto& _prop_21 = _properties[21];
+  const auto& _prop_22 = _properties[22];
+  const auto& _prop_23 = _properties[23];
+  const auto& _prop_24 = _properties[24];
+  const auto& _prop_25 = _properties[25];
+  const auto& _prop_26 = _properties[26];
+  const auto& _prop_27 = _properties[27];
+  const auto& _prop_28 = _properties[28];
+  const auto& _prop_29 = _properties[29];
+  const auto& _prop_30 = _properties[30];
+  const auto& _prop_31 = _properties[31];
+  const auto& _prop_32 = _properties[32];
+  resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
+  resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "name"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "color"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _tag = r.read_u8(); if (_tag == 0) { _obj.setProperty(rt, rustra::generated::cachedProp(rt, "lastActiveTabId"), jsi::Value::null()); } else { { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "lastActiveTabId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_6, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _tag = r.read_u8(); if (_tag == 0) { _obj.setProperty(rt, _prop_7, jsi::Value::null()); } else { { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_7, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaces"), _arr); }
+    resultObj.setProperty(rt, _prop_3, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "url"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "favorite"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "pinned"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "private"), r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarkId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "homeUrl"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "homeTitle"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "suspended"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "updatedAt"), [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_12, r.read_bool());
+      _obj.setProperty(rt, _prop_13, r.read_bool());
+      _obj.setProperty(rt, _prop_14, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_15, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_18, r.read_bool());
+      _obj.setProperty(rt, _prop_19, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "tabs"), _arr); }
+    resultObj.setProperty(rt, _prop_8, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "url"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "folderId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_21, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarks"), _arr); }
+    resultObj.setProperty(rt, _prop_20, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "id"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "workspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "title"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "bookmarkFolders"), _arr); }
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeWorkspaceId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeTabId"), jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "activeTabId"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+    resultObj.setProperty(rt, _prop_22, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_23, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_24, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_24, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "key"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "meta"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "ctrl"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "alt"), r.read_bool());
-      _obj.setProperty(rt, rustra::generated::cachedProp(rt, "shift"), r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, rustra::generated::cachedProp(rt, "command"), jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_26, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_27, r.read_bool());
+      _obj.setProperty(rt, _prop_28, r.read_bool());
+      _obj.setProperty(rt, _prop_29, r.read_bool());
+      _obj.setProperty(rt, _prop_30, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "keyBindings"), _arr); }
-  resultObj.setProperty(rt, rustra::generated::cachedProp(rt, "keymapVersion"), (double)r.read_uvar());
+    resultObj.setProperty(rt, _prop_25, _arr); }
+  resultObj.setProperty(rt, _prop_32, (double)r.read_uvar());
   return std::move(resultObj);
 }
-
-static void encode_complex_workArchiveExport(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
-  w.push_u8(2); w.push_u8(0);
-  { if (!args.isObject() || args.asObject(rt).isArray(rt)) throw jsi::JSError(rt, "complex object expected");
-    auto _cx0 = args.asObject(rt);
-    auto _cx1 = _cx0.getProperty(rt, "presentation"); if (_cx0.hasProperty(rt, "presentation") && !_cx1.isUndefined()) { w.push_u8(1);
-      { if (_cx1.isNull() || _cx1.isUndefined()) { w.push_u8(0); } else { w.push_u8(1);
-        if (!_cx1.isString()) throw jsi::JSError(rt, "complex string expected");
-        w.push_string(_cx1.getString(rt).utf8(rt));
-      } }
-    } else { w.push_u8(0); }
-  }
-}
-
-static jsi::Value decode_complex_workArchiveExport(jsi::Runtime& rt, rc::Reader& r) {
-  return [&]() -> jsi::Value { auto _s = r.read_string_view(); return jsi::String::createFromUtf8(rt, _s.data, _s.size); }();
+static jsi::Value decode_workspaceCreate(jsi::Runtime& rt, rc::Reader& r) {
+  auto resultObj = jsi::Object(rt);
+  const std::array<jsi::PropNameID, 33> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  return decode_body_workspaceCreate(rt, resultObj, r, _properties.data());
 }
 
 namespace rustra::generated {
+
+bool encode_bound(Runtime& rt, const BoundCodecContext& context, const Value& args, rc::Writer& w) {
+  switch (context.commandId) {
+    case 20: {
+      w.push_u8(20); w.push_u8(0);
+      auto argsObj = args.asObject(rt);
+      encode_body_bookmarkCreate(rt, argsObj, w, context.input.data()); return true;
+    }
+    case 24: {
+      w.push_u8(24); w.push_u8(0);
+      auto argsObj = args.asObject(rt);
+      encode_body_bookmarkFolderCreate(rt, argsObj, w, context.input.data()); return true;
+    }
+    case 26: {
+      w.push_u8(26); w.push_u8(0);
+      auto argsObj = args.asObject(rt);
+      encode_body_bookmarkFolderRemove(rt, argsObj, w, context.input.data()); return true;
+    }
+    case 25: {
+      w.push_u8(25); w.push_u8(0);
+      auto argsObj = args.asObject(rt);
+      encode_body_bookmarkFolderRename(rt, argsObj, w, context.input.data()); return true;
+    }
+    case 23: {
+      w.push_u8(23); w.push_u8(0);
+      auto argsObj = args.asObject(rt);
+      encode_body_bookmarkMove(rt, argsObj, w, context.input.data()); return true;
+    }
+    case 29: {
+      w.push_u8(29); w.push_u8(0);
+      auto argsObj = args.asObject(rt);
+      encode_body_bookmarkOpen(rt, argsObj, w, context.input.data()); return true;
+    }
+    case 22: {
+      w.push_u8(22); w.push_u8(0);
+      auto argsObj = args.asObject(rt);
+      encode_body_bookmarkRemove(rt, argsObj, w, context.input.data()); return true;
+    }
+    case 27: {
+      w.push_u8(27); w.push_u8(0);
+      auto argsObj = args.asObject(rt);
+      encode_body_bookmarkSetFolder(rt, argsObj, w, context.input.data()); return true;
+    }
+    case 21: {
+      w.push_u8(21); w.push_u8(0);
+      auto argsObj = args.asObject(rt);
+      encode_body_bookmarkUpdate(rt, argsObj, w, context.input.data()); return true;
+    }
+    case 1: {
+      w.push_u8(1); w.push_u8(0);
+      auto argsObj = args.asObject(rt);
+      encode_body_browserSnapshot(rt, argsObj, w, context.input.data()); return true;
+    }
+    case 19: {
+      w.push_u8(19); w.push_u8(0);
+      auto argsObj = args.asObject(rt);
+      encode_body_keymapDefaults(rt, argsObj, w, context.input.data()); return true;
+    }
+    case 18: {
+      w.push_u8(18); w.push_u8(0);
+      auto argsObj = args.asObject(rt);
+      encode_body_keymapSet(rt, argsObj, w, context.input.data()); return true;
+    }
+    case 17: {
+      w.push_u8(17); w.push_u8(0);
+      auto argsObj = args.asObject(rt);
+      encode_body_snapshotRestore(rt, argsObj, w, context.input.data()); return true;
+    }
+    case 9: {
+      w.push_u8(9); w.push_u8(0);
+      auto argsObj = args.asObject(rt);
+      encode_body_tabActivate(rt, argsObj, w, context.input.data()); return true;
+    }
+    case 10: {
+      w.push_u8(10); w.push_u8(0);
+      auto argsObj = args.asObject(rt);
+      encode_body_tabClose(rt, argsObj, w, context.input.data()); return true;
+    }
+    case 7: {
+      w.push_u8(7); w.push_u8(0);
+      auto argsObj = args.asObject(rt);
+      encode_body_tabCreate(rt, argsObj, w, context.input.data()); return true;
+    }
+    case 14: {
+      w.push_u8(14); w.push_u8(0);
+      auto argsObj = args.asObject(rt);
+      encode_body_tabMove(rt, argsObj, w, context.input.data()); return true;
+    }
+    case 11: {
+      w.push_u8(11); w.push_u8(0);
+      auto argsObj = args.asObject(rt);
+      encode_body_tabNavigated(rt, argsObj, w, context.input.data()); return true;
+    }
+    case 8: {
+      w.push_u8(8); w.push_u8(0);
+      auto argsObj = args.asObject(rt);
+      encode_body_tabOpenExternal(rt, argsObj, w, context.input.data()); return true;
+    }
+    case 28: {
+      w.push_u8(28); w.push_u8(0);
+      auto argsObj = args.asObject(rt);
+      encode_body_tabReset(rt, argsObj, w, context.input.data()); return true;
+    }
+    case 12: {
+      w.push_u8(12); w.push_u8(0);
+      auto argsObj = args.asObject(rt);
+      encode_body_tabSetFavorite(rt, argsObj, w, context.input.data()); return true;
+    }
+    case 13: {
+      w.push_u8(13); w.push_u8(0);
+      auto argsObj = args.asObject(rt);
+      encode_body_tabSetPinned(rt, argsObj, w, context.input.data()); return true;
+    }
+    case 15: {
+      w.push_u8(15); w.push_u8(0);
+      auto argsObj = args.asObject(rt);
+      encode_body_tabSetWorkspace(rt, argsObj, w, context.input.data()); return true;
+    }
+    case 5: {
+      w.push_u8(5); w.push_u8(0);
+      auto argsObj = args.asObject(rt);
+      encode_body_workArchiveImport(rt, argsObj, w, context.input.data()); return true;
+    }
+    case 4: {
+      w.push_u8(4); w.push_u8(0);
+      auto argsObj = args.asObject(rt);
+      encode_body_workArchivePrepare(rt, argsObj, w, context.input.data()); return true;
+    }
+    case 3: {
+      w.push_u8(3); w.push_u8(0);
+      auto argsObj = args.asObject(rt);
+      encode_body_workArchivePreview(rt, argsObj, w, context.input.data()); return true;
+    }
+    case 16: {
+      w.push_u8(16); w.push_u8(0);
+      auto argsObj = args.asObject(rt);
+      encode_body_workspaceActivate(rt, argsObj, w, context.input.data()); return true;
+    }
+    case 6: {
+      w.push_u8(6); w.push_u8(0);
+      auto argsObj = args.asObject(rt);
+      encode_body_workspaceCreate(rt, argsObj, w, context.input.data()); return true;
+    }
+    default: return false;
+  }
+}
+
+Value decode_bound(Runtime& rt, const BoundCodecContext& context, rc::Reader& r) {
+  switch (context.commandId) {
+    case 20: {
+      auto resultObj = jsi::Object(rt);
+      return decode_body_bookmarkCreate(rt, resultObj, r, context.output.data());
+    }
+    case 24: {
+      auto resultObj = jsi::Object(rt);
+      return decode_body_bookmarkFolderCreate(rt, resultObj, r, context.output.data());
+    }
+    case 26: {
+      auto resultObj = jsi::Object(rt);
+      return decode_body_bookmarkFolderRemove(rt, resultObj, r, context.output.data());
+    }
+    case 25: {
+      auto resultObj = jsi::Object(rt);
+      return decode_body_bookmarkFolderRename(rt, resultObj, r, context.output.data());
+    }
+    case 23: {
+      auto resultObj = jsi::Object(rt);
+      return decode_body_bookmarkMove(rt, resultObj, r, context.output.data());
+    }
+    case 29: {
+      auto resultObj = jsi::Object(rt);
+      return decode_body_bookmarkOpen(rt, resultObj, r, context.output.data());
+    }
+    case 22: {
+      auto resultObj = jsi::Object(rt);
+      return decode_body_bookmarkRemove(rt, resultObj, r, context.output.data());
+    }
+    case 27: {
+      auto resultObj = jsi::Object(rt);
+      return decode_body_bookmarkSetFolder(rt, resultObj, r, context.output.data());
+    }
+    case 21: {
+      auto resultObj = jsi::Object(rt);
+      return decode_body_bookmarkUpdate(rt, resultObj, r, context.output.data());
+    }
+    case 1: {
+      auto resultObj = jsi::Object(rt);
+      return decode_body_browserSnapshot(rt, resultObj, r, context.output.data());
+    }
+    case 19: {
+      auto resultObj = jsi::Object(rt);
+      return decode_body_keymapDefaults(rt, resultObj, r, context.output.data());
+    }
+    case 18: {
+      auto resultObj = jsi::Object(rt);
+      return decode_body_keymapSet(rt, resultObj, r, context.output.data());
+    }
+    case 17: {
+      auto resultObj = jsi::Object(rt);
+      return decode_body_snapshotRestore(rt, resultObj, r, context.output.data());
+    }
+    case 9: {
+      auto resultObj = jsi::Object(rt);
+      return decode_body_tabActivate(rt, resultObj, r, context.output.data());
+    }
+    case 10: {
+      auto resultObj = jsi::Object(rt);
+      return decode_body_tabClose(rt, resultObj, r, context.output.data());
+    }
+    case 7: {
+      auto resultObj = jsi::Object(rt);
+      return decode_body_tabCreate(rt, resultObj, r, context.output.data());
+    }
+    case 14: {
+      auto resultObj = jsi::Object(rt);
+      return decode_body_tabMove(rt, resultObj, r, context.output.data());
+    }
+    case 11: {
+      auto resultObj = jsi::Object(rt);
+      return decode_body_tabNavigated(rt, resultObj, r, context.output.data());
+    }
+    case 8: {
+      auto resultObj = jsi::Object(rt);
+      return decode_body_tabOpenExternal(rt, resultObj, r, context.output.data());
+    }
+    case 28: {
+      auto resultObj = jsi::Object(rt);
+      return decode_body_tabReset(rt, resultObj, r, context.output.data());
+    }
+    case 12: {
+      auto resultObj = jsi::Object(rt);
+      return decode_body_tabSetFavorite(rt, resultObj, r, context.output.data());
+    }
+    case 13: {
+      auto resultObj = jsi::Object(rt);
+      return decode_body_tabSetPinned(rt, resultObj, r, context.output.data());
+    }
+    case 15: {
+      auto resultObj = jsi::Object(rt);
+      return decode_body_tabSetWorkspace(rt, resultObj, r, context.output.data());
+    }
+    case 5: {
+      auto resultObj = jsi::Object(rt);
+      return decode_body_workArchiveImport(rt, resultObj, r, context.output.data());
+    }
+    case 4: {
+      auto resultObj = jsi::Object(rt);
+      return decode_body_workArchivePrepare(rt, resultObj, r, context.output.data());
+    }
+    case 3: {
+      auto resultObj = jsi::Object(rt);
+      return decode_body_workArchivePreview(rt, resultObj, r, context.output.data());
+    }
+    case 16: {
+      auto resultObj = jsi::Object(rt);
+      return decode_body_workspaceActivate(rt, resultObj, r, context.output.data());
+    }
+    case 6: {
+      auto resultObj = jsi::Object(rt);
+      return decode_body_workspaceCreate(rt, resultObj, r, context.output.data());
+    }
+    default: throw JSError(rt, "rustra: no bound codec");
+  }
+}
 
 bool encode_by_name(Runtime& rt, const std::string& name, const Value& args, rc::Writer& w) {
   if (name == "bookmarkCreate") { encode_bookmarkCreate(rt, args, w); return true; }
@@ -2325,7 +3769,6 @@ bool encode_by_name(Runtime& rt, const std::string& name, const Value& args, rc:
   if (name == "workArchivePreview") { encode_workArchivePreview(rt, args, w); return true; }
   if (name == "workspaceActivate") { encode_workspaceActivate(rt, args, w); return true; }
   if (name == "workspaceCreate") { encode_workspaceCreate(rt, args, w); return true; }
-  if (name == "workArchiveExport") { encode_complex_workArchiveExport(rt, args, w); return true; }
   return false; // 동적 명령 — JS 가 Tier 3 fallback 처리
 }
 
@@ -2358,7 +3801,6 @@ Value decode_by_name(Runtime& rt, const std::string& name, rc::Reader& r) {
   if (name == "workArchivePreview") return decode_workArchivePreview(rt, r);
   if (name == "workspaceActivate") return decode_workspaceActivate(rt, r);
   if (name == "workspaceCreate") return decode_workspaceCreate(rt, r);
-  if (name == "workArchiveExport") return decode_complex_workArchiveExport(rt, r);
   throw JSError(rt, "rustra: no C++ codec for '" + name + "'");
 }
 
@@ -2392,7 +3834,6 @@ bool encode_by_id(Runtime& rt, uint16_t cmd_id, const Value& args, rc::Writer& w
     case 3: encode_workArchivePreview(rt, args, w); return true;
     case 16: encode_workspaceActivate(rt, args, w); return true;
     case 6: encode_workspaceCreate(rt, args, w); return true;
-    case 2: encode_complex_workArchiveExport(rt, args, w); return true;
     default: return false; // 동적/알 수 없는 cmd_id — JS 가 Tier 3 fallback 처리
   }
 }
@@ -2427,7 +3868,6 @@ Value decode_by_id(Runtime& rt, uint16_t cmd_id, rc::Reader& r) {
     case 3: return decode_workArchivePreview(rt, r);
     case 16: return decode_workspaceActivate(rt, r);
     case 6: return decode_workspaceCreate(rt, r);
-    case 2: return decode_complex_workArchiveExport(rt, r);
     default: throw JSError(rt, "rustra: no C++ codec for cmd_id " + std::to_string(cmd_id));
   }
 }
@@ -2461,7 +3901,6 @@ bool has_static_codec(const std::string& name) {
   if (name == "workArchivePreview") return true;
   if (name == "workspaceActivate") return true;
   if (name == "workspaceCreate") return true;
-  if (name == "workArchiveExport") return true;
   return false;
 }
 
@@ -2495,7 +3934,6 @@ bool has_static_codec_id(uint16_t cmd_id) {
     case 3: return true;
     case 16: return true;
     case 6: return true;
-    case 2: return true;
     default: return false;
   }
 }
@@ -2580,6 +4018,12 @@ Value decode_buffer_result_by_id(Runtime& rt, uint16_t cmd_id, Value buffer) {
   }
 }
 
+Value decode_buffer_bound(Runtime& rt, const BoundCodecContext& context, Value buffer) {
+  switch (context.commandId) {
+    default: throw JSError(rt, "rustra: no bound buffer result codec");
+  }
+}
+
 bool has_raw_codec(uint16_t cmd_id) {
   switch (cmd_id) {
 
@@ -2596,6 +4040,12 @@ void encode_raw_slots(Runtime& rt, uint16_t cmd_id, const Value* argv, size_t ar
 Value decode_raw_result(Runtime& rt, uint16_t cmd_id, uint64_t slot) {
   switch (cmd_id) {
     default: throw JSError(rt, "rustra: no raw result codec for cmd_id " + std::to_string(cmd_id));
+  }
+}
+
+Value decode_raw_bound(Runtime& rt, const BoundCodecContext& context, uint64_t slot) {
+  switch (context.commandId) {
+    default: throw JSError(rt, "rustra: no bound raw result codec");
   }
 }
 
