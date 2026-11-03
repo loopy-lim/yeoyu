@@ -122,7 +122,7 @@ class BrowserPictureInPicture(private val activity: Activity, private val launch
 
     /** Acceptance-only decisions; no page contents or media URLs. Never called from pre-draw. */
     private fun trace(event: String, detail: String? = null) {
-        if (activity.packageName != "com.workspacebrowser.acceptance") return
+        if (activity.packageName != "ll3.kr.yeoyu.acceptance") return
         val current = transfer
         val entry = (current?.target?.tabId ?: policy.tabId)?.let(GeckoSessionRegistry::entry)
         val gecko = current?.gecko ?: entry?.owner?.gecko

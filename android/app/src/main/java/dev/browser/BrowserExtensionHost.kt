@@ -183,7 +183,7 @@ internal object BrowserExtensionHost {
 
     /** Diagnostic phases only: never log an extension, tab, URL or page content. */
     private fun tracePopup(phase: String) {
-        if (popupTraceCount >= 80 || GeckoSessionRegistry.activityProvider?.invoke()?.packageName != "com.workspacebrowser.acceptance") return
+        if (popupTraceCount >= 80 || GeckoSessionRegistry.activityProvider?.invoke()?.packageName != "ll3.kr.yeoyu.acceptance") return
         popupTraceCount++
         android.util.Log.i("YeoyuExtensionPopup", "phase=$phase")
     }

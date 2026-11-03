@@ -19,7 +19,7 @@ def total_pss_kb(memory):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--serial", required=True)
-    parser.add_argument("--package", default="com.workspacebrowser.acceptance")
+    parser.add_argument("--package", default="ll3.kr.yeoyu.acceptance")
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--duration-seconds", type=int, default=1800)
     parser.add_argument("--interval-seconds", type=int, default=60)

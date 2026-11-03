@@ -82,7 +82,7 @@ internal object SpaceTransitionCover {
         val publication = CoverPublication(publish)
         val started = SystemClock.uptimeMillis()
         fun skip(reason: String) {
-            if (activity?.packageName == "com.workspacebrowser.acceptance")
+            if (activity?.packageName == "ll3.kr.yeoyu.acceptance")
                 Log.i("YeoyuSpaceCover", "event=return-skipped returnToken=$returnToken reason=$reason")
             publication.complete()
         }
@@ -126,7 +126,7 @@ internal object SpaceTransitionCover {
     }
 
     fun prepare(activity: Activity?, from: String?, to: String?, reply: () -> Unit) {
-        if (activity?.packageName == "com.workspacebrowser.acceptance") {
+        if (activity?.packageName == "ll3.kr.yeoyu.acceptance") {
             val source = from?.let(GeckoSessionRegistry::entry)
             val target = to?.let(GeckoSessionRegistry::entry)
             Log.i("YeoyuBootstrap", "event=space-prepare from=$from to=$to sourcePresent=${source != null}" +
@@ -139,7 +139,7 @@ internal object SpaceTransitionCover {
             InputRouter.engine.chromeModalActive || InputRouter.engine.addressInputActive) { reply(); return }
         val pair = GeckoSessionRegistry.spaceTransitionPair(from, to)
         if (pair == null) {
-            if (activity.packageName == "com.workspacebrowser.acceptance")
+            if (activity.packageName == "ll3.kr.yeoyu.acceptance")
                 Log.i("YeoyuBootstrap", "event=space-pair-unavailable from=$from to=$to")
             reply(); return
         }
@@ -257,7 +257,7 @@ internal object SpaceTransitionCover {
         val p = coldPending ?: return
         // Invalidate first: late native callbacks cannot publish again or capture another entry with the same id.
         coldPending = null
-        if (p.activity.packageName == "com.workspacebrowser.acceptance")
+        if (p.activity.packageName == "ll3.kr.yeoyu.acceptance")
             Log.i("YeoyuSpaceCover", "event=$reason from=${p.sourceIdentity.tab} to=${p.targetId} ageMs=${SystemClock.uptimeMillis() - p.started}")
         try { detachCold(p) } finally { p.publication.complete() }
     }
@@ -652,7 +652,7 @@ internal object SpaceTransitionCover {
         try { p.publication.complete(install) } catch (_: RuntimeException) { } catch (_: OutOfMemoryError) { }
     }
     private fun trace(p: Pending, event: String) {
-        if (p.activity.packageName != "com.workspacebrowser.acceptance" || p.events++ >= 18) return
+        if (p.activity.packageName != "ll3.kr.yeoyu.acceptance" || p.events++ >= 18) return
         val readiness = if (p.returning == null) "" else
             " lifecycle=${(p.activity as? MainActivity)?.lifecycle?.currentState}" +
                 " windowVisibility=${p.activity.window.peekDecorView()?.windowVisibility}" +

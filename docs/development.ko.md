@@ -71,10 +71,10 @@ Native/unit gate이며 앱을 설치하거나 특정 Android 기기·외부 iden
 
 | 명령 | Application | 용도 |
 | --- | --- | --- |
-| `./scripts/build-android.sh Debug` | `com.workspacebrowser` | Metro에 연결되는 개발 APK |
-| `./scripts/build-android.sh LocalRelease` | `com.workspacebrowser` | 이 기기의 Android debug key로 서명한 optimized test APK |
-| `./scripts/build-android.sh Acceptance` | `com.workspacebrowser.acceptance` | destructive acceptance를 위한 별도 data slot |
-| `./scripts/build-android.sh Release` | `com.workspacebrowser` | 실제 서명과 증가한 version이 필요한 distribution candidate |
+| `./scripts/build-android.sh Debug` | `ll3.kr.yeoyu` | Metro에 연결되는 개발 APK |
+| `./scripts/build-android.sh LocalRelease` | `ll3.kr.yeoyu` | 이 기기의 Android debug key로 서명한 optimized test APK |
+| `./scripts/build-android.sh Acceptance` | `ll3.kr.yeoyu.acceptance` | destructive acceptance를 위한 별도 data slot |
+| `./scripts/build-android.sh Release` | `ll3.kr.yeoyu` | 실제 서명과 증가한 version이 필요한 distribution candidate |
 
 Build output은 Git에서 제외된 `dist/`로 복사됩니다. 저장소에는 signing key를 포함하지 않습니다. Debug, LocalRelease, Acceptance는 Android의 일반적인 기기별 debug key를 사용합니다.
 
@@ -92,7 +92,7 @@ bun start
 adb devices
 adb -s DEVICE_ID reverse tcp:8081 tcp:8081
 adb -s DEVICE_ID install -r android/app/build/outputs/apk/debug/app-debug.apk
-adb -s DEVICE_ID shell am start -n com.workspacebrowser/.MainActivity
+adb -s DEVICE_ID shell am start -n ll3.kr.yeoyu/.MainActivity
 ```
 
 일반 업데이트 과정에서 uninstall이나 app data 초기화를 사용하지 마세요. 기존 tab과 setting은 중요한 test data일 수 있습니다.

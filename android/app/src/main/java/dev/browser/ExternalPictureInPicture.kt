@@ -69,7 +69,7 @@ object ExternalPictureInPicture {
 
     /** Acceptance diagnostics only: lifecycle identities and decisions, never URLs or page content. */
     internal fun trace(event: String, activity: Activity? = null, ticket: Long? = null, detail: String? = null) {
-        if ((activity?.packageName ?: app?.packageName) != "com.workspacebrowser.acceptance") return
+        if ((activity?.packageName ?: app?.packageName) != "ll3.kr.yeoyu.acceptance") return
         val current = transfer
         val host = activity ?: current?.activity
         val live = current?.lease?.source?.let(::entry)
@@ -86,7 +86,7 @@ object ExternalPictureInPicture {
 
     internal fun traceExitBoundary(activity: ExternalPictureInPictureActivity, ticket: Long,
         event: String, detail: String = "", begin: Boolean = false) {
-        if (activity.packageName != "com.workspacebrowser.acceptance") return
+        if (activity.packageName != "ll3.kr.yeoyu.acceptance") return
         val current = transfer?.takeIf { it.lease.ticket == ticket && it.activity === activity } ?: return
         if (begin && policy.phase == ExternalPipPhase.ACTIVE && !activity.isInPictureInPictureMode)
             current.viewport?.beginExitProbe(activity, ticket, current.documentGeneration)

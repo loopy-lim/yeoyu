@@ -34,7 +34,7 @@ class StableGeckoView(context: Context) : GeckoView(context) {
     private var returnTrace: ReturnTrace? = null
 
     internal fun beginReturnedSurfaceTrace(ticket: Long, tab: String, document: Long) {
-        if (context.packageName != "com.workspacebrowser.acceptance") return
+        if (context.packageName != "ll3.kr.yeoyu.acceptance") return
         val trace = ReturnTrace(ticket, tab, document, System.identityHashCode(session), SystemClock.uptimeMillis())
         returnTrace = trace
         traceReturnedSurface("requested")

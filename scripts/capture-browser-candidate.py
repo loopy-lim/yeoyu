@@ -50,7 +50,7 @@ def main():
             parser.error("--aapt is required with --apk")
         badging = subprocess.check_output([str(args.aapt), "dump", "badging", str(args.apk)], text=True)
         package = re.search(r"^package: name='([^']+)' versionCode='([^']+)' versionName='([^']+)'", badging, re.M)
-        if not package or package[1] != "com.workspacebrowser.acceptance":
+        if not package or package[1] != "ll3.kr.yeoyu.acceptance":
             parser.error("Only the isolated Acceptance package may receive this candidate receipt")
         result["apk"] = {"file": args.apk.name, "sha256": sha256(args.apk), "bytes": args.apk.stat().st_size, "applicationId": package[1], "versionCode": package[2], "versionName": package[3]}
     args.out.parent.mkdir(parents=True, exist_ok=True)

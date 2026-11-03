@@ -12,7 +12,7 @@ import uuid
 from xml.etree import ElementTree as ET
 
 
-EXPECTED_PACKAGE = "com.workspacebrowser.acceptance"
+EXPECTED_PACKAGE = "ll3.kr.yeoyu.acceptance"
 
 
 class GuardError(RuntimeError):

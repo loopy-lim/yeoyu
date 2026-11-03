@@ -86,7 +86,7 @@ android {
     namespace "com.workspacebrowser"
     defaultConfig {
         ndk { abiFilters.addAll((rootProject.findProperty("reactNativeArchitectures") ?: "arm64-v8a").split(",") as List) }
-        applicationId "com.workspacebrowser"
+        applicationId "ll3.kr.yeoyu"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         // Ad-hoc builds without env versions default to a monotonic day

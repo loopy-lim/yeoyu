@@ -29,7 +29,7 @@ def adb(*command):
 
 before = adb("exec-out", "screencap", "-p")
 (out / "before.png").write_bytes(before)
-adb("shell", "dumpsys", "gfxinfo", "com.workspacebrowser", "reset")
+adb("shell", "dumpsys", "gfxinfo", "ll3.kr.yeoyu", "reset")
 started = time.monotonic()
 completed = 0
 try:
@@ -43,8 +43,8 @@ finally:
     if completed % 2:
         adb("shell", "input", "keycombination", "-t", "60", "113", "47")
 elapsed = time.monotonic() - started
-gfx = adb("shell", "dumpsys", "gfxinfo", "com.workspacebrowser", "framestats").decode()
-memory = adb("shell", "dumpsys", "meminfo", "com.workspacebrowser").decode()
+gfx = adb("shell", "dumpsys", "gfxinfo", "ll3.kr.yeoyu", "framestats").decode()
+memory = adb("shell", "dumpsys", "meminfo", "ll3.kr.yeoyu").decode()
 (out / "gfxinfo.txt").write_text(gfx)
 (out / "memory.txt").write_text(memory)
 (out / "after.png").write_bytes(adb("exec-out", "screencap", "-p"))
