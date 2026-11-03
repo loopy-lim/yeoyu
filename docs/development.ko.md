@@ -97,6 +97,24 @@ adb -s DEVICE_ID shell am start -n ll3.kr.yeoyu/.MainActivity
 
 일반 업데이트 과정에서 uninstall이나 app data 초기화를 사용하지 마세요. 기존 tab과 setting은 중요한 test data일 수 있습니다.
 
+## 데이터 마이그레이션
+
+앱 ID 변경(`com.workspacebrowser` → `ll3.kr.yeoyu`)이나 재설치 시 데이터는 슬롯별로 분리됩니다. `uninstall`과 `pm clear`는 앱 데이터를 함께 지웁니다. 이동 경로는 두 가지입니다.
+
+**작업 보관 파일 경로(권장, 모든 빌드 가능)** — 앱 내 설정 → 브라우저 데이터에서 제공합니다.
+
+1. 이전 설치에서 "작업 보관 파일 내보내기"(또는 "북마크를 HTML로 내보내기")로 파일을 저장합니다. 보관 파일에는 Space·탭·북마크·키맵이 담기고 비공개 탭·쿠키·입력 상태는 제외됩니다.
+2. 새 설치에서 "북마크 또는 작업 보관 파일 가져오기"로 파일을 열고 미리 보기로 개수를 확인한 뒤 가져옵니다. 중복 URL은 카운트되고 keymap·즐겨찾기 추가는 토글로 선택합니다.
+
+**전체 슬롯 복사(Debug 빌드 전용)** — `scripts/migrate-app-data.py`가 run-as로 데이터 디렉터리(files, shared_prefs, databases)를 tar로 옮깁니다. Acceptance·Release는 debuggable이 아니라 run-as를 거부합니다.
+
+```sh
+python3 scripts/migrate-app-data.py dump -s DEVICE_ID --from OLD_PKG -o old.tar
+python3 scripts/migrate-app-data.py restore -s DEVICE_ID --to NEW_PKG -i old.tar
+```
+
+restore 전에 대상 앱을 한 번 실행해 데이터 디렉터리를 초기화해 둡니다(스크립트가 없으면 자동 실행). 같은 패키지 복구는 dump → `pm clear` → restore 순서로 씁니다.
+
 ## Distribution signing
 
 `Release`에는 다음 environment variable이 필요합니다.
