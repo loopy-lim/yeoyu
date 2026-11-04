@@ -20,10 +20,12 @@ import { ChromeIcon } from "@/chrome/ChromeIcon";
 import { josaRo } from "@/i18n";
 import {
   normalizeInput,
+  resolveSiteSearch,
   suggest,
   type SearchEngineId,
   type Suggestion,
 } from "@/suggestions";
+import type { SiteSearchEntry } from "@/uiPreferences";
 import { matchingCommands, type ProductCommand } from "@/commandRegistry";
 import type { HistoryEntry } from "@/history";
 import { platform } from "@/platform";
@@ -34,6 +36,7 @@ import { useI18n } from "@/i18nContext";
 
 interface Props {
   engine: SearchEngineId;
+  siteSearches?: SiteSearchEntry[];
   value?: string;
   autoFocus?: boolean;
   placeholder?: string;
@@ -54,10 +57,13 @@ interface Props {
 
 type Result =
   | { kind: "command"; command: ProductCommand }
+  | { kind: "site"; url: string; label: string }
   | { kind: "page"; page: Suggestion };
 const resultKey = (result: Result) =>
   result.kind === "command"
     ? `command:${result.command.id}`
+    : result.kind === "site"
+    ? `site:${result.url}`
     : `page:${result.page.source}:${result.page.url}`;
 
 /** URL/search, existing tabs and product commands share one keyboard selection model. */
@@ -101,12 +107,26 @@ export const AddressBox = forwardRef<
               command,
             }))
           : []),
+        ...(() => {
+          const siteQuery = query.trim();
+          const siteUrl = resolveSiteSearch(siteQuery, props.siteSearches ?? []);
+          const keyword = siteQuery.split(/\s+/)[0]?.toLowerCase() ?? "";
+          const siteEntry =
+            !siteUrl || !keyword
+              ? null
+              : (props.siteSearches ?? []).find(
+                  (candidate) => candidate.keyword === keyword
+                );
+          return siteUrl && siteEntry
+            ? [{ kind: "site" as const, url: siteUrl, label: siteEntry.label }]
+            : [];
+        })(),
         ...suggest(query, props.suggestions).map((page) => ({
           kind: "page" as const,
           page,
         })),
       ].slice(0, 8),
-    [query, props.suggestions, props.commands, props.onCommand]
+    [query, props.suggestions, props.commands, props.onCommand, props.siteSearches]
   );
   const visible = focused && results.length > 0;
   const highlight = results.findIndex(
@@ -153,9 +173,14 @@ export const AddressBox = forwardRef<
       props.onOpenTab(result.page.tabId);
       return;
     }
+    if (result?.kind === "site") {
+      props.onSubmit(result.url);
+      return;
+    }
     const url = normalizeInput(
       result?.kind === "page" ? result.page.url : query,
-      props.engine
+      props.engine,
+      props.siteSearches
     );
     if (url) props.onSubmit(url);
   };
@@ -192,7 +217,13 @@ export const AddressBox = forwardRef<
     return () => subscription.remove();
   }, [focused]);
   useEffect(() => {
-    const enable = () => platform?.setAddressInputActive?.(focused);
+    const enable = () => {
+      platform?.setAddressInputActive?.(focused);
+      // Keyboard-invoked editors suppress the soft keyboard, which also
+      // skips the IME start request hardware composition needs (Korean).
+      if (focused && props.softInput === false)
+        platform?.ensureAddressImeSession?.();
+    };
     enable();
     const focusSubscription = DeviceEventEmitter.addListener(
       "BrowserWindowFocus",
@@ -260,7 +291,9 @@ export const AddressBox = forwardRef<
           {results.map((result, index) => {
             const command = result.kind === "command" ? result.command : null;
             const page = result.kind === "page" ? result.page : null;
-            const title = command?.title ?? page!.title;
+            const site = result.kind === "site" ? result : null;
+            const title =
+              command?.title ?? site?.label ?? page!.title;
             return (
               <Pressable
                 key={resultKey(result)}
@@ -286,7 +319,7 @@ export const AddressBox = forwardRef<
                   <ChromeIcon name="chevronRight" size={16} />
                 ) : (
                   <Favicon
-                    url={page!.url}
+                    url={site?.url ?? page!.url}
                     fallback={title.slice(0, 1)}
                     size={16}
                     radius={4}

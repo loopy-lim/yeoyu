@@ -1544,3 +1544,144 @@ fn bookmark_open_in_private_mode_creates_a_private_tab_without_reuse() {
     let untouched = snapshot.tabs.iter().find(|tab| tab.id == ordinary).unwrap();
     assert!(untouched.bookmark_id.is_empty());
 }
+
+fn split_save(
+    name: &str,
+    orientation: &str,
+    ratio_milli: u32,
+) -> yeoyu_core::domain::SplitGroupSave {
+    yeoyu_core::domain::SplitGroupSave {
+        split_group_id: None,
+        name: name.into(),
+        orientation: orientation.into(),
+        ratio_milli,
+        first_title: "First".into(),
+        first_url: "https://first.example".into(),
+        second_title: "Second".into(),
+        second_url: "https://second.example".into(),
+    }
+}
+
+#[test]
+fn split_group_save_creates_in_active_workspace_and_remove_drops_it() {
+    let mut state = BrowserState::default();
+    let snapshot = state
+        .save_split_group(split_save("Research", "horizontal", 500))
+        .unwrap();
+    let group = snapshot.split_groups.last().unwrap();
+    assert_eq!(group.id, "split-1");
+    assert_eq!(group.workspace_id, "workspace-1");
+    assert_eq!(group.name, "Research");
+    assert_eq!(group.orientation, "horizontal");
+    assert_eq!(group.ratio_milli, 500);
+    let removed = state.remove_split_group(&group.id).unwrap();
+    assert!(removed.split_groups.is_empty());
+    assert!(state.remove_split_group("split-1").is_err());
+}
+
+#[test]
+fn split_group_save_rejects_invalid_fields() {
+    let mut state = BrowserState::default();
+    assert!(
+        state
+            .save_split_group(split_save("  ", "horizontal", 500))
+            .is_err()
+    );
+    assert!(
+        state
+            .save_split_group(split_save("X", "diagonal", 500))
+            .is_err()
+    );
+    assert!(
+        state
+            .save_split_group(split_save("X", "horizontal", 249))
+            .is_err()
+    );
+    assert!(
+        state
+            .save_split_group(split_save("X", "horizontal", 751))
+            .is_err()
+    );
+    let mut missing_url = split_save("X", "horizontal", 500);
+    missing_url.second_url = "  ".into();
+    assert!(state.save_split_group(missing_url).is_err());
+    assert!(state.snapshot().split_groups.is_empty());
+}
+
+#[test]
+fn split_group_upsert_updates_in_place_and_keeps_binding() {
+    let mut state = BrowserState::default();
+    let first = state
+        .save_split_group(split_save("A", "horizontal", 500))
+        .unwrap();
+    let id = first.split_groups.last().unwrap().id.clone();
+    // create_workspace auto-activates the new space.
+    state.create_workspace("Work").unwrap();
+    let mut edit = split_save("A renamed", "vertical", 300);
+    edit.split_group_id = Some(id.clone());
+    let updated = state.save_split_group(edit).unwrap();
+    let group = updated.split_groups.iter().find(|g| g.id == id).unwrap();
+    assert_eq!(group.name, "A renamed");
+    assert_eq!(group.orientation, "vertical");
+    assert_eq!(group.ratio_milli, 300);
+    assert_eq!(
+        group.workspace_id, "workspace-1",
+        "updates keep the original binding"
+    );
+    assert!(
+        state
+            .save_split_group(split_save("B", "horizontal", 500))
+            .is_ok()
+    );
+    let created_in_active = state.snapshot().split_groups.last().unwrap().clone();
+    assert_eq!(created_in_active.workspace_id, "workspace-2");
+    assert_eq!(created_in_active.id, "split-2");
+}
+
+#[test]
+fn split_group_cap_is_twenty_per_workspace() {
+    let mut state = BrowserState::default();
+    for index in 0..20 {
+        state
+            .save_split_group(split_save(&format!("G{index}"), "horizontal", 500))
+            .unwrap();
+    }
+    assert!(
+        state
+            .save_split_group(split_save("G21", "horizontal", 500))
+            .is_err()
+    );
+    state.create_workspace("Work").unwrap();
+    state.activate_workspace("workspace-2").unwrap();
+    assert!(
+        state
+            .save_split_group(split_save("Other", "horizontal", 500))
+            .is_ok()
+    );
+}
+
+#[test]
+fn restore_derives_next_split_group_id_and_old_snapshots_need_no_field() {
+    let mut state = BrowserState::default();
+    let saved = state
+        .save_split_group(split_save("Kept", "vertical", 620))
+        .unwrap();
+    let mut exported = serde_json::to_value(&saved).unwrap();
+    state.restore(&exported.to_string()).unwrap();
+    let next = state
+        .save_split_group(split_save("After", "horizontal", 400))
+        .unwrap();
+    let ids: Vec<&str> = next.split_groups.iter().map(|g| g.id.as_str()).collect();
+    assert_eq!(
+        ids,
+        vec!["split-1", "split-2"],
+        "restored id counters continue after saved groups"
+    );
+    exported.as_object_mut().unwrap().remove("splitGroups");
+    state.restore(&exported.to_string()).unwrap();
+    assert!(state.snapshot().split_groups.is_empty());
+    let next = state
+        .save_split_group(split_save("Fresh", "horizontal", 500))
+        .unwrap();
+    assert_eq!(next.split_groups.last().unwrap().id, "split-1");
+}

@@ -64,6 +64,8 @@ async function fixture(seed = initial()) {
     bookmarkFolderRename: unsupported,
     bookmarkFolderRemove: unsupported,
     bookmarkSetFolder: unsupported,
+    splitGroupSave: unsupported,
+    splitGroupRemove: unsupported,
   };
   const storage: BrowserStorage = {
     readSnapshot: async () => null,

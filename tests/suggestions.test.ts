@@ -47,3 +47,38 @@ test("command search matches product words in any order without exposing IDs", (
   expect(matchingCommands("pins.toggle", [pin])).toEqual([]);
   expect(matchingCommands("", [pin])).toEqual([]);
 });
+
+import { resolveSiteSearch } from "../src/suggestions";
+import type { SiteSearchEntry } from "../src/uiPreferences";
+
+const entries: SiteSearchEntry[] = [
+  { id: "s1", keyword: "gh", label: "GitHub", urlTemplate: "https://github.com/search?q=%s" },
+  { id: "s2", keyword: "naver", label: "Naver", urlTemplate: "https://search.naver.com/search.naver?query=%s" },
+];
+
+test("a registered keyword routes terms to the site search template", () => {
+  expect(resolveSiteSearch("gh rustra", entries)).toBe(
+    "https://github.com/search?q=rustra"
+  );
+  expect(resolveSiteSearch("GH two words here", entries)).toBe(
+    "https://github.com/search?q=two%20words%20here"
+  );
+  expect(resolveSiteSearch("naver 여유 브라우저", entries)).toBe(
+    "https://search.naver.com/search.naver?query=%EC%97%AC%EC%9C%A0%20%EB%B8%8C%EB%9D%BC%EC%9A%B0%EC%A0%80"
+  );
+});
+
+test("input without a keyword match keeps the ordinary address and engine paths", () => {
+  expect(resolveSiteSearch("example.com", entries)).toBe(null);
+  expect(resolveSiteSearch("gh", entries)).toBe(null);
+  expect(resolveSiteSearch("unknown word", entries)).toBe(null);
+  expect(normalizeInput("gh react", "google")).toBe(
+    "https://www.google.com/search?q=gh%20react"
+  );
+  expect(normalizeInput("gh react", "google", entries)).toBe(
+    "https://github.com/search?q=react"
+  );
+  expect(normalizeInput("example.com", "google", entries)).toBe(
+    "https://example.com/"
+  );
+});

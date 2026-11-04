@@ -1,4 +1,4 @@
-import type { Snapshot } from "@generated/types";
+import type { Snapshot, SplitGroupSaveInput } from "@generated/types";
 import type { Navigation } from "@modules/browser-surface/src/BrowserSurfaceNativeComponent";
 import { SerialQueue } from "@/policy";
 import { persistableSnapshot } from "@/privateTabs";
@@ -29,6 +29,8 @@ type GeneratedCommands = Pick<
   | "bookmarkFolderRename"
   | "bookmarkFolderRemove"
   | "bookmarkSetFolder"
+  | "splitGroupSave"
+  | "splitGroupRemove"
 >;
 type ArchiveCommands = Pick<
   typeof import("@generated/commands"),
@@ -744,6 +746,12 @@ export class BrowserController {
     return this.mutate(() =>
       this.commands.bookmarkSetFolder({ bookmarkId, folderId })
     );
+  }
+  splitGroupSave(input: SplitGroupSaveInput) {
+    return this.mutate(() => this.commands.splitGroupSave(input));
+  }
+  splitGroupRemove(splitGroupId: string) {
+    return this.mutate(() => this.commands.splitGroupRemove({ splitGroupId }));
   }
   bookmarkUpdate(bookmarkId: string, title: string, url: string) {
     return this.mutate(() =>

@@ -28,6 +28,7 @@ import Surface, {
 import { controller } from "@/controllerRuntime";
 import { platform } from "@/platform";
 import { normalizeInput, type SearchEngineId } from "@/suggestions";
+import type { SiteSearchEntry } from "@/uiPreferences";
 import {
   answerBrowserPermission,
   initializeBrowserPermissions,
@@ -124,6 +125,7 @@ export default function YeoyuWindow(props: {
                 windowId={props.windowId}
                 theme={resolved}
                 searchEngine={prefs.searchEngine}
+                siteSearches={prefs.siteSearches}
               />
             ) : (
               <WindowStartup
@@ -176,11 +178,13 @@ function WindowBody({
   windowId,
   theme,
   searchEngine,
+  siteSearches,
 }: {
   initialTabId?: string;
   windowId?: string;
   theme: Theme;
   searchEngine: SearchEngineId;
+  siteSearches?: SiteSearchEntry[];
 }) {
   const { tr } = useI18n();
   // The generated Fabric host receives the compiled layout at its native seam.
@@ -362,7 +366,7 @@ function WindowBody({
 
   const submitAddress = () => {
     if (!tabId) return;
-    const url = normalizeInput(draft, searchEngine);
+    const url = normalizeInput(draft, searchEngine, siteSearches);
     if (!url) return;
     setEditing(false);
     platform.loadTabUrl?.(tabId, url);

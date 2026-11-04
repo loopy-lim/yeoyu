@@ -30,6 +30,18 @@ export function normalizeCustomColor(value: unknown): string | null {
 }
 export type SearchEngine = "google" | "naver" | "duckduckgo";
 
+// A user-defined site search. Typing "<keyword> <terms>" in the address
+// field searches that site; urlTemplate carries exactly one "%s" that the
+// encoded terms replace.
+export interface SiteSearchEntry {
+  id: string;
+  keyword: string;
+  label: string;
+  urlTemplate: string;
+}
+export const SITE_SEARCH_KEYWORD_PATTERN = /^[a-z0-9_-]{1,32}$/;
+export const SITE_SEARCH_MAX_ENTRIES = 32;
+
 export interface SiteBoost {
   host: string;
   css: string;
@@ -112,6 +124,7 @@ export interface UiPreferences {
   fullscreen: boolean;
   autoPictureInPicture: boolean;
   searchEngine: SearchEngine;
+  siteSearches: SiteSearchEntry[];
   boosts: SiteBoost[];
   framePx: FramePadding;
 }
@@ -130,6 +143,7 @@ export type UiPreferenceAction =
   | { type: "setFullscreen"; fullscreen: boolean }
   | { type: "setAutoPictureInPicture"; enabled: boolean }
   | { type: "setSearchEngine"; searchEngine: SearchEngine }
+  | { type: "setSiteSearches"; siteSearches: SiteSearchEntry[] }
   | { type: "setBoosts"; boosts: SiteBoost[] }
   | { type: "setFramePx"; side: FrameSide; value: number }
   | { type: "restore"; preferences: UiPreferences };
@@ -143,6 +157,7 @@ export const defaultUiPreferences: UiPreferences = {
   fullscreen: true,
   autoPictureInPicture: true,
   searchEngine: "google",
+  siteSearches: [],
   boosts: [],
   framePx: { ...defaultFramePadding },
 };
@@ -251,6 +266,9 @@ export function reduceUiPreferences(
   if (action.type === "setSearchEngine") {
     return { ...preferences, searchEngine: action.searchEngine };
   }
+  if (action.type === "setSiteSearches") {
+    return { ...preferences, siteSearches: action.siteSearches };
+  }
   if (action.type === "setBoosts") {
     return { ...preferences, boosts: action.boosts };
   }
@@ -286,6 +304,42 @@ const sanitizeBoosts = (value: unknown): SiteBoost[] =>
         enabled: boost.enabled !== false,
       }))
     : [];
+
+// Drops malformed or conflicting rows instead of failing the whole restore;
+// the surviving set keeps its order.
+const sanitizeSiteSearches = (value: unknown): SiteSearchEntry[] => {
+  if (!Array.isArray(value)) return [];
+  const entries: SiteSearchEntry[] = [];
+  const keywords = new Set<string>();
+  for (const raw of value) {
+    if (entries.length >= SITE_SEARCH_MAX_ENTRIES) break;
+    if (typeof raw !== "object" || raw === null) continue;
+    const candidate = raw as Partial<SiteSearchEntry>;
+    if (
+      typeof candidate.id !== "string" ||
+      !candidate.id ||
+      typeof candidate.keyword !== "string" ||
+      typeof candidate.label !== "string" ||
+      typeof candidate.urlTemplate !== "string" ||
+      !candidate.urlTemplate.includes("%s")
+    )
+      continue;
+    const keyword = candidate.keyword.toLowerCase();
+    if (
+      !SITE_SEARCH_KEYWORD_PATTERN.test(keyword) ||
+      keywords.has(keyword)
+    )
+      continue;
+    keywords.add(keyword);
+    entries.push({
+      id: candidate.id,
+      keyword,
+      label: candidate.label || keyword,
+      urlTemplate: candidate.urlTemplate,
+    });
+  }
+  return entries;
+};
 
 const sanitizeFramePadding = (value: unknown): FramePadding => {
   const frame = { ...defaultFramePadding };
@@ -341,6 +395,7 @@ export async function loadUiPreferences(
         searchEngine: ["google", "naver", "duckduckgo"].includes(prefs.searchEngine)
           ? prefs.searchEngine
           : "google",
+        siteSearches: sanitizeSiteSearches(prefs.siteSearches),
         boosts: sanitizeBoosts(prefs.boosts),
         framePx: sanitizeFramePadding(prefs.framePx),
         sidebarWidth: sanitizeSidebarWidth(prefs.sidebarWidth),

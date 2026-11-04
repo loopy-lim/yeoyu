@@ -1,4 +1,5 @@
 import type { HistoryEntry } from "@/history";
+import type { SiteSearchEntry } from "@/uiPreferences";
 
 export type SearchEngineId = "google" | "naver" | "duckduckgo";
 
@@ -26,7 +27,11 @@ const DOMAINISH = /^\S+[.\u3001]\S+$/;
 
 // Typed text becomes a URL when it carries a scheme or looks like a bare
 // domain; anything else goes to the selected search engine.
-export function normalizeInput(input: string, engine: SearchEngineId): string {
+export function normalizeInput(
+  input: string,
+  engine: SearchEngineId,
+  siteSearches: readonly SiteSearchEntry[] = []
+): string {
   const trimmed = input.trim();
   if (!trimmed) return "";
   // A hostname followed by a numeric port is not a URI scheme. Bracketed
@@ -50,7 +55,24 @@ export function normalizeInput(input: string, engine: SearchEngineId): string {
       return url;
     }
   }
+  const site = resolveSiteSearch(trimmed, siteSearches);
+  if (site) return site;
   return SEARCH_ENGINES[engine].query(trimmed);
+}
+
+// "keyword terms" routes to a user-defined site search; anything else is not
+// one. Terms are URI-encoded into the template's single "%s" placeholder.
+export function resolveSiteSearch(
+  input: string,
+  entries: readonly SiteSearchEntry[]
+): string | null {
+  const trimmed = input.trim();
+  const match = /^(\S+)\s+(.+)$/.exec(trimmed);
+  if (!match) return null;
+  const keyword = match[1].toLowerCase();
+  const entry = entries.find((candidate) => candidate.keyword === keyword);
+  if (!entry) return null;
+  return entry.urlTemplate.replace("%s", encodeURIComponent(match[2].trim()));
 }
 
 export interface Suggestion {

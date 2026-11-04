@@ -542,6 +542,39 @@ function fixture(seed: Snapshot = initial()) {
       };
       return result();
     },
+    splitGroupSave: async ({ splitGroupId, name, orientation, ratioMilli, firstTitle, firstUrl, secondTitle, secondUrl }) => {
+      const groups = state.splitGroups ?? [];
+      const next = splitGroupId
+        ? groups.map((group) =>
+            group.id === splitGroupId
+              ? { ...group, name, orientation, ratioMilli, firstTitle, firstUrl, secondTitle, secondUrl }
+              : group
+          )
+        : [
+            ...groups,
+            {
+              id: `split-${groups.length + 1}`,
+              workspaceId: state.activeWorkspaceId,
+              name,
+              orientation,
+              ratioMilli,
+              firstTitle,
+              firstUrl,
+              secondTitle,
+              secondUrl,
+            },
+          ];
+      state = { ...state, revision: state.revision + 1, splitGroups: next };
+      return result();
+    },
+    splitGroupRemove: async ({ splitGroupId }) => {
+      state = {
+        ...state,
+        revision: state.revision + 1,
+        splitGroups: (state.splitGroups ?? []).filter((group) => group.id !== splitGroupId),
+      };
+      return result();
+    },
     keymapSet: unsupported,
     tabClose: async ({ tabId }) => {
       requireTab(tabId);

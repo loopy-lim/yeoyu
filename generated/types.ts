@@ -55,6 +55,23 @@ export type BookmarkFolder = {
   title: string;
 };
 
+/**
+ * A saved two-pane arrangement. Panes are stored as home URLs, never tab IDs — tabs churn across restarts and private tabs are stripped from snapshots. Restoring creates fresh tabs and re-applies the layout.
+ */
+export type SplitGroup = {
+  id: string;
+  workspaceId?: string;
+  name: string;
+  /** "horizontal" (side by side) or "vertical" (stacked). */
+  orientation: string;
+  /** Share of the first pane in thousandths, always 250..=750 so the value matches the runtime clamp in the address bar UI. */
+  ratioMilli: number;
+  firstTitle: string;
+  firstUrl: string;
+  secondTitle: string;
+  secondUrl: string;
+};
+
 export type KeyBinding = {
   key: string;
   meta: boolean;
@@ -79,6 +96,7 @@ export type Snapshot = {
   tabs: Tab[];
   bookmarks?: Bookmark[];
   bookmarkFolders?: BookmarkFolder[];
+  splitGroups?: SplitGroup[];
   activeWorkspaceId: string;
   activeTabId?: string | null;
   keyBindings: KeyBinding[];
@@ -134,6 +152,21 @@ export type KeymapSetInput = {
 
 export type SnapshotRestoreInput = {
   json: string;
+};
+
+export type SplitGroupIdInput = {
+  splitGroupId: string;
+};
+
+export type SplitGroupSaveInput = {
+  splitGroupId?: string | null;
+  name: string;
+  orientation: string;
+  ratioMilli: number;
+  firstTitle: string;
+  firstUrl: string;
+  secondTitle: string;
+  secondUrl: string;
 };
 
 export type TabIdInput = {

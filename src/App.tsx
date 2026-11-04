@@ -49,6 +49,7 @@ import { BrowserToolsPanel } from "@/components/BrowserToolsPanel";
 import { BrowserDataPanel } from "@/components/BrowserDataPanel";
 import { AppearanceSettings } from "@/components/AppearanceSettings";
 import { ConsentSettings } from "@/components/ConsentSettings";
+import { SiteSearchSettings } from "@/components/SiteSearchSettings";
 import { ExtensionsSettings } from "@/components/ExtensionsSettings";
 import { ExtensionActionsBar } from "@/components/ExtensionActionsBar";
 import {
@@ -88,6 +89,7 @@ import {
   normalizeBoostHost,
   reduceUiPreferences,
   type PermissionKind,
+  type SiteSearchEntry,
 } from "@/uiPreferences";
 import { permissionKindsFromEvent } from "@/permissions";
 import {
@@ -99,7 +101,7 @@ import {
   subscribeSitePermissionChanges,
 } from "@/browserPermissionRuntime";
 import { type PermissionChoice } from "@/permissionRequests";
-import type { KeyBinding } from "@generated/types";
+import type { KeyBinding, SplitGroup } from "@generated/types";
 import { DragSource } from "@/chrome/DragSource";
 import {
   SidebarLayer,
@@ -158,6 +160,7 @@ import {
 } from "@/components/SidebarCollections";
 import { sidebarPresentation, type SidebarFolder } from "@/sidebarPresentation";
 import { AddressBox } from "@/components/AddressBox";
+import { SettingsGroup } from "@/components/settings/kit";
 import { AddressTrigger } from "@/components/AddressTrigger";
 import { FindBar } from "@/components/FindBar";
 import {
@@ -300,6 +303,7 @@ const NewTabPage = ({
   visibleHeight,
   reducedMotion,
   engine,
+  siteSearches,
   suggestions,
   commands,
   onCommand,
@@ -311,6 +315,7 @@ const NewTabPage = ({
   visibleHeight: number;
   reducedMotion: boolean;
   engine: SearchEngineId;
+  siteSearches?: SiteSearchEntry[];
   suggestions: SuggestionSources;
   commands: ProductCommand[];
   onCommand: (id: string) => void;
@@ -354,6 +359,7 @@ const NewTabPage = ({
         <View className={cn(c.newTabPanel, "max-h-full min-h-0")}>
           <AddressBox
             engine={engine}
+            siteSearches={siteSearches}
             autoFocus={false}
             reducedMotion={reducedMotion}
             suggestions={suggestions}
@@ -487,6 +493,14 @@ function BrowserApp() {
   } | null>(null);
   const [splitPickerTabId, setSplitPickerTabId] = useState<string | null>(null);
   const [newFolderOpen, setNewFolderOpen] = useState(false);
+  const [splitGroupDialog, setSplitGroupDialog] = useState<
+    "save" | "manage" | null
+  >(null);
+  const [splitGroupName, setSplitGroupName] = useState("");
+  const pendingSplitSave =
+    useRef<{ firstUrl: string; firstTitle: string; secondUrl: string; secondTitle: string; orientation: string; ratio: number } | null>(
+      null
+    );
   const openTabMenu = (id: string, x: number, y: number) => {
     setCtxMenuTabId(id);
     setCtxMenuAnchor(x || y ? { x, y } : undefined);
@@ -1145,6 +1159,55 @@ function BrowserApp() {
     if (activePrivate) createPrivateTabAndShow(url);
     else createTabAndShow(url);
   };
+  // Restoring a saved split group recreates both panes as fresh tabs (the
+  // group stores home URLs, not tab IDs) and re-applies the layout.
+  const openSplitGroup = (group: SplitGroup) => {
+    setSplitGroupDialog(null);
+    run(
+      controller
+        .createTab(group.firstUrl, group.workspaceId)
+        .then((firstSnapshot) => {
+          const firstId = firstSnapshot.activeTabId;
+          if (!firstId) throw Error("created tab is missing");
+          return controller
+            .createTab(group.secondUrl, group.workspaceId)
+            .then((secondSnapshot) => {
+              const secondId = secondSnapshot.activeTabId;
+              if (!secondId) throw Error("created tab is missing");
+              return controller
+                .activate(firstId, [firstId, secondId])
+                .then(() => {
+                  setSplitLayout({
+                    first: firstId,
+                    second: secondId,
+                    orientation:
+                      group.orientation === "vertical" ? "vertical" : "horizontal",
+                    ratio: group.ratioMilli / 1000,
+                  });
+                  setFocused(firstId);
+                });
+            });
+        })
+    );
+  };
+  const confirmSplitGroupSave = () => {
+    const pending = pendingSplitSave.current;
+    const name = splitGroupName.trim();
+    if (!pending || !name) return;
+    setSplitGroupDialog(null);
+    run(
+      controller.splitGroupSave({
+        splitGroupId: null,
+        name,
+        orientation: pending.orientation,
+        ratioMilli: Math.round(pending.ratio * 1000),
+        firstTitle: pending.firstTitle,
+        firstUrl: pending.firstUrl,
+        secondTitle: pending.secondTitle,
+        secondUrl: pending.secondUrl,
+      })
+    );
+  };
   // Space icons switch directly; long-press opens the manager.
   const switchSpace = (id: string) => {
     if (!state || id === state.activeWorkspaceId) return;
@@ -1428,6 +1491,29 @@ function BrowserApp() {
   registry.register("browser.split.close", () => {
     if (validSplit) toggleSplit();
   });
+  registry.register("browser.splitGroup.save", () => {
+    const split = validSplit;
+    const tabs = state?.tabs ?? [];
+    const first = split && tabs.find((tab) => tab.id === split.first);
+    const second = split && tabs.find((tab) => tab.id === split.second);
+    if (!split || !first || !second) {
+      flashNotice(tr("splitGroup.none"));
+      return;
+    }
+    pendingSplitSave.current = {
+      firstUrl: first.url,
+      firstTitle: tabLabel(first) || first.url,
+      secondUrl: second.url,
+      secondTitle: tabLabel(second) || second.url,
+      orientation: split.orientation,
+      ratio: split.ratio,
+    };
+    setSplitGroupName(tabLabel(first) || first.url);
+    setSplitGroupDialog("save");
+  });
+  registry.register("browser.splitGroup.manage", () =>
+    setSplitGroupDialog("manage")
+  );
   registry.register("browser.focusPane.1", () => {
     if (first) setFocused(first.id);
   });
@@ -3803,6 +3889,7 @@ function BrowserApp() {
                                     }
                                     reducedMotion={reducedMotion}
                                     engine={ui.searchEngine}
+                                    siteSearches={ui.siteSearches}
                                     suggestions={suggestionSources}
                                     commands={registry.entries(language)}
                                     onCommand={(id) => registry.execute(id)}
@@ -4227,6 +4314,86 @@ function BrowserApp() {
               )
             )}
             {sheet(
+              splitGroupDialog === "save",
+              () => setSplitGroupDialog(null),
+              splitGroupDialog === "save" && (
+                <View className={cn(c.dialog, c.settingsDialog)}>
+                  <Text className={c.dialogTitle}>
+                    {tr("splitGroup.saveTitle")}
+                  </Text>
+                  <Text className={c.dialogHelp}>
+                    {tr("splitGroup.nameLabel")}
+                  </Text>
+                  <TextInput
+                    accessibilityLabel={tr("splitGroup.nameLabel")}
+                    className={c.commandInput}
+                    value={splitGroupName}
+                    onChangeText={setSplitGroupName}
+                    autoFocus
+                  />
+                  <Button
+                    label={tr("splitGroup.save")}
+                    disabled={!splitGroupName.trim()}
+                    onPress={confirmSplitGroupSave}
+                  />
+                </View>
+              )
+            )}
+            {sheet(
+              splitGroupDialog === "manage",
+              () => setSplitGroupDialog(null),
+              splitGroupDialog === "manage" &&
+                state && (
+                  <View className={cn(c.dialog, c.settingsDialog)}>
+                    <Text className={c.dialogTitle}>
+                      {tr("splitGroup.manageTitle")}
+                    </Text>
+                    {(state.splitGroups ?? [])
+                      .filter(
+                        (group) =>
+                          group.workspaceId === state.activeWorkspaceId
+                      )
+                      .map((group) => (
+                        <View
+                          key={group.id}
+                          className="flex-row items-center gap-lg"
+                        >
+                          <Pressable
+                            accessibilityRole="button"
+                            accessibilityLabel={tr("splitGroup.restore", {
+                              name: group.name,
+                            })}
+                            className="flex-1 flex-row items-center gap-lg py-md active:opacity-pressed"
+                            onPress={() => openSplitGroup(group)}
+                          >
+                            <ChromeIcon name="split" size={16} className="text-ink-muted" />
+                            <Text numberOfLines={1} className={c.optionTitle}>
+                              {group.name}
+                            </Text>
+                          </Pressable>
+                          <Pressable
+                            accessibilityRole="button"
+                            accessibilityLabel={tr("splitGroup.remove", {
+                              name: group.name,
+                            })}
+                            className="size-[28px] items-center justify-center rounded-[8px] active:bg-sunken"
+                            onPress={() => run(controller.splitGroupRemove(group.id))}
+                          >
+                            <ChromeIcon name="close" size={14} className="text-ink-muted" />
+                          </Pressable>
+                        </View>
+                      ))}
+                    {(state.splitGroups ?? []).filter(
+                      (group) => group.workspaceId === state.activeWorkspaceId
+                    ).length === 0 && (
+                      <Text className={c.dialogHelp}>
+                        {tr("splitGroup.empty")}
+                      </Text>
+                    )}
+                  </View>
+                )
+            )}
+            {sheet(
               !!spaceSwitcher,
               () => setSpaceSwitcher(false),
               state && (
@@ -4311,6 +4478,7 @@ function BrowserApp() {
                     softInput={quickOpenSoft}
                     reducedMotion={reducedMotion}
                     engine={ui.searchEngine}
+                    siteSearches={ui.siteSearches}
                     value={
                       quickOpenEdit && targetUrl !== NEW_TAB_URL
                         ? targetUrl
@@ -4804,6 +4972,7 @@ function BrowserApp() {
                         "language 언어 한국어 English search engine google naver duckduckgo restore pages text scale default browser 검색 엔진 기본 브라우저 글자 크기",
                       content: (
                         <>
+                          <SettingsGroup>
                           <SettingsRow
                             title={tr("language.title")}
                             summary={tr("language.detail")}
@@ -4848,6 +5017,7 @@ function BrowserApp() {
                               )}
                             </View>
                           </SettingsRow>
+                          </SettingsGroup>
                           <BrowserToolsPanel
                             section="browsing"
                             config={browser.config}
@@ -4864,58 +5034,66 @@ function BrowserApp() {
                             onError={setError}
                             onNotice={flashNotice}
                           />
-                          <Text className={c.settingsSection}>
-                            {tr("browsing.searchEngine")}
-                          </Text>
-                          <Text className={c.dialogHelp}>
-                            {tr("browsing.searchEngineHelp")}
-                          </Text>
-                          {(["google", "naver", "duckduckgo"] as const).map(
-                            (searchEngine) => (
-                              <Pressable
-                                key={searchEngine}
-                                accessibilityRole="radio"
-                                accessibilityState={{
-                                  checked: ui.searchEngine === searchEngine,
-                                  disabled: !uiHydrated,
-                                }}
-                                disabled={!uiHydrated}
-                                className={settingsChoiceClasses({
-                                  selected: ui.searchEngine === searchEngine,
-                                })}
-                                onPress={() =>
-                                  updateUi({
-                                    type: "setSearchEngine",
-                                    searchEngine,
-                                  })
-                                }
-                              >
-                                <Text className={c.optionTitle}>
-                                  {SEARCH_ENGINES[searchEngine].label}
-                                </Text>
-                                {ui.searchEngine === searchEngine && (
-                                  <View
-                                    className={cn(
-                                      "flex-row",
-                                      "items-center",
-                                      "gap-md"
-                                    )}
-                                  >
-                                    <ChromeIcon
+                          <SettingsGroup heading={tr("browsing.searchEngine")}>
+                            <View className="px-xxl pb-xxl pt-sm gap-lg">
+                            <Text className={c.dialogHelp}>
+                              {tr("browsing.searchEngineHelp")}
+                            </Text>
+                            {(["google", "naver", "duckduckgo"] as const).map(
+                              (searchEngine) => (
+                                <Pressable
+                                  key={searchEngine}
+                                  accessibilityRole="radio"
+                                  accessibilityState={{
+                                    checked: ui.searchEngine === searchEngine,
+                                    disabled: !uiHydrated,
+                                  }}
+                                  disabled={!uiHydrated}
+                                  className={settingsChoiceClasses({
+                                    selected: ui.searchEngine === searchEngine,
+                                  })}
+                                  onPress={() =>
+                                    updateUi({
+                                      type: "setSearchEngine",
+                                      searchEngine,
+                                    })
+                                  }
+                                >
+                                  <Text className={c.optionTitle}>
+                                    {SEARCH_ENGINES[searchEngine].label}
+                                  </Text>
+                                  {ui.searchEngine === searchEngine && (
+                                    <View
                                       className={cn(
-                                        "size-[14px]",
-                                        "text-accent-strong"
+                                        "flex-row",
+                                        "items-center",
+                                        "gap-md"
                                       )}
-                                      name="check"
-                                    />
-                                    <Text className={c.optionTitle}>
-                                      {tr("common.selected")}
-                                    </Text>
-                                  </View>
-                                )}
-                              </Pressable>
-                            )
-                          )}
+                                    >
+                                      <ChromeIcon
+                                        className={cn(
+                                          "size-[14px]",
+                                          "text-accent-strong"
+                                        )}
+                                        name="check"
+                                      />
+                                      <Text className={c.optionTitle}>
+                                        {tr("common.selected")}
+                                      </Text>
+                                    </View>
+                                  )}
+                                </Pressable>
+                              )
+                            )}
+                            </View>
+                          </SettingsGroup>
+                          <SiteSearchSettings
+                            entries={ui.siteSearches}
+                            disabled={!uiHydrated}
+                            onChange={(siteSearches) =>
+                              updateUi({ type: "setSiteSearches", siteSearches })
+                            }
+                          />
                         </>
                       ),
                     },
@@ -4936,9 +5114,7 @@ function BrowserApp() {
                             }
                             onChange={updateUi}
                           />
-                          <Text className={c.settingsSection}>
-                            {tr("appearance.sidebar")}
-                          </Text>
+                          <SettingsGroup heading={tr("appearance.sidebar")}>
                           <Pressable
                             accessibilityRole="button"
                             accessibilityLabel={tr(
@@ -5014,9 +5190,8 @@ function BrowserApp() {
                               />
                             </View>
                           </View>
-                          <Text className={c.settingsSection}>
-                            {tr("appearance.layout")}
-                          </Text>
+                          </SettingsGroup>
+                          <SettingsGroup heading={tr("appearance.layout")}>
                           {FRAME_SIDES.map((side) => (
                             <View key={side} className={c.settingsAction}>
                               <View className={c.settingsToggleCopy}>
@@ -5070,9 +5245,8 @@ function BrowserApp() {
                               </View>
                             </View>
                           ))}
-                          <Text className={c.settingsSection}>
-                            {tr("appearance.display")}
-                          </Text>
+                          </SettingsGroup>
+                          <SettingsGroup heading={tr("appearance.display")}>
                           <Pressable
                             accessibilityRole="switch"
                             accessibilityLabel={tr("appearance.hideStatus")}
@@ -5126,6 +5300,7 @@ function BrowserApp() {
                               {tr("appearance.resetLayout")}
                             </Text>
                           </Pressable>
+                          </SettingsGroup>
                         </>
                       ),
                     },
@@ -5305,9 +5480,7 @@ function BrowserApp() {
                             onError={setError}
                             onNotice={flashNotice}
                           />
-                          <Text className={c.settingsSection}>
-                            {tr("data.title")}
-                          </Text>
+                          <SettingsGroup heading={tr("data.title")}>
                           <Pressable
                             accessibilityRole="button"
                             accessibilityLabel={tr("data.history")}
@@ -5327,9 +5500,8 @@ function BrowserApp() {
                             </View>
                             <Text className={c.chevron}>›</Text>
                           </Pressable>
-                          <Text className={c.settingsSection}>
-                            {tr("data.bookmarksTitle")}
-                          </Text>
+                          </SettingsGroup>
+                          <SettingsGroup heading={tr("data.bookmarksTitle")}>
                           <Pressable
                             accessibilityRole="button"
                             accessibilityLabel={tr("data.bookmarks")}
@@ -5349,6 +5521,7 @@ function BrowserApp() {
                             </View>
                             <Text className={c.chevron}>›</Text>
                           </Pressable>
+                          </SettingsGroup>
                         </>
                       ),
                     },
@@ -5404,9 +5577,7 @@ function BrowserApp() {
                             onError={setError}
                             onNotice={flashNotice}
                           />
-                          <Text className={c.settingsSection}>
-                            {tr("advanced.boostsTitle")}
-                          </Text>
+                          <SettingsGroup heading={tr("advanced.boostsTitle")}>
                           <Pressable
                             accessibilityRole="button"
                             accessibilityLabel={tr("advanced.boosts")}
@@ -5430,9 +5601,8 @@ function BrowserApp() {
                                 : "›"}
                             </Text>
                           </Pressable>
-                          <Text className={c.settingsSection}>
-                            {tr("advanced.commandsTitle")}
-                          </Text>
+                          </SettingsGroup>
+                          <SettingsGroup heading={tr("advanced.commandsTitle")}>
                           <Pressable
                             accessibilityRole="button"
                             accessibilityLabel={tr("advanced.commands")}
@@ -5468,6 +5638,7 @@ function BrowserApp() {
                             </View>
                             <Text className={c.chevron}>›</Text>
                           </Pressable>
+                          </SettingsGroup>
                         </>
                       ),
                     },

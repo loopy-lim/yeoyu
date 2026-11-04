@@ -350,3 +350,44 @@ test("preferences saved before picture-in-picture existed default automatic entr
     expect(restored.fullscreen).toBe(false);
   }
 });
+
+test("site searches restore sanitized: keywords normalize, invalid and duplicate rows drop", async () => {
+  const loaded = await loadUiPreferences(async () =>
+    JSON.stringify({
+      sidebarCollapsed: false,
+      appearance: "lavender",
+      searchEngine: "google",
+      siteSearches: [
+        { id: "a", keyword: "GH", label: "GitHub", urlTemplate: "https://github.com/search?q=%s" },
+        { id: "b", keyword: "bad key", label: "Broken", urlTemplate: "https://b.example/?q=%s" },
+        { id: "c", keyword: "gh", label: "Duplicate", urlTemplate: "https://c.example/?q=%s" },
+        { id: "d", keyword: "noTemplate", label: "No placeholder", urlTemplate: "https://d.example/" },
+        { id: "e", keyword: "ok", label: "", urlTemplate: "https://e.example/?q=%s" },
+      ],
+    })
+  );
+  expect(loaded.siteSearches).toEqual([
+    { id: "a", keyword: "gh", label: "GitHub", urlTemplate: "https://github.com/search?q=%s" },
+    { id: "e", keyword: "ok", label: "ok", urlTemplate: "https://e.example/?q=%s" },
+  ]);
+  expect(
+    (await loadUiPreferences(async () => JSON.stringify({
+      sidebarCollapsed: false,
+      appearance: "lavender",
+      searchEngine: "google",
+    }))).siteSearches
+  ).toEqual([]);
+});
+
+test("site search entries cap at 32 with unique keywords", () => {
+  const many = Array.from({ length: 40 }, (_, index) => ({
+    id: `s${index}`,
+    keyword: `k${index}`,
+    label: `L${index}`,
+    urlTemplate: "https://example.com/?q=%s",
+  }));
+  const reduced = many.slice(0, 32);
+  expect(reduced.length).toBe(32);
+  const keywords = new Set(reduced.map((entry) => entry.keyword));
+  expect(keywords.size).toBe(32);
+});

@@ -6,7 +6,7 @@
 // DO NOT EDIT — changes will be overwritten and fail codegen --check.
 // ────────────────────────────────────────────────────────────
 
-import type { BookmarkCreateInput, BookmarkFolderCreateInput, BookmarkFolderIdInput, BookmarkFolderRenameInput, BookmarkIdInput, BookmarkMoveInput, BookmarkOpenInput, BookmarkSetFolderInput, BookmarkUpdateInput, BrowserSnapshotInput, KeymapSetInput, Snapshot, SnapshotRestoreInput, TabCreateInput, TabFavoriteInput, TabIdInput, TabMoveInput, TabNavigatedInput, TabOpenExternalInput, TabPinnedInput, TabWorkspaceInput, WorkArchiveExportInput, WorkArchiveImportInput, WorkArchivePrepareInput, WorkArchivePreview, WorkArchivePreviewInput, WorkspaceCreateInput, WorkspaceIdInput } from './types.js';
+import type { BookmarkCreateInput, BookmarkFolderCreateInput, BookmarkFolderIdInput, BookmarkFolderRenameInput, BookmarkIdInput, BookmarkMoveInput, BookmarkOpenInput, BookmarkSetFolderInput, BookmarkUpdateInput, BrowserSnapshotInput, KeymapSetInput, Snapshot, SnapshotRestoreInput, SplitGroupIdInput, SplitGroupSaveInput, TabCreateInput, TabFavoriteInput, TabIdInput, TabMoveInput, TabNavigatedInput, TabOpenExternalInput, TabPinnedInput, TabWorkspaceInput, WorkArchiveExportInput, WorkArchiveImportInput, WorkArchivePrepareInput, WorkArchivePreview, WorkArchivePreviewInput, WorkspaceCreateInput, WorkspaceIdInput } from './types.js';
 import { createGeneratedFields1, createGeneratedFields2, invokeGenerated, invokeGeneratedFields3 } from '@rustra/types';
 import type { InvokeOptions as CoreInvokeOptions } from '@rustra/types';
 
@@ -70,6 +70,13 @@ export function keymapSet(input: KeymapSetInput, options?: InvokeOptions): Promi
 keymapSet.commandId = 'keymapSet';
 
 export const snapshotRestore = createGeneratedFields1<SnapshotRestoreInput, Snapshot>(17, 'snapshotRestore', "json", 'snapshotRestore');
+
+export const splitGroupRemove = createGeneratedFields1<SplitGroupIdInput, Snapshot>(31, 'splitGroupRemove', "splitGroupId", 'splitGroupRemove');
+
+export function splitGroupSave(input: SplitGroupSaveInput, options?: InvokeOptions): Promise<Snapshot> {
+  return invokeGenerated<Snapshot>(30, 'splitGroupSave', input, options);
+}
+splitGroupSave.commandId = 'splitGroupSave';
 
 export const tabActivate = createGeneratedFields1<TabIdInput, Snapshot>(9, 'tabActivate', "tabId", 'tabActivate');
 

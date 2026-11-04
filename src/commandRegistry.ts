@@ -47,6 +47,14 @@ const labels = {
   },
   "browser.split": { title: "Open Split View", keywords: "side by side" },
   "browser.split.close": { title: "Close Split View", keywords: "unsplit" },
+  "browser.splitGroup.save": {
+    title: "Save Split View as group",
+    keywords: "save split layout preset",
+  },
+  "browser.splitGroup.manage": {
+    title: "Saved Split Groups",
+    keywords: "split groups restore open",
+  },
   "browser.focusPane.1": { title: "Focus first pane" },
   "browser.focusPane.2": { title: "Focus second pane" },
   "space.manage": { title: "Manage Spaces" },
@@ -62,6 +70,7 @@ const commandKeys: Record<keyof typeof labels, TranslationKey> = {
   "browser.back": "command.back", "browser.forward": "command.forward", "browser.reload": "command.reload",
   "sidebar.toggle": "command.sidebar", "favorites.toggle": "command.favorite", "pins.toggle": "command.pin",
   "tab.reset": "command.resetTab", "browser.split": "command.split", "browser.split.close": "command.closeSplit",
+  "browser.splitGroup.save": "command.saveSplitGroup", "browser.splitGroup.manage": "command.manageSplitGroups",
   "browser.focusPane.1": "command.focusFirst", "browser.focusPane.2": "command.focusSecond",
   "space.manage": "command.spaces", "settings.open": "command.settings",
   "window.new": "command.windowNew",

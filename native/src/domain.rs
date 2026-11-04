@@ -93,6 +93,27 @@ pub struct BookmarkFolder {
     pub title: String,
 }
 
+/// A saved two-pane arrangement. Panes are stored as home URLs, never tab
+/// IDs — tabs churn across restarts and private tabs are stripped from
+/// snapshots. Restoring creates fresh tabs and re-applies the layout.
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct SplitGroup {
+    pub id: String,
+    #[serde(default)]
+    pub workspace_id: String,
+    pub name: String,
+    /// "horizontal" (side by side) or "vertical" (stacked).
+    pub orientation: String,
+    /// Share of the first pane in thousandths, always 250..=750 so the
+    /// value matches the runtime clamp in the address bar UI.
+    pub ratio_milli: u32,
+    pub first_title: String,
+    pub first_url: String,
+    pub second_title: String,
+    pub second_url: String,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct KeyBinding {
@@ -149,6 +170,8 @@ pub struct Snapshot {
     pub bookmarks: Vec<Bookmark>,
     #[serde(default)]
     pub bookmark_folders: Vec<BookmarkFolder>,
+    #[serde(default)]
+    pub split_groups: Vec<SplitGroup>,
     pub active_workspace_id: String,
     pub active_tab_id: Option<String>,
     pub key_bindings: Vec<KeyBinding>,
@@ -164,6 +187,7 @@ pub struct BrowserState {
     pub(crate) next_tab_id: u64,
     pub(crate) next_bookmark_id: u64,
     pub(crate) next_bookmark_folder_id: u64,
+    pub(crate) next_split_group_id: u64,
 }
 
 impl Default for BrowserState {
@@ -182,6 +206,7 @@ impl Default for BrowserState {
                 tabs: Vec::new(),
                 bookmarks: default_bookmarks(),
                 bookmark_folders: Vec::new(),
+                split_groups: Vec::new(),
                 active_workspace_id: "workspace-1".into(),
                 active_tab_id: None,
                 key_bindings: default_key_bindings(),
@@ -191,6 +216,7 @@ impl Default for BrowserState {
             next_tab_id: 1,
             next_bookmark_id: 4,
             next_bookmark_folder_id: 1,
+            next_split_group_id: 1,
         }
     }
 }
@@ -689,11 +715,20 @@ impl BrowserState {
                 .collect::<Vec<_>>(),
             "folder-",
         )?;
+        let next_split_group_id = next_id(
+            &candidate
+                .split_groups
+                .iter()
+                .map(|item| item.id.as_str())
+                .collect::<Vec<_>>(),
+            "split-",
+        )?;
         self.snapshot = candidate;
         self.next_workspace_id = next_workspace_id;
         self.next_tab_id = next_tab_id;
         self.next_bookmark_id = next_bookmark_id;
         self.next_bookmark_folder_id = next_bookmark_folder_id;
+        self.next_split_group_id = next_split_group_id;
         Ok(self.snapshot())
     }
 
@@ -859,6 +894,94 @@ impl BrowserState {
         });
         self.commit(candidate)?;
         self.next_bookmark_folder_id = next_bookmark_folder_id;
+        Ok(self.snapshot())
+    }
+
+    /// Creates or updates a saved two-pane arrangement. Creation always
+    /// binds the group to the active workspace; updates keep the original
+    /// binding and never count against the per-workspace limit.
+    pub fn save_split_group(&mut self, input: SplitGroupSave) -> Result<Snapshot> {
+        validate_split_group_fields(
+            &input.name,
+            &input.orientation,
+            input.ratio_milli,
+            &input.first_title,
+            &input.first_url,
+            &input.second_title,
+            &input.second_url,
+        )?;
+        if let Some(id) = &input.split_group_id {
+            if !self
+                .snapshot
+                .split_groups
+                .iter()
+                .any(|group| group.id == *id)
+            {
+                return Err(domain_error("split group does not exist"));
+            }
+            let mut candidate = self.snapshot.clone();
+            let group = candidate
+                .split_groups
+                .iter_mut()
+                .find(|group| group.id == *id)
+                .expect("split group existence checked above");
+            group.name = input.name.trim().into();
+            group.orientation = input.orientation;
+            group.ratio_milli = input.ratio_milli;
+            group.first_title = input.first_title.trim().into();
+            group.first_url = input.first_url.trim().into();
+            group.second_title = input.second_title.trim().into();
+            group.second_url = input.second_url.trim().into();
+            self.commit(candidate)?;
+            return Ok(self.snapshot());
+        }
+        let workspace_id = self.snapshot.active_workspace_id.clone();
+        if self
+            .snapshot
+            .split_groups
+            .iter()
+            .filter(|group| group.workspace_id == workspace_id)
+            .count()
+            >= 20
+        {
+            return Err(domain_error("split group limit reached (20 per workspace)"));
+        }
+        let id = format!("split-{}", self.next_split_group_id);
+        let next_split_group_id = self
+            .next_split_group_id
+            .checked_add(1)
+            .ok_or_else(|| domain_error("split group ID space exhausted"))?;
+        let mut candidate = self.snapshot.clone();
+        candidate.split_groups.push(SplitGroup {
+            id,
+            workspace_id,
+            name: input.name.trim().into(),
+            orientation: input.orientation,
+            ratio_milli: input.ratio_milli,
+            first_title: input.first_title.trim().into(),
+            first_url: input.first_url.trim().into(),
+            second_title: input.second_title.trim().into(),
+            second_url: input.second_url.trim().into(),
+        });
+        self.commit(candidate)?;
+        self.next_split_group_id = next_split_group_id;
+        Ok(self.snapshot())
+    }
+
+    pub fn remove_split_group(&mut self, split_group_id: &str) -> Result<Snapshot> {
+        if !self
+            .snapshot
+            .split_groups
+            .iter()
+            .any(|group| group.id == split_group_id)
+        {
+            return Err(domain_error("split group does not exist"));
+        }
+        let mut candidate = self.snapshot.clone();
+        candidate
+            .split_groups
+            .retain(|group| group.id != split_group_id);
+        self.commit(candidate)?;
         Ok(self.snapshot())
     }
 
@@ -1127,6 +1250,26 @@ pub(crate) fn validate_snapshot(snapshot: &Snapshot) -> Result<()> {
                 != Some(&bookmark.workspace_id.as_str())
         {
             return Err(domain_error("bookmark folder must exist in its workspace"));
+        }
+    }
+    let mut split_group_spaces = HashMap::new();
+    for group in &snapshot.split_groups {
+        if group.id.trim().is_empty()
+            || group.name.trim().is_empty()
+            || group.first_url.trim().is_empty()
+            || group.second_url.trim().is_empty()
+            || (group.orientation != "horizontal" && group.orientation != "vertical")
+            || !(250..=750).contains(&group.ratio_milli)
+            || split_group_spaces
+                .insert(group.id.as_str(), group.workspace_id.as_str())
+                .is_some()
+        {
+            return Err(domain_error(
+                "split group fields must be valid and IDs unique",
+            ));
+        }
+        if !workspace_ids.contains(group.workspace_id.as_str()) {
+            return Err(domain_error("split group references an unknown workspace"));
         }
     }
     if let Some(active_tab_id) = &snapshot.active_tab_id {
@@ -1408,6 +1551,51 @@ fn now_ms() -> u64 {
 fn validate_bookmark_fields(title: &str, url: &str) -> Result<()> {
     if title.trim().is_empty() || url.trim().is_empty() {
         return Err(domain_error("bookmark title and URL must not be empty"));
+    }
+    Ok(())
+}
+
+pub struct SplitGroupSave {
+    pub split_group_id: Option<String>,
+    pub name: String,
+    pub orientation: String,
+    pub ratio_milli: u32,
+    pub first_title: String,
+    pub first_url: String,
+    pub second_title: String,
+    pub second_url: String,
+}
+
+fn validate_split_group_fields(
+    name: &str,
+    orientation: &str,
+    ratio_milli: u32,
+    first_title: &str,
+    first_url: &str,
+    second_title: &str,
+    second_url: &str,
+) -> Result<()> {
+    if name.trim().is_empty() {
+        return Err(domain_error("split group name must not be empty"));
+    }
+    if orientation != "horizontal" && orientation != "vertical" {
+        return Err(domain_error(
+            "split group orientation must be horizontal or vertical",
+        ));
+    }
+    if !(250..=750).contains(&ratio_milli) {
+        return Err(domain_error(
+            "split group ratio must be within 0.25 and 0.75",
+        ));
+    }
+    if first_title.trim().is_empty()
+        || first_url.trim().is_empty()
+        || second_title.trim().is_empty()
+        || second_url.trim().is_empty()
+    {
+        return Err(domain_error(
+            "split group pane titles and URLs must not be empty",
+        ));
     }
     Ok(())
 }

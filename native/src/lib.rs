@@ -129,6 +129,28 @@ pub struct BookmarkFolderCreateInput {
 
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
+pub struct SplitGroupSaveInput {
+    // None creates a group in the active workspace; Some updates in place.
+    pub split_group_id: Option<String>,
+    pub name: String,
+    // "horizontal" or "vertical".
+    pub orientation: String,
+    // First pane share in thousandths, 250..=750.
+    pub ratio_milli: u32,
+    pub first_title: String,
+    pub first_url: String,
+    pub second_title: String,
+    pub second_url: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct SplitGroupIdInput {
+    pub split_group_id: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct BookmarkFolderRenameInput {
     pub folder_id: String,
     pub title: String,
@@ -327,6 +349,23 @@ pub fn bookmark_folder_remove(input: BookmarkFolderIdInput) -> Result<Snapshot> 
 pub fn bookmark_set_folder(input: BookmarkSetFolderInput) -> Result<Snapshot> {
     lock_state()?.set_bookmark_folder(&input.bookmark_id, &input.folder_id)
 }
+#[command]
+pub fn split_group_save(input: SplitGroupSaveInput) -> Result<Snapshot> {
+    lock_state()?.save_split_group(domain::SplitGroupSave {
+        split_group_id: input.split_group_id,
+        name: input.name,
+        orientation: input.orientation,
+        ratio_milli: input.ratio_milli,
+        first_title: input.first_title,
+        first_url: input.first_url,
+        second_title: input.second_title,
+        second_url: input.second_url,
+    })
+}
+#[command]
+pub fn split_group_remove(input: SplitGroupIdInput) -> Result<Snapshot> {
+    lock_state()?.remove_split_group(&input.split_group_id)
+}
 
 static PACKAGE: OnceLock<Package> = OnceLock::new();
 pub fn browser_package() -> Package {
@@ -362,7 +401,9 @@ pub fn browser_package() -> Package {
                 bookmark_folder_remove,
                 bookmark_set_folder,
                 tab_reset,
-                bookmark_open
+                bookmark_open,
+                split_group_save,
+                split_group_remove
             )
             .build();
             package.register_ffi_with_default(FfiFormat::Json);
