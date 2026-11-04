@@ -13,8 +13,8 @@ from xml.etree import ElementTree as ET
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 from browser_device_guard import BrowserDeviceGuard, GuardError, matches, parse_foreground
-ACCEPTANCE = "com.workspacebrowser.acceptance"
-NORMAL = "com.workspacebrowser"
+ACCEPTANCE = "ll3.kr.yeoyu.acceptance"
+NORMAL = "ll3.kr.yeoyu"
 
 # Minimal API 36 records from physical-state-audit/activities.txt. Only the
 # package/record values vary in tests; background Acceptance is not foreground.

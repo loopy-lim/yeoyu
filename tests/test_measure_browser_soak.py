@@ -11,7 +11,7 @@ import unittest
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
-PACKAGE = 'com.workspacebrowser.acceptance'
+PACKAGE = 'll3.kr.yeoyu.acceptance'
 
 class SamplingRaceTest(unittest.TestCase):
     def sample(self, fault):
