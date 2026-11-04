@@ -64,7 +64,7 @@ import {
 import { SettingsDialog } from "@/components/SettingsDialog";
 import { SettingsRow } from "@/components/SettingsRow";
 import { I18nContext, useI18n } from "@/i18nContext";
-import { resolveLanguage, translate, type TranslationKey } from "@/i18n";
+import { josaRo, resolveLanguage, translate, type TranslationKey } from "@/i18n";
 import { useUiPreferencePersistence } from "@/hooks/useUiPreferencePersistence";
 import { useWindowTabs } from "@/hooks/useWindowTabs";
 import { useInputViewport } from "@/hooks/useInputViewport";
@@ -3176,6 +3176,53 @@ function BrowserApp() {
                                 className={cn("size-[12px]", "text-ink-muted")}
                                 name="space"
                               />
+                              {/* Arc-style space pills: one tap switches Space,
+                              the row keeps the header as the manage entry. */}
+                              <View className="flex-row items-center gap-xs">
+                                {(state?.workspaces ?? []).map((workspace) => {
+                                  const active =
+                                    workspace.id === state?.activeWorkspaceId;
+                                  return (
+                                    <Pressable
+                                      key={workspace.id}
+                                      accessibilityRole="button"
+                                      accessibilityLabel={tr(
+                                        "dialog.switchSpace",
+                                        {
+                                          name: workspace.name,
+                                          ro: josaRo(workspace.name),
+                                        }
+                                      )}
+                                      accessibilityState={{
+                                        selected: active,
+                                      }}
+                                      hitSlop={4}
+                                      className={cn(
+                                        "size-[20px] items-center justify-center rounded-full border",
+                                        active
+                                          ? "border-ink"
+                                          : "border-transparent"
+                                      )}
+                                      onPress={() => switchSpace(workspace.id)}
+                                      onLongPress={() =>
+                                        setSpaceSwitcher(true)
+                                      }
+                                    >
+                                      <View
+                                        className={cn(
+                                          "size-[13px] rounded-full",
+                                          !workspace.color && "bg-accent"
+                                        )}
+                                        style={
+                                          workspace.color
+                                            ? { backgroundColor: workspace.color }
+                                            : undefined
+                                        }
+                                      />
+                                    </Pressable>
+                                  );
+                                })}
+                              </View>
                               <Text
                                 numberOfLines={1}
                                 className={c.spaceHeaderTitle}
