@@ -71,7 +71,7 @@
 
 | ID | 방법 | cwd·환경 | 기대 결과 | 실제 | 판정 |
 |---|---|---|---|---|---|
-| V-1 | 에뮬레이터 수용 빌드 실측: split 생성→저장→재시작→복원→삭제 | emulator-5554 | 배치(방향·비율) 유지 복원, 재시작 후 존속 | 저장 커맨드 실행·notice·다이얼로그 노출은 실측됨(팔레트 행 탭 → 핸들러 동작 확인). 그러나 분할 생성 전제가 막힘 — **F-1로 인해 라이브 저장→복원 클릭 경로 미검증**. 도메인·컨트롤러 계층은 V-2·V-3으로 검증 | BLOCKED(F-1 해소 후 재검증) |
+| V-1 | 에뮬레이터 수용 빌드 실측: split 생성→저장→재시작→복원→삭제 | emulator-5554 | 배치(방향·비율) 유지 복원, 재시작 후 존속 | **2026-11-04 재실측**: 2탭 상태에서 분할 상자 후보 정상 렌더 → 상대 탭으로 **분할 생성 성공**(오버레이가 좌패널 좌표로 이동 = 2패널 지오메트리 확인) → 팔레트 "Save Split View as group" 탭 → **저장 다이얼로그 개봉·이름 프리필 확인**. 미완료 구간: Save 버튼 → 재시작 → 복원 → 삭제(에뮬레이터를 병행 세션과 선점 경합하며 앱이 강제 종료됨 — F-4). 도메인·컨트롤러 저장/복원/삭제는 V-2·V-3 단위 검증 PASS | BLOCKED(F-4 해소 후 잔여 구간 재검증) |
 | V-2 | bun test: uiPreferences sanitize·suggestions·splitLayout 신규 핀 | repo root | 신규+기존 전부 통과 | **581 pass / 0 fail** (site search 4핀 + controller fixture 포함) | PASS |
 | V-3 | cargo test: domain 신규 검증·상한·upsert/remove | native | 신규+기존 전부 통과 | domain **58 pass / 0 fail** (split group 5테스트 신규), fmt·clippy 클린 | PASS |
 | V-4 | 에뮬레이터 G4 관찰: 설정 UI·주소창 흐름 스크린샷 | emulator-5554 | 계층·잘림 없음, 키보드 흐름 동작 | SITE SEARCH 그룹 렌더 확인, 폼으로 `gh`/`GitHub`/`https://github.com/search?q=%s` 추가 성공(행+삭제 버튼 렌더), 주소창 `gh react` → **"Repository search results · GitHub" 이동 확인**. 스크린샷 3장(evidence-2026-11-03/) | PASS |
@@ -79,9 +79,9 @@
 
 ## 발견 결함 (F-*)
 
-- **F-1 (P1 — 사전 존재 결함, 이번 기능 경로 직격)**: "Open Split View"의 분할 상대 선택 시트(ActionMenu in sheet)에서 **후보 탭 행이 렌더링되지 않음** — 제목("Choose a tab to split with")과 닫기 버튼만 존재, 항목 버튼 0개(에뮬레이터 2560×1600 실측, uiautomator 전수 확인). 터치로 분할을 만들 수 없어 저장→복원 라이브 경로가 전체 막힘.
-  - **격리 진단(2026-11-04)**: ActionMenu 단독 렌더 테스트(`tests/actionMenuRender.test.tsx`)에서 anchor 없음·있음 모두 행 정상 렌더 — **컴포넌트 무결립**. 메뉴 루트가 최초 추정 높이(44+items×40)가 아닌 제목만 한 높이로 보였다는 관측과 함께 보면 런타임 `items` 배열이 비었거나 sheet Overlay 문맥에서 ScrollView 높이가 붕괴하는 통합 계층 문제. 다음 진단 단계: 라이브로 ActionMenu 루트(또한 accessibilityLabel=제목)의 bounds를 덤프해 높이를 확인하면 둘 중 하나가 확정됨. 메모리 압박으로 에뮬레이터가 시스템에 종료되어 재기동 보류 — 다음 세션에서 수행
-  - 참고: 동일 ActionMenu가 탭 컨텍스트 메뉴(anchor 방식)에서는 정상 렌더링 실측됨
+- **F-1 (기각 — 결함 아님, 2026-11-04 확정)**: "시트에서 후보 행 미렌더"는 내 자동화의 상태 착각이었다. 확정 경위: ① ActionMenu 격리 테스트 PASS(컴포넌트 무결립), ② 실측에서 탭이 1개뿐인 상태(사이드바 "+"는 `openQuickOpen("touch")` — 탭을 만들지 않고 퀵오픈만 띄움)의 분할 상자는 후보가 0개라 **비어 있는 것이 정상**, ③ 2개 탭 상태에서는 시트에 후보 행("om - Google 검색")이 정상 렌더되고 탭으로 분할 생성까지 성공. 초기 관측을 오염시킨 것: (a) uiautomator dump가 UiAutomation 이중 등록 크래시 후 파일을 갱신하지 못해 계속 stale XML을 읽음, (b) Gboard가 시트를 덮어 후보 탭이 키보드 키로 향함, (c) 다른 세션과의 에뮬레이터 선점. 교훈은 dump마다 파일 삭제·재생성 검증과 키보드 닫기 선행
+- **F-4 (환경, 신규)**: 에뮬레이터가 병행 세션(leftcar)과 공유되며 상호 포그라운드 선점으로 검증이 상호 오염됨 — AVD 분리(`avdmanager`로 전용 AVD 생성) 또는 세션 간 시간 분할 필요
+
 - **F-2 (P3, 수정 완료)**: 어제 앱 ID 변경(`b580149`) 시 python 측정 테스트 픽스처 상수(`tests/test_browser_device_guard.py` ACCEPTANCE/NORMAL, `tests/test_measure_browser_soak.py` PACKAGE)를 갱신하지 않아 check.sh python 단계 54건 실패 — 상수 갱신으로 수정, 75/75 통과
 - **F-3 (관찰)**: 라이브 split 중 새 탭 생성이 `setSplitLayout(null)`로 분할을 조용히 해제함(App.tsx 기존 동작) — 저장 UX상 사용자가 의도를 잃을 수 있음. 후속 UX 과제로 기록
 
