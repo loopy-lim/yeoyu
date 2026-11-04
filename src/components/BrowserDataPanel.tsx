@@ -17,6 +17,7 @@ import {
 import { useTheme } from "@/themeContext";
 import { useI18n } from "@/i18nContext";
 import { HapticSwitch } from "@/chrome/HapticSwitch";
+import { SettingsGroup, settingsClasses } from "@/components/settings/kit";
 
 type Preview = {
   json: string;
@@ -26,13 +27,12 @@ type Preview = {
   spaces: string[];
 };
 const c = {
-  section: "mt-[20px] mb-md text-body-plus font-bold text-ink-muted",
+  groupBody: "px-xxl py-xxl gap-lg",
   detail: "text-input-plus text-ink-muted leading-[21px]",
   text: "text-[15px] text-ink leading-[21px]",
-  action:
-    "min-h-action-row justify-center p-xxl rounded-[8px] bg-surface-elevated active:opacity-pressed",
+  action: settingsClasses.actionSecondary,
   actions: "gap-lg my-lg",
-  preview: "border border-ink-faint rounded-[8px] p-xxl gap-lg",
+  preview: "border border-ink-faint rounded-control p-xxl gap-lg",
   row: "flex-row flex-wrap gap-xxl items-center min-h-action-row",
   grow: "flex-1 min-w-0",
 } as const;
@@ -249,105 +249,112 @@ export function BrowserDataPanel({
   };
   return (
     <>
-      <Text className={c.section}>{tr("archive.title")}</Text>
-      <Text className={c.detail}>{tr("archive.help")}</Text>
-      <View className={c.actions}>
-        {button(tr("archive.exportHtml"), () => exportFile(true))}
-        {button(tr("archive.exportWork"), () => exportFile(false))}
-        {button(tr("archive.chooseImport"), chooseImport)}
-      </View>
-      {preview && (
-        <View className={c.preview}>
-          <Text accessibilityRole="header" className={c.text}>
-            {tr("archive.preview")}
-          </Text>
-          <Text className={c.detail}>
-            {tr("archive.counts", {
-              spaces: preview.counts.spaces,
-              tabs: preview.counts.tabs,
-              bookmarks: preview.counts.bookmarks,
-              folders: preview.counts.folders,
-            })}
-          </Text>
-          <Text className={c.detail}>
-            {tr("archive.duplicates", { count: preview.counts.duplicateUrls })}
-          </Text>
-          <Text className={c.detail}>
-            {preview.spaces.slice(0, 20).join(", ")}
-            {preview.spaces.length > 20
-              ? tr("archive.moreSpaces", { count: preview.spaces.length - 20 })
-              : ""}
-          </Text>
-          {preview.counts.favorites > 0 && (
-            <View className={c.row}>
-              <Text className={cn(c.text, c.grow)}>
-                {tr("archive.addFavorites", {
-                  count: preview.counts.favorites,
+      <SettingsGroup heading={tr("archive.title")}>
+        <View className={c.groupBody}>
+          <Text className={c.detail}>{tr("archive.help")}</Text>
+          <View className={c.actions}>
+            {button(tr("archive.exportHtml"), () => exportFile(true))}
+            {button(tr("archive.exportWork"), () => exportFile(false))}
+            {button(tr("archive.chooseImport"), chooseImport)}
+          </View>
+          {preview && (
+            <View className={c.preview}>
+              <Text accessibilityRole="header" className={c.text}>
+                {tr("archive.preview")}
+              </Text>
+              <Text className={c.detail}>
+                {tr("archive.counts", {
+                  spaces: preview.counts.spaces,
+                  tabs: preview.counts.tabs,
+                  bookmarks: preview.counts.bookmarks,
+                  folders: preview.counts.folders,
                 })}
               </Text>
-              <HapticSwitch
-                trackColor={{ false: t.switchOff, true: t.accent }}
-                thumbColor={t.surfaceElevated}
-                accessibilityLabel={tr("archive.addFavoritesLabel")}
-                disabled={busy}
-                value={favorites}
-                onValueChange={setFavorites}
-              />
+              <Text className={c.detail}>
+                {tr("archive.duplicates", {
+                  count: preview.counts.duplicateUrls,
+                })}
+              </Text>
+              <Text className={c.detail}>
+                {preview.spaces.slice(0, 20).join(", ")}
+                {preview.spaces.length > 20
+                  ? tr("archive.moreSpaces", {
+                      count: preview.spaces.length - 20,
+                    })
+                  : ""}
+              </Text>
+              {preview.counts.favorites > 0 && (
+                <View className={c.row}>
+                  <Text className={cn(c.text, c.grow)}>
+                    {tr("archive.addFavorites", {
+                      count: preview.counts.favorites,
+                    })}
+                  </Text>
+                  <HapticSwitch
+                    trackColor={{ false: t.switchOff, true: t.accent }}
+                    thumbColor={t.surfaceElevated}
+                    accessibilityLabel={tr("archive.addFavoritesLabel")}
+                    disabled={busy}
+                    value={favorites}
+                    onValueChange={setFavorites}
+                  />
+                </View>
+              )}
+              {preview.counts.hasKeyBindings && (
+                <>
+                  <View className={c.row}>
+                    <Text className={cn(c.text, c.grow)}>
+                      {tr("archive.replaceKeys")}
+                    </Text>
+                    <HapticSwitch
+                      trackColor={{ false: t.switchOff, true: t.accent }}
+                      thumbColor={t.surfaceElevated}
+                      accessibilityLabel={tr("archive.replaceKeys")}
+                      disabled={busy}
+                      value={keymap}
+                      onValueChange={setKeymap}
+                    />
+                  </View>
+                  {keymap && (
+                    <Text className={c.detail}>
+                      {preview.shortcuts.slice(0, 30).join("\n")}
+                      {preview.shortcuts.length > 30
+                        ? `\n${tr("archive.moreKeys", {
+                            count: preview.shortcuts.length - 30,
+                          })}`
+                        : ""}
+                    </Text>
+                  )}
+                </>
+              )}
+              {preview.presentation && (
+                <>
+                  <View className={c.row}>
+                    <Text className={cn(c.text, c.grow)}>
+                      {tr("archive.applyAppearance")}
+                    </Text>
+                    <HapticSwitch
+                      trackColor={{ false: t.switchOff, true: t.accent }}
+                      thumbColor={t.surfaceElevated}
+                      accessibilityLabel={tr("archive.applyAppearance")}
+                      disabled={busy}
+                      value={presentation}
+                      onValueChange={setPresentation}
+                    />
+                  </View>
+                  {presentation && (
+                    <Text className={c.detail}>
+                      {presentationDetails(preview.presentation)}
+                    </Text>
+                  )}
+                </>
+              )}
+              {button(tr("archive.add"), applyImport)}
+              {button(tr("archive.cancelImport"), () => setPreview(null))}
             </View>
           )}
-          {preview.counts.hasKeyBindings && (
-            <>
-              <View className={c.row}>
-                <Text className={cn(c.text, c.grow)}>
-                  {tr("archive.replaceKeys")}
-                </Text>
-                <HapticSwitch
-                  trackColor={{ false: t.switchOff, true: t.accent }}
-                  thumbColor={t.surfaceElevated}
-                  accessibilityLabel={tr("archive.replaceKeys")}
-                  disabled={busy}
-                  value={keymap}
-                  onValueChange={setKeymap}
-                />
-              </View>
-              {keymap && (
-                <Text className={c.detail}>
-                  {preview.shortcuts.slice(0, 30).join("\n")}
-                  {preview.shortcuts.length > 30
-                    ? `\n${tr("archive.moreKeys", {
-                        count: preview.shortcuts.length - 30,
-                      })}`
-                    : ""}
-                </Text>
-              )}
-            </>
-          )}
-          {preview.presentation && (
-            <>
-              <View className={c.row}>
-                <Text className={cn(c.text, c.grow)}>
-                  {tr("archive.applyAppearance")}
-                </Text>
-                <HapticSwitch
-                  trackColor={{ false: t.switchOff, true: t.accent }}
-                  thumbColor={t.surfaceElevated}
-                  accessibilityLabel={tr("archive.applyAppearance")}
-                  disabled={busy}
-                  value={presentation}
-                  onValueChange={setPresentation}
-                />
-              </View>
-              {presentation && (
-                <Text className={c.detail}>
-                  {presentationDetails(preview.presentation)}
-                </Text>
-              )}
-            </>
-          )}
-          {button(tr("archive.add"), applyImport)}
-          {button(tr("archive.cancelImport"), () => setPreview(null))}
         </View>
-      )}
+      </SettingsGroup>
     </>
   );
 }

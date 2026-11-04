@@ -44,3 +44,18 @@ test("a fresh address presentation restores native focus after retained-input bl
     output: "",
   });
 });
+
+test("keyboard-invoked editors start an IME session for hardware composition", () => {
+  const result = Bun.spawnSync(
+    [process.execPath, "tests/fixtures/address-box.tsx", "ime"],
+    {
+      cwd: `${import.meta.dir}/..`,
+      stdout: "pipe",
+      stderr: "pipe",
+    }
+  );
+  expect({ code: result.exitCode, output: result.stderr.toString() }).toEqual({
+    code: 0,
+    output: "",
+  });
+});

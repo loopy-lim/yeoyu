@@ -31,10 +31,11 @@ import { useTheme } from "@/themeContext";
 import { useI18n } from "@/i18nContext";
 import { mozillaExtensionSource } from "@/extensionLinks";
 import { HapticSwitch } from "@/chrome/HapticSwitch";
+import { settingsClasses } from "@/components/settings/kit";
 
 const c = {
-  section: "mt-[20px] mb-lg text-icon-size font-bold text-ink",
-  card: "my-lg p-[14px] gap-xl rounded-tile bg-surface border-hairline border-hairline-width",
+  section: settingsClasses.groupHeader,
+  card: `${settingsClasses.group} my-lg p-[14px] gap-xl`,
   title: "text-icon-size font-semibold text-ink",
   text: "text-input-plus leading-[21px] text-ink",
   detail: "text-input-plus leading-[21px] text-ink-muted",
@@ -42,13 +43,11 @@ const c = {
   row: "min-h-action-row flex-row items-center gap-xxl",
   grow: "flex-1 min-w-0",
   actions: "flex-row flex-wrap gap-lg",
-  action:
-    "min-h-action-row shrink justify-center px-xxl py-xl rounded-[8px] bg-sunken active:opacity-pressed",
-  linkInput:
-    "min-h-action-row px-xxl py-xl border border-hairline rounded-[8px] bg-sunken text-ink text-input-plus",
+  action: `${settingsClasses.action} shrink py-xl`,
+  linkInput: `${settingsClasses.field} py-xl`,
   permissionGroup: "gap-sm mt-lg",
   resultRow: "flex-row gap-xxl mt-xl",
-  resultIcon: "size-[40px] rounded-[10px] bg-sunken",
+  resultIcon: "size-[40px] rounded-control bg-sunken",
   resultGrow: "flex-1 min-w-0 gap-xs",
   resultName: "text-[15px] font-semibold text-ink",
   headlineRow: "flex-row gap-xxl items-center",

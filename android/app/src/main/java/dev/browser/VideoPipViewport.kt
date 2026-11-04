@@ -61,7 +61,7 @@ internal class VideoPipViewport(
 
     /** Observation only: one exit, at most24 events/750ms, never a rendering gate. */
     internal fun beginExitProbe(activity: Activity, ticket: Long, document: Long) {
-        if (context.packageName != "com.workspacebrowser.acceptance" || disposed || exitProbeStarted) return
+        if (context.packageName != "ll3.kr.yeoyu.acceptance" || disposed || exitProbeStarted) return
         exitProbeStarted = true
         val probe = ExitProbe(activity, ticket, document, SystemClock.uptimeMillis() + 750L,
             activity.window.decorView.viewTreeObserver)
@@ -159,7 +159,7 @@ internal class VideoPipViewport(
         super.onDetachedFromWindow()
     }
     private fun trace(event: String, detail: String = "") {
-        if (context.packageName != "com.workspacebrowser.acceptance") return
+        if (context.packageName != "ll3.kr.yeoyu.acceptance") return
         Log.i("YeoyuPipTrace", "uptime=${SystemClock.uptimeMillis()} event=viewport-$event" +
             " session=${System.identityHashCode(session)} ready=${presentation.ready}" +
             " awaitingPinnedFrames=${presentation.awaitingPinnedFrames} readiness=${presentation.readinessReason}" +

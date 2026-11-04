@@ -30,6 +30,7 @@ import {
   type DownloadHistoryStatus,
 } from "@/downloadHistory";
 import { HapticSwitch } from "@/chrome/HapticSwitch";
+import { SettingsGroup, settingsClasses } from "@/components/settings/kit";
 
 interface Download {
   id: string;
@@ -58,21 +59,20 @@ const DOWNLOAD_STATES = {
   cancelled: "tools.state.cancelled",
 } as const;
 const c = {
-  section: "mt-xxxl mb-md text-body-plus font-bold text-ink-muted",
+  groupBody: "px-xxl py-xxl gap-lg",
   row: "min-h-action-row py-[9px] gap-md border-ink-faint border-b-hairline-width",
   horizontal: "flex-row items-center gap-xxl",
   text: "text-[15px] text-ink leading-[21px]",
   detail: "text-input-plus text-ink-muted leading-[21px]",
   grow: "flex-1 min-w-0",
-  action:
-    "min-h-action-row justify-center px-xxl rounded-[8px] bg-surface-elevated active:opacity-pressed",
+  action: settingsClasses.actionSecondary,
   choices: "flex-row flex-wrap gap-md",
   overlay: "flex-1 items-center justify-center bg-scrim p-[20px]",
   dialog:
     "w-full max-w-[640px] h-[80%] rounded-dialog bg-surface-elevated p-[18px]",
   title: "text-title font-bold text-ink",
   search:
-    "min-h-action-row my-xl px-xxl rounded-[8px] bg-sunken text-ink text-icon-size",
+    "min-h-action-row my-xl px-xxl rounded-control bg-sunken text-ink text-icon-size",
 } as const;
 const actionClasses = cva(c.action, {
   variants: {
@@ -334,337 +334,364 @@ export function BrowserToolsPanel({
   return (
     <>
       {show("browsing") && (
-        <>
-          <Text className={c.section}>{tr("tools.browsing")}</Text>
-          {action(
-            tr(defaultBrowser ? "tools.defaultHeld" : "tools.setDefault"),
-            chooseDefaultBrowser,
-            defaultBrowser === true
-          )}
-          <View className={c.row}>
-            <View className={c.horizontal}>
-              <View className={c.grow}>
-                <Text className={c.text}>{tr("tools.restorePages")}</Text>
-                <Text className={c.detail}>{tr("tools.restoreHelp")}</Text>
-              </View>
-              <HapticSwitch
-                {...switchColors}
-                accessibilityLabel={tr("tools.restorePages")}
-                disabled={!config || busy}
-                value={config?.restoreSessions ?? true}
-                onValueChange={(enabled) => {
-                  if (!config) return;
-                  const save = () =>
-                    perform(() =>
-                      onSave((current) => ({
-                        ...current,
-                        restoreSessions: enabled,
-                      }))
-                    );
-                  if (enabled)
-                    Alert.alert(
-                      tr("tools.rememberTitle"),
-                      tr("tools.rememberWarning"),
-                      [
-                        { text: tr("common.cancel"), style: "cancel" },
-                        { text: tr("tools.remember"), onPress: save },
-                      ]
-                    );
-                  else save();
-                }}
-              />
-            </View>
-          </View>
-          <View className={cn(c.row, c.horizontal)}>
-            <View className={c.grow}>
-              <Text className={c.text}>{tr("tools.textSize")}</Text>
-              <Text className={c.detail}>
-                {tr("tools.textSizeHelp", {
-                  percent: Math.round((config?.textScale ?? 1) * 100),
-                })}
-              </Text>
-            </View>
+        <SettingsGroup heading={tr("tools.browsing")}>
+          <View className={c.groupBody}>
             {action(
-              "−",
-              () =>
-                config &&
-                perform(() =>
-                  onSave((current) => ({
-                    ...current,
-                    textScale: Math.max(
-                      0.5,
-                      Math.round((current.textScale - 0.1) * 10) / 10
-                    ),
-                  }))
-                ),
-              !config || config.textScale <= 0.5
+              tr(defaultBrowser ? "tools.defaultHeld" : "tools.setDefault"),
+              chooseDefaultBrowser,
+              defaultBrowser === true
             )}
-            {action(
-              "＋",
-              () =>
-                config &&
-                perform(() =>
-                  onSave((current) => ({
-                    ...current,
-                    textScale: Math.min(
-                      2,
-                      Math.round((current.textScale + 0.1) * 10) / 10
-                    ),
-                  }))
-                ),
-              !config || config.textScale >= 2
-            )}
-          </View>
-          {action(
-            tr("tools.resetText"),
-            () =>
-              perform(() =>
-                onSave((current) => ({ ...current, textScale: 1 }))
-              ),
-            !config || config.textScale === 1
-          )}
-        </>
-      )}
-      {show("website") && (
-        <>
-          <Text className={c.section}>{tr("tools.website")}</Text>
-          <Text selectable className={c.detail}>
-            {origin ?? tr("tools.openSite")}
-          </Text>
-          {privateTab && (
-            <Text className={c.detail}>{tr("tools.privateSite")}</Text>
-          )}
-          {!!origin && (
-            <>
-              <View className={c.row}>
-                <Text className={c.text}>
-                  {tr(
-                    origin.startsWith("http:")
-                      ? "tools.insecure"
-                      : security?.origin === origin && security.known !== false
-                      ? security.secure &&
-                        !security.exception &&
-                        !security.mixedActive
-                        ? "tools.secure"
-                        : "tools.attention"
-                      : "tools.securityLoading"
-                  )}
-                </Text>
-                {!!security?.issuer && security.origin === origin && (
-                  <Text className={c.detail}>
-                    {tr("tools.certificate", { issuer: security.issuer })}
-                  </Text>
-                )}
-              </View>
-            </>
-          )}
-          {!!origin && !privateTab && (
-            <>
-              <View className={cn(c.row, c.horizontal)}>
+            <View className={c.row}>
+              <View className={c.horizontal}>
                 <View className={c.grow}>
-                  <Text className={c.text}>{tr("tools.desktop")}</Text>
-                  <Text className={c.detail}>{tr("tools.desktopHelp")}</Text>
+                  <Text className={c.text}>{tr("tools.restorePages")}</Text>
+                  <Text className={c.detail}>{tr("tools.restoreHelp")}</Text>
                 </View>
                 <HapticSwitch
                   {...switchColors}
-                  accessibilityLabel={tr("tools.desktopLabel")}
+                  accessibilityLabel={tr("tools.restorePages")}
                   disabled={!config || busy}
-                  value={site?.desktop ?? true}
-                  onValueChange={(desktop) => setSite({ desktop })}
+                  value={config?.restoreSessions ?? true}
+                  onValueChange={(enabled) => {
+                    if (!config) return;
+                    const save = () =>
+                      perform(() =>
+                        onSave((current) => ({
+                          ...current,
+                          restoreSessions: enabled,
+                        }))
+                      );
+                    if (enabled)
+                      Alert.alert(
+                        tr("tools.rememberTitle"),
+                        tr("tools.rememberWarning"),
+                        [
+                          { text: tr("common.cancel"), style: "cancel" },
+                          { text: tr("tools.remember"), onPress: save },
+                        ]
+                      );
+                    else save();
+                  }}
                 />
               </View>
-              <Text className={c.detail}>{tr("tools.originHelp")}</Text>
+            </View>
+            <View className={cn(c.row, c.horizontal)}>
+              <View className={c.grow}>
+                <Text className={c.text}>{tr("tools.textSize")}</Text>
+                <Text className={c.detail}>
+                  {tr("tools.textSizeHelp", {
+                    percent: Math.round((config?.textScale ?? 1) * 100),
+                  })}
+                </Text>
+              </View>
               {action(
-                tr("tools.resetSite"),
-                () => resetSites(currentOrigin ?? undefined),
-                !site
-              )}
-              {action(
-                tr("tools.reload"),
-                () => tabId && perform(() => platform.retryTab(tabId)),
-                !tabId
-              )}
-              {action(tr("tools.clearSite"), () => clear(host), !host)}
-            </>
-          )}
-          {!privateTab && (
-            <>
-              <Text className={c.section}>{tr("tools.allSites")}</Text>
-              <Text className={c.detail}>{tr("tools.allSitesHelp")}</Text>
-              {action(
-                tr("tools.manageSites", { count: config?.sites.length ?? 0 }),
-                () => {
-                  setSiteQuery("");
-                  setSitePreferencesOpen(true);
-                },
-                !config
-              )}
-            </>
-          )}
-        </>
-      )}
-      {show("privacy") && (
-        <>
-          <Text className={c.section}>{tr("tools.privacy")}</Text>
-          <Text className={c.detail}>{tr("tools.privacyHelp")}</Text>
-          <View className={c.choices}>
-            {(
-              ["engine-default", "standard", "strict"] as TrackingProtection[]
-            ).map((protection) => (
-              <Pressable
-                key={protection}
-                accessibilityRole="radio"
-                accessibilityState={{
-                  checked: config?.trackingProtection === protection,
-                  disabled: !config || busy,
-                }}
-                disabled={!config || busy}
-                onPress={() =>
+                "−",
+                () =>
                   config &&
                   perform(() =>
                     onSave((current) => ({
                       ...current,
-                      trackingProtection: protection,
+                      textScale: Math.max(
+                        0.5,
+                        Math.round((current.textScale - 0.1) * 10) / 10
+                      ),
+                    }))
+                  ),
+                !config || config.textScale <= 0.5
+              )}
+              {action(
+                "＋",
+                () =>
+                  config &&
+                  perform(() =>
+                    onSave((current) => ({
+                      ...current,
+                      textScale: Math.min(
+                        2,
+                        Math.round((current.textScale + 0.1) * 10) / 10
+                      ),
+                    }))
+                  ),
+                !config || config.textScale >= 2
+              )}
+            </View>
+            {action(
+              tr("tools.resetText"),
+              () =>
+                perform(() =>
+                  onSave((current) => ({ ...current, textScale: 1 }))
+                ),
+              !config || config.textScale === 1
+            )}
+          </View>
+        </SettingsGroup>
+      )}
+      {show("website") && (
+        <>
+          <SettingsGroup heading={tr("tools.website")}>
+            <View className={c.groupBody}>
+              <Text selectable className={c.detail}>
+                {origin ?? tr("tools.openSite")}
+              </Text>
+              {privateTab && (
+                <Text className={c.detail}>{tr("tools.privateSite")}</Text>
+              )}
+              {!!origin && (
+                <>
+                  <View className={c.row}>
+                    <Text className={c.text}>
+                      {tr(
+                        origin.startsWith("http:")
+                          ? "tools.insecure"
+                          : security?.origin === origin &&
+                            security.known !== false
+                          ? security.secure &&
+                            !security.exception &&
+                            !security.mixedActive
+                            ? "tools.secure"
+                            : "tools.attention"
+                          : "tools.securityLoading"
+                      )}
+                    </Text>
+                    {!!security?.issuer && security.origin === origin && (
+                      <Text className={c.detail}>
+                        {tr("tools.certificate", { issuer: security.issuer })}
+                      </Text>
+                    )}
+                  </View>
+                </>
+              )}
+              {!!origin && !privateTab && (
+                <>
+                  <View className={cn(c.row, c.horizontal)}>
+                    <View className={c.grow}>
+                      <Text className={c.text}>{tr("tools.desktop")}</Text>
+                      <Text className={c.detail}>{tr("tools.desktopHelp")}</Text>
+                    </View>
+                    <HapticSwitch
+                      {...switchColors}
+                      accessibilityLabel={tr("tools.desktopLabel")}
+                      disabled={!config || busy}
+                      value={site?.desktop ?? true}
+                      onValueChange={(desktop) => setSite({ desktop })}
+                    />
+                  </View>
+                  <Text className={c.detail}>{tr("tools.originHelp")}</Text>
+                  {action(
+                    tr("tools.resetSite"),
+                    () => resetSites(currentOrigin ?? undefined),
+                    !site
+                  )}
+                  {action(
+                    tr("tools.reload"),
+                    () => tabId && perform(() => platform.retryTab(tabId)),
+                    !tabId
+                  )}
+                  {action(tr("tools.clearSite"), () => clear(host), !host)}
+                </>
+              )}
+            </View>
+          </SettingsGroup>
+          {!privateTab && (
+            <SettingsGroup heading={tr("tools.allSites")}>
+              <View className={c.groupBody}>
+                <Text className={c.detail}>{tr("tools.allSitesHelp")}</Text>
+                {action(
+                  tr("tools.manageSites", { count: config?.sites.length ?? 0 }),
+                  () => {
+                    setSiteQuery("");
+                    setSitePreferencesOpen(true);
+                  },
+                  !config
+                )}
+              </View>
+            </SettingsGroup>
+          )}
+        </>
+      )}
+      {show("privacy") && (
+        <SettingsGroup heading={tr("tools.privacy")}>
+          <View className={c.groupBody}>
+            <Text className={c.detail}>{tr("tools.privacyHelp")}</Text>
+            <View className={c.choices}>
+              {(
+                ["engine-default", "standard", "strict"] as TrackingProtection[]
+              ).map((protection) => (
+                <Pressable
+                  key={protection}
+                  accessibilityRole="radio"
+                  accessibilityState={{
+                    checked: config?.trackingProtection === protection,
+                    disabled: !config || busy,
+                  }}
+                  disabled={!config || busy}
+                  onPress={() =>
+                    config &&
+                    perform(() =>
+                      onSave((current) => ({
+                        ...current,
+                        trackingProtection: protection,
+                      }))
+                    )
+                  }
+                  className={cn(
+                    actionClasses({
+                      selected: config?.trackingProtection === protection,
+                      disabled: !config || busy,
+                    })
+                  )}
+                >
+                  <Text className={c.text}>
+                    {tr(
+                      protection === "engine-default"
+                        ? "tools.protectionOff"
+                        : protection === "standard"
+                        ? "tools.protectionStandard"
+                        : "tools.protectionStrict"
+                    )}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+            {!!origin && !privateTab && (
+              <View className={c.row}>
+                <Text className={c.text}>{tr("tools.siteProtection")}</Text>
+                <View className={c.choices}>
+                  {([null, true, false] as const).map((value) => (
+                    <Pressable
+                      key={String(value)}
+                      accessibilityRole="radio"
+                      accessibilityState={{
+                        checked: (site?.trackingProtection ?? null) === value,
+                        disabled: !config || busy,
+                      }}
+                      disabled={!config || busy}
+                      className={cn(
+                        actionClasses({
+                          selected: (site?.trackingProtection ?? null) === value,
+                          disabled: !config || busy,
+                        })
+                      )}
+                      onPress={() => setSite({ trackingProtection: value })}
+                    >
+                      <Text className={c.text}>
+                        {tr(
+                          value === null
+                            ? "tools.useGlobal"
+                            : value
+                            ? "common.on"
+                            : "common.off"
+                        )}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </View>
+            )}
+            {!privateTab &&
+              action(tr("tools.clearAllAction"), () => clear(null))}
+          </View>
+        </SettingsGroup>
+      )}
+      {show("memory") && (
+        <SettingsGroup heading={tr("tools.memory")}>
+          <View className={c.groupBody}>
+            <View className={cn(c.row, c.horizontal)}>
+              <Text className={cn(c.text, c.grow)}>
+                {tr("tools.autoMemory")}
+              </Text>
+              <HapticSwitch
+                {...switchColors}
+                accessibilityLabel={tr("tools.autoMemory")}
+                disabled={!config || busy}
+                value={config?.automaticMemorySaving ?? false}
+                onValueChange={(automaticMemorySaving) =>
+                  perform(() =>
+                    onSave((current) => ({
+                      ...current,
+                      automaticMemorySaving,
                     }))
                   )
                 }
-                className={cn(
-                  actionClasses({
-                    selected: config?.trackingProtection === protection,
-                    disabled: !config || busy,
-                  })
-                )}
-              >
-                <Text className={c.text}>
-                  {tr(
-                    protection === "engine-default"
-                      ? "tools.protectionOff"
-                      : protection === "standard"
-                      ? "tools.protectionStandard"
-                      : "tools.protectionStrict"
-                  )}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-          {!!origin && !privateTab && (
-            <View className={c.row}>
-              <Text className={c.text}>{tr("tools.siteProtection")}</Text>
-              <View className={c.choices}>
-                {([null, true, false] as const).map((value) => (
-                  <Pressable
-                    key={String(value)}
-                    accessibilityRole="radio"
-                    accessibilityState={{
-                      checked: (site?.trackingProtection ?? null) === value,
-                      disabled: !config || busy,
-                    }}
-                    disabled={!config || busy}
-                    className={cn(
-                      actionClasses({
-                        selected: (site?.trackingProtection ?? null) === value,
-                        disabled: !config || busy,
-                      })
-                    )}
-                    onPress={() => setSite({ trackingProtection: value })}
-                  >
-                    <Text className={c.text}>
-                      {tr(
-                        value === null
-                          ? "tools.useGlobal"
-                          : value
-                          ? "common.on"
-                          : "common.off"
-                      )}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
-            </View>
-          )}
-          {!privateTab && action(tr("tools.clearAllAction"), () => clear(null))}
-        </>
-      )}
-      {show("memory") && (
-        <>
-          <Text className={c.section}>{tr("tools.memory")}</Text>
-          <View className={cn(c.row, c.horizontal)}>
-            <Text className={cn(c.text, c.grow)}>{tr("tools.autoMemory")}</Text>
-            <HapticSwitch
-              {...switchColors}
-              accessibilityLabel={tr("tools.autoMemory")}
-              disabled={!config || busy}
-              value={config?.automaticMemorySaving ?? false}
-              onValueChange={(automaticMemorySaving) =>
-                perform(() =>
-                  onSave((current) => ({ ...current, automaticMemorySaving }))
-                )
-              }
-            />
-          </View>
-          <Text className={c.detail}>{tr("tools.autoMemoryHelp")}</Text>
-          {!!origin && !privateTab && (
-            <View className={cn(c.row, c.horizontal)}>
-              <Text className={cn(c.text, c.grow)}>{tr("tools.keepSite")}</Text>
-              <HapticSwitch
-                {...switchColors}
-                accessibilityLabel={tr("tools.keepSiteLabel")}
-                disabled={!config || busy}
-                value={site?.keepAlive ?? false}
-                onValueChange={(keepAlive) => setSite({ keepAlive })}
               />
             </View>
-          )}
-          {!privateTab &&
-            (config?.sites.filter((entry) => entry.keepAlive) ?? []).map(
-              (entry) => (
-                <View key={entry.origin} className={c.row}>
-                  <Text className={c.detail}>
-                    {tr("tools.keepAlive", { site: entry.origin })}
-                  </Text>
-                  {action(tr("tools.removeKeepAlive"), () =>
-                    perform(() =>
-                      onSave(
-                        updateSitePreference(entry.origin, { keepAlive: false })
+            <Text className={c.detail}>{tr("tools.autoMemoryHelp")}</Text>
+            {!!origin && !privateTab && (
+              <View className={cn(c.row, c.horizontal)}>
+                <Text className={cn(c.text, c.grow)}>
+                  {tr("tools.keepSite")}
+                </Text>
+                <HapticSwitch
+                  {...switchColors}
+                  accessibilityLabel={tr("tools.keepSiteLabel")}
+                  disabled={!config || busy}
+                  value={site?.keepAlive ?? false}
+                  onValueChange={(keepAlive) => setSite({ keepAlive })}
+                />
+              </View>
+            )}
+            {!privateTab &&
+              (config?.sites.filter((entry) => entry.keepAlive) ?? []).map(
+                (entry) => (
+                  <View key={entry.origin} className={c.row}>
+                    <Text className={c.detail}>
+                      {tr("tools.keepAlive", { site: entry.origin })}
+                    </Text>
+                    {action(tr("tools.removeKeepAlive"), () =>
+                      perform(() =>
+                        onSave(
+                          updateSitePreference(entry.origin, {
+                            keepAlive: false,
+                          })
+                        )
                       )
-                    )
-                  )}
-                </View>
+                    )}
+                  </View>
+                )
+              )}
+            {action(tr("tools.inspectMemory"), inspectMemoryProtection)}
+            {!!resourceSummary && (
+              <Text className={c.detail}>{resourceSummary}</Text>
+            )}
+            <Text className={c.detail}>{tr("tools.memoryWarning")}</Text>
+            {action(tr("tools.release"), () =>
+              Alert.alert(
+                tr("tools.releaseTitle"),
+                tr("tools.releaseWarning"),
+                [
+                  { text: tr("common.cancel"), style: "cancel" },
+                  {
+                    text: tr("tools.releaseConfirm"),
+                    onPress: () =>
+                      perform(async () => {
+                        const result = JSON.parse(
+                          await platform.releaseInactiveTabs()
+                        );
+                        onNotice(
+                          tr("tools.releaseResult", {
+                            released: result.released,
+                            protected: result.protected,
+                            failed: result.failed,
+                            reasons: Object.entries(result.reasons ?? {})
+                              .map(([reason, count]) => `${reason}: ${count}`)
+                              .join("; "),
+                          })
+                        );
+                      }),
+                  },
+                ]
               )
             )}
-          {action(tr("tools.inspectMemory"), inspectMemoryProtection)}
-          {!!resourceSummary && (
-            <Text className={c.detail}>{resourceSummary}</Text>
-          )}
-          <Text className={c.detail}>{tr("tools.memoryWarning")}</Text>
-          {action(tr("tools.release"), () =>
-            Alert.alert(tr("tools.releaseTitle"), tr("tools.releaseWarning"), [
-              { text: tr("common.cancel"), style: "cancel" },
-              {
-                text: tr("tools.releaseConfirm"),
-                onPress: () =>
-                  perform(async () => {
-                    const result = JSON.parse(
-                      await platform.releaseInactiveTabs()
-                    );
-                    onNotice(
-                      tr("tools.releaseResult", {
-                        released: result.released,
-                        protected: result.protected,
-                        failed: result.failed,
-                        reasons: Object.entries(result.reasons ?? {})
-                          .map(([reason, count]) => `${reason}: ${count}`)
-                          .join("; "),
-                      })
-                    );
-                  }),
-              },
-            ])
-          )}
-        </>
+          </View>
+        </SettingsGroup>
       )}
-      {show("downloads") &&
-        action(tr("tools.downloads"), () => setDownloadsOpen(true))}
+      {show("downloads") && (
+        <SettingsGroup>
+          <View className={c.groupBody}>
+            {action(tr("tools.downloads"), () => setDownloadsOpen(true))}
+          </View>
+        </SettingsGroup>
+      )}
       <Modal
         transparent
         animationType={reducedMotion ? "none" : "fade"}

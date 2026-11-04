@@ -5,6 +5,7 @@ import { Pressable, Text, View } from "react-native";
 import { appClasses as c } from "@/chrome/appStyles";
 import { ChromeIcon } from "@/chrome/ChromeIcon";
 import { useI18n } from "@/i18nContext";
+import { SettingsGroupRow, settingsClasses } from "@/components/settings/kit";
 import {
   ANDROID_PERMISSION_KINDS,
   type AndroidPermissionKind,
@@ -125,18 +126,21 @@ export function ConsentSettings({
       <View>
         <Text
           accessibilityRole="header"
-          className={cn(c.settingsSection, "mt-0")}
+          className={cn(settingsClasses.groupHeader, "mt-0")}
         >
           {tr("consent.deviceTitle")}
         </Text>
         <Text className={c.optionDescription}>{tr("consent.deviceHelp")}</Text>
-        <View className={c.consentGroup}>
-          {ANDROID_PERMISSION_KINDS.map((kind) => {
+        <View className={cn(settingsClasses.group, "mt-xxl")}>
+          {ANDROID_PERMISSION_KINDS.map((kind, index) => {
             const status = android.status[kind];
             const granted = status === "allowed" || status === "approximate";
             const label = tr(`consent.kind.${kind}`);
             return (
-              <View key={kind} className={c.consentRow}>
+              <SettingsGroupRow
+                key={kind}
+                last={index === ANDROID_PERMISSION_KINDS.length - 1}
+              >
                 <View className={c.consentCopy}>
                   <Text className={c.optionTitle}>{label}</Text>
                   <Text className={c.optionDescription}>
@@ -190,7 +194,7 @@ export function ConsentSettings({
                   </Pressable>
                 )}
                 <ConsentFeedback feedback={feedback} target={kind} />
-              </View>
+              </SettingsGroupRow>
             );
           })}
         </View>
@@ -283,7 +287,7 @@ export function ConsentSettings({
       <View>
         <Text
           accessibilityRole="header"
-          className={cn(c.settingsSection, "mt-0")}
+          className={cn(settingsClasses.groupHeader, "mt-0")}
         >
           {tr("consent.saved")}
         </Text>
@@ -293,12 +297,15 @@ export function ConsentSettings({
             : tr("consent.empty")}
         </Text>
         {[...groups].map(([origin, siteRules]) => (
-          <View key={origin} className={c.consentGroup}>
+          <View key={origin} className={cn(settingsClasses.group, "mt-xxl")}>
             <Text selectable className={c.consentOrigin}>
               {origin}
             </Text>
-            {siteRules.map((rule) => (
-              <View key={rule.kind} className={c.consentRow}>
+            {siteRules.map((rule, index) => (
+              <SettingsGroupRow
+                key={rule.kind}
+                last={index === siteRules.length - 1}
+              >
                 <View className={c.consentCopy}>
                   <Text className={c.optionTitle}>
                     {tr(`consent.kind.${rule.kind}`)}
@@ -338,7 +345,7 @@ export function ConsentSettings({
                 >
                   <Text className={c.optionTitle}>{tr("consent.forget")}</Text>
                 </Pressable>
-              </View>
+              </SettingsGroupRow>
             ))}
           </View>
         ))}

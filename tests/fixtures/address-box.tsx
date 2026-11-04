@@ -9,6 +9,7 @@ const listeners = new Map<string, (event: unknown) => void>();
 const scrolls: Array<{ y: number; animated: boolean }> = [];
 const submissions: string[] = [];
 const focusEvents: string[] = [];
+const imeSessions: string[] = [];
 const Input = React.forwardRef((props: any, ref) => {
   React.useImperativeHandle(ref, () => ({
     focus: () => {
@@ -44,7 +45,12 @@ mock.module("react-native", () => ({
   ScrollView: Scroll,
 }));
 mock.module("../../src/platform", () => ({
-  platform: { setAddressInputActive() {} },
+  platform: {
+    setAddressInputActive() {},
+    ensureAddressImeSession() {
+      imeSessions.push("session");
+    },
+  },
 }));
 mock.module("../../src/chrome/ChromeIcon", () => ({
   ChromeIcon: "ChromeIcon",
@@ -58,11 +64,12 @@ console.error = (...args: unknown[]) => {
 };
 let tree!: ReactTestRenderer;
 const addressRef = React.createRef<React.ComponentRef<typeof AddressBox>>();
-const scene = (presentation?: number, autoFocus = false) => (
+const scene = (presentation?: number, autoFocus = false, softInput?: boolean) => (
   <AddressBox
     key={presentation}
     ref={addressRef}
     autoFocus={autoFocus}
+    softInput={softInput}
     engine="google"
     value="page"
     reducedMotion
@@ -79,7 +86,29 @@ const scene = (presentation?: number, autoFocus = false) => (
   />
 );
 try {
-  if (process.argv[2] === "presentation") {
+  if (process.argv[2] === "ime") {
+    // Keyboard-invoked editors (softInput=false) must establish an IME
+    // session so hardware Korean composition has a target; touch editors
+    // rely on the standard focus flow and must not double-request.
+    await act(() => {
+      tree = create(scene(1, true, false));
+    });
+    assert.deepEqual(focusEvents, ["focus"]);
+    assert.equal(
+      imeSessions.length,
+      1,
+      "the keyboard path starts an IME session for hardware composition"
+    );
+    await act(() => {
+      tree = create(scene(2, true));
+    });
+    assert.deepEqual(focusEvents, ["focus", "focus"]);
+    assert.equal(
+      imeSessions.length,
+      1,
+      "the touch path leaves the IME to the standard focus flow"
+    );
+  } else if (process.argv[2] === "presentation") {
     await act(() => {
       tree = create(scene(1, true));
     });
@@ -178,7 +207,11 @@ try {
       await act(() => {
         for (let step = 0; step < 6; step++)
           listeners.get("BrowserInputKey")?.({ key: "ArrowDown" });
-        listeners.get("BrowserInputKey")?.({ key: "Enter" });
+        // Enter reaches the editor through the EditText editor action
+        // (onSubmitEditing) since the native router no longer promotes it.
+        tree.root
+          .findByType("TextInput" as React.ElementType)
+          .props.onSubmitEditing();
       });
       assert.deepEqual(
         submissions,

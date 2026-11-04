@@ -78,6 +78,7 @@ export interface BrowserRuntime {
   ): Promise<string>;
   configureKeys(json: string): void;
   setAddressInputActive?(enabled: boolean): void;
+  ensureAddressImeSession?(): void;
   setChromeModalActive?(enabled: boolean): void;
   reconcileTabs(tabs: { id: string; private: boolean }[]): void;
   setTabMetadataCount?(count: number): void;

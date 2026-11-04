@@ -21,10 +21,13 @@ class RemapEngine {
         if (!down) { held.remove(key); return previous ?: KeyAction.Pass }
         if (previous != null) return previous
         if (addressInputActive && !meta && !ctrl && !alt && !shift) {
+            // Enter stays out of the InputKey capture so the editor's submit
+            // flows through the standard EditText editor-action path
+            // (onSubmitEditing), matching IME composition commit behavior
+            // instead of a pre-IME shortcut.
             val inputKey = when (key) {
                 "DPAD_UP" -> "ArrowUp"
                 "DPAD_DOWN" -> "ArrowDown"
-                "ENTER", "NUMPAD_ENTER" -> "Enter"
                 "ESCAPE" -> "Escape"
                 else -> null
             }

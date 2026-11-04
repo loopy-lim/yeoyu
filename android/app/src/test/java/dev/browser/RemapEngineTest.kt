@@ -42,10 +42,10 @@ class RemapEngineTest {
   assertEquals(KeyAction.Pass, e.route("K", false))
   assertEquals(KeyAction.Command("commandPalette.open"), e.route("K", true, ctrl=true))
  }
- @Test fun focusedAddressCapturesArrowsEnterEscapeOnceAndConsumesTheirPairs() {
+ @Test fun focusedAddressCapturesArrowsAndEscapeOnceAndConsumesTheirPairs() {
   val e = RemapEngine()
   e.addressInputActive = true
-  for ((key, expected) in mapOf("DPAD_UP" to "ArrowUp", "DPAD_DOWN" to "ArrowDown", "ENTER" to "Enter", "ESCAPE" to "Escape")) {
+  for ((key, expected) in mapOf("DPAD_UP" to "ArrowUp", "DPAD_DOWN" to "ArrowDown", "ESCAPE" to "Escape")) {
    assertEquals(KeyAction.InputKey(expected), e.route(key, true))
    assertEquals(KeyAction.Consume, e.route(key, true))
    e.addressInputActive = false
@@ -54,6 +54,18 @@ class RemapEngineTest {
    assertEquals(KeyAction.Pass, e.route(key, false))
    e.addressInputActive = true
   }
+ }
+ /** Enter stays with the IME while the address input is active: a live
+  *  Korean/Japanese composition needs it to commit. The editor still sees
+  *  submission through the EditText's onSubmitEditing once the IME forwards
+  *  the key outside a composition. */
+ @Test fun focusedAddressLeavesEnterForImeComposition() {
+  val e = RemapEngine()
+  e.addressInputActive = true
+  assertEquals(KeyAction.Pass, e.route("ENTER", true))
+  assertEquals(KeyAction.Pass, e.route("ENTER", false))
+  assertEquals(KeyAction.Pass, e.route("NUMPAD_ENTER", true))
+  assertEquals(KeyAction.Pass, e.route("NUMPAD_ENTER", false))
  }
  @Test fun addressCapturePreservesModifiedShortcutsAndOrdinaryTyping() {
   val e = RemapEngine()
@@ -68,11 +80,11 @@ class RemapEngineTest {
  }
  @Test fun aKeyPressedBeforeAddressFocusDoesNotBecomeCapturedMidPress() {
   val e = RemapEngine()
-  assertEquals(KeyAction.Pass, e.route("ENTER", true))
+  assertEquals(KeyAction.Pass, e.route("ESCAPE", true))
   e.addressInputActive = true
-  assertEquals(KeyAction.Pass, e.route("ENTER", true))
-  assertEquals(KeyAction.Pass, e.route("ENTER", false))
-  assertEquals(KeyAction.InputKey("Enter"), e.route("ENTER", true))
+  assertEquals(KeyAction.Pass, e.route("ESCAPE", true))
+  assertEquals(KeyAction.Pass, e.route("ESCAPE", false))
+  assertEquals(KeyAction.InputKey("Escape"), e.route("ESCAPE", true))
  }
  @Test fun losingWindowFocusDisablesAddressCapture() {
   val e = RemapEngine()

@@ -384,7 +384,7 @@ object GeckoSessionRegistry {
         BrowserWebNotifications.initialize(app, it)
         installNotificationWindowDelegate(it)
         BrowserExtensionHost.initialize(it)
-        BrowserVideoRegions.initialize(it, diagnostics = (app.packageName == "com.workspacebrowser.acceptance" || app.packageName.startsWith("com.workspacebrowser.acceptance.")))
+        BrowserVideoRegions.initialize(it, diagnostics = (app.packageName == "ll3.kr.yeoyu.acceptance" || app.packageName.startsWith("com.workspacebrowser.acceptance.")))
     }
 
     private fun applyRuntimeSettings(rt: GeckoRuntime) {
@@ -866,7 +866,7 @@ object GeckoSessionRegistry {
         e.initialNavigation = InitialNavigationAdmission(initialUrl, openInitially, ::current)
         var bootstrapEvents = 0
         fun traceBootstrap(event: String, reported: String? = null) {
-            if (e.privateSession || !app.packageName.startsWith("com.workspacebrowser.acceptance") || bootstrapEvents++ >= 40) return
+            if (e.privateSession || !app.packageName.startsWith("ll3.kr.yeoyu.acceptance") || bootstrapEvents++ >= 40) return
             val kind = when (reported) { null -> "none"; "about:blank" -> "blank"; else -> "nonblank" }
             android.util.Log.i("YeoyuBootstrap", "event=$event tab=$id session=${e.sessionVersion}" +
                 " document=${e.documentGeneration} reported=$kind knownBlank=${e.url == "about:blank"}" +

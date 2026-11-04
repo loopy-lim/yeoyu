@@ -36,7 +36,7 @@ export type SettingsSaveStatus = "loading" | "saving" | "saved" | "failed";
 
 const c = {
   dialog:
-    "w-[94%] max-w-[1040px] max-h-[94%] rounded-[24px] bg-surface-elevated overflow-hidden",
+    "w-[94%] max-w-[1040px] max-h-[94%] rounded-dialog bg-surface-elevated overflow-hidden",
   headerScroll: "max-h-[34%] grow-0 shrink",
   header: "px-[20px] py-xxl gap-lg border-hairline border-b-hairline-width",
   row: "flex-row items-center gap-xxl",
@@ -49,14 +49,14 @@ const c = {
   navCopy: "flex-1 min-w-0",
   navIcon: "size-[24px] items-center justify-center rounded-control",
   close:
-    "size-[48px] items-center justify-center rounded-[24px] bg-sunken active:bg-sunken-strong",
+    "size-[48px] items-center justify-center rounded-dialog bg-sunken active:bg-sunken-strong",
   footer:
     "min-h-input flex-row items-center gap-lg px-[20px] py-lg border-hairline border-t-hairline-width",
   detail: "text-input-plus text-ink-muted leading-[21px]",
   action:
-    "min-h-action-row p-xxl rounded-[10px] justify-center active:bg-sunken-strong",
+    "min-h-action-row p-xxl rounded-control justify-center active:bg-sunken-strong",
   search:
-    "flex-1 min-w-0 min-h-action-row bg-sunken text-ink px-xxl rounded-[10px] text-icon-size border border-hairline",
+    "flex-1 min-w-0 min-h-action-row bg-sunken text-ink px-xxl rounded-control text-icon-size border border-hairline",
   status: "flex-1 min-w-0 text-input-plus leading-[21px] text-ink-muted",
 } as const;
 const bodyClasses = cva("flex-1 min-h-0", {

@@ -202,6 +202,20 @@ class BrowserModule(context:ReactApplicationContext):ReactContextBaseJavaModule(
    InputRouter.engine.addressInputActive=enabled && reactApplicationContext.currentActivity?.hasWindowFocus()==true
   }
  }
+ /** Keyboard-invoked editors open with showSoftInputOnFocus=false, which skips
+  *  the IME start request; without a live session hardware Korean composition
+  *  has no target. Ask the IME explicitly — hardware-mode IMEs keep their view
+  *  hidden while composing, so this does not pop the soft keyboard. */
+ @ReactMethod fun ensureAddressImeSession() {
+  UiThreadUtil.runOnUiThread {
+   val activity=reactApplicationContext.currentActivity ?: return@runOnUiThread
+   if(!activity.hasWindowFocus()) return@runOnUiThread
+   if(activity.resources.configuration.keyboard == android.content.res.Configuration.KEYBOARD_NOKEYS) return@runOnUiThread
+   val view=activity.currentFocus ?: return@runOnUiThread
+   val imm=activity.getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as? android.view.inputmethod.InputMethodManager ?: return@runOnUiThread
+   imm.showSoftInput(view, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT)
+  }
+ }
  @ReactMethod fun setChromeModalActive(enabled:Boolean) {
   UiThreadUtil.runOnUiThread {
    InputRouter.engine.chromeModalActive=enabled && reactApplicationContext.currentActivity?.hasWindowFocus()==true
