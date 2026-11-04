@@ -79,7 +79,9 @@
 
 ## 발견 결함 (F-*)
 
-- **F-1 (P1 — 사전 존재 결함, 이번 기능 경로 직격)**: "Open Split View"의 분할 상대 선택 시트(ActionMenu in sheet)에서 **후보 탭 행이 렌더링되지 않음** — 제목("Choose a tab to split with")과 닫기 버튼만 존재, 항목 버튼 0개(에뮬레이터 2560×1600 실측, uiautomator 전수 확인). 터치로 분할을 만들 수 없어 저장→복원 라이브 경로가 전체 막힘. 같은 ActionMenu가 탭 컨텍스트 메뉴(anchor 방식)에서는 정상 렌더링 — sheet 프리젠테이션에서 ScrollView(`grow-0 shrink`) 높이 붕괴 추정. 조사 에이전트 보고 없음(사전 결함으로 추정되나 확인 필요). 후속: sheet 컨테이너 높이 제약 수정 후 V-1 재검증
+- **F-1 (P1 — 사전 존재 결함, 이번 기능 경로 직격)**: "Open Split View"의 분할 상대 선택 시트(ActionMenu in sheet)에서 **후보 탭 행이 렌더링되지 않음** — 제목("Choose a tab to split with")과 닫기 버튼만 존재, 항목 버튼 0개(에뮬레이터 2560×1600 실측, uiautomator 전수 확인). 터치로 분할을 만들 수 없어 저장→복원 라이브 경로가 전체 막힘.
+  - **격리 진단(2026-11-04)**: ActionMenu 단독 렌더 테스트(`tests/actionMenuRender.test.tsx`)에서 anchor 없음·있음 모두 행 정상 렌더 — **컴포넌트 무결립**. 메뉴 루트가 최초 추정 높이(44+items×40)가 아닌 제목만 한 높이로 보였다는 관측과 함께 보면 런타임 `items` 배열이 비었거나 sheet Overlay 문맥에서 ScrollView 높이가 붕괴하는 통합 계층 문제. 다음 진단 단계: 라이브로 ActionMenu 루트(또한 accessibilityLabel=제목)의 bounds를 덤프해 높이를 확인하면 둘 중 하나가 확정됨. 메모리 압박으로 에뮬레이터가 시스템에 종료되어 재기동 보류 — 다음 세션에서 수행
+  - 참고: 동일 ActionMenu가 탭 컨텍스트 메뉴(anchor 방식)에서는 정상 렌더링 실측됨
 - **F-2 (P3, 수정 완료)**: 어제 앱 ID 변경(`b580149`) 시 python 측정 테스트 픽스처 상수(`tests/test_browser_device_guard.py` ACCEPTANCE/NORMAL, `tests/test_measure_browser_soak.py` PACKAGE)를 갱신하지 않아 check.sh python 단계 54건 실패 — 상수 갱신으로 수정, 75/75 통과
 - **F-3 (관찰)**: 라이브 split 중 새 탭 생성이 `setSplitLayout(null)`로 분할을 조용히 해제함(App.tsx 기존 동작) — 저장 UX상 사용자가 의도를 잃을 수 있음. 후속 UX 과제로 기록
 
