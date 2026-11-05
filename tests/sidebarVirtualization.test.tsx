@@ -113,6 +113,7 @@ function renderList(rail: boolean, grouped = false) {
     state: { tabs, activeWorkspaceId: "a" },
     ordinaryTabs: tabs,
     railTabs: tabs,
+    tabsCollapsed: false,
     privateTabs: [],
     createPrivateTabAndShow: () => {},
     initialSidebarRows: 24,

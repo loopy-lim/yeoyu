@@ -493,6 +493,7 @@ function BrowserApp() {
   } | null>(null);
   const [splitPickerTabId, setSplitPickerTabId] = useState<string | null>(null);
   const [newFolderOpen, setNewFolderOpen] = useState(false);
+  const [tabsCollapsed, setTabsCollapsed] = useState(false);
   const [splitGroupDialog, setSplitGroupDialog] = useState<
     "save" | "manage" | null
   >(null);
@@ -3127,6 +3128,67 @@ function BrowserApp() {
                             </DragSource>
                           </View>
                         ))}
+                        {/* Arc-style single icon block: saved sites join the
+                        favorite tiles so one grid answers "where do my
+                        places live". Folder trees keep their structure. */}
+                        {sidebar.looseBookmarks.map((bookmark) => {
+                          const tab = bookmarkTabs.get(bookmark.id);
+                          if (tab && (tab.favorite || !tab.pinned)) return null;
+                          const isActive =
+                            !!tab && !tab.suspended && splitPaneIds.includes(tab.id);
+                          const title = bookmark.title || bookmark.url;
+                          return (
+                            <View
+                              key={bookmark.id}
+                              style={{
+                                width:
+                                  (sidebarLimits.width -
+                                    24 -
+                                    6 * (favoriteColumns - 1)) /
+                                  favoriteColumns,
+                              }}
+                            >
+                              <ContextPressable
+                                accessibilityRole="button"
+                                accessibilityLabel={tr("chrome.pinnedTabLabel", {
+                                  name: title,
+                                })}
+                                accessibilityState={{ selected: isActive }}
+                                className={favoriteClasses({
+                                  selected: isActive,
+                                })}
+                                onPress={() =>
+                                  tab ? revealTab(tab.id) : openBookmark(bookmark)
+                                }
+                                contextOpen={
+                                  sidebarMenu?.kind === "bookmark" &&
+                                  sidebarMenu.id === bookmark.id
+                                }
+                                onContextMenu={(x, y) =>
+                                  setSidebarMenu({
+                                    kind: "bookmark",
+                                    id: bookmark.id,
+                                    anchor: { x, y },
+                                  })
+                                }
+                              >
+                                {tab && playing.includes(tab.id) ? (
+                                  <ChromeIcon
+                                    className={cn("size-[20px]")}
+                                    name="play"
+                                  />
+                                ) : (
+                                  <Favicon
+                                    url={tab?.url || bookmark.url}
+                                    fallback={title.slice(0, 1).toUpperCase()}
+                                    size={22}
+                                    radius={5}
+                                  />
+                                )}
+                              </ContextPressable>
+                            </View>
+                          );
+                        })}
                       </ScrollView>
                     </View>
                   </View>
@@ -3137,7 +3199,7 @@ function BrowserApp() {
                   >
                     <FlatList
                       key={state?.activeWorkspaceId}
-                      data={sidebar.ordinaryTabs}
+                      data={tabsCollapsed ? [] : sidebar.ordinaryTabs}
                       keyExtractor={(tab) => tab.id}
                       renderItem={({ item }) => renderSidebarTab(item)}
                       initialNumToRender={initialSidebarRows}
@@ -3281,9 +3343,6 @@ function BrowserApp() {
                                 );
                               }
                             )}
-                            {sidebar.looseBookmarks.map((bookmark) =>
-                              bookmarkTreeRow(bookmark, false)
-                            )}
                             {sidebar.pinnedTabs.map((tab) =>
                               renderSidebarTab(tab)
                             )}
@@ -3361,6 +3420,37 @@ function BrowserApp() {
                                 {tr("chrome.newTab")}
                               </Text>
                             </SidebarPressable>
+                            {sidebar.ordinaryTabs.length > 0 && (
+                              <SidebarPressable
+                                accessibilityRole="button"
+                                accessibilityLabel={tr("chrome.tabsSection")}
+                                accessibilityState={{ expanded: !tabsCollapsed }}
+                                className={cn(
+                                  c.spaceHeader,
+                                  "active:opacity-pressed"
+                                )}
+                                onPress={() => setTabsCollapsed((v) => !v)}
+                              >
+                                <ChromeIcon
+                                  className={cn(
+                                    "size-[10px]",
+                                    "text-ink-muted"
+                                  )}
+                                  name={
+                                    tabsCollapsed ? "chevronRight" : "chevronDown"
+                                  }
+                                />
+                                <Text
+                                  numberOfLines={1}
+                                  className={c.spaceHeaderTitle}
+                                >
+                                  {tr("chrome.tabsSection")}
+                                </Text>
+                                <Text className={c.spaceHeaderTitle}>
+                                  {sidebar.ordinaryTabs.length}
+                                </Text>
+                              </SidebarPressable>
+                            )}
                           </View>
                         </View>
                       }

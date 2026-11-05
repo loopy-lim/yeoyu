@@ -19,7 +19,7 @@ const DeviceEventEmitter = {
 };
 const AppState = { addEventListener: (_: string, listener: (state: string) => void) => DeviceEventEmitter.addListener("AppState", listener) };
 const emit = (name: string, event: unknown) => listeners.get(name)?.forEach((listener) => listener(event));
-mock.module("react-native", () => ({ DeviceEventEmitter, AppState }));
+mock.module("react-native", () => ({ DeviceEventEmitter, AppState, Keyboard: { dismiss: () => {} } }));
 const reads: Array<{ resolve(json: string): void; reject(error: Error): void }> = [];
 const platform = scenario === "unsupported" ? {} : {
   windowTabs: () => new Promise<string>((resolve, reject) => reads.push({ resolve, reject })),

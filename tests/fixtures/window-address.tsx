@@ -94,6 +94,7 @@ const runtime = {
 };
 mock.module("react-native", () => ({
   AppState: { addEventListener: () => ({ remove() {} }) },
+  Keyboard: { dismiss: () => {} },
   DeviceEventEmitter: {
     addListener: (name: string, callback: (event: any) => void) => {
       const group = listeners.get(name) ?? new Set();

@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
+  Keyboard,
   Pressable,
   ScrollView,
   Text,
@@ -43,6 +44,11 @@ export function ActionMenu({
   const window = useWindowDimensions();
   const [height, setHeight] = useState(44 + items.length * 40);
   const position = menuPosition(anchor, window, 280, height);
+  // Menus are tap-choose surfaces; an open IME otherwise covers the sheet's
+  // lower rows (observed on the split-picker candidate list).
+  useEffect(() => {
+    Keyboard.dismiss();
+  }, []);
   return (
     <View
       accessibilityViewIsModal

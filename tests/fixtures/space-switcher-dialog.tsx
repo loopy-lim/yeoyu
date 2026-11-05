@@ -8,6 +8,7 @@ Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
 mock.module("react-native", () => ({
   View: "View", Text: "Text", TextInput: "TextInput", Pressable: "Pressable",
   FlatList: "FlatList", ScrollView: "ScrollView", Switch: "Switch", Image: "Image",
+  Keyboard: { dismiss: () => {} },
   useWindowDimensions: () => ({ width: 400, height: 400, fontScale: 1.6 }),
 }));
 mock.module("react-native-svg", () => ({ default: "Svg", Path: "Path" }));
