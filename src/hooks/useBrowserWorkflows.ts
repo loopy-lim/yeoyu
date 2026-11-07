@@ -25,7 +25,7 @@ export interface BrowserContentRequest {
   imageUri?: string;
   title?: string;
 }
-export type ContentAction = "open" | "copy" | "share";
+export type ContentAction = "open" | "privateOpen" | "download" | "copy" | "share";
 
 export function useBrowserWorkflows(options: {
   onError(message: string): void;
@@ -136,12 +136,13 @@ export function useBrowserWorkflows(options: {
       const source = before?.tabs.find((tab) => tab.id === request.tabId && !tab.suspended);
       if (!source || !before) throw new Error("The source tab is no longer available");
       const url = await platform.consumeContentContext(requestId, target);
-      if (action === "open") {
+      if (action === "open" || action === "privateOpen") {
         const live = controller.snapshot?.tabs.find((tab) => tab.id === source.id && !tab.suspended);
         if (!live || !!live.private !== !!source.private) throw new Error("The source tab is no longer available");
         callbacks.current.onExternalTab(await controller.createTab(url,
-          source.favorite ? before.activeWorkspaceId : source.workspaceId, { private: !!source.private }));
+          source.favorite ? before.activeWorkspaceId : source.workspaceId, { private: action === "privateOpen" ? true : !!source.private }));
       }
+      else if (action === "download") { await platform.downloadUrl(source.id, url); }
       else if (action === "copy") { platform.copyToClipboard(url); callbacks.current.onNotice("Link copied"); }
       else await platform.shareUrl(url);
     } catch (error) { callbacks.current.onError(String(error)); }

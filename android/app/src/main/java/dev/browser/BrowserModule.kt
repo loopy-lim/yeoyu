@@ -192,8 +192,35 @@ class BrowserModule(context:ReactApplicationContext):ReactContextBaseJavaModule(
   ExternalNavigationCoordinator.share(activity,url)
   promise.resolve(null)
  }
+ @ReactMethod fun capturePagePdf(tabId:String,promise:Promise) {
+  try {
+   GeckoSessionRegistry.capturePagePdf(tabId) { path,failure ->
+    if(failure!=null) promise.reject("CAPTURE",failure) else promise.resolve(path)
+   }
+  } catch(failure:Exception) { promise.reject("CAPTURE",failure) }
+ }
+ @ReactMethod fun sharePagePdf(path:String,promise:Promise) = onUi(promise) {
+  val activity=requireUiActivity()
+  val file=java.io.File(path)
+  if(!file.isFile) throw java.io.IOException("The captured page is unavailable")
+  val content=androidx.core.content.FileProvider.getUriForFile(activity,"${activity.packageName}.downloads",file)
+  val intent=android.content.Intent(android.content.Intent.ACTION_SEND)
+   .setType("application/pdf")
+   .putExtra(android.content.Intent.EXTRA_STREAM,content)
+   .addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+   .apply { clipData=ClipData.newRawUri("Captured page",content) }
+  activity.startActivity(android.content.Intent.createChooser(intent,"Share page"))
+  promise.resolve(null)
+ }
  @ReactMethod fun consumeContentContext(requestId:String,target:String,promise:Promise) = onUi(promise) {
   promise.resolve(ExternalNavigationCoordinator.consumeContext(requestId,target))
+ }
+ @ReactMethod fun downloadUrl(tabId:String,url:String,promise:Promise) {
+  try {
+   GeckoSessionRegistry.downloadUrl(tabId,url) { failure ->
+    if(failure!=null) promise.reject("DOWNLOAD",failure) else promise.resolve(null)
+   }
+  } catch(failure:Exception) { promise.reject("DOWNLOAD",failure) }
  }
  @ReactMethod fun addListener(name:String) {}
  @ReactMethod fun removeListeners(count:Double) {}

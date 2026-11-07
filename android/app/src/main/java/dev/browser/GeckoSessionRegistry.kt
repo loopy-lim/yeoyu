@@ -370,7 +370,7 @@ object GeckoSessionRegistry {
             val session = entry.session
             if (action == "back" || action == "forward" || action == "reload") entry.initialNavigation.navigationRequested()
             if (action == "reload") recoveryBudget.retry(id)
-            when (action) { "back" -> session.goBack(); "forward" -> session.goForward(); "reload" -> session.reload() }
+            when (action) { "back" -> session.goBack(); "forward" -> session.goForward(); "reload" -> session.reload(); "stop" -> session.stop() }
         } catch (_: Exception) { sessionBlocked(id, "load-failed") }
     }
 
@@ -390,6 +390,16 @@ object GeckoSessionRegistry {
     private fun applyRuntimeSettings(rt: GeckoRuntime) {
         BrowserAppearance.applyRuntimeSettings(rt.settings)
         rt.settings.setAutomaticFontSizeAdjustment(false).setFontSizeFactor(toolsConfig.textScale.toFloat())
+        // Secure DNS: "auto" keeps Gecko's resolver defaults; "off" pins
+        // direct resolution; "custom" pins a validated resolver TRR-first.
+        when (toolsConfig.secureDnsMode) {
+            "off" -> rt.settings.setTrustedRecursiveResolverMode(GeckoRuntimeSettings.TRR_MODE_OFF)
+            "custom" -> {
+                rt.settings.setTrustedRecursiveResolverMode(GeckoRuntimeSettings.TRR_MODE_FIRST)
+                rt.settings.setTrustedRecursiveResolverUri(toolsConfig.secureDnsUri)
+            }
+            else -> Unit
+        }
         val protection = rt.settings.contentBlocking
         protection.setAntiTracking(if (toolsConfig.trackingProtection == "strict") ContentBlocking.AntiTracking.STRICT else ContentBlocking.AntiTracking.DEFAULT)
         protection.setEnhancedTrackingProtectionLevel(when (toolsConfig.trackingProtection) {
@@ -1132,7 +1142,9 @@ object GeckoSessionRegistry {
                 if (!current()) return
                 traceBootstrap(if (success) "page-stop-success" else "page-stop-failed")
                 if (!e.initialNavigation.acceptPageStop(success)) { traceBootstrap("suppressed-page-stop"); return }
-                e.loading = false; e.progress = 100; reportProgress(id, e)
+                // changed() is what tells JS loading=false; without it the reload
+                // button stays a stop ✕ until some incidental delegate fires.
+                e.loading = false; e.progress = 100; changed(id); reportProgress(id, e)
                 injectBoost(id, e)
                 s.flushSessionState()
             }
@@ -1431,6 +1443,55 @@ object GeckoSessionRegistry {
                 )
             }
         }
+    }
+    /** Render the whole page to a PDF under the app's Download dir and reply
+     *  with the file path. Private tabs never touch the disk, matching
+     *  snapshots. */
+    fun capturePagePdf(id:String,reply:(String?,Exception?)->Unit) {
+        val entry=entries[id]
+        if(entry==null) return reply(null,IllegalStateException("tab has no session"))
+        if(id in privateIds) return reply(null,IllegalStateException("private tabs cannot be captured"))
+        val context=activityProvider?.invoke()?.applicationContext
+            ?: return reply(null,IllegalStateException("no active browser window"))
+        val dir=File(context.getExternalFilesDir(null),"Download")
+        dir.mkdirs()
+        entry.session.saveAsPdf().accept { stream ->
+            if(stream==null) return@accept reply(null,IllegalStateException("capture produced no output"))
+            try {
+                val file=File(dir,"yeoyu-page-${System.currentTimeMillis()}.pdf")
+                stream.use { input -> file.outputStream().use { output -> input.copyTo(output) } }
+                reply(file.absolutePath,null)
+            } catch(failure:Exception) { reply(null,failure) }
+        }.exceptionally { failure ->
+            reply(null,if(failure is Exception) failure else Exception(failure?.message ?: "capture failed"))
+            GeckoResult.fromValue(null)
+        }
+    }
+    /** Saves a link/image the user picked from the content menu — the same
+     *  journal, notifications and private-confirmation policy as page downloads. */
+    fun downloadUrl(tabId:String,url:String,reply:(Exception?)->Unit) {
+        val entry=entries[tabId]
+        if(entry==null) return reply(IllegalStateException("tab has no session"))
+        val context=activityProvider?.invoke()?.applicationContext
+            ?: return reply(IllegalStateException("no active browser window"))
+        try {
+            GeckoWebExecutor(getRuntime(context)).fetch(WebRequest(url)).accept { response ->
+                if(response==null||response.statusCode !in 200..299) {
+                    runCatching { response?.body?.close() }
+                    reply(IllegalStateException("download failed (HTTP ${response?.statusCode ?: 0})"))
+                    return@accept
+                }
+                val generation=entry.documentGeneration
+                val current={ entry===entries[tabId] && entry.documentGeneration==generation }
+                val save={ DownloadCoordinator.save(context,response) { event,payload -> emit?.invoke(event,payload) } }
+                if(entry.privateSession) PrivateDownloadConfirmation.request(entry.session,response,current,save)
+                else save()
+                reply(null)
+            }.exceptionally { failure ->
+                reply(if(failure is Exception) failure else Exception(failure?.message ?: "download failed"))
+                GeckoResult.fromValue(null)
+            }
+        } catch(failure:Exception) { reply(failure) }
     }
     /** Replace the boost map (bare host → css) and restyle live sessions. */
     fun setBoosts(map:Map<String,String>) {

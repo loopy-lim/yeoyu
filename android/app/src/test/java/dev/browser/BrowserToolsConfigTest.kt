@@ -58,4 +58,26 @@ class BrowserToolsConfigTest {
         )
         bad.forEach { assertThrows(IllegalArgumentException::class.java) { BrowserToolsConfig.parse(it) } }
     }
+
+    @Test fun secureDnsDefaultsToAutoAndSurvivesRoundTrip() {
+        val config = BrowserToolsConfig.parse("""{"schema":1,"restoreSessions":false,"trackingProtection":"standard","textScale":1,"sites":[]}""")
+        assertEquals("auto", config.secureDnsMode)
+        assertEquals("", config.secureDnsUri)
+    }
+
+    @Test fun secureDnsRoundTripsThroughJson() {
+        val config = BrowserToolsConfig(restoreSessions = false, secureDnsMode = "custom", secureDnsUri = "https://dns.example/dns-query")
+        val read = BrowserToolsConfig.parse(config.toJson())
+        assertEquals("custom", read.secureDnsMode)
+        assertEquals("https://dns.example/dns-query", read.secureDnsUri)
+    }
+
+    @Test fun secureDnsRejectsUnknownModesAndNonHttpsCustomResolvers() {
+        val bad = listOf(
+            """{"schema":1,"restoreSessions":false,"trackingProtection":"standard","textScale":1,"sites":[],"secureDnsMode":"strict"}""",
+            """{"schema":1,"restoreSessions":false,"trackingProtection":"standard","textScale":1,"sites":[],"secureDnsMode":"custom","secureDnsUri":"http://dns.example/dns-query"}""",
+            """{"schema":1,"restoreSessions":false,"trackingProtection":"standard","textScale":1,"sites":[],"secureDnsMode":"custom","secureDnsUri":"not a url"}""",
+        )
+        bad.forEach { assertThrows(IllegalArgumentException::class.java) { BrowserToolsConfig.parse(it) } }
+    }
 }

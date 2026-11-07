@@ -5,8 +5,9 @@ import { useReducedMotion } from "@/chrome/useReducedMotion";
 import type { BrowserContentRequest, ContentAction } from "@/hooks/useBrowserWorkflows";
 import { useI18n } from "@/i18nContext";
 
-export function BrowserContentMenu({ request, onClose, onChoose }: {
+export function BrowserContentMenu({ request, sourcePrivate, onClose, onChoose }: {
   request: BrowserContentRequest | null;
+  sourcePrivate?: boolean;
   onClose(): void;
   onChoose(requestId: string, target: "link" | "image", action: ContentAction): Promise<void>;
 }) {
@@ -26,10 +27,16 @@ export function BrowserContentMenu({ request, onClose, onChoose }: {
         <ScrollView>{(["link", "image"] as const).map((target) => {
           const url = target === "link" ? request?.linkUri : request?.imageUri;
           if (!url) return null;
+          // Chrome-parity item set: open (new tab), open in private tab
+          // (non-private sources only), download, copy address, share.
+          const actions = (sourcePrivate
+            ? (["open", "download", "copy", "share"] as const)
+            : (["open", "privateOpen", "download", "copy", "share"] as const)
+          ).filter((action) => target === "link" || action !== "privateOpen");
           return <View key={target} className="mt-xxl">
             <Text numberOfLines={2} className="text-ink-muted text-body-plus">{url}</Text>
-            {(["open", "copy", "share"] as const).map((action) => <Pressable key={action} accessibilityRole="button" disabled={pending} accessibilityState={{ disabled: pending }} onPress={() => choose(target, action)} className={cn("min-h-input justify-center")}>
-              <Text className="text-ink text-input">{tr(`content.${action}`, { target: tr(target === "link" ? "content.link" : "content.image") })}</Text>
+            {actions.map((action) => <Pressable key={action} accessibilityRole="button" disabled={pending} accessibilityState={{ disabled: pending }} onPress={() => choose(target, action)} className={cn("min-h-input justify-center")}>
+              <Text className="text-ink text-input">{action === "privateOpen" ? tr("content.privateOpen") : tr(`content.${action}`, { target: tr(target === "link" ? "content.link" : "content.image") })}</Text>
             </Pressable>)}
           </View>;
         })}</ScrollView>

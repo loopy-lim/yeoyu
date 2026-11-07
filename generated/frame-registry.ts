@@ -6,7 +6,7 @@
 // DO NOT EDIT — changes will be overwritten and fail codegen --check.
 // ────────────────────────────────────────────────────────────
 
-import { bookmarkCreateCodec, bookmarkFolderCreateCodec, bookmarkFolderRemoveCodec, bookmarkFolderRenameCodec, bookmarkMoveCodec, bookmarkOpenCodec, bookmarkRemoveCodec, bookmarkSetFolderCodec, bookmarkUpdateCodec, browserSnapshotCodec, keymapDefaultsCodec, keymapSetCodec, snapshotRestoreCodec, splitGroupRemoveCodec, splitGroupSaveCodec, tabActivateCodec, tabCloseCodec, tabCreateCodec, tabMoveCodec, tabNavigatedCodec, tabOpenExternalCodec, tabResetCodec, tabSetFavoriteCodec, tabSetPinnedCodec, tabSetWorkspaceCodec, workArchiveExportCodec, workArchiveImportCodec, workArchivePrepareCodec, workArchivePreviewCodec, workspaceActivateCodec, workspaceCreateCodec } from './frame-codecs.js';
+import { bookmarkCreateCodec, bookmarkFolderCreateCodec, bookmarkFolderRemoveCodec, bookmarkFolderRenameCodec, bookmarkMoveCodec, bookmarkOpenCodec, bookmarkRemoveCodec, bookmarkSetFolderCodec, bookmarkUpdateCodec, browserSnapshotCodec, keymapDefaultsCodec, keymapSetCodec, snapshotRestoreCodec, splitGroupRemoveCodec, splitGroupSaveCodec, tabActivateCodec, tabCloseCodec, tabCreateCodec, tabMoveCodec, tabNavigatedCodec, tabOpenExternalCodec, tabRenameCodec, tabResetCodec, tabSetFavoriteCodec, tabSetPinnedCodec, tabSetWorkspaceCodec, workArchiveExportCodec, workArchiveImportCodec, workArchivePrepareCodec, workArchivePreviewCodec, workspaceActivateCodec, workspaceCreateCodec } from './frame-codecs.js';
 
 export const frameRegistry = new Map<string, import('@rustra/types').FrameCodec<any, any>>([
   // route: postcard
@@ -51,6 +51,8 @@ export const frameRegistry = new Map<string, import('@rustra/types').FrameCodec<
   ['tabNavigated', tabNavigatedCodec],
   // route: postcard
   ['tabOpenExternal', tabOpenExternalCodec],
+  // route: postcard
+  ['tabRename', tabRenameCodec],
   // route: postcard
   ['tabReset', tabResetCodec],
   // route: postcard

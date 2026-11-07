@@ -32,6 +32,10 @@ const labels = {
   "history.open": { title: "Open history", keywords: "visited" },
   "find.open": { title: "Find in page", keywords: "search text" },
   "browser.copyUrl": { title: "Copy page link", keywords: "url share" },
+  "browser.captureShare": {
+    title: "Share page as PDF",
+    keywords: "capture pdf share save screenshot export",
+  },
   "browser.back": { title: "Go back" },
   "browser.forward": { title: "Go forward" },
   "browser.reload": { title: "Reload page", keywords: "refresh" },
@@ -67,6 +71,7 @@ const commandKeys: Record<keyof typeof labels, TranslationKey> = {
   "tab.reopen": "command.reopenTab", "tab.next": "command.nextTab", "tab.prev": "command.previousTab",
   "location.focus": "command.editAddress", "commandPalette.open": "command.searchCommands",
   "history.open": "command.history", "find.open": "command.find", "browser.copyUrl": "command.copyUrl",
+  "browser.captureShare": "command.captureShare",
   "browser.back": "command.back", "browser.forward": "command.forward", "browser.reload": "command.reload",
   "sidebar.toggle": "command.sidebar", "favorites.toggle": "command.favorite", "pins.toggle": "command.pin",
   "tab.reset": "command.resetTab", "browser.split": "command.split", "browser.split.close": "command.closeSplit",

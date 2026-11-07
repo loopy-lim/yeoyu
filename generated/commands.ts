@@ -6,7 +6,7 @@
 // DO NOT EDIT — changes will be overwritten and fail codegen --check.
 // ────────────────────────────────────────────────────────────
 
-import type { BookmarkCreateInput, BookmarkFolderCreateInput, BookmarkFolderIdInput, BookmarkFolderRenameInput, BookmarkIdInput, BookmarkMoveInput, BookmarkOpenInput, BookmarkSetFolderInput, BookmarkUpdateInput, BrowserSnapshotInput, KeymapSetInput, Snapshot, SnapshotRestoreInput, SplitGroupIdInput, SplitGroupSaveInput, TabCreateInput, TabFavoriteInput, TabIdInput, TabMoveInput, TabNavigatedInput, TabOpenExternalInput, TabPinnedInput, TabWorkspaceInput, WorkArchiveExportInput, WorkArchiveImportInput, WorkArchivePrepareInput, WorkArchivePreview, WorkArchivePreviewInput, WorkspaceCreateInput, WorkspaceIdInput } from './types.js';
+import type { BookmarkCreateInput, BookmarkFolderCreateInput, BookmarkFolderIdInput, BookmarkFolderRenameInput, BookmarkIdInput, BookmarkMoveInput, BookmarkOpenInput, BookmarkSetFolderInput, BookmarkUpdateInput, BrowserSnapshotInput, KeymapSetInput, Snapshot, SnapshotRestoreInput, SplitGroupIdInput, SplitGroupSaveInput, TabCreateInput, TabFavoriteInput, TabIdInput, TabMoveInput, TabNavigatedInput, TabOpenExternalInput, TabPinnedInput, TabRenameInput, TabWorkspaceInput, WorkArchiveExportInput, WorkArchiveImportInput, WorkArchivePrepareInput, WorkArchivePreview, WorkArchivePreviewInput, WorkspaceCreateInput, WorkspaceIdInput } from './types.js';
 import { createGeneratedFields1, createGeneratedFields2, invokeGenerated, invokeGeneratedFields3 } from '@rustra/types';
 import type { InvokeOptions as CoreInvokeOptions } from '@rustra/types';
 
@@ -95,6 +95,8 @@ export function tabNavigated(input: TabNavigatedInput, options?: InvokeOptions):
 tabNavigated.commandId = 'tabNavigated';
 
 export const tabOpenExternal = createGeneratedFields2<TabOpenExternalInput, Snapshot>(8, 'tabOpenExternal', "requestId", "url", 'tabOpenExternal');
+
+export const tabRename = createGeneratedFields2<TabRenameInput, Snapshot>(32, 'tabRename', "tabId", "title", 'tabRename');
 
 export const tabReset = createGeneratedFields1<TabIdInput, Snapshot>(28, 'tabReset', "tabId", 'tabReset');
 

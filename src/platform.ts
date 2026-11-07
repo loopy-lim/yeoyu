@@ -76,6 +76,11 @@ export interface BrowserRuntime {
     requestId: string,
     target: "link" | "image"
   ): Promise<string>;
+  /** Saves a link/image URL outside page navigation (content-menu download).
+   *  The promise resolves when the download is *initiated* — for private tabs
+   *  that is before the save confirmation dialog is answered; transfer
+   *  failures surface later via the download list and notification events. */
+  downloadUrl(tabId: string, url: string): Promise<void>;
   configureKeys(json: string): void;
   setAddressInputActive?(enabled: boolean): void;
   ensureAddressImeSession?(): void;
@@ -101,6 +106,10 @@ export interface BrowserRuntime {
   setSitePermissionRules(json: string): void;
   resolvePermission(requestId: number, allow: boolean, rememberDenial: boolean): void;
   captureRendering(tabId: string): void;
+  /** Renders the tab to a PDF file and resolves with its absolute path. */
+  capturePagePdf?(tabId: string): Promise<string>;
+  /** Opens the Android share sheet for a captured PDF file path. */
+  sharePagePdf?(path: string): Promise<void>;
   requestAndroidPermission(
     kind: "geolocation" | "notifications" | "camera" | "microphone"
   ): Promise<boolean>;

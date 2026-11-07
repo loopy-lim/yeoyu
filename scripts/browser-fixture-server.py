@@ -57,6 +57,17 @@ window.addEventListener('message',event=>report('popup-child-message',event.data
                     time.sleep(self.server.slow_download_delay)
             except (BrokenPipeError, ConnectionResetError):
                 pass
+        elif self.path.startswith("/slow-page"):
+            # Navigation-paced page for reload/stop affordance checks.
+            import urllib.parse
+            query = urllib.parse.urlparse(self.path).query
+            ms = min(float(urllib.parse.parse_qs(query).get("ms", ["2000"])[0]), 20000)
+            time.sleep(ms / 1000)
+            self.payload(("<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>slow page</title><h1>Slow page loaded</h1><a href=\"/content-menu.html\">content menu</a>".encode()), "text/html")
+        elif self.path == "/ua":
+            # User-agent echo for desktop-site toggle verification.
+            ua = self.headers.get("User-Agent", "")
+            self.payload((f"<title>ua page</title><pre id=\"ua\">{ua}</pre>".encode()), "text/html")
         elif self.path == "/browser-contracts.html":
             self.payload((ROOT / "browser-contracts.html").read_bytes(), "text/html")
         else:

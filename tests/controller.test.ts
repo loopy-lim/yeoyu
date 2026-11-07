@@ -356,6 +356,17 @@ function fixture(seed: Snapshot = initial()) {
     browserSnapshot: async () => result(),
     snapshotRestore: unsupported,
     tabReset: unsupported,
+    tabRename: async ({ tabId, title }) => {
+      requireTab(tabId);
+      state = {
+        ...state,
+        revision: state.revision + 1,
+        tabs: state.tabs.map((item) =>
+          item.id === tabId ? { ...item, customTitle: title.trim() } : item
+        ),
+      };
+      return result();
+    },
     workspaceCreate: unsupported,
     tabCreate: async ({ workspaceId, url, private: isPrivate }) => {
       const id = `created-${state.revision + 1}`;
@@ -1707,4 +1718,20 @@ test("metadata count is initialized even for an empty pre-seed snapshot", async 
   await controller.initialize(); await controller.flush();
   expect(counts[0]).toBe(0);
   expect(counts.at(-1)).toBe(controller.snapshot!.tabs.length);
+});
+
+test("tab rename keeps the custom title and an empty title releases it", async () => {
+  const { BrowserController } = await import("../src/BrowserController");
+  const ports = fixture();
+  const controller = new BrowserController(ports.commands, ports.storage);
+  await controller.initialize();
+  const tabId = controller.snapshot!.activeTabId!;
+  const renamed = await controller.rename(tabId, "  Research plan  ");
+  expect(renamed.tabs.find((tab) => tab.id === tabId)?.customTitle).toBe(
+    "Research plan"
+  );
+  const released = await controller.rename(tabId, "   ");
+  expect(released.tabs.find((tab) => tab.id === tabId)?.customTitle).toBe("");
+  await expect(controller.rename("missing", "X")).rejects.toThrow();
+  await controller.flush();
 });

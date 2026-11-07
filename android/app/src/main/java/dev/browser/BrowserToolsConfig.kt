@@ -17,6 +17,10 @@ internal data class BrowserToolsConfig(
     val textScale: Double = 1.0,
     val sites: List<BrowserSiteConfig> = emptyList(),
     val automaticMemorySaving: Boolean = false,
+    // "auto" keeps Gecko's default resolver behavior, "off" forces direct
+    // resolution, "custom" pins TRR-first to secureDnsUri.
+    val secureDnsMode: String = "auto",
+    val secureDnsUri: String = "",
 ) {
     fun siteFor(url: String): BrowserSiteConfig? = canonicalBrowserOrigin(url)?.let { origin -> sites.firstOrNull { it.origin == origin } }
     fun toJson(): String = JSONObject().apply {
@@ -25,6 +29,8 @@ internal data class BrowserToolsConfig(
         put("automaticMemorySaving", automaticMemorySaving)
         put("trackingProtection", trackingProtection)
         put("textScale", textScale)
+        put("secureDnsMode", secureDnsMode)
+        put("secureDnsUri", secureDnsUri)
         put("sites", JSONArray().apply { sites.forEach { site -> put(JSONObject().apply {
             put("origin", site.origin)
             put("desktop", site.desktop)
@@ -63,10 +69,20 @@ internal data class BrowserToolsConfig(
                 }
                 require(sites.map { it.origin }.distinct().size == sites.size)
                 val automatic = if (objectValue.has("automaticMemorySaving")) { require(objectValue.get("automaticMemorySaving") is Boolean); objectValue.getBoolean("automaticMemorySaving") } else false
+                val dnsMode = if (objectValue.has("secureDnsMode")) {
+                    val mode = objectValue.getString("secureDnsMode")
+                    require(mode in setOf("auto", "off", "custom"))
+                    mode
+                } else "auto"
+                val dnsUri = if (objectValue.has("secureDnsUri")) objectValue.getString("secureDnsUri") else ""
+                if (dnsMode == "custom") {
+                    val resolver = URI(dnsUri)
+                    require(resolver.scheme == "https" && !resolver.host.isNullOrBlank() && resolver.rawUserInfo == null)
+                }
                 // Default-only legacy rows consume the same bounded exception budget.
                 // Validate duplicates first, then omit rows whose behavior is inherited.
                 val exceptions = sites.filterNot { it.desktop && it.trackingProtection == null && !it.keepAlive }
-                return BrowserToolsConfig(objectValue.getBoolean("restoreSessions"), protection, scale, exceptions, automatic)
+                return BrowserToolsConfig(objectValue.getBoolean("restoreSessions"), protection, scale, exceptions, automatic, dnsMode, dnsUri)
             } catch (_: Exception) {
                 throw IllegalArgumentException("Browser settings are invalid or use an unsupported version")
             }

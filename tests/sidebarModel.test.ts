@@ -8,6 +8,8 @@ import {
   sidebarTabMoveIndex,
   sidebarDropChange,
   liveSplitLayout,
+  batchCloseTargets,
+  batchMoveTargets,
 } from "../src/sidebarModel";
 
 test("a retained saved tab cannot survive in a frozen split after its live page closes", () => {
@@ -160,4 +162,29 @@ test("Space libraries isolate bookmarks and folders, including empty and unknown
   expect(libraryItemsForSpace(bookmarks, "new-space")).toEqual([]);
   expect(libraryItemsForSpace(folders, "new-space")).toEqual([]);
   expect(libraryItemsForSpace([], "work")).toEqual([]);
+});
+
+test("batch close skips saved roles and closed sessions", () => {
+  const tabs = [
+    { id: "a", favorite: true },
+    { id: "b", pinned: true },
+    { id: "c" },
+    { id: "d", suspended: true },
+    { id: "e" },
+  ];
+  expect(
+    batchCloseTargets(["a", "b", "c", "d", "e", "missing"], tabs)
+  ).toEqual(["c", "e"]);
+});
+
+test("batch move skips favorites, private tabs, and same-Space rows", () => {
+  const tabs = [
+    { id: "a", favorite: true, workspaceId: "home" },
+    { id: "b", private: true, workspaceId: "home" },
+    { id: "c", workspaceId: "home" },
+    { id: "d", workspaceId: "work" },
+  ];
+  expect(batchMoveTargets(["a", "b", "c", "d"], tabs, "work")).toEqual([
+    "c",
+  ]);
 });

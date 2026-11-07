@@ -20,6 +20,9 @@ This document describes the current public source. It deliberately avoids promot
 - Android separate windows, share input, background media controls, download recovery, and live-runtime web notifications.
 - Shared React-host lifecycle coordination for simultaneously resumed windows, stable window/tab bindings, and owner-scoped permissions and file-picker results.
 - Compatible Mozilla extension search/install, toolbar actions, permission review/revocation, and extension-page controls.
+- Nameable saved split groups that survive restarts (orientation/ratio restore), tab rename (released on navigation to a different URL), and tab multi-select with batch close and move-to-Space.
+- Secure DNS settings (auto/off/custom HTTPS resolver) and page capture to PDF via the Android share sheet.
+- Reload affordances that switch to stop while loading (sidebar, compact toolbar, secondary windows), content-menu link/image downloads with open-in-new-private-tab, and sidebar-menu access to find-in-page, page-link sharing, the download list, and per-site desktop mode.
 
 ## Reproducible repository gates
 
@@ -36,7 +39,7 @@ These gates establish source and build behavior. They do not, by themselves, est
 
 - Android landscape tablets are the only runnable target; the iOS directory exposes an interface but no application.
 - Distribution artifacts and their exact scope are listed in [GitHub Releases](https://github.com/loopy-lim/yeoyu/releases). There is no supported automatic update channel.
-- Sync, saved split groups, isolated account profiles, and automatic tab archiving are not implemented.
+- Sync, isolated account profiles, and automatic tab archiving are not implemented.
 - The mini player and Android PiP move the full browser surface/session; they do not extract a service-independent video overlay.
 - Automatic memory release stays conservative when the app cannot prove that page state is safely restorable. No general memory-saving claim is made.
 - Passkeys, autofill, OAuth, DRM media, accessibility, downloads under process death, and provider-specific behavior require dedicated device/account validation.

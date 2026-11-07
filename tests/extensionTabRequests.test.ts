@@ -49,6 +49,7 @@ async function fixture(seed = initial()) {
       return domain;
     },
     tabReset: unsupported,
+    tabRename: unsupported,
     tabNavigated: unsupported,
     tabSetFavorite: unsupported,
     tabSetPinned: unsupported,

@@ -15,7 +15,22 @@ internal object PrivateDownloadConfirmation {
 
     fun request(session: GeckoSession, response: WebResponse, current: () -> Boolean, save: () -> Unit,
         ownerHasFocus: (android.app.Activity) -> Boolean = { it.hasWindowFocus() }) {
+        // The dialog must be created and shown on the main thread; content-menu
+        // fetches arrive here on the NativeModules bridge thread.
+        val invoke = Runnable { show(session, response, current, save, ownerHasFocus, 0) }
+        if (Looper.myLooper() == Looper.getMainLooper()) invoke.run() else main.post(invoke)
+    }
+
+    private fun show(session: GeckoSession, response: WebResponse, current: () -> Boolean, save: () -> Unit,
+        ownerHasFocus: (android.app.Activity) -> Boolean, attempt: Int) {
         val activity = GeckoSessionRegistry.activityProvider?.invoke()
+        // Right after the content sheet dismisses, window focus returns to the
+        // activity over a few frames; a backgrounded app never regains it, so
+        // a short retry distinguishes the two before declining.
+        if (activity != null && !activity.isFinishing && !activity.isDestroyed && !ownerHasFocus(activity) && attempt < 3) {
+            main.postDelayed({ show(session, response, current, save, ownerHasFocus, attempt + 1) }, 250)
+            return
+        }
         if (pending != null || activity == null || activity.isFinishing || activity.isDestroyed || !ownerHasFocus(activity) || !current()) {
             runCatching { response.body?.close() }; return
         }

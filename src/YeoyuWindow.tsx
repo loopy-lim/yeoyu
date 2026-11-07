@@ -434,10 +434,15 @@ function WindowBody({
               if (ref) Commands.goForward(ref);
             }
           )}
-          {iconButton("reload", tr("chrome.reload"), false, () => {
-            const ref = surfaceRef.current;
-            if (ref) Commands.reload(ref);
-          })}
+          {iconButton(
+            nav.loading ? "close" : "reload",
+            tr(nav.loading ? "chrome.stop" : "chrome.reload"),
+            false,
+            () => {
+              const ref = surfaceRef.current;
+              if (ref) (nav.loading ? Commands.stop : Commands.reload)(ref);
+            }
+          )}
           {isPrivate && (
             <View
               accessibilityRole="text"

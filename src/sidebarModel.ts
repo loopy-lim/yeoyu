@@ -131,3 +131,54 @@ export function bookmarkTabsForSpace<
       owners.set(tab.bookmarkId, tab);
   return owners;
 }
+
+/**
+ * Tabs a multi-select close may close: saved roles and closed sessions stay
+ * out of bulk operations, mirroring the "close other tabs" filter.
+ */
+export function batchCloseTargets(
+  selectedIds: readonly string[],
+  tabs: readonly {
+    id: string;
+    favorite?: boolean;
+    pinned?: boolean;
+    suspended?: boolean;
+  }[]
+): string[] {
+  const selected = new Set(selectedIds);
+  return tabs
+    .filter(
+      (tab) =>
+        selected.has(tab.id) &&
+        !tab.favorite &&
+        !tab.pinned &&
+        !tab.suspended
+    )
+    .map((tab) => tab.id);
+}
+
+/**
+ * Tabs a multi-select move may move to a Space: favorites live in every
+ * Space, private tabs never persist, and same-Space rows have nothing to do.
+ */
+export function batchMoveTargets(
+  selectedIds: readonly string[],
+  tabs: readonly {
+    id: string;
+    private?: boolean;
+    favorite?: boolean;
+    workspaceId?: string;
+  }[],
+  workspaceId: string
+): string[] {
+  const selected = new Set(selectedIds);
+  return tabs
+    .filter(
+      (tab) =>
+        selected.has(tab.id) &&
+        !tab.private &&
+        !tab.favorite &&
+        tab.workspaceId !== workspaceId
+    )
+    .map((tab) => tab.id);
+}

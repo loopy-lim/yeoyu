@@ -19,6 +19,7 @@ class BrowserSurfaceManager:SimpleViewManager<BrowserSurfaceView>(),BrowserSurfa
  override fun goBack(view:BrowserSurfaceView) {GeckoSessionRegistry.navigate(view.context,view.tabId,"back")}
  override fun goForward(view:BrowserSurfaceView) {GeckoSessionRegistry.navigate(view.context,view.tabId,"forward")}
  override fun reload(view:BrowserSurfaceView) {GeckoSessionRegistry.navigate(view.context,view.tabId,"reload")}
+ override fun stop(view:BrowserSurfaceView) {GeckoSessionRegistry.navigate(view.context,view.tabId,"stop")}
  override fun focusContent(view:BrowserSurfaceView) {view.gecko.requestFocus()}
  override fun getExportedCustomDirectEventTypeConstants():Map<String,Any> = mapOf(
   "topNavigation" to mapOf("registrationName" to "onNavigation"),

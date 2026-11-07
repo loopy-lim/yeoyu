@@ -1685,3 +1685,93 @@ fn restore_derives_next_split_group_id_and_old_snapshots_need_no_field() {
         .unwrap();
     assert_eq!(next.split_groups.last().unwrap().id, "split-1");
 }
+
+#[test]
+fn tab_rename_sets_custom_title_and_empty_title_releases_it() {
+    let mut state = BrowserState::default();
+    let id = state
+        .create_tab("workspace-1", "https://example.com/home")
+        .unwrap()
+        .active_tab_id
+        .unwrap();
+    state
+        .navigate_tab(&id, "https://example.com/home", "Home")
+        .unwrap();
+    let renamed = state.rename_tab(&id, "  Research plan  ").unwrap();
+    let tab = renamed.tabs.iter().find(|tab| tab.id == id).unwrap();
+    assert_eq!(tab.custom_title, "Research plan");
+    // The engine title stays untouched so search and inner logic keep seeing
+    // the page title; display layers prefer the override.
+    assert_eq!(tab.title, "Home");
+    let released = state.rename_tab(&id, "").unwrap();
+    let tab = released.tabs.iter().find(|tab| tab.id == id).unwrap();
+    assert_eq!(tab.custom_title, "");
+    assert!(state.rename_tab("missing", "X").is_err());
+}
+
+#[test]
+fn tab_rename_survives_same_site_navigation_and_releases_on_new_site() {
+    let mut state = BrowserState::default();
+    let id = state
+        .create_tab("workspace-1", "https://example.com/home")
+        .unwrap()
+        .active_tab_id
+        .unwrap();
+    state
+        .navigate_tab(&id, "https://example.com/home", "Home")
+        .unwrap();
+    state.rename_tab(&id, "Docs").unwrap();
+    // Same URL with a changed page title keeps the user's name.
+    let same = state
+        .navigate_tab(&id, "https://example.com/home", "Home — Example")
+        .unwrap();
+    let tab = same.tabs.iter().find(|tab| tab.id == id).unwrap();
+    assert_eq!(tab.custom_title, "Docs");
+    // In-site navigation keeps it (SPAs fire location changes per route).
+    let route = state
+        .navigate_tab(&id, "https://example.com/other/page", "Other")
+        .unwrap();
+    let tab = route.tabs.iter().find(|tab| tab.id == id).unwrap();
+    assert_eq!(tab.custom_title, "Docs");
+    // Leaving the site releases it.
+    let away = state
+        .navigate_tab(&id, "https://another.example/away", "Away")
+        .unwrap();
+    let tab = away.tabs.iter().find(|tab| tab.id == id).unwrap();
+    assert_eq!(tab.custom_title, "");
+}
+
+#[test]
+fn tab_rename_persists_through_snapshot_roundtrip() {
+    let mut state = BrowserState::default();
+    let id = state
+        .create_tab("workspace-1", "https://example.com/home")
+        .unwrap()
+        .active_tab_id
+        .unwrap();
+    state.rename_tab(&id, "Kept").unwrap();
+    let saved = serde_json::to_value(state.snapshot()).unwrap();
+    let mut restored_state = BrowserState::default();
+    restored_state.restore(&saved.to_string()).unwrap();
+    let restored = restored_state.snapshot();
+    let tab = restored.tabs.iter().find(|tab| tab.id == id).unwrap();
+    assert_eq!(tab.custom_title, "Kept");
+    // Legacy snapshots without the field restore as unnamed tabs.
+    let mut legacy = serde_json::to_value(state.snapshot()).unwrap();
+    legacy["tabs"]
+        .as_array_mut()
+        .unwrap()
+        .iter_mut()
+        .for_each(|tab| {
+            tab.as_object_mut().unwrap().remove("customTitle");
+        });
+    let mut legacy_state = BrowserState::default();
+    legacy_state.restore(&legacy.to_string()).unwrap();
+    let legacy_snapshot = legacy_state.snapshot();
+    let tab = legacy_snapshot
+        .tabs
+        .iter()
+        .find(|tab| tab.id == id)
+        .unwrap();
+    assert_eq!(tab.custom_title, "");
+}

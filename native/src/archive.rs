@@ -358,6 +358,8 @@ impl BrowserState {
                     workspace_id: workspace_id.clone(),
                     url: if saved { t.home_url.clone() } else { t.url },
                     title: if saved { t.home_title.clone() } else { t.title },
+                    // Imported tabs never carry a user-assigned name.
+                    custom_title: String::new(),
                     favorite: t.favorite,
                     pinned: t.pinned,
                     private: false,

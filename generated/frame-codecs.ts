@@ -162,7 +162,7 @@ function _pcDecodeF32(buf: Uint8Array, offset: number): { value: number; bytesRe
 
 import { createComplexCodec, createSchemaPostcardCodec } from '@rustra/types';
 import type { FrameCodec, RustraError, ComplexSchema } from '@rustra/types';
-import type { Bookmark, BookmarkCreateInput, BookmarkFolder, BookmarkFolderCreateInput, BookmarkFolderIdInput, BookmarkFolderRenameInput, BookmarkIdInput, BookmarkMoveInput, BookmarkOpenInput, BookmarkSetFolderInput, BookmarkUpdateInput, BrowserSnapshotInput, KeyBinding, KeymapSetInput, Snapshot, SnapshotRestoreInput, SplitGroup, SplitGroupIdInput, SplitGroupSaveInput, String, Tab, TabCreateInput, TabFavoriteInput, TabIdInput, TabMoveInput, TabNavigatedInput, TabOpenExternalInput, TabPinnedInput, TabWorkspaceInput, WorkArchiveExportInput, WorkArchiveImportInput, WorkArchivePrepareInput, WorkArchivePreview, WorkArchivePreviewInput, Workspace, WorkspaceCreateInput, WorkspaceIdInput } from './types.js';
+import type { Bookmark, BookmarkCreateInput, BookmarkFolder, BookmarkFolderCreateInput, BookmarkFolderIdInput, BookmarkFolderRenameInput, BookmarkIdInput, BookmarkMoveInput, BookmarkOpenInput, BookmarkSetFolderInput, BookmarkUpdateInput, BrowserSnapshotInput, KeyBinding, KeymapSetInput, Snapshot, SnapshotRestoreInput, SplitGroup, SplitGroupIdInput, SplitGroupSaveInput, String, Tab, TabCreateInput, TabFavoriteInput, TabIdInput, TabMoveInput, TabNavigatedInput, TabOpenExternalInput, TabPinnedInput, TabRenameInput, TabWorkspaceInput, WorkArchiveExportInput, WorkArchiveImportInput, WorkArchivePrepareInput, WorkArchivePreview, WorkArchivePreviewInput, Workspace, WorkspaceCreateInput, WorkspaceIdInput } from './types.js';
 
 export const bookmarkCreateCodec: FrameCodec<BookmarkCreateInput, Snapshot> = {
   commandId: 20,
@@ -305,6 +305,11 @@ export const bookmarkCreateCodec: FrameCodec<BookmarkCreateInput, Snapshot> = {
         {
           const _v = _pcDecodeString(u8, offset);
           _obj.title = _v.value;
+          offset += _v.bytesRead;
+        }
+        {
+          const _v = _pcDecodeString(u8, offset);
+          _obj.customTitle = _v.value;
           offset += _v.bytesRead;
         }
         {
@@ -665,6 +670,11 @@ export const bookmarkFolderCreateCodec: FrameCodec<BookmarkFolderCreateInput, Sn
           offset += _v.bytesRead;
         }
         {
+          const _v = _pcDecodeString(u8, offset);
+          _obj.customTitle = _v.value;
+          offset += _v.bytesRead;
+        }
+        {
           _obj.favorite = u8[offset] === 1;
           offset += 1;
         }
@@ -1019,6 +1029,11 @@ export const bookmarkFolderRemoveCodec: FrameCodec<BookmarkFolderIdInput, Snapsh
         {
           const _v = _pcDecodeString(u8, offset);
           _obj.title = _v.value;
+          offset += _v.bytesRead;
+        }
+        {
+          const _v = _pcDecodeString(u8, offset);
+          _obj.customTitle = _v.value;
           offset += _v.bytesRead;
         }
         {
@@ -1381,6 +1396,11 @@ export const bookmarkFolderRenameCodec: FrameCodec<BookmarkFolderRenameInput, Sn
           offset += _v.bytesRead;
         }
         {
+          const _v = _pcDecodeString(u8, offset);
+          _obj.customTitle = _v.value;
+          offset += _v.bytesRead;
+        }
+        {
           _obj.favorite = u8[offset] === 1;
           offset += 1;
         }
@@ -1737,6 +1757,11 @@ export const bookmarkMoveCodec: FrameCodec<BookmarkMoveInput, Snapshot> = {
         {
           const _v = _pcDecodeString(u8, offset);
           _obj.title = _v.value;
+          offset += _v.bytesRead;
+        }
+        {
+          const _v = _pcDecodeString(u8, offset);
+          _obj.customTitle = _v.value;
           offset += _v.bytesRead;
         }
         {
@@ -2101,6 +2126,11 @@ export const bookmarkOpenCodec: FrameCodec<BookmarkOpenInput, Snapshot> = {
           offset += _v.bytesRead;
         }
         {
+          const _v = _pcDecodeString(u8, offset);
+          _obj.customTitle = _v.value;
+          offset += _v.bytesRead;
+        }
+        {
           _obj.favorite = u8[offset] === 1;
           offset += 1;
         }
@@ -2455,6 +2485,11 @@ export const bookmarkRemoveCodec: FrameCodec<BookmarkIdInput, Snapshot> = {
         {
           const _v = _pcDecodeString(u8, offset);
           _obj.title = _v.value;
+          offset += _v.bytesRead;
+        }
+        {
+          const _v = _pcDecodeString(u8, offset);
+          _obj.customTitle = _v.value;
           offset += _v.bytesRead;
         }
         {
@@ -2814,6 +2849,11 @@ export const bookmarkSetFolderCodec: FrameCodec<BookmarkSetFolderInput, Snapshot
         {
           const _v = _pcDecodeString(u8, offset);
           _obj.title = _v.value;
+          offset += _v.bytesRead;
+        }
+        {
+          const _v = _pcDecodeString(u8, offset);
+          _obj.customTitle = _v.value;
           offset += _v.bytesRead;
         }
         {
@@ -3178,6 +3218,11 @@ export const bookmarkUpdateCodec: FrameCodec<BookmarkUpdateInput, Snapshot> = {
           offset += _v.bytesRead;
         }
         {
+          const _v = _pcDecodeString(u8, offset);
+          _obj.customTitle = _v.value;
+          offset += _v.bytesRead;
+        }
+        {
           _obj.favorite = u8[offset] === 1;
           offset += 1;
         }
@@ -3529,6 +3574,11 @@ export const browserSnapshotCodec: FrameCodec<BrowserSnapshotInput, Snapshot> = 
         {
           const _v = _pcDecodeString(u8, offset);
           _obj.title = _v.value;
+          offset += _v.bytesRead;
+        }
+        {
+          const _v = _pcDecodeString(u8, offset);
+          _obj.customTitle = _v.value;
           offset += _v.bytesRead;
         }
         {
@@ -3981,6 +4031,11 @@ export const keymapSetCodec: FrameCodec<KeymapSetInput, Snapshot> = {
           offset += _v.bytesRead;
         }
         {
+          const _v = _pcDecodeString(u8, offset);
+          _obj.customTitle = _v.value;
+          offset += _v.bytesRead;
+        }
+        {
           _obj.favorite = u8[offset] === 1;
           offset += 1;
         }
@@ -4335,6 +4390,11 @@ export const snapshotRestoreCodec: FrameCodec<SnapshotRestoreInput, Snapshot> = 
         {
           const _v = _pcDecodeString(u8, offset);
           _obj.title = _v.value;
+          offset += _v.bytesRead;
+        }
+        {
+          const _v = _pcDecodeString(u8, offset);
+          _obj.customTitle = _v.value;
           offset += _v.bytesRead;
         }
         {
@@ -4695,6 +4755,11 @@ export const splitGroupRemoveCodec: FrameCodec<SplitGroupIdInput, Snapshot> = {
           offset += _v.bytesRead;
         }
         {
+          const _v = _pcDecodeString(u8, offset);
+          _obj.customTitle = _v.value;
+          offset += _v.bytesRead;
+        }
+        {
           _obj.favorite = u8[offset] === 1;
           offset += 1;
         }
@@ -5048,6 +5113,11 @@ export const splitGroupSaveCodec: FrameCodec<SplitGroupSaveInput, Snapshot> = {
         {
           const _v = _pcDecodeString(u8, offset);
           _obj.title = _v.value;
+          offset += _v.bytesRead;
+        }
+        {
+          const _v = _pcDecodeString(u8, offset);
+          _obj.customTitle = _v.value;
           offset += _v.bytesRead;
         }
         {
@@ -5408,6 +5478,11 @@ export const tabActivateCodec: FrameCodec<TabIdInput, Snapshot> = {
           offset += _v.bytesRead;
         }
         {
+          const _v = _pcDecodeString(u8, offset);
+          _obj.customTitle = _v.value;
+          offset += _v.bytesRead;
+        }
+        {
           _obj.favorite = u8[offset] === 1;
           offset += 1;
         }
@@ -5762,6 +5837,11 @@ export const tabCloseCodec: FrameCodec<TabIdInput, Snapshot> = {
         {
           const _v = _pcDecodeString(u8, offset);
           _obj.title = _v.value;
+          offset += _v.bytesRead;
+        }
+        {
+          const _v = _pcDecodeString(u8, offset);
+          _obj.customTitle = _v.value;
           offset += _v.bytesRead;
         }
         {
@@ -6126,6 +6206,11 @@ export const tabCreateCodec: FrameCodec<TabCreateInput, Snapshot> = {
           offset += _v.bytesRead;
         }
         {
+          const _v = _pcDecodeString(u8, offset);
+          _obj.customTitle = _v.value;
+          offset += _v.bytesRead;
+        }
+        {
           _obj.favorite = u8[offset] === 1;
           offset += 1;
         }
@@ -6482,6 +6567,11 @@ export const tabMoveCodec: FrameCodec<TabMoveInput, Snapshot> = {
         {
           const _v = _pcDecodeString(u8, offset);
           _obj.title = _v.value;
+          offset += _v.bytesRead;
+        }
+        {
+          const _v = _pcDecodeString(u8, offset);
+          _obj.customTitle = _v.value;
           offset += _v.bytesRead;
         }
         {
@@ -6846,6 +6936,11 @@ export const tabNavigatedCodec: FrameCodec<TabNavigatedInput, Snapshot> = {
           offset += _v.bytesRead;
         }
         {
+          const _v = _pcDecodeString(u8, offset);
+          _obj.customTitle = _v.value;
+          offset += _v.bytesRead;
+        }
+        {
           _obj.favorite = u8[offset] === 1;
           offset += 1;
         }
@@ -7205,6 +7300,375 @@ export const tabOpenExternalCodec: FrameCodec<TabOpenExternalInput, Snapshot> = 
           offset += _v.bytesRead;
         }
         {
+          const _v = _pcDecodeString(u8, offset);
+          _obj.customTitle = _v.value;
+          offset += _v.bytesRead;
+        }
+        {
+          _obj.favorite = u8[offset] === 1;
+          offset += 1;
+        }
+        {
+          _obj.pinned = u8[offset] === 1;
+          offset += 1;
+        }
+        {
+          _obj.private = u8[offset] === 1;
+          offset += 1;
+        }
+        {
+          const _v = _pcDecodeString(u8, offset);
+          _obj.bookmarkId = _v.value;
+          offset += _v.bytesRead;
+        }
+        {
+          const _v = _pcDecodeString(u8, offset);
+          _obj.homeUrl = _v.value;
+          offset += _v.bytesRead;
+        }
+        {
+          const _v = _pcDecodeString(u8, offset);
+          _obj.homeTitle = _v.value;
+          offset += _v.bytesRead;
+        }
+        {
+          _obj.suspended = u8[offset] === 1;
+          offset += 1;
+        }
+        {
+          const _v = _pcDecodeVarint64(u8, offset);
+          _obj.updatedAt = _v.value;
+          offset += _v.bytesRead;
+        }
+        _arr[_i] = _obj;
+      }
+      result.tabs = _arr;
+    }
+    {
+      const _len = _pcDecodeVarint(u8, offset);
+      offset += _len.bytesRead;
+      const _arr: Bookmark[] = new Array(_len.value);
+      for (let _i = 0; _i < _len.value; _i++) {
+        const _obj: Bookmark = {} as Bookmark;
+        {
+          const _v = _pcDecodeString(u8, offset);
+          _obj.id = _v.value;
+          offset += _v.bytesRead;
+        }
+        {
+          const _v = _pcDecodeString(u8, offset);
+          _obj.workspaceId = _v.value;
+          offset += _v.bytesRead;
+        }
+        {
+          const _v = _pcDecodeString(u8, offset);
+          _obj.title = _v.value;
+          offset += _v.bytesRead;
+        }
+        {
+          const _v = _pcDecodeString(u8, offset);
+          _obj.url = _v.value;
+          offset += _v.bytesRead;
+        }
+        {
+          const _v = _pcDecodeString(u8, offset);
+          _obj.folderId = _v.value;
+          offset += _v.bytesRead;
+        }
+        _arr[_i] = _obj;
+      }
+      result.bookmarks = _arr;
+    }
+    {
+      const _len = _pcDecodeVarint(u8, offset);
+      offset += _len.bytesRead;
+      const _arr: BookmarkFolder[] = new Array(_len.value);
+      for (let _i = 0; _i < _len.value; _i++) {
+        const _obj: BookmarkFolder = {} as BookmarkFolder;
+        {
+          const _v = _pcDecodeString(u8, offset);
+          _obj.id = _v.value;
+          offset += _v.bytesRead;
+        }
+        {
+          const _v = _pcDecodeString(u8, offset);
+          _obj.workspaceId = _v.value;
+          offset += _v.bytesRead;
+        }
+        {
+          const _v = _pcDecodeString(u8, offset);
+          _obj.title = _v.value;
+          offset += _v.bytesRead;
+        }
+        _arr[_i] = _obj;
+      }
+      result.bookmarkFolders = _arr;
+    }
+    {
+      const _len = _pcDecodeVarint(u8, offset);
+      offset += _len.bytesRead;
+      const _arr: SplitGroup[] = new Array(_len.value);
+      for (let _i = 0; _i < _len.value; _i++) {
+        const _obj: SplitGroup = {} as SplitGroup;
+        {
+          const _v = _pcDecodeString(u8, offset);
+          _obj.id = _v.value;
+          offset += _v.bytesRead;
+        }
+        {
+          const _v = _pcDecodeString(u8, offset);
+          _obj.workspaceId = _v.value;
+          offset += _v.bytesRead;
+        }
+        {
+          const _v = _pcDecodeString(u8, offset);
+          _obj.name = _v.value;
+          offset += _v.bytesRead;
+        }
+        {
+          const _v = _pcDecodeString(u8, offset);
+          _obj.orientation = _v.value;
+          offset += _v.bytesRead;
+        }
+        {
+          const _v = _pcDecodeVarint(u8, offset);
+          _obj.ratioMilli = _v.value;
+          offset += _v.bytesRead;
+        }
+        {
+          const _v = _pcDecodeString(u8, offset);
+          _obj.firstTitle = _v.value;
+          offset += _v.bytesRead;
+        }
+        {
+          const _v = _pcDecodeString(u8, offset);
+          _obj.firstUrl = _v.value;
+          offset += _v.bytesRead;
+        }
+        {
+          const _v = _pcDecodeString(u8, offset);
+          _obj.secondTitle = _v.value;
+          offset += _v.bytesRead;
+        }
+        {
+          const _v = _pcDecodeString(u8, offset);
+          _obj.secondUrl = _v.value;
+          offset += _v.bytesRead;
+        }
+        _arr[_i] = _obj;
+      }
+      result.splitGroups = _arr;
+    }
+    {
+      const _v = _pcDecodeString(u8, offset);
+      result.activeWorkspaceId = _v.value;
+      offset += _v.bytesRead;
+    }
+    {
+      const _tag = u8[offset];
+      offset += 1;
+      if (_tag === 0) {
+        result.activeTabId = null;
+      } else {
+        {
+          const _v = _pcDecodeString(u8, offset);
+          result.activeTabId = _v.value;
+          offset += _v.bytesRead;
+        }
+      }
+    }
+    {
+      const _len = _pcDecodeVarint(u8, offset);
+      offset += _len.bytesRead;
+      const _arr: KeyBinding[] = new Array(_len.value);
+      for (let _i = 0; _i < _len.value; _i++) {
+        const _obj: KeyBinding = {} as KeyBinding;
+        {
+          const _v = _pcDecodeString(u8, offset);
+          _obj.key = _v.value;
+          offset += _v.bytesRead;
+        }
+        {
+          _obj.meta = u8[offset] === 1;
+          offset += 1;
+        }
+        {
+          _obj.ctrl = u8[offset] === 1;
+          offset += 1;
+        }
+        {
+          _obj.alt = u8[offset] === 1;
+          offset += 1;
+        }
+        {
+          _obj.shift = u8[offset] === 1;
+          offset += 1;
+        }
+        {
+          const _v = _pcDecodeString(u8, offset);
+          _obj.command = _v.value;
+          offset += _v.bytesRead;
+        }
+        _arr[_i] = _obj;
+      }
+      result.keyBindings = _arr;
+    }
+    {
+      const _v = _pcDecodeVarint(u8, offset);
+      result.keymapVersion = _v.value;
+      offset += _v.bytesRead;
+    }
+    return { ok: true, result: result as Snapshot };
+  },
+};
+
+export const tabRenameCodec: FrameCodec<TabRenameInput, Snapshot> = {
+  commandId: 32,
+  execution: "sync",
+  syncFields: ["tabId","title"],
+
+  encode(args: TabRenameInput): ArrayBuffer {
+    // [cmd_id: u16 LE][postcard(TabRenameInput)]
+    const parts: Uint8Array[] = [];
+    const cmdId = new Uint8Array(2);
+    new DataView(cmdId.buffer).setUint16(0, 32, true);
+    parts.push(cmdId);
+    parts.push(_pcEncodeString(args.tabId));
+    parts.push(_pcEncodeString(args.title));
+    return _pcConcatUint8Arrays(parts).buffer as ArrayBuffer;
+  },
+
+  encodeInto(args: TabRenameInput, reuse?: Uint8Array): Uint8Array {
+    let out = reuse ?? new Uint8Array(64);
+    let w = 0;
+    const ensure = (need: number) => {
+      if (w + need <= out.length) return;
+      const grown = new Uint8Array(Math.max(out.length * 2, w + need));
+      grown.set(out.subarray(0, w));
+      out = grown;
+    };
+    ensure(2);
+    out[w++] = 32; out[w++] = 0;
+    { const _s = args.tabId; const _u = _utf8Encode(_s); ensure(5 + _u.length); let _v = _u.length; do { out[w++] = (_v % 128) | 0x80; _v = Math.floor(_v / 128); } while (_v > 0); out[w - 1] &= 0x7f; out.set(_u, w); w += _u.length; }
+    { const _s = args.title; const _u = _utf8Encode(_s); ensure(5 + _u.length); let _v = _u.length; do { out[w++] = (_v % 128) | 0x80; _v = Math.floor(_v / 128); } while (_v > 0); out[w - 1] &= 0x7f; out.set(_u, w); w += _u.length; }
+    return out.subarray(0, w);
+  },
+
+  decode(buf: ArrayBuffer | ArrayBufferView): { ok: boolean; result?: Snapshot; error?: RustraError } {
+    // caller-buffer 뷰(Uint8Array subarray 등)도 받는다 — node-loop 가 왕복당
+    // 사본 없이 프레임 뷰를 그대로 넘긴다. DataView 는 ArrayBuffer 만 받으므로
+    // (buf.buffer, byteOffset) 로 정규화한다.
+    const isView = ArrayBuffer.isView(buf);
+    const u8 = isView
+      ? new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength)
+      : new Uint8Array(buf);
+    const view = isView
+      ? new DataView(buf.buffer, buf.byteOffset, buf.byteLength)
+      : new DataView(buf);
+    if (view.byteLength < 8) return { ok: false, error: { code: 'invoke.too_short', message: 'response too short' } };
+    if (u8[0] !== 1) {
+      let err: RustraError = { code: 'invoke.failed', message: 'invoke failed' };
+      try {
+        const errLen = view.getUint16(8, true);
+        if (errLen > 0) {
+          // postcard({ code: String, message: String })
+          const c = _pcDecodeString(u8, 10);
+          const m = _pcDecodeString(u8, 10 + c.bytesRead);
+          err = { code: c.value, message: m.value };
+        }
+      } catch {
+        // 잘린/뒤틀린 에러 프레임 — 기본 err 를 유지한다.
+      }
+      return { ok: false, error: err };
+    }
+    // Decode postcard from offset 8
+    let offset = 8;
+    const result: Partial<Snapshot> = {};
+    {
+      const _v = _pcDecodeVarint(u8, offset);
+      result.version = _v.value;
+      offset += _v.bytesRead;
+    }
+    {
+      const _v = _pcDecodeVarint(u8, offset);
+      result.revision = _v.value;
+      offset += _v.bytesRead;
+    }
+    {
+      const _v = _pcDecodeString(u8, offset);
+      result.lastExternalRequestId = _v.value;
+      offset += _v.bytesRead;
+    }
+    {
+      const _len = _pcDecodeVarint(u8, offset);
+      offset += _len.bytesRead;
+      const _arr: Workspace[] = new Array(_len.value);
+      for (let _i = 0; _i < _len.value; _i++) {
+        const _obj: Workspace = {} as Workspace;
+        {
+          const _v = _pcDecodeString(u8, offset);
+          _obj.id = _v.value;
+          offset += _v.bytesRead;
+        }
+        {
+          const _v = _pcDecodeString(u8, offset);
+          _obj.name = _v.value;
+          offset += _v.bytesRead;
+        }
+        {
+          const _v = _pcDecodeString(u8, offset);
+          _obj.color = _v.value;
+          offset += _v.bytesRead;
+        }
+        {
+          const _tag = u8[offset];
+          offset += 1;
+          if (_tag === 0) {
+            _obj.lastActiveTabId = null;
+          } else {
+            {
+              const _v = _pcDecodeString(u8, offset);
+              _obj.lastActiveTabId = _v.value;
+              offset += _v.bytesRead;
+            }
+          }
+        }
+        _arr[_i] = _obj;
+      }
+      result.workspaces = _arr;
+    }
+    {
+      const _len = _pcDecodeVarint(u8, offset);
+      offset += _len.bytesRead;
+      const _arr: Tab[] = new Array(_len.value);
+      for (let _i = 0; _i < _len.value; _i++) {
+        const _obj: Tab = {} as Tab;
+        {
+          const _v = _pcDecodeString(u8, offset);
+          _obj.id = _v.value;
+          offset += _v.bytesRead;
+        }
+        {
+          const _v = _pcDecodeString(u8, offset);
+          _obj.workspaceId = _v.value;
+          offset += _v.bytesRead;
+        }
+        {
+          const _v = _pcDecodeString(u8, offset);
+          _obj.url = _v.value;
+          offset += _v.bytesRead;
+        }
+        {
+          const _v = _pcDecodeString(u8, offset);
+          _obj.title = _v.value;
+          offset += _v.bytesRead;
+        }
+        {
+          const _v = _pcDecodeString(u8, offset);
+          _obj.customTitle = _v.value;
+          offset += _v.bytesRead;
+        }
+        {
           _obj.favorite = u8[offset] === 1;
           offset += 1;
         }
@@ -7559,6 +8023,11 @@ export const tabResetCodec: FrameCodec<TabIdInput, Snapshot> = {
         {
           const _v = _pcDecodeString(u8, offset);
           _obj.title = _v.value;
+          offset += _v.bytesRead;
+        }
+        {
+          const _v = _pcDecodeString(u8, offset);
+          _obj.customTitle = _v.value;
           offset += _v.bytesRead;
         }
         {
@@ -7921,6 +8390,11 @@ export const tabSetFavoriteCodec: FrameCodec<TabFavoriteInput, Snapshot> = {
           offset += _v.bytesRead;
         }
         {
+          const _v = _pcDecodeString(u8, offset);
+          _obj.customTitle = _v.value;
+          offset += _v.bytesRead;
+        }
+        {
           _obj.favorite = u8[offset] === 1;
           offset += 1;
         }
@@ -8277,6 +8751,11 @@ export const tabSetPinnedCodec: FrameCodec<TabPinnedInput, Snapshot> = {
         {
           const _v = _pcDecodeString(u8, offset);
           _obj.title = _v.value;
+          offset += _v.bytesRead;
+        }
+        {
+          const _v = _pcDecodeString(u8, offset);
+          _obj.customTitle = _v.value;
           offset += _v.bytesRead;
         }
         {
@@ -8639,6 +9118,11 @@ export const tabSetWorkspaceCodec: FrameCodec<TabWorkspaceInput, Snapshot> = {
           offset += _v.bytesRead;
         }
         {
+          const _v = _pcDecodeString(u8, offset);
+          _obj.customTitle = _v.value;
+          offset += _v.bytesRead;
+        }
+        {
           _obj.favorite = u8[offset] === 1;
           offset += 1;
         }
@@ -8856,7 +9340,7 @@ export const tabSetWorkspaceCodec: FrameCodec<TabWorkspaceInput, Snapshot> = {
   },
 };
 
-export const workArchiveExportCodec = createSchemaPostcardCodec(2, {"title":"WorkArchiveExportInput","type":"object","properties":{"presentation":{"type":["string","null"]}}} as ComplexSchema, {"title":"String","type":"string"} as ComplexSchema, {"Workspace":{"type":"object","required":["id","name"],"properties":{"id":{"type":"string"},"name":{"type":"string"},"color":{"description":"Space tint as #rrggbb. Empty means \"follow the appearance hue\" — the default space stays appearance-colored so existing snapshots keep their look; created spaces pick from the palette round-robin.","default":"","type":"string"},"lastActiveTabId":{"description":"The space's most recently used tab; activate_workspace reopens the space where the user left off (Arc's working-set behavior). Dangling values are rejected on restore like the other active pointers.","default":null,"type":["string","null"]}}},"Tab":{"type":"object","required":["id","title","url","workspaceId"],"properties":{"id":{"type":"string"},"workspaceId":{"type":"string"},"url":{"type":"string"},"title":{"type":"string"},"favorite":{"description":"Favorites appear in every space without changing the selected space. Older snapshots restore without the field as non-favorites.","default":false,"type":"boolean"},"pinned":{"description":"Pinned tabs keep their own section under favorites, per space.","default":false,"type":"boolean"},"private":{"description":"Private tabs run engine-private sessions and never persist: the controller strips them from saved copies and restore drops them.","default":false,"type":"boolean"},"bookmarkId":{"description":"The persistent sidebar item owning this tab, independent of its live URL.","default":"","type":"string"},"homeUrl":{"description":"Saved destination, independent of navigation in the live session.","default":"","type":"string"},"homeTitle":{"default":"","type":"string"},"suspended":{"description":"The saved row remains while its browser session is closed.","default":false,"type":"boolean"},"updatedAt":{"description":"Last touch in epoch ms; drives the Today/Earlier split (12h archive).","default":0,"type":"integer","format":"uint64","minimum":0}}},"Bookmark":{"type":"object","required":["id","title","url"],"properties":{"id":{"type":"string"},"workspaceId":{"description":"Empty only in legacy snapshots, assigned to a Space during restore.","default":"","type":"string"},"title":{"type":"string"},"url":{"type":"string"},"folderId":{"default":"","type":"string"}}},"BookmarkFolder":{"type":"object","required":["id","title"],"properties":{"id":{"type":"string"},"workspaceId":{"default":"","type":"string"},"title":{"type":"string"}}},"SplitGroup":{"description":"A saved two-pane arrangement. Panes are stored as home URLs, never tab IDs — tabs churn across restarts and private tabs are stripped from snapshots. Restoring creates fresh tabs and re-applies the layout.","type":"object","required":["firstTitle","firstUrl","id","name","orientation","ratioMilli","secondTitle","secondUrl"],"properties":{"id":{"type":"string"},"workspaceId":{"default":"","type":"string"},"name":{"type":"string"},"orientation":{"description":"\"horizontal\" (side by side) or \"vertical\" (stacked).","type":"string"},"ratioMilli":{"description":"Share of the first pane in thousandths, always 250..=750 so the value matches the runtime clamp in the address bar UI.","type":"integer","format":"uint32","minimum":0},"firstTitle":{"type":"string"},"firstUrl":{"type":"string"},"secondTitle":{"type":"string"},"secondUrl":{"type":"string"}}},"KeyBinding":{"type":"object","required":["alt","command","ctrl","key","meta","shift"],"properties":{"key":{"type":"string"},"meta":{"type":"boolean"},"ctrl":{"type":"boolean"},"alt":{"type":"boolean"},"shift":{"type":"boolean"},"command":{"type":"string"}}}} as Record<string, ComplexSchema>, true)! as FrameCodec<WorkArchiveExportInput, String>;
+export const workArchiveExportCodec = createSchemaPostcardCodec(2, {"title":"WorkArchiveExportInput","type":"object","properties":{"presentation":{"type":["string","null"]}}} as ComplexSchema, {"title":"String","type":"string"} as ComplexSchema, {"Workspace":{"type":"object","required":["id","name"],"properties":{"id":{"type":"string"},"name":{"type":"string"},"color":{"description":"Space tint as #rrggbb. Empty means \"follow the appearance hue\" — the default space stays appearance-colored so existing snapshots keep their look; created spaces pick from the palette round-robin.","default":"","type":"string"},"lastActiveTabId":{"description":"The space's most recently used tab; activate_workspace reopens the space where the user left off (Arc's working-set behavior). Dangling values are rejected on restore like the other active pointers.","default":null,"type":["string","null"]}}},"Tab":{"type":"object","required":["id","title","url","workspaceId"],"properties":{"id":{"type":"string"},"workspaceId":{"type":"string"},"url":{"type":"string"},"title":{"type":"string"},"customTitle":{"description":"User-assigned label that survives navigation; display prefers it over the page title. Navigating to a different URL releases it, reloads and title churn on the same URL keep it.","default":"","type":"string"},"favorite":{"description":"Favorites appear in every space without changing the selected space. Older snapshots restore without the field as non-favorites.","default":false,"type":"boolean"},"pinned":{"description":"Pinned tabs keep their own section under favorites, per space.","default":false,"type":"boolean"},"private":{"description":"Private tabs run engine-private sessions and never persist: the controller strips them from saved copies and restore drops them.","default":false,"type":"boolean"},"bookmarkId":{"description":"The persistent sidebar item owning this tab, independent of its live URL.","default":"","type":"string"},"homeUrl":{"description":"Saved destination, independent of navigation in the live session.","default":"","type":"string"},"homeTitle":{"default":"","type":"string"},"suspended":{"description":"The saved row remains while its browser session is closed.","default":false,"type":"boolean"},"updatedAt":{"description":"Last touch in epoch ms; drives the Today/Earlier split (12h archive).","default":0,"type":"integer","format":"uint64","minimum":0}}},"Bookmark":{"type":"object","required":["id","title","url"],"properties":{"id":{"type":"string"},"workspaceId":{"description":"Empty only in legacy snapshots, assigned to a Space during restore.","default":"","type":"string"},"title":{"type":"string"},"url":{"type":"string"},"folderId":{"default":"","type":"string"}}},"BookmarkFolder":{"type":"object","required":["id","title"],"properties":{"id":{"type":"string"},"workspaceId":{"default":"","type":"string"},"title":{"type":"string"}}},"SplitGroup":{"description":"A saved two-pane arrangement. Panes are stored as home URLs, never tab IDs — tabs churn across restarts and private tabs are stripped from snapshots. Restoring creates fresh tabs and re-applies the layout.","type":"object","required":["firstTitle","firstUrl","id","name","orientation","ratioMilli","secondTitle","secondUrl"],"properties":{"id":{"type":"string"},"workspaceId":{"default":"","type":"string"},"name":{"type":"string"},"orientation":{"description":"\"horizontal\" (side by side) or \"vertical\" (stacked).","type":"string"},"ratioMilli":{"description":"Share of the first pane in thousandths, always 250..=750 so the value matches the runtime clamp in the address bar UI.","type":"integer","format":"uint32","minimum":0},"firstTitle":{"type":"string"},"firstUrl":{"type":"string"},"secondTitle":{"type":"string"},"secondUrl":{"type":"string"}}},"KeyBinding":{"type":"object","required":["alt","command","ctrl","key","meta","shift"],"properties":{"key":{"type":"string"},"meta":{"type":"boolean"},"ctrl":{"type":"boolean"},"alt":{"type":"boolean"},"shift":{"type":"boolean"},"command":{"type":"string"}}}} as Record<string, ComplexSchema>, true)! as FrameCodec<WorkArchiveExportInput, String>;
 
 export const workArchiveImportCodec: FrameCodec<WorkArchiveImportInput, Snapshot> = {
   commandId: 5,
@@ -9000,6 +9484,11 @@ export const workArchiveImportCodec: FrameCodec<WorkArchiveImportInput, Snapshot
         {
           const _v = _pcDecodeString(u8, offset);
           _obj.title = _v.value;
+          offset += _v.bytesRead;
+        }
+        {
+          const _v = _pcDecodeString(u8, offset);
+          _obj.customTitle = _v.value;
           offset += _v.bytesRead;
         }
         {
@@ -9361,6 +9850,11 @@ export const workArchivePrepareCodec: FrameCodec<WorkArchivePrepareInput, Snapsh
         {
           const _v = _pcDecodeString(u8, offset);
           _obj.title = _v.value;
+          offset += _v.bytesRead;
+        }
+        {
+          const _v = _pcDecodeString(u8, offset);
+          _obj.customTitle = _v.value;
           offset += _v.bytesRead;
         }
         {
@@ -9832,6 +10326,11 @@ export const workspaceActivateCodec: FrameCodec<WorkspaceIdInput, Snapshot> = {
           offset += _v.bytesRead;
         }
         {
+          const _v = _pcDecodeString(u8, offset);
+          _obj.customTitle = _v.value;
+          offset += _v.bytesRead;
+        }
+        {
           _obj.favorite = u8[offset] === 1;
           offset += 1;
         }
@@ -10186,6 +10685,11 @@ export const workspaceCreateCodec: FrameCodec<WorkspaceCreateInput, Snapshot> = 
         {
           const _v = _pcDecodeString(u8, offset);
           _obj.title = _v.value;
+          offset += _v.bytesRead;
+        }
+        {
+          const _v = _pcDecodeString(u8, offset);
+          _obj.customTitle = _v.value;
           offset += _v.bytesRead;
         }
         {

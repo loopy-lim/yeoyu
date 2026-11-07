@@ -177,6 +177,8 @@ export function TabContextMenuDialog({
   onSplit,
   onReset,
   onCopyLink,
+  onRename,
+  onEnterSelection,
   onEdit,
   onOpenInNewWindow,
 }: {
@@ -194,6 +196,9 @@ export function TabContextMenuDialog({
   onSplit?: () => void;
   onReset?: () => void;
   onCopyLink?: () => void;
+  onRename?: () => void;
+  /** Enters the sidebar's multi-select mode with this tab pre-selected. */
+  onEnterSelection?: () => void;
   /** Absent for private tabs and the focused pane. */
   onOpenInNewWindow?: () => void;
   onEdit?: () => void;
@@ -208,6 +213,20 @@ export function TabContextMenuDialog({
       icon: "link",
       onPress: onCopyLink,
       shortcut: "⌘⇧C",
+    });
+  if (onRename)
+    items.push({
+      id: "rename",
+      label: tr("chrome.renameTab"),
+      icon: "edit",
+      onPress: onRename,
+    });
+  if (onEnterSelection)
+    items.push({
+      id: "select",
+      label: tr("chrome.selectTabs"),
+      icon: "check",
+      onPress: onEnterSelection,
     });
   if (onEdit)
     items.push({

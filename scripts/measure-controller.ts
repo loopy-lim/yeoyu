@@ -32,7 +32,7 @@ for (const count of [10, 50, 100, 500]) {
           return structuredClone(state);
         },
         workspaceCreate: unsupported, tabCreate: unsupported, tabActivate: unsupported, tabClose: unsupported,
-        tabReset: unsupported, tabSetFavorite: unsupported, tabSetPinned: unsupported, tabMove: unsupported,
+        tabReset: unsupported, tabRename: unsupported, tabSetFavorite: unsupported, tabSetPinned: unsupported, tabMove: unsupported,
         tabSetWorkspace: unsupported, workspaceActivate: unsupported, keymapSet: unsupported,
         bookmarkOpen: unsupported, bookmarkCreate: unsupported, bookmarkUpdate: unsupported,
         bookmarkRemove: unsupported, bookmarkMove: unsupported, bookmarkFolderCreate: unsupported,

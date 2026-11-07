@@ -42,6 +42,11 @@ pub struct Tab {
     pub workspace_id: String,
     pub url: String,
     pub title: String,
+    /// User-assigned label that survives navigation; display prefers it over
+    /// the page title. Navigating to a different URL releases it, reloads
+    /// and title churn on the same URL keep it.
+    #[serde(default)]
+    pub custom_title: String,
     /// Favorites appear in every space without changing the selected space.
     /// Older snapshots restore without the field as non-favorites.
     #[serde(default)]
@@ -268,6 +273,7 @@ impl BrowserState {
             workspace_id: id.clone(),
             url: "about:blank".into(),
             title: String::new(),
+            custom_title: String::new(),
             favorite: false,
             pinned: false,
             private: false,
@@ -350,6 +356,7 @@ impl BrowserState {
             workspace_id: workspace_id.into(),
             url: url.into(),
             title: String::new(),
+            custom_title: String::new(),
             favorite: false,
             pinned: false,
             private,
@@ -611,6 +618,7 @@ impl BrowserState {
                     workspace_id: workspace_id.clone(),
                     url: "about:blank".into(),
                     title: String::new(),
+                    custom_title: String::new(),
                     favorite: false,
                     pinned: false,
                     private: false,
@@ -660,9 +668,32 @@ impl BrowserState {
         if tab.suspended {
             return Err(domain_error("tab session is closed"));
         }
+        let origin_changed = match (url::Url::parse(&tab.url), url::Url::parse(url)) {
+            // Same-site navigation keeps the user-assigned name (SPAs fire
+            // location changes on every in-app route); leaving the site ends it.
+            (Ok(old), Ok(new)) => old.origin() != new.origin(),
+            _ => true,
+        };
+        if origin_changed {
+            tab.custom_title.clear();
+        }
         tab.url = url.into();
         tab.title = title.into();
         tab.updated_at = now;
+        self.commit(candidate)
+    }
+
+    /// Names a tab for the user. An empty title releases the override and
+    /// restores the engine-provided label.
+    pub fn rename_tab(&mut self, tab_id: &str, title: &str) -> Result<Snapshot> {
+        let mut candidate = self.snapshot.clone();
+        let tab = candidate
+            .tabs
+            .iter_mut()
+            .find(|tab| tab.id == tab_id)
+            .ok_or_else(|| domain_error("tab does not exist"))?;
+        tab.custom_title = title.trim().into();
+        tab.updated_at = now_ms();
         self.commit(candidate)
     }
 
@@ -807,6 +838,7 @@ impl BrowserState {
                 workspace_id: workspace_id.clone(),
                 url: bookmark.url.clone(),
                 title: bookmark.title.clone(),
+                custom_title: String::new(),
                 favorite: false,
                 // A private tab carries no saved role: persistence strips it,
                 // and the domain forbids saved fields on private tabs.

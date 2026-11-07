@@ -23,6 +23,8 @@ export type Tab = {
   workspaceId: string;
   url: string;
   title: string;
+  /** User-assigned label that survives navigation; display prefers it over the page title. Navigating to a different URL releases it, reloads and title churn on the same URL keep it. */
+  customTitle?: string;
   /** Favorites appear in every space without changing the selected space. Older snapshots restore without the field as non-favorites. */
   favorite?: boolean;
   /** Pinned tabs keep their own section under favorites, per space. */
@@ -194,6 +196,11 @@ export type TabNavigatedInput = {
 export type TabOpenExternalInput = {
   requestId: string;
   url: string;
+};
+
+export type TabRenameInput = {
+  tabId: string;
+  title: string;
 };
 
 export type TabFavoriteInput = {

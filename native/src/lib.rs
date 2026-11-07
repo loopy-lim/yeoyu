@@ -41,6 +41,13 @@ pub struct TabIdInput {
 
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
+pub struct TabRenameInput {
+    pub tab_id: String,
+    pub title: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct TabNavigatedInput {
     pub tab_id: String,
     pub url: String,
@@ -280,6 +287,10 @@ pub fn tab_reset(input: TabIdInput) -> Result<Snapshot> {
     lock_state()?.reset_tab(&input.tab_id)
 }
 #[command]
+pub fn tab_rename(input: TabRenameInput) -> Result<Snapshot> {
+    lock_state()?.rename_tab(&input.tab_id, &input.title)
+}
+#[command]
 pub fn tab_navigated(input: TabNavigatedInput) -> Result<Snapshot> {
     lock_state()?.navigate_tab(&input.tab_id, &input.url, &input.title)
 }
@@ -403,7 +414,8 @@ pub fn browser_package() -> Package {
                 tab_reset,
                 bookmark_open,
                 split_group_save,
-                split_group_remove
+                split_group_remove,
+                tab_rename
             )
             .build();
             package.register_ffi_with_default(FfiFormat::Json);

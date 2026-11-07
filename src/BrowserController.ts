@@ -13,6 +13,7 @@ type GeneratedCommands = Pick<
   | "tabActivate"
   | "tabClose"
   | "tabReset"
+  | "tabRename"
   | "tabNavigated"
   | "tabSetFavorite"
   | "tabSetPinned"
@@ -684,6 +685,9 @@ export class BrowserController {
         return snapshot;
       }
     );
+  }
+  rename(tabId: string, title: string) {
+    return this.mutate(() => this.commands.tabRename({ tabId, title }));
   }
   setFavorite(tabId: string, favorite: boolean) {
     return this.mutate(() => this.commands.tabSetFavorite({ tabId, favorite }));

@@ -22,6 +22,7 @@ import {
   updateSitePreference,
   type BrowserToolsConfig,
   type BrowserToolsUpdate,
+  type SecureDnsMode,
   type TrackingProtection,
 } from "@/browserWorkflows";
 import type { BrowserSecurity } from "@/hooks/useBrowserWorkflows";
@@ -127,6 +128,15 @@ export function BrowserToolsPanel({
   const [downloadRefresh, setDownloadRefresh] = useState(0);
   const [resourceSummary, setResourceSummary] = useState("");
   const [sitePreferencesOpen, setSitePreferencesOpen] = useState(false);
+  // The custom resolver is drafted locally: saving "custom" with an empty
+  // URI would be rejected, so only Apply commits the pair.
+  const [dnsModeDraft, setDnsModeDraft] = useState<SecureDnsMode | null>(null);
+  const [dnsUriDraft, setDnsUriDraft] = useState("");
+  // Already-stored custom resolvers must be visible and editable, not blank.
+  useEffect(() => {
+    if (config?.secureDnsMode === "custom")
+      setDnsUriDraft((current) => current || config.secureDnsUri || "");
+  }, [config?.secureDnsMode, config?.secureDnsUri]);
   const [siteQuery, setSiteQuery] = useState("");
   const filteredSites = useMemo(() => {
     const query = siteQuery.trim().toLowerCase();
@@ -510,6 +520,7 @@ export function BrowserToolsPanel({
         </>
       )}
       {show("privacy") && (
+        <>
         <SettingsGroup heading={tr("tools.privacy")}>
           <View className={c.groupBody}>
             <Text className={c.detail}>{tr("tools.privacyHelp")}</Text>
@@ -592,6 +603,85 @@ export function BrowserToolsPanel({
               action(tr("tools.clearAllAction"), () => clear(null))}
           </View>
         </SettingsGroup>
+        <SettingsGroup heading={tr("tools.secureDns")}>
+          <View className={c.groupBody}>
+            <Text className={c.detail}>{tr("tools.secureDnsHelp")}</Text>
+            <View className={c.choices}>
+              {(["auto", "off", "custom"] as SecureDnsMode[]).map((mode) => {
+                const selected =
+                  (dnsModeDraft ?? config?.secureDnsMode ?? "auto") === mode;
+                return (
+                  <Pressable
+                    key={mode}
+                    accessibilityRole="radio"
+                    accessibilityState={{ checked: selected, disabled: !config || busy }}
+                    disabled={!config || busy}
+                    className={cn(actionClasses({ selected, disabled: !config || busy }))}
+                    onPress={() => {
+                      if (!config) return;
+                      if (mode === "custom") {
+                        setDnsModeDraft("custom");
+                        setDnsUriDraft(config.secureDnsUri ?? "");
+                        return;
+                      }
+                      setDnsModeDraft(null);
+                      perform(() =>
+                        onSave((current) => ({
+                          ...current,
+                          secureDnsMode: mode,
+                          secureDnsUri: "",
+                        }))
+                      );
+                    }}
+                  >
+                    <Text className={c.text}>
+                      {tr(
+                        mode === "auto"
+                          ? "tools.secureDnsAuto"
+                          : mode === "off"
+                          ? "tools.secureDnsOff"
+                          : "tools.secureDnsCustom"
+                      )}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+            {(dnsModeDraft ?? config?.secureDnsMode ?? "auto") === "custom" && (
+              <>
+                <TextInput
+                  accessibilityLabel={tr("tools.secureDnsUriLabel")}
+                  placeholder="https://dns.example/dns-query"
+                  placeholderTextColor={theme.inkMuted}
+                  value={dnsUriDraft}
+                  onChangeText={setDnsUriDraft}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  keyboardType="url"
+                  className={c.search}
+                  disableFullscreenUI
+                />
+                {action(
+                  tr("tools.secureDnsApply"),
+                  () => {
+                    if (!config) return;
+                    perform(async () => {
+                      await onSave((current) => ({
+                        ...current,
+                        secureDnsMode: "custom",
+                        secureDnsUri: dnsUriDraft.trim(),
+                      }));
+                      setDnsModeDraft(null);
+                      setDnsUriDraft("");
+                    });
+                  },
+                  !dnsUriDraft.trim()
+                )}
+              </>
+            )}
+          </View>
+        </SettingsGroup>
+        </>
       )}
       {show("memory") && (
         <SettingsGroup heading={tr("tools.memory")}>

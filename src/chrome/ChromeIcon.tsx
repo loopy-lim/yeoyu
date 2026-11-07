@@ -31,6 +31,7 @@ const paths = {
   play: "M7 4l13 8-13 8z",
   search: "M17 10a7 7 0 1 0-14 0 7 7 0 0 0 14 0 M15 15l6 6",
   copy: "M8 8h12v13H8z M16 8V3H3v13h5",
+  download: "M12 4v11 M7 11l5 5 5-5 M4 20h16",
   link: "M9.5 13.5l5-5 M8 11l-2.8 2.8a4 4 0 0 0 5.7 5.7L13.5 17 M16 13l2.8-2.8a4 4 0 0 0-5.7-5.7L10.5 7",
   edit: "M4 16L16 4l4 4L8 20H4z M13 7l4 4",
   trash: "M3 6h18 M9 6V3h6v3 M5 6l1 15h12l1-15 M10 10v7 M14 10v7",

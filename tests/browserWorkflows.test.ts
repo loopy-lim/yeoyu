@@ -130,6 +130,25 @@ test("tool configuration preserves per-site policy and rejects unsafe replacemen
     expect(() => parseBrowserTools(JSON.stringify({ ...config, ...patch }))).toThrow();
 });
 
+test("secure DNS settings round trip and reject unknown modes or non-HTTPS custom resolvers", () => {
+  const config: BrowserToolsConfig = {
+    schema: 1, automaticMemorySaving: false, restoreSessions: true, trackingProtection: "engine-default", textScale: 1, sites: [],
+    secureDnsMode: "custom", secureDnsUri: "https://dns.example/dns-query",
+  };
+  expect(parseBrowserTools(JSON.stringify(config))).toEqual(config);
+  expect(parseBrowserTools(JSON.stringify({ ...config, secureDnsMode: "auto", secureDnsUri: "" })).secureDnsMode).toBe("auto");
+  for (const patch of [
+    { secureDnsMode: "strict" },
+    { secureDnsMode: "custom", secureDnsUri: "http://dns.example/dns-query" },
+    { secureDnsMode: "custom", secureDnsUri: "HTTPS://dns.example/dns-query" },
+    { secureDnsMode: "custom", secureDnsUri: "https://user:pass@dns.example/dns-query" },
+    { secureDnsMode: "custom", secureDnsUri: "https://dns_example.com/query" },
+    { secureDnsMode: "custom", secureDnsUri: "not a url" },
+    { secureDnsUri: 7 },
+  ])
+    expect(() => parseBrowserTools(JSON.stringify({ ...config, ...patch }))).toThrow();
+});
+
 function deferred() {
   let resolve!: () => void;
   let reject!: (error: Error) => void;

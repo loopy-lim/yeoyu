@@ -86,6 +86,7 @@ export function retainLiveTabs<T>(record: Record<string, T>, live: ReadonlySet<s
 }
 
 export type TrackingProtection = "engine-default" | "standard" | "strict";
+export type SecureDnsMode = "auto" | "off" | "custom";
 export interface SitePreference {
   keepAlive?: boolean;
   origin: string;
@@ -99,6 +100,8 @@ export interface BrowserToolsConfig {
   trackingProtection: TrackingProtection;
   textScale: number;
   sites: SitePreference[];
+  secureDnsMode?: SecureDnsMode;
+  secureDnsUri?: string;
 }
 
 /** No stored row means a desktop request, global protection, and no keep-alive exception. */
@@ -112,6 +115,17 @@ export function parseBrowserTools(json: string): BrowserToolsConfig {
       !["engine-default", "standard", "strict"].includes(value.trackingProtection) ||
       typeof value.textScale !== "number" || !Number.isFinite(value.textScale) || value.textScale < 0.5 || value.textScale > 2 ||
       !Array.isArray(value.sites) || value.sites.length > 256) throw Error("Browser settings could not be read");
+  if (value.secureDnsMode !== undefined && !["auto", "off", "custom"].includes(value.secureDnsMode)) throw Error("Invalid secure DNS mode");
+  if (value.secureDnsUri !== undefined && typeof value.secureDnsUri !== "string") throw Error("Invalid secure DNS resolver");
+  if (value.secureDnsMode === "custom") {
+    // Mirror the Kotlin parser exactly: java.net.URI rejects userinfo,
+    // uppercase schemes, and registry-based (e.g. underscore) hosts, and a
+    // mismatch would silently reset the whole stored config on next launch.
+    if (!value.secureDnsUri.startsWith("https://")) throw Error("Invalid secure DNS resolver");
+    let parsed: URL;
+    try { parsed = new URL(value.secureDnsUri); } catch { throw Error("Invalid secure DNS resolver"); }
+    if (parsed.username || parsed.password || !parsed.hostname || !/^[A-Za-z0-9.:-]+$/.test(parsed.hostname)) throw Error("Invalid secure DNS resolver");
+  }
   const origins = new Set<string>();
   const sites: SitePreference[] = value.sites.map((site: SitePreference) => {
     if (!site || (site.keepAlive !== undefined && typeof site.keepAlive !== "boolean") || new URL(webUrl(site.origin)).origin !== site.origin || origins.has(site.origin) ||
@@ -120,7 +134,7 @@ export function parseBrowserTools(json: string): BrowserToolsConfig {
     origins.add(site.origin);
     return { origin: site.origin, desktop: site.desktop, trackingProtection: site.trackingProtection, ...(site.keepAlive !== undefined ? { keepAlive: site.keepAlive } : {}) };
   });
-  return { schema: 1, automaticMemorySaving: value.automaticMemorySaving ?? false, restoreSessions: value.restoreSessions, trackingProtection: value.trackingProtection, textScale: value.textScale, sites: sites.filter((site) => !isDefaultSitePreference(site)) };
+  return { schema: 1, automaticMemorySaving: value.automaticMemorySaving ?? false, restoreSessions: value.restoreSessions, trackingProtection: value.trackingProtection, textScale: value.textScale, sites: sites.filter((site) => !isDefaultSitePreference(site)), ...(value.secureDnsMode !== undefined ? { secureDnsMode: value.secureDnsMode, secureDnsUri: value.secureDnsUri ?? "" } : {}) };
 }
 
 export type BrowserToolsUpdate = (current: BrowserToolsConfig) => BrowserToolsConfig;

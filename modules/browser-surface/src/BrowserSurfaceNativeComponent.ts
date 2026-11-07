@@ -24,6 +24,7 @@ interface NativeCommands {
   goBack: (viewRef: React.ElementRef<Surface>) => void;
   goForward: (viewRef: React.ElementRef<Surface>) => void;
   reload: (viewRef: React.ElementRef<Surface>) => void;
+  stop: (viewRef: React.ElementRef<Surface>) => void;
   focusContent: (viewRef: React.ElementRef<Surface>) => void;
 }
 export const Commands = codegenNativeCommands<NativeCommands>({
@@ -32,6 +33,7 @@ export const Commands = codegenNativeCommands<NativeCommands>({
     "goBack",
     "goForward",
     "reload",
+    "stop",
     "focusContent",
   ],
 });

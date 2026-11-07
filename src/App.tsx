@@ -69,7 +69,7 @@ import { useUiPreferencePersistence } from "@/hooks/useUiPreferencePersistence";
 import { useWindowTabs } from "@/hooks/useWindowTabs";
 import { useInputViewport } from "@/hooks/useInputViewport";
 import { BrowserContentMenu } from "@/components/BrowserContentMenu";
-import { retainLiveTabs } from "@/browserWorkflows";
+import { retainLiveTabs, updateSitePreference } from "@/browserWorkflows";
 import { NavigationEventOrder } from "@/navigationEvents";
 import { NEW_TAB_URL } from "@/BrowserController";
 import { favicons } from "@/favicons";
@@ -133,6 +133,8 @@ import {
   sidebarDropChange,
   favoriteMoveIndex,
   sidebarAddressLabel,
+  batchCloseTargets,
+  batchMoveTargets,
   type TileBounds,
 } from "@/sidebarModel";
 import { Overlay } from "@/chrome/Overlay";
@@ -310,7 +312,7 @@ const NewTabPage = ({
   onOpenUrl,
   onOpenFavorite,
 }: {
-  favorites: { id: string; title: string; url: string }[];
+  favorites: { id: string; title: string; url: string; customTitle?: string }[];
   keyboardInset: number;
   visibleHeight: number;
   reducedMotion: boolean;
@@ -377,7 +379,7 @@ const NewTabPage = ({
                     key={tab.id}
                     accessibilityRole="button"
                     accessibilityLabel={tr("chrome.favoriteLabel", {
-                      name: tab.title || tab.url,
+                      name: tab.customTitle || tab.title || tab.url,
                     })}
                     className={cn(c.newTabTile, "active:opacity-pressed")}
                     onPress={() => onOpenFavorite(tab.id)}
@@ -385,7 +387,7 @@ const NewTabPage = ({
                     <View className={c.newTabTileIcon}>
                       <Favicon
                         url={tab.url}
-                        fallback={(tab.title || tab.url)
+                        fallback={(tab.customTitle || tab.title || tab.url)
                           .slice(0, 1)
                           .toUpperCase()}
                         size={32}
@@ -393,7 +395,7 @@ const NewTabPage = ({
                       />
                     </View>
                     <Text numberOfLines={1} className={c.newTabTileLabel}>
-                      {tab.title || tab.url}
+                      {tab.customTitle || tab.title || tab.url}
                     </Text>
                   </Pressable>
                 ))}
@@ -498,8 +500,16 @@ function BrowserApp() {
     "save" | "manage" | null
   >(null);
   const [splitGroupName, setSplitGroupName] = useState("");
+  const [renameTab, setRenameTab] = useState<
+    { id: string; value: string } | null
+  >(null);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedTabIds, setSelectedTabIds] = useState<Set<string>>(
+    () => new Set()
+  );
+  const [selectionMoveMenu, setSelectionMoveMenu] = useState(false);
   const pendingSplitSave =
-    useRef<{ firstUrl: string; firstTitle: string; secondUrl: string; secondTitle: string; orientation: string; ratio: number } | null>(
+    useRef<{ splitGroupId: string | null; firstUrl: string; firstTitle: string; secondUrl: string; secondTitle: string; orientation: string; ratio: number } | null>(
       null
     );
   const openTabMenu = (id: string, x: number, y: number) => {
@@ -698,6 +708,7 @@ function BrowserApp() {
   };
   const toggleSidebar = () => {
     haptic("tick");
+    exitSelectionMode();
     updateUi({ type: "toggleSidebar" });
   };
   const settingsReturn = useRef<string | null>(null);
@@ -786,8 +797,14 @@ function BrowserApp() {
     void history.load();
     return unsubscribe;
   }, []);
-  const tabLabel = (tab: { title: string; url: string }) =>
-    tab.url === NEW_TAB_URL ? tr("chrome.newTab") : tab.title || tab.url;
+  const tabLabel = (tab: {
+    title: string;
+    url: string;
+    customTitle?: string;
+  }) =>
+    tab.url === NEW_TAB_URL
+      ? tr("chrome.newTab")
+      : tab.customTitle || tab.title || tab.url;
   // The sidebar shows only the domain; the centered editor retains the full URL.
   const displayUrl = sidebarAddressLabel;
   const suggestionSources = useMemo<SuggestionSources>(
@@ -1075,6 +1092,7 @@ function BrowserApp() {
     if (!fullscreen.dismiss(() => false)) invoke(Commands.goBack);
   };
   const goHome = () => {
+    exitSelectionMode();
     void platform.goHome().catch((failure) => setError(String(failure)));
   };
   const loadInPane = (id: string, url: string) => {
@@ -1191,6 +1209,20 @@ function BrowserApp() {
         })
     );
   };
+  // Rename reuses the save dialog: the upsert keeps the group's Space binding.
+  const openSplitGroupRename = (group: SplitGroup) => {
+    pendingSplitSave.current = {
+      splitGroupId: group.id,
+      firstUrl: group.firstUrl,
+      firstTitle: group.firstTitle,
+      secondUrl: group.secondUrl,
+      secondTitle: group.secondTitle,
+      orientation: group.orientation,
+      ratio: group.ratioMilli / 1000,
+    };
+    setSplitGroupName(group.name);
+    setSplitGroupDialog("save");
+  };
   const confirmSplitGroupSave = () => {
     const pending = pendingSplitSave.current;
     const name = splitGroupName.trim();
@@ -1198,7 +1230,7 @@ function BrowserApp() {
     setSplitGroupDialog(null);
     run(
       controller.splitGroupSave({
-        splitGroupId: null,
+        splitGroupId: pending.splitGroupId,
         name,
         orientation: pending.orientation,
         ratioMilli: Math.round(pending.ratio * 1000),
@@ -1209,10 +1241,61 @@ function BrowserApp() {
       })
     );
   };
+  const confirmTabRename = () => {
+    if (!renameTab) return;
+    const { id, value } = renameTab;
+    setRenameTab(null);
+    run(controller.rename(id, value));
+  };
+  const exitSelectionMode = () => {
+    setSelectionMode(false);
+    setSelectedTabIds(new Set());
+    setSelectionMoveMenu(false);
+  };
+  const toggleTabSelection = (tabId: string) => {
+    setSelectedTabIds((current) => {
+      const next = new Set(current);
+      if (next.has(tabId)) next.delete(tabId);
+      else next.add(tabId);
+      return next;
+    });
+  };
+  const closeSelectedTabs = () => {
+    const targets = batchCloseTargets(
+      [...selectedTabIds],
+      state?.tabs ?? []
+    );
+    exitSelectionMode();
+    targets.forEach((tabId) => closeTab(tabId));
+  };
+  const moveSelectedTabs = (workspaceId: string) => {
+    const targets = batchMoveTargets(
+      [...selectedTabIds],
+      state?.tabs ?? [],
+      workspaceId
+    );
+    exitSelectionMode();
+    // The controller queue serializes the writes; the live split re-gates on
+    // each commit, so no extra teardown is needed here. A failed move is
+    // counted, not swallowed — the rest still proceed.
+    let flow: Promise<unknown> = Promise.resolve();
+    let failures = 0;
+    targets.forEach((tabId) => {
+      flow = flow
+        .then(() => controller.setTabWorkspace(tabId, workspaceId))
+        .catch(() => {
+          failures += 1;
+        });
+    });
+    void flow.then(() => {
+      if (failures > 0) flashNotice(tr("chrome.selectionMoveFailed"));
+    });
+  };
   // Space icons switch directly; long-press opens the manager.
   const switchSpace = (id: string) => {
     if (!state || id === state.activeWorkspaceId) return;
     haptic("click");
+    exitSelectionMode();
     run(
       controller.activateWorkspace(id).then((snapshot) => {
         setSplitLayout(null);
@@ -1393,6 +1476,16 @@ function BrowserApp() {
   };
   const canGoBack = !!target && !!navigation[target]?.canGoBack;
   const canGoForward = !!target && !!navigation[target]?.canGoForward;
+  // The reload affordance doubles as stop while the page is still loading,
+  // the convention every mainstream browser address row follows.
+  const targetLoading = !!target && !!navigation[target]?.loading;
+  // Site-scoped page actions (desktop-site toggle) key off the page origin.
+  const pageOrigin = (() => {
+    try {
+      const parsed = new URL(targetUrl);
+      return ["http:", "https:"].includes(parsed.protocol) ? parsed.origin : null;
+    } catch { return null; }
+  })();
   const menuTab = ctxMenuTabId
     ? state?.tabs.find((t) => t.id === ctxMenuTabId) ?? null
     : null;
@@ -1471,6 +1564,23 @@ function BrowserApp() {
       flashNotice(tr("chrome.urlCopied"));
     }
   });
+  registry.register("browser.captureShare", () => {
+    const current = state?.tabs.find((t) => t.id === target);
+    if (!current || current.private || current.suspended || current.url === NEW_TAB_URL) {
+      flashNotice(tr("chrome.captureUnavailable"));
+      return;
+    }
+    if (
+      typeof platform.capturePagePdf !== "function" ||
+      typeof platform.sharePagePdf !== "function"
+    )
+      return;
+    flashNotice(tr("chrome.captureStarted"));
+    void platform
+      .capturePagePdf(current.id)
+      .then((path) => platform.sharePagePdf?.(path))
+      .catch(() => setError(tr("chrome.captureFailed")));
+  });
   registry.register("browser.back", goBack);
   registry.register("browser.forward", () => invoke(Commands.goForward));
   registry.register("browser.reload", () => invoke(Commands.reload));
@@ -1502,6 +1612,7 @@ function BrowserApp() {
       return;
     }
     pendingSplitSave.current = {
+      splitGroupId: null,
       firstUrl: first.url,
       firstTitle: tabLabel(first) || first.url,
       secondUrl: second.url,
@@ -2587,7 +2698,9 @@ function BrowserApp() {
       className={cn(
         rowVariants({
           density: "tab",
-          selected: splitPaneIds.includes(tab.id) && !tab.suspended,
+          selected: selectionMode
+            ? selectedTabIds.has(tab.id)
+            : splitPaneIds.includes(tab.id) && !tab.suspended,
         }),
         c.tab
       )}
@@ -2600,9 +2713,15 @@ function BrowserApp() {
             : tab.pinned
             ? "chrome.pinnedTab"
             : "chrome.tab"
-        )} ${tabLabel(tab)}`}
+        )} ${tabLabel(tab)}${
+          selectionMode && selectedTabIds.has(tab.id)
+            ? `, ${tr("chrome.tabSelected")}`
+            : ""
+        }`}
         className={c.tabDrag}
-        onPress={() => revealTab(tab.id)}
+        onPress={() =>
+          selectionMode ? toggleTabSelection(tab.id) : revealTab(tab.id)
+        }
         onDragStart={(x, y) => beginDrag(tab.id, tabLabel(tab), x, y)}
         onDragMove={moveDrag}
         onDragRelease={finishDrag}
@@ -2610,7 +2729,13 @@ function BrowserApp() {
         onLongPress={(x, y) => openTabMenu(tab.id, x, y)}
       >
         <View className={c.tabFavicon}>
-          {playing.includes(tab.id) ? (
+          {selectionMode ? (
+            selectedTabIds.has(tab.id) ? (
+              <ChromeIcon className={cn("size-[16px]", "text-ink")} name="check" />
+            ) : (
+              <View className="size-[14px] rounded-[4px] border-2 border-ink-muted" />
+            )
+          ) : playing.includes(tab.id) ? (
             <ChromeIcon className={cn("size-[14px]")} name="play" />
           ) : (
             // Private tabs use a local fallback: nothing about the
@@ -2644,24 +2769,28 @@ function BrowserApp() {
           />
         )}
       </DragSource>
-      <SidebarPressable
-        accessibilityRole="button"
-        accessibilityLabel={tr("chrome.closeNamedTab", { name: tabLabel(tab) })}
-        accessibilityState={{ disabled: !!tab.suspended }}
-        disabled={!!tab.suspended}
-        hitSlop={8}
-        className={cn(
-          c.tabClose,
-          tab.suspended && c.disabled,
-          "active:bg-field-on-chrome"
-        )}
-        onPress={() => closeTab(tab.id)}
-      >
-        <ChromeIcon
-          className={cn("size-[15px]", "text-ink-muted")}
-          name="close"
-        />
-      </SidebarPressable>
+      {!selectionMode && (
+        <SidebarPressable
+          accessibilityRole="button"
+          accessibilityLabel={tr("chrome.closeNamedTab", {
+            name: tabLabel(tab),
+          })}
+          accessibilityState={{ disabled: !!tab.suspended }}
+          disabled={!!tab.suspended}
+          hitSlop={8}
+          className={cn(
+            c.tabClose,
+            tab.suspended && c.disabled,
+            "active:bg-field-on-chrome"
+          )}
+          onPress={() => closeTab(tab.id)}
+        >
+          <ChromeIcon
+            className={cn("size-[15px]", "text-ink-muted")}
+            name="close"
+          />
+        </SidebarPressable>
+      )}
     </View>
   );
   const renderRailFolder = (item: SidebarFolder) => (
@@ -2736,6 +2865,86 @@ function BrowserApp() {
           label: tr("chrome.history"),
           icon: "history",
           onPress: () => setHistoryOpen(true),
+        },
+        {
+          id: "downloads",
+          label: tr("chrome.downloads"),
+          icon: "download",
+          onPress: () => {
+            setSettingsQuery("");
+            setSettingsSection("data");
+            setSettings(true);
+          },
+        },
+        {
+          id: "find",
+          label: tr("find.inPage"),
+          icon: "search",
+          disabled: !target || targetUrl === NEW_TAB_URL,
+          onPress: () => registry.execute("find.open"),
+        },
+        {
+          id: "share-page",
+          label: tr("chrome.sharePage"),
+          icon: "link",
+          disabled: !target || targetUrl === NEW_TAB_URL,
+          onPress: () => {
+            void platform.shareUrl(targetUrl).catch((error) =>
+              setError(String(error))
+            );
+          },
+        },
+        {
+          id: "desktop-site",
+          // State suffix follows the per-site preference, matching the
+          // checked/unchecked convention other browsers show for this row.
+          label: pageOrigin
+            ? `${tr("chrome.desktopSite")} · ${tr(
+                (browser.config?.sites.find(
+                  (entry) => entry.origin === pageOrigin
+                )?.desktop ?? true)
+                  ? "common.on"
+                  : "common.off"
+              )}`
+            : tr("chrome.desktopSite"),
+          icon: "window",
+          disabled: (() => {
+            const tab = state?.tabs.find((tab) => tab.id === target);
+            return (
+              !tab ||
+              tab.private ||
+              targetUrl === NEW_TAB_URL ||
+              !pageOrigin
+            );
+          })(),
+          onPress: () => {
+            if (!target || !pageOrigin) return;
+            const site = browser.config?.sites.find(
+              (entry) => entry.origin === pageOrigin
+            );
+            void browser.saveConfig(
+              updateSitePreference(pageOrigin, {
+                desktop: !(site?.desktop ?? true),
+              })
+            )
+              .then(() => platform.retryTab(target))
+              .catch((error) => setError(String(error)));
+          },
+        },
+        {
+          id: "capture-share",
+          label: tr("chrome.captureShare"),
+          icon: "copy",
+          disabled: (() => {
+            const current = state?.tabs.find((tab) => tab.id === target);
+            return (
+              !current ||
+              current.private ||
+              current.suspended ||
+              current.url === NEW_TAB_URL
+            );
+          })(),
+          onPress: () => registry.execute("browser.captureShare"),
         },
         {
           id: "picture-in-picture",
@@ -3031,9 +3240,9 @@ function BrowserApp() {
                         disabled={!canGoForward}
                       />
                       <IconButton
-                        label={tr("chrome.reload")}
-                        icon="reload"
-                        onPress={() => invoke(Commands.reload)}
+                        label={tr(targetLoading ? "chrome.stop" : "chrome.reload")}
+                        icon={targetLoading ? "close" : "reload"}
+                        onPress={() => invoke(targetLoading ? Commands.stop : Commands.reload)}
                       />
                     </View>
                     {activePrivate && (
@@ -3457,53 +3666,89 @@ function BrowserApp() {
                     />
                   </AnimatedView>
                   <View className={c.sidebarBottom}>
-                    <IconButton
-                      label={tr("chrome.androidHome")}
-                      icon="home"
-                      onPress={goHome}
-                    />
-                    <ScrollView
-                      horizontal
-                      showsHorizontalScrollIndicator={false}
-                      className={c.spaceRailScroll}
-                      contentContainerClassName={c.spaceRail}
-                    >
-                      {(state?.workspaces ?? []).map((workspace) => (
-                        <SidebarPressable
-                          key={workspace.id}
-                          accessibilityRole="button"
-                          accessibilityLabel={tr("chrome.switchSpace", {
-                            space: workspace.name,
-                          })}
-                          accessibilityState={{
-                            selected: workspace.id === state?.activeWorkspaceId,
-                          }}
-                          hitSlop={8}
-                          className={cn(
-                            c.spaceChip,
-                            workspace.id === state?.activeWorkspaceId &&
-                              c.spaceChipActive,
-                            "active:opacity-pressed"
-                          )}
-                          onPress={() => switchSpace(workspace.id)}
-                          onLongPress={() => setSpaceSwitcher(true)}
+                    {selectionMode ? (
+                      <>
+                        <IconButton
+                          label={tr("common.cancel")}
+                          icon="close"
+                          onPress={exitSelectionMode}
+                        />
+                        <Text
+                          numberOfLines={1}
+                          accessibilityRole="text"
+                          className="flex-1 text-center text-[13px] font-semibold text-ink"
                         >
-                          <ChromeIcon
-                            className={cn(
-                              "size-[17px]",
-                              workspace.id === state?.activeWorkspaceId
-                                ? "text-ink"
-                                : "text-ink-muted"
-                            )}
-                            name="space"
-                          />
-                          {workspace.id === state?.activeWorkspaceId && (
-                            <View className={c.spaceIndicator} />
-                          )}
-                        </SidebarPressable>
-                      ))}
-                    </ScrollView>
-                    <SidebarPressable
+                          {tr("chrome.selectionCount", {
+                            count: selectedTabIds.size,
+                          })}
+                        </Text>
+                        <IconButton
+                          label={tr("chrome.selectionClose")}
+                          icon="trash"
+                          onPress={closeSelectedTabs}
+                          disabled={
+                            batchCloseTargets(
+                              [...selectedTabIds],
+                              state?.tabs ?? []
+                            ).length === 0
+                          }
+                        />
+                        <IconButton
+                          label={tr("chrome.selectionMove")}
+                          icon="space"
+                          onPress={() => setSelectionMoveMenu(true)}
+                        />
+                      </>
+                    ) : (
+                      <>
+                        <IconButton
+                          label={tr("chrome.androidHome")}
+                          icon="home"
+                          onPress={goHome}
+                        />
+                        <ScrollView
+                          horizontal
+                          showsHorizontalScrollIndicator={false}
+                          className={c.spaceRailScroll}
+                          contentContainerClassName={c.spaceRail}
+                        >
+                          {(state?.workspaces ?? []).map((workspace) => (
+                            <SidebarPressable
+                              key={workspace.id}
+                              accessibilityRole="button"
+                              accessibilityLabel={tr("chrome.switchSpace", {
+                                space: workspace.name,
+                              })}
+                              accessibilityState={{
+                                selected:
+                                  workspace.id === state?.activeWorkspaceId,
+                              }}
+                              hitSlop={8}
+                              className={cn(
+                                c.spaceChip,
+                                workspace.id === state?.activeWorkspaceId &&
+                                  c.spaceChipActive,
+                                "active:opacity-pressed"
+                              )}
+                              onPress={() => switchSpace(workspace.id)}
+                              onLongPress={() => setSpaceSwitcher(true)}
+                            >
+                              <ChromeIcon
+                                className={cn(
+                                  "size-[17px]",
+                                  workspace.id === state?.activeWorkspaceId
+                                    ? "text-ink"
+                                    : "text-ink-muted"
+                                )}
+                                name="space"
+                              />
+                              {workspace.id === state?.activeWorkspaceId && (
+                                <View className={c.spaceIndicator} />
+                              )}
+                            </SidebarPressable>
+                          ))}
+                        </ScrollView>
+                        <SidebarPressable
                       accessibilityRole="button"
                       accessibilityLabel={tr("chrome.settings")}
                       className={c.iconButton}
@@ -3530,6 +3775,8 @@ function BrowserApp() {
                     >
                       <ChromeIcon className={cn("size-[20px]")} name="plus" />
                     </SidebarPressable>
+                      </>
+                    )}
                   </View>
                 </SidebarLayer>
                 <SidebarLayer
@@ -3769,6 +4016,11 @@ function BrowserApp() {
                         icon="forward"
                         onPress={() => invoke(Commands.goForward)}
                         disabled={!canGoForward}
+                      />
+                      <IconButton
+                        label={tr(targetLoading ? "chrome.stop" : "chrome.reload")}
+                        icon={targetLoading ? "close" : "reload"}
+                        onPress={() => invoke(targetLoading ? Commands.stop : Commands.reload)}
                       />
                       <AddressTrigger
                         compact
@@ -4122,7 +4374,30 @@ function BrowserApp() {
                   anchor={ctxMenuAnchor}
                   workspaces={state.workspaces}
                   onCloseTab={() => closeTab(menuTab.id)}
-                  onSplit={() => setSplitPickerTabId(menuTab.id)}
+                  onRename={
+                    menuTab
+                      ? () => {
+                          setCtxMenuTabId(null);
+                          setRenameTab({
+                            id: menuTab.id,
+                            value: menuTab.customTitle || menuTab.title,
+                          });
+                        }
+                      : undefined
+                  }
+                  onEnterSelection={
+                    menuTab
+                      ? () => {
+                          setCtxMenuTabId(null);
+                          setSelectionMode(true);
+                          setSelectedTabIds(new Set([menuTab.id]));
+                        }
+                      : undefined
+                  }
+                  onSplit={() => {
+                    exitSelectionMode();
+                    setSplitPickerTabId(menuTab.id);
+                  }}
                   onCopyLink={() => {
                     platform.copyToClipboard(menuTab.url);
                     flashNotice(tr("chrome.linkCopied"));
@@ -4370,6 +4645,18 @@ function BrowserApp() {
                   />
                 ))
             )}
+            {selectionMoveMenu && (
+              <ActionMenu
+                title={tr("chrome.selectionMoveTitle")}
+                items={(state?.workspaces ?? []).map((workspace) => ({
+                  id: workspace.id,
+                  label: workspace.name,
+                  icon: "space",
+                  onPress: () => moveSelectedTabs(workspace.id),
+                }))}
+                onClose={() => setSelectionMoveMenu(false)}
+              />
+            )}
             {sheet(
               !!splitPickerTabId,
               () => setSplitPickerTabId(null),
@@ -4456,7 +4743,11 @@ function BrowserApp() {
               splitGroupDialog === "save" && (
                 <View className={cn(c.dialog, c.settingsDialog)}>
                   <Text className={c.dialogTitle}>
-                    {tr("splitGroup.saveTitle")}
+                    {tr(
+                      pendingSplitSave.current?.splitGroupId
+                        ? "splitGroup.renameTitle"
+                        : "splitGroup.saveTitle"
+                    )}
                   </Text>
                   <Text className={c.dialogHelp}>
                     {tr("splitGroup.nameLabel")}
@@ -4472,6 +4763,33 @@ function BrowserApp() {
                     label={tr("splitGroup.save")}
                     disabled={!splitGroupName.trim()}
                     onPress={confirmSplitGroupSave}
+                  />
+                </View>
+              )
+            )}
+            {sheet(
+              !!renameTab,
+              () => setRenameTab(null),
+              renameTab && (
+                <View className={cn(c.dialog, c.settingsDialog)}>
+                  <Text className={c.dialogTitle}>
+                    {tr("chrome.renameTab")}
+                  </Text>
+                  <TextInput
+                    accessibilityLabel={tr("chrome.renameTab")}
+                    className={c.commandInput}
+                    value={renameTab.value}
+                    onChangeText={(value) =>
+                      setRenameTab((current) =>
+                        current ? { ...current, value } : current
+                      )
+                    }
+                    autoFocus
+                  />
+                  <Button
+                    label={tr("common.save")}
+                    disabled={!renameTab.value.trim()}
+                    onPress={confirmTabRename}
                   />
                 </View>
               )
@@ -4507,6 +4825,16 @@ function BrowserApp() {
                             <Text numberOfLines={1} className={c.optionTitle}>
                               {group.name}
                             </Text>
+                          </Pressable>
+                          <Pressable
+                            accessibilityRole="button"
+                            accessibilityLabel={tr("splitGroup.rename", {
+                              name: group.name,
+                            })}
+                            className="size-[28px] items-center justify-center rounded-[8px] active:bg-sunken"
+                            onPress={() => openSplitGroupRename(group)}
+                          >
+                            <ChromeIcon name="edit" size={14} className="text-ink-muted" />
                           </Pressable>
                           <Pressable
                             accessibilityRole="button"
@@ -4657,7 +4985,7 @@ function BrowserApp() {
                           key={tab.id}
                           accessibilityRole="button"
                           accessibilityLabel={tr("chrome.favoriteLabel", {
-                            name: tab.title || tab.url,
+                            name: tab.customTitle || tab.title || tab.url,
                           })}
                           className={cn(
                             c.quickOpenTile,
@@ -4671,7 +4999,7 @@ function BrowserApp() {
                           <View className={c.quickOpenTileIcon}>
                             <Favicon
                               url={tab.url}
-                              fallback={(tab.title || tab.url)
+                              fallback={(tab.customTitle || tab.title || tab.url)
                                 .slice(0, 1)
                                 .toUpperCase()}
                               size={22}
@@ -4683,7 +5011,7 @@ function BrowserApp() {
                             maxFontSizeMultiplier={1.35}
                             className={c.quickOpenTileLabel}
                           >
-                            {tab.title || tab.url}
+                            {tab.customTitle || tab.title || tab.url}
                           </Text>
                         </Pressable>
                       ))}
@@ -5542,7 +5870,7 @@ function BrowserApp() {
                       title: tr("category.privacy"),
                       description: tr("category.privacyDetail"),
                       keywords:
-                        "cookies storage cache clear standard strict tracking protection 개인정보 보안 쿠키 추적 데이터 삭제",
+                        "cookies storage cache clear standard strict tracking protection dns doh secure resolver 개인정보 보안 쿠키 추적 데이터 삭제",
                       content: (
                         <>
                           <BrowserToolsPanel
@@ -5815,6 +6143,11 @@ function BrowserApp() {
           </SafeAreaView>
           <BrowserContentMenu
             request={browser.context}
+            sourcePrivate={
+              !!browser.context &&
+              !!state?.tabs.find((tab) => tab.id === browser.context!.tabId)
+                ?.private
+            }
             onClose={browser.closeContext}
             onChoose={browser.selectContext}
           />
