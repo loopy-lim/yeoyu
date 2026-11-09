@@ -36,7 +36,7 @@ export type SettingsSaveStatus = "loading" | "saving" | "saved" | "failed";
 
 const c = {
   dialog:
-    "w-[94%] max-w-[1040px] max-h-[94%] rounded-dialog bg-surface-elevated overflow-hidden",
+    "w-[94%] max-w-[1040px] max-h-[94%] rounded-dialog bg-surface-elevated border border-hairline overflow-hidden",
   headerScroll: "max-h-[34%] grow-0 shrink",
   header: "px-[20px] py-xxl gap-lg border-hairline border-b-hairline-width",
   row: "flex-row items-center gap-xxl",

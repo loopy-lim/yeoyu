@@ -22,12 +22,12 @@ const pageTitle = (page: { title: string; url: string }) =>
   page.title || sidebarAddressLabel(page.url) || "New tab";
 const compactCount = (count: number) => (count > 99 ? "99+" : String(count));
 const splitItemVariants = cva(
-  "flex-row items-center bg-pill rounded-control active:bg-field-on-chrome",
+  "flex-row items-center bg-field-on-chrome rounded-control active:bg-pill",
   {
     variants: {
       collapsed: {
         true: "size-input justify-center",
-        false: "min-h-[52px] px-lg py-md gap-lg my-[3px]",
+        false: "min-h-[52px] px-lg py-md gap-lg my-sm",
       },
     },
   }

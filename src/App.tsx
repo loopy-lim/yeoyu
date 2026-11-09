@@ -3692,7 +3692,7 @@ function BrowserApp() {
                                       }}
                                       hitSlop={4}
                                       className={cn(
-                                        "size-[20px] items-center justify-center rounded-full border",
+                                        "size-[20px] items-center justify-center rounded-control border",
                                         active
                                           ? "border-ink"
                                           : "border-transparent"

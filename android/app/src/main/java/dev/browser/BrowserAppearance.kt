@@ -73,7 +73,7 @@ object BrowserAppearance {
         // brightness's background while waiting for the next resolved theme payload.
         val background = chrome.takeIf { chromeMode == resolved } ?: Color.parseColor(
             if (dark) if (appearance == "warm") "#261d1e" else "#211c26"
-            else if (appearance == "warm") "#dfcfd1" else "#d9cedf"
+            else if (appearance == "warm") "#d6cfcf" else "#d2ced6"
         )
         val window = activity.window
         window.setBackgroundDrawable(ColorDrawable(background))

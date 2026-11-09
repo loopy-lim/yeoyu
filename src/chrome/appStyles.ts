@@ -27,7 +27,7 @@ export const appClasses = {
   favorites: "flex-row flex-wrap gap-md py-xs",
   favorite:
     "h-favorite rounded-control items-center justify-center bg-field-on-chrome",
-  favoriteActive: "bg-pill shadow-favorite-active",
+  favoriteActive: "bg-pill",
   favoriteIcon: "w-[24px] h-[24px] items-center justify-center",
   favoriteInitial: "text-ink-muted text-body font-extrabold",
   separator: "h-[1px] my-xl bg-hairline-on-chrome",
@@ -72,14 +72,14 @@ export const appClasses = {
     "h-tab-row px-xl rounded-control flex-row items-center gap-lg",
   bookmarkTreeActive: "bg-pill",
   bookmarkTreeIndent: "pl-xl",
-  folderChildren: "ml-[20px] border-l border-l-hairline-on-chrome mb-[3px]",
+  folderChildren: "ml-[20px] border-l border-l-hairline-on-chrome mb-sm",
   emptyFolder: "px-xxl py-md text-ink-muted text-body",
   bookmarkDisclosure: "w-[10px] text-ink-faint text-micro font-bold",
   profileInitial: "text-white text-body font-extrabold",
   chevron: "text-ink-faint text-icon-size",
   content:
-    "flex-1 ml-sm border border-card-border rounded-card overflow-hidden bg-surface shadow-content",
-  contentFullscreen: "ml-0 border-0 rounded-none shadow-content-fullscreen",
+    "flex-1 ml-sm border border-card-border rounded-card overflow-hidden bg-surface",
+  contentFullscreen: "ml-0 border-0 rounded-none",
   paneFullscreen: "border-0",
   canvasToolbar:
     "h-toolbar px-xxl flex-row items-center border-b-hairline-width border-b-hairline bg-surface-elevated",
@@ -116,14 +116,14 @@ export const appClasses = {
   newTabGrid: "flex-row flex-wrap gap-xxxl",
   newTabTile: "w-[80px] items-center gap-md",
   newTabTileIcon:
-    "w-[46px] h-[46px] rounded-tile items-center justify-center bg-white shadow-new-tab-tile-icon",
+    "w-[46px] h-[46px] rounded-tile items-center justify-center bg-sunken border border-hairline",
   newTabTileLabel: "text-ink-muted text-small font-semibold",
   newTabHint: "text-ink-faint text-body text-center",
   quickOpenDialog: "w-[90%] max-w-[560px] gap-xl",
   quickOpenRow: "flex-row gap-xl py-xs",
   quickOpenTile: "w-[86px] items-center gap-sm",
   quickOpenTileIcon:
-    "w-[36px] h-[36px] rounded-field items-center justify-center bg-white shadow-quick-open-tile-icon",
+    "w-[36px] h-[36px] rounded-field items-center justify-center bg-sunken border border-hairline",
   quickOpenTileLabel: "text-ink-muted text-small font-semibold",
   quickOpenHint: "text-ink-faint text-body",
   railContent: "items-center gap-xs pb-lg",
@@ -135,7 +135,7 @@ export const appClasses = {
   railTabActive: "bg-pill",
   railSeparator: "w-[16px] h-[1px] my-md bg-hairline-on-chrome",
   minis: "absolute right-xxxl bottom-xxxl gap-lg",
-  mini: "w-[310px] h-[208px] bg-white rounded-tile overflow-hidden border border-card-border shadow-mini",
+  mini: "w-[310px] h-[208px] bg-surface-elevated rounded-tile overflow-hidden border border-card-border shadow-mini",
   miniHeader:
     "h-[36px] pl-xxl pr-sm flex-row items-center bg-white border-b-hairline-width border-b-hairline",
   miniTitle: "flex-1 text-ink-muted text-small font-semibold",
@@ -144,7 +144,7 @@ export const appClasses = {
   overlayTouch: "absolute inset-0 justify-center items-center",
   sheetUnderlay: "absolute inset-0",
   dialog:
-    "w-[90%] max-w-[620px] max-h-[78%] p-xxxl bg-surface-elevated rounded-dialog gap-lg shadow-dialog",
+    "w-[90%] max-w-[620px] max-h-[78%] p-xxxl bg-surface-elevated rounded-dialog gap-lg border border-hairline shadow-dialog",
   dialogTitle: "text-ink text-title font-bold",
   dialogHelp: "text-ink-muted text-body leading-xxxl",
   dialogScroll: "grow-0 overflow-hidden",
