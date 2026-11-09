@@ -1918,32 +1918,34 @@ function BrowserApp() {
       shift: false,
       command: "space.next",
     },
+    {
+      key: "DPAD_UP",
+      meta: true,
+      ctrl: false,
+      alt: true,
+      shift: false,
+      command: "tab.prev",
+    },
+    {
+      key: "DPAD_DOWN",
+      meta: true,
+      ctrl: false,
+      alt: true,
+      shift: false,
+      command: "tab.next",
+    },
   ];
   useEffect(() => {
     if (!state || keymapMigrated.current) return;
     keymapMigrated.current = true;
-    let bindings = [...(state.keyBindings ?? [])];
+    // Rust restore owns remaps + keymapVersion bumps. Once at v3, do not
+    // rewrite Shift+N or re-append Arc chords (preserves user removals).
+    if ((state.keymapVersion ?? 0) >= 3) return;
+    const bindings = [...(state.keyBindings ?? [])];
     const additions: KeyBinding[] = [];
     if (!bindings.some((binding) => binding.key === "TAB"))
       additions.push(...tabCycleBindings);
-    // Remap leftover pre-v2 Shift+N window chords in-place when the chord is
-    // still the old default shape (do not touch user remaps to other commands).
-    bindings = bindings.map((binding) => {
-      if (
-        binding.key !== "n" ||
-        binding.command !== "window.new" ||
-        !binding.shift
-      )
-        return binding;
-      if (
-        (!binding.alt && binding.meta !== binding.ctrl) ||
-        (binding.alt && !binding.meta && !binding.ctrl)
-      )
-        return { ...binding, command: "private.newTab" };
-      return binding;
-    });
-    // Append only chords the snapshot keymap is actually missing, so an
-    // earlier partial migration still receives the Alt fallback.
+    // Append only free chords. Shift+N window→private stays in Rust migration.
     const occupied = (binding: KeyBinding) =>
       bindings.some(
         (existing) =>
@@ -1956,14 +1958,7 @@ function BrowserApp() {
     additions.push(
       ...arcHostNBindings.filter((binding) => !occupied(binding))
     );
-    const next = additions.length ? [...bindings, ...additions] : bindings;
-    const changed =
-      additions.length > 0 ||
-      next.some(
-        (binding, index) =>
-          binding.command !== (state.keyBindings ?? [])[index]?.command
-      );
-    if (changed) run(controller.keymap(next));
+    if (additions.length) run(controller.keymap([...bindings, ...additions]));
   }, [state]);
 
   // The trailing snapshot save is forced to disk when the app backgrounds

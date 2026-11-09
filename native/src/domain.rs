@@ -1611,7 +1611,10 @@ fn arc_host_extra_shortcuts() -> Vec<KeyBinding> {
 
 fn ensure_key_bindings(bindings: &mut Vec<KeyBinding>, wanted: &[KeyBinding]) {
     for binding in wanted {
-        if bindings.iter().any(|existing| same_key_chord(existing, binding)) {
+        if bindings
+            .iter()
+            .any(|existing| same_key_chord(existing, binding))
+        {
             continue;
         }
         bindings.push(binding.clone());
@@ -1831,10 +1834,20 @@ pub fn default_key_bindings() -> Vec<KeyBinding> {
     // light host is wired. Added after twin generation so ⌥ does not collapse
     // into the plain Ctrl+N window twin.
     bindings.push(KeyBinding::command(
-        "n", true, false, true, false, "window.new",
+        "n",
+        true,
+        false,
+        true,
+        false,
+        "window.new",
     ));
     bindings.push(KeyBinding::command(
-        "n", false, true, true, false, "window.new",
+        "n",
+        false,
+        true,
+        true,
+        false,
+        "window.new",
     ));
     // TB710FU-class devices swallow Ctrl/Cmd+Shift+N before the app;
     // Alt+Shift+N mirrors that private chord (kept out of the Meta list so
@@ -1860,20 +1873,45 @@ pub fn default_key_bindings() -> Vec<KeyBinding> {
         "DPAD_UP", true, false, true, false, "tab.prev",
     ));
     bindings.push(KeyBinding::command(
-        "DPAD_DOWN", true, false, true, false, "tab.next",
+        "DPAD_DOWN",
+        true,
+        false,
+        true,
+        false,
+        "tab.next",
     ));
     // Arc ⌥⌘←/→ Space switch.
     bindings.push(KeyBinding::command(
-        "DPAD_LEFT", true, false, true, false, "space.prev",
+        "DPAD_LEFT",
+        true,
+        false,
+        true,
+        false,
+        "space.prev",
     ));
     bindings.push(KeyBinding::command(
-        "DPAD_LEFT", false, true, true, false, "space.prev",
+        "DPAD_LEFT",
+        false,
+        true,
+        true,
+        false,
+        "space.prev",
     ));
     bindings.push(KeyBinding::command(
-        "DPAD_RIGHT", true, false, true, false, "space.next",
+        "DPAD_RIGHT",
+        true,
+        false,
+        true,
+        false,
+        "space.next",
     ));
     bindings.push(KeyBinding::command(
-        "DPAD_RIGHT", false, true, true, false, "space.next",
+        "DPAD_RIGHT",
+        false,
+        true,
+        true,
+        false,
+        "space.next",
     ));
     bindings.push(KeyBinding::command(
         "DPAD_LEFT",
@@ -1893,10 +1931,20 @@ pub fn default_key_bindings() -> Vec<KeyBinding> {
     ));
     // Arc ⌥⇧⌘C copies the URL as Markdown.
     bindings.push(KeyBinding::command(
-        "c", true, false, true, true, "browser.copyUrlMarkdown",
+        "c",
+        true,
+        false,
+        true,
+        true,
+        "browser.copyUrlMarkdown",
     ));
     bindings.push(KeyBinding::command(
-        "c", false, true, true, true, "browser.copyUrlMarkdown",
+        "c",
+        false,
+        true,
+        true,
+        true,
+        "browser.copyUrlMarkdown",
     ));
     // Plus is shifted to EQUALS on most Android keyboards; bind both chords.
     bindings.push(KeyBinding::command(

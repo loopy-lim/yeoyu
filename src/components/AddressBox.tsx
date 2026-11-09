@@ -364,7 +364,9 @@ export const AddressBox = forwardRef<
                   highlight === index && "bg-sunken"
                 )}
               >
-                {command || siteHint ? (
+                {command ? (
+                  <ChromeIcon name="chevronRight" size={16} />
+                ) : siteHint ? (
                   <ChromeIcon name="search" size={16} color={t.inkMuted} />
                 ) : (
                   <Favicon
