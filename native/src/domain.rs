@@ -5,6 +5,9 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 pub const SNAPSHOT_VERSION: u32 = 1;
+/// Bumped when default chords change in a way that existing installs must
+/// remap. v1: ⌘D favorites→pins. v2: Arc N-family. v3: clear/zoom/space/markdown.
+pub const CURRENT_KEYMAP_VERSION: u32 = 3;
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
@@ -215,7 +218,7 @@ impl Default for BrowserState {
                 active_workspace_id: "workspace-1".into(),
                 active_tab_id: None,
                 key_bindings: default_key_bindings(),
-                keymap_version: 1,
+                keymap_version: CURRENT_KEYMAP_VERSION,
             },
             next_workspace_id: 2,
             next_tab_id: 1,
@@ -707,7 +710,17 @@ impl BrowserState {
             migrate_legacy_pin_shortcuts(&mut candidate.key_bindings);
             candidate.keymap_version = 1;
         }
+        // Exact legacy defaults must expand before N-family remaps so a
+        // 19-chord profile still matches migrate_legacy_default_keymap.
         migrate_legacy_default_keymap(&mut candidate.key_bindings);
+        if candidate.keymap_version < 2 {
+            migrate_arc_host_n_shortcuts(&mut candidate.key_bindings);
+            candidate.keymap_version = 2;
+        }
+        if candidate.keymap_version < CURRENT_KEYMAP_VERSION {
+            migrate_arc_host_extra_shortcuts(&mut candidate.key_bindings);
+            candidate.keymap_version = CURRENT_KEYMAP_VERSION;
+        }
         validate_snapshot(&candidate)?;
         candidate.revision = candidate
             .revision
@@ -1540,6 +1553,82 @@ fn migrate_legacy_pin_shortcuts(bindings: &mut [KeyBinding]) {
     }
 }
 
+/// Align the N-family with Arc macOS: ⌘N window, ⌘⇧N private, ⌥⌘N Little Arc
+/// (Yeoyu maps Little Arc to `window.new` until a dedicated light host exists).
+fn migrate_arc_host_n_shortcuts(bindings: &mut Vec<KeyBinding>) {
+    for binding in bindings.iter_mut() {
+        if !binding.key.eq_ignore_ascii_case("n") || binding.command != "window.new" {
+            continue;
+        }
+        // Former default: Meta/Ctrl+Shift+N opened a window instead of private.
+        if binding.shift && !binding.alt && binding.meta != binding.ctrl {
+            binding.command = "private.newTab".into();
+            continue;
+        }
+        // Device fallback that mirrored the swallowed Shift+N window chord.
+        if binding.shift && binding.alt && !binding.meta && !binding.ctrl {
+            binding.command = "private.newTab".into();
+        }
+    }
+    ensure_key_bindings(
+        bindings,
+        &[
+            KeyBinding::command("n", true, false, false, false, "window.new"),
+            KeyBinding::command("n", false, true, false, false, "window.new"),
+            KeyBinding::command("n", true, false, true, false, "window.new"),
+            KeyBinding::command("n", false, true, true, false, "window.new"),
+        ],
+    );
+}
+
+/// Append Arc host chords introduced after keymap v2 when the chord is free.
+fn migrate_arc_host_extra_shortcuts(bindings: &mut Vec<KeyBinding>) {
+    ensure_key_bindings(bindings, &arc_host_extra_shortcuts());
+}
+
+fn arc_host_extra_shortcuts() -> Vec<KeyBinding> {
+    vec![
+        KeyBinding::command("k", true, false, false, true, "tabs.clearUnpinned"),
+        KeyBinding::command("k", false, true, false, true, "tabs.clearUnpinned"),
+        KeyBinding::command("PLUS", true, false, false, false, "browser.zoomIn"),
+        KeyBinding::command("PLUS", false, true, false, false, "browser.zoomIn"),
+        KeyBinding::command("EQUALS", true, false, false, false, "browser.zoomIn"),
+        KeyBinding::command("EQUALS", false, true, false, false, "browser.zoomIn"),
+        KeyBinding::command("MINUS", true, false, false, false, "browser.zoomOut"),
+        KeyBinding::command("MINUS", false, true, false, false, "browser.zoomOut"),
+        KeyBinding::command("0", true, false, false, false, "browser.zoomReset"),
+        KeyBinding::command("0", false, true, false, false, "browser.zoomReset"),
+        KeyBinding::command("c", true, false, true, true, "browser.copyUrlMarkdown"),
+        KeyBinding::command("c", false, true, true, true, "browser.copyUrlMarkdown"),
+        KeyBinding::command("DPAD_LEFT", true, false, true, false, "space.prev"),
+        KeyBinding::command("DPAD_LEFT", false, true, true, false, "space.prev"),
+        KeyBinding::command("DPAD_RIGHT", true, false, true, false, "space.next"),
+        KeyBinding::command("DPAD_RIGHT", false, true, true, false, "space.next"),
+        KeyBinding::command("DPAD_UP", true, false, true, false, "tab.prev"),
+        KeyBinding::command("DPAD_DOWN", true, false, true, false, "tab.next"),
+    ]
+}
+
+fn ensure_key_bindings(bindings: &mut Vec<KeyBinding>, wanted: &[KeyBinding]) {
+    for binding in wanted {
+        if bindings
+            .iter()
+            .any(|existing| same_key_chord(existing, binding))
+        {
+            continue;
+        }
+        bindings.push(binding.clone());
+    }
+}
+
+fn same_key_chord(left: &KeyBinding, right: &KeyBinding) -> bool {
+    left.key.eq_ignore_ascii_case(&right.key)
+        && left.meta == right.meta
+        && left.ctrl == right.ctrl
+        && left.alt == right.alt
+        && left.shift == right.shift
+}
+
 fn migrate_legacy_default_keymap(bindings: &mut Vec<KeyBinding>) {
     if bindings.len() != 19 {
         return;
@@ -1676,23 +1765,28 @@ pub fn default_key_bindings() -> Vec<KeyBinding> {
         KeyBinding::command("l", true, false, false, false, "location.focus"),
         KeyBinding::command("k", true, false, false, false, "commandPalette.open"),
         KeyBinding::command("r", true, false, false, false, "browser.reload"),
-        // Pin/unpin belongs to the current space; favorites are separate.
+        // Arc: ⌘D pins/unpins the current Space tab (not Favorites).
         KeyBinding::command("d", true, false, false, false, "pins.toggle"),
         KeyBinding::command("s", true, false, false, false, "sidebar.toggle"),
         KeyBinding::command("f", true, false, false, false, "find.open"),
         KeyBinding::command("y", true, false, false, false, "history.open"),
-        // Shifted twins of the base keys: reopen and copy-URL chords. Zoom
-        // stays unbound: GeckoView 155 exposes no programmatic zoom API.
+        // Shifted twins: reopen, copy URL, clear unpinned (Arc ⌘⇧K).
         KeyBinding::command("t", true, false, false, true, "tab.reopen"),
         KeyBinding::command("c", true, false, false, true, "browser.copyUrl"),
+        KeyBinding::command("k", true, false, false, true, "tabs.clearUnpinned"),
+        // Zoom uses text-scale (platform.zoom); split keeps Ctrl+Shift±.
+        KeyBinding::command("PLUS", true, false, false, false, "browser.zoomIn"),
+        KeyBinding::command("EQUALS", true, false, false, false, "browser.zoomIn"),
+        KeyBinding::command("MINUS", true, false, false, false, "browser.zoomOut"),
+        KeyBinding::command("0", true, false, false, false, "browser.zoomReset"),
         // Tab-key cycling: Cmd/Ctrl+Tab next, +Shift previous (stepTab wraps).
         // Android may reserve Meta+Tab for app switching, so the generated
         // Ctrl twins below are the reliable path on keyboard devices.
         KeyBinding::command("TAB", true, false, false, false, "tab.next"),
         KeyBinding::command("TAB", true, false, false, true, "tab.prev"),
-        // OS windows: Cmd/Ctrl+Shift+N mirrors desktop browsers' new window.
-        // The Ctrl twin is generated below with the other Meta bindings.
-        KeyBinding::command("n", true, false, false, true, "window.new"),
+        // Arc N-family: ⌘N new window, ⌘⇧N private/incognito.
+        KeyBinding::command("n", true, false, false, false, "window.new"),
+        KeyBinding::command("n", true, false, false, true, "private.newTab"),
     ];
     // TB710FU-class devices swallow Ctrl/Cmd+Shift+T before the app; Alt+Shift+T
     // is the device-friendly reopen chord (verified via InputRouter events). It
@@ -1736,16 +1830,35 @@ pub fn default_key_bindings() -> Vec<KeyBinding> {
     bindings.push(KeyBinding::command(
         "DPAD_UP", false, true, true, false, "tab.prev",
     ));
+    // Little Arc is ⌥⌘N on macOS; Yeoyu reuses window.new until a dedicated
+    // light host is wired. Added after twin generation so ⌥ does not collapse
+    // into the plain Ctrl+N window twin.
+    bindings.push(KeyBinding::command(
+        "n",
+        true,
+        false,
+        true,
+        false,
+        "window.new",
+    ));
+    bindings.push(KeyBinding::command(
+        "n",
+        false,
+        true,
+        true,
+        false,
+        "window.new",
+    ));
     // TB710FU-class devices swallow Ctrl/Cmd+Shift+N before the app;
-    // Alt+Shift+N is the device-friendly new-window chord (kept out of the
-    // Meta list above so twin generation cannot duplicate it).
+    // Alt+Shift+N mirrors that private chord (kept out of the Meta list so
+    // twin generation cannot duplicate it).
     bindings.push(KeyBinding::command(
         "n",
         false,
         false,
         true,
         true,
-        "window.new",
+        "private.newTab",
     ));
     bindings.push(KeyBinding::command(
         "DPAD_DOWN",
@@ -1754,6 +1867,51 @@ pub fn default_key_bindings() -> Vec<KeyBinding> {
         true,
         false,
         "tab.next",
+    ));
+    // Arc ⌥⌘↑/↓ tab switch (Meta twin of the existing Ctrl+Alt DPAD chords).
+    bindings.push(KeyBinding::command(
+        "DPAD_UP", true, false, true, false, "tab.prev",
+    ));
+    bindings.push(KeyBinding::command(
+        "DPAD_DOWN",
+        true,
+        false,
+        true,
+        false,
+        "tab.next",
+    ));
+    // Arc ⌥⌘←/→ Space switch.
+    bindings.push(KeyBinding::command(
+        "DPAD_LEFT",
+        true,
+        false,
+        true,
+        false,
+        "space.prev",
+    ));
+    bindings.push(KeyBinding::command(
+        "DPAD_LEFT",
+        false,
+        true,
+        true,
+        false,
+        "space.prev",
+    ));
+    bindings.push(KeyBinding::command(
+        "DPAD_RIGHT",
+        true,
+        false,
+        true,
+        false,
+        "space.next",
+    ));
+    bindings.push(KeyBinding::command(
+        "DPAD_RIGHT",
+        false,
+        true,
+        true,
+        false,
+        "space.next",
     ));
     bindings.push(KeyBinding::command(
         "DPAD_LEFT",
@@ -1770,6 +1928,23 @@ pub fn default_key_bindings() -> Vec<KeyBinding> {
         true,
         false,
         "browser.forward",
+    ));
+    // Arc ⌥⇧⌘C copies the URL as Markdown.
+    bindings.push(KeyBinding::command(
+        "c",
+        true,
+        false,
+        true,
+        true,
+        "browser.copyUrlMarkdown",
+    ));
+    bindings.push(KeyBinding::command(
+        "c",
+        false,
+        true,
+        true,
+        true,
+        "browser.copyUrlMarkdown",
     ));
     // Plus is shifted to EQUALS on most Android keyboards; bind both chords.
     bindings.push(KeyBinding::command(

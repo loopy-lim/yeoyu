@@ -586,12 +586,21 @@ fn legacy_default_keymap_migration_is_idempotent_and_later_customization_stays_c
 #[test]
 fn defaults_cover_browser_commands_and_tab_slots() {
     let snapshot = BrowserState::default().snapshot();
-    // 54 base chords + 4 Tab-cycling bindings (Cmd/Ctrl+Tab, +Shift twins)
-    // + the OS-window chord with its generated Ctrl twin and Alt fallback.
-    assert_eq!(snapshot.key_bindings.len(), 61);
+    // Arc host set: prior 61 + N-family (+4) + clear/zoom (+10) + ⌥⌘ tab/space
+    // (+6) + markdown copy (+2).
+    assert_eq!(snapshot.key_bindings.len(), 83);
+    assert_eq!(snapshot.keymap_version, 3);
     for command in [
         "tab.new",
         "window.new",
+        "private.newTab",
+        "tabs.clearUnpinned",
+        "browser.zoomIn",
+        "browser.zoomOut",
+        "browser.zoomReset",
+        "browser.copyUrlMarkdown",
+        "space.next",
+        "space.prev",
         "tab.close",
         "location.focus",
         "commandPalette.open",
@@ -611,6 +620,124 @@ fn defaults_cover_browser_commands_and_tab_slots() {
                 .key_bindings
                 .iter()
                 .any(|binding| binding.command == format!("tab.activate.{slot}"))
+        );
+    }
+}
+
+#[test]
+fn defaults_follow_arc_host_n_family() {
+    let snapshot = BrowserState::default().snapshot();
+    let command = |meta: bool, ctrl: bool, alt: bool, shift: bool| {
+        snapshot
+            .key_bindings
+            .iter()
+            .find(|binding| {
+                binding.key.eq_ignore_ascii_case("n")
+                    && binding.meta == meta
+                    && binding.ctrl == ctrl
+                    && binding.alt == alt
+                    && binding.shift == shift
+            })
+            .map(|binding| binding.command.as_str())
+    };
+    assert_eq!(command(true, false, false, false), Some("window.new"));
+    assert_eq!(command(false, true, false, false), Some("window.new"));
+    assert_eq!(command(true, false, false, true), Some("private.newTab"));
+    assert_eq!(command(false, true, false, true), Some("private.newTab"));
+    assert_eq!(command(true, false, true, false), Some("window.new"));
+    assert_eq!(command(false, true, true, false), Some("window.new"));
+    assert_eq!(command(false, false, true, true), Some("private.newTab"));
+}
+
+#[test]
+fn keymap_v2_migrates_shift_n_window_chords_to_private_and_adds_plain_n() {
+    let mut state = BrowserState::default();
+    let mut saved = serde_json::to_value(state.snapshot()).unwrap();
+    saved["keymapVersion"] = serde_json::json!(1);
+    saved["keyBindings"] = serde_json::json!([
+        {"key":"n","meta":true,"ctrl":false,"alt":false,"shift":true,"command":"window.new"},
+        {"key":"n","meta":false,"ctrl":true,"alt":false,"shift":true,"command":"window.new"},
+        {"key":"n","meta":false,"ctrl":false,"alt":true,"shift":true,"command":"window.new"},
+        {"key":"t","meta":true,"ctrl":false,"alt":false,"shift":false,"command":"tab.new"}
+    ]);
+    let restored = state.restore(&saved.to_string()).unwrap();
+    assert_eq!(restored.keymap_version, 3);
+    let n = |meta: bool, ctrl: bool, alt: bool, shift: bool| {
+        restored
+            .key_bindings
+            .iter()
+            .find(|binding| {
+                binding.key.eq_ignore_ascii_case("n")
+                    && binding.meta == meta
+                    && binding.ctrl == ctrl
+                    && binding.alt == alt
+                    && binding.shift == shift
+            })
+            .map(|binding| binding.command.as_str())
+    };
+    assert_eq!(n(true, false, false, true), Some("private.newTab"));
+    assert_eq!(n(false, true, false, true), Some("private.newTab"));
+    assert_eq!(n(false, false, true, true), Some("private.newTab"));
+    assert_eq!(n(true, false, false, false), Some("window.new"));
+    assert_eq!(n(false, true, false, false), Some("window.new"));
+    assert_eq!(n(true, false, true, false), Some("window.new"));
+    assert_eq!(n(false, true, true, false), Some("window.new"));
+}
+
+#[test]
+fn keymap_v2_leaves_custom_shift_n_commands_alone() {
+    let mut state = BrowserState::default();
+    let mut saved = serde_json::to_value(state.snapshot()).unwrap();
+    saved["keymapVersion"] = serde_json::json!(1);
+    saved["keyBindings"] = serde_json::json!([
+        {"key":"n","meta":true,"ctrl":false,"alt":false,"shift":true,"command":"custom.keep"},
+        {"key":"n","meta":true,"ctrl":false,"alt":false,"shift":false,"command":"sidebar.toggle"}
+    ]);
+    let restored = state.restore(&saved.to_string()).unwrap();
+    assert_eq!(restored.keymap_version, 3);
+    assert_eq!(
+        restored
+            .key_bindings
+            .iter()
+            .find(|binding| binding.meta && binding.shift && binding.key == "n")
+            .map(|binding| binding.command.as_str()),
+        Some("custom.keep")
+    );
+    assert_eq!(
+        restored
+            .key_bindings
+            .iter()
+            .find(|binding| binding.meta && !binding.shift && !binding.alt && binding.key == "n")
+            .map(|binding| binding.command.as_str()),
+        Some("sidebar.toggle")
+    );
+}
+
+#[test]
+fn keymap_v3_appends_clear_zoom_space_and_markdown_chords() {
+    let mut state = BrowserState::default();
+    let mut saved = serde_json::to_value(state.snapshot()).unwrap();
+    saved["keymapVersion"] = serde_json::json!(2);
+    saved["keyBindings"] = serde_json::json!([
+        {"key":"t","meta":true,"ctrl":false,"alt":false,"shift":false,"command":"tab.new"}
+    ]);
+    let restored = state.restore(&saved.to_string()).unwrap();
+    assert_eq!(restored.keymap_version, 3);
+    for command in [
+        "tabs.clearUnpinned",
+        "browser.zoomIn",
+        "browser.zoomOut",
+        "browser.zoomReset",
+        "browser.copyUrlMarkdown",
+        "space.next",
+        "space.prev",
+    ] {
+        assert!(
+            restored
+                .key_bindings
+                .iter()
+                .any(|binding| binding.command == command),
+            "missing {command}"
         );
     }
 }

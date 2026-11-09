@@ -19,6 +19,7 @@ import { Favicon } from "@/components/Favicon";
 import { ChromeIcon } from "@/chrome/ChromeIcon";
 import { josaRo } from "@/i18n";
 import {
+  matchSiteSearchKeyword,
   normalizeInput,
   resolveSiteSearch,
   suggest,
@@ -58,12 +59,15 @@ interface Props {
 type Result =
   | { kind: "command"; command: ProductCommand }
   | { kind: "site"; url: string; label: string }
+  | { kind: "siteHint"; keyword: string; label: string }
   | { kind: "page"; page: Suggestion };
 const resultKey = (result: Result) =>
   result.kind === "command"
     ? `command:${result.command.id}`
     : result.kind === "site"
     ? `site:${result.url}`
+    : result.kind === "siteHint"
+    ? `siteHint:${result.keyword}`
     : `page:${result.page.source}:${result.page.url}`;
 
 /** URL/search, existing tabs and product commands share one keyboard selection model. */
@@ -117,8 +121,22 @@ export const AddressBox = forwardRef<
               : (props.siteSearches ?? []).find(
                   (candidate) => candidate.keyword === keyword
                 );
-          return siteUrl && siteEntry
-            ? [{ kind: "site" as const, url: siteUrl, label: siteEntry.label }]
+          if (siteUrl && siteEntry)
+            return [
+              { kind: "site" as const, url: siteUrl, label: siteEntry.label },
+            ];
+          const hint = matchSiteSearchKeyword(
+            siteQuery,
+            props.siteSearches ?? []
+          );
+          return hint
+            ? [
+                {
+                  kind: "siteHint" as const,
+                  keyword: hint.keyword,
+                  label: hint.label,
+                },
+              ]
             : [];
         })(),
         ...suggest(query, props.suggestions).map((page) => ({
@@ -177,12 +195,24 @@ export const AddressBox = forwardRef<
       props.onSubmit(result.url);
       return;
     }
+    if (result?.kind === "siteHint") {
+      setQuery(`${result.keyword} `);
+      updateSelection(null);
+      return;
+    }
     const url = normalizeInput(
       result?.kind === "page" ? result.page.url : query,
       props.engine,
       props.siteSearches
     );
     if (url) props.onSubmit(url);
+  };
+  const enterSiteSearchMode = () => {
+    const entry = matchSiteSearchKeyword(query, props.siteSearches ?? []);
+    if (!entry) return false;
+    setQuery(`${entry.keyword} `);
+    updateSelection(null);
+    return true;
   };
   const onKey = (key: string) => {
     const currentHighlight = results.findIndex(
@@ -200,7 +230,16 @@ export const AddressBox = forwardRef<
       updateSelection(
         currentHighlight > 0 ? resultKey(results[currentHighlight - 1]) : null
       );
-    else if (key === "Enter")
+    else if (key === "Tab") {
+      if (currentHighlight >= 0) {
+        const highlighted = results[currentHighlight];
+        if (highlighted?.kind === "siteHint") {
+          select(highlighted);
+          return;
+        }
+      }
+      enterSiteSearchMode();
+    } else if (key === "Enter")
       select(currentHighlight >= 0 ? results[currentHighlight] : undefined);
     else if (key === "Escape") props.onDismiss?.();
   };
@@ -292,8 +331,13 @@ export const AddressBox = forwardRef<
             const command = result.kind === "command" ? result.command : null;
             const page = result.kind === "page" ? result.page : null;
             const site = result.kind === "site" ? result : null;
+            const siteHint = result.kind === "siteHint" ? result : null;
             const title =
-              command?.title ?? site?.label ?? page!.title;
+              command?.title ??
+              site?.label ??
+              siteHint?.label ??
+              page?.title ??
+              "";
             return (
               <Pressable
                 key={resultKey(result)}
@@ -301,6 +345,11 @@ export const AddressBox = forwardRef<
                 accessibilityLabel={
                   command
                     ? title
+                    : siteHint
+                    ? tr("address.siteSearchHint", {
+                        label: title,
+                        keyword: siteHint.keyword,
+                      })
                     : tr("address.go", { title, ro: josaRo(title) })
                 }
                 accessibilityState={{ selected: highlight === index }}
@@ -317,6 +366,8 @@ export const AddressBox = forwardRef<
               >
                 {command ? (
                   <ChromeIcon name="chevronRight" size={16} />
+                ) : siteHint ? (
+                  <ChromeIcon name="search" size={16} color={t.inkMuted} />
                 ) : (
                   <Favicon
                     url={site?.url ?? page!.url}
@@ -333,6 +384,17 @@ export const AddressBox = forwardRef<
                   >
                     {title}
                   </Text>
+                  {siteHint && (
+                    <Text
+                      numberOfLines={1}
+                      maxFontSizeMultiplier={1.35}
+                      className={textVariants({ tone: "muted" })}
+                    >
+                      {tr("address.siteSearchTab", {
+                        keyword: siteHint.keyword,
+                      })}
+                    </Text>
+                  )}
                   {page && (
                     <Text
                       numberOfLines={1}

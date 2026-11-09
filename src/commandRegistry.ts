@@ -32,6 +32,10 @@ const labels = {
   "history.open": { title: "Open history", keywords: "visited" },
   "find.open": { title: "Find in page", keywords: "search text" },
   "browser.copyUrl": { title: "Copy page link", keywords: "url share" },
+  "browser.copyUrlMarkdown": {
+    title: "Copy page link as Markdown",
+    keywords: "url markdown md",
+  },
   "browser.captureShare": {
     title: "Share page as PDF",
     keywords: "capture pdf share save screenshot export",
@@ -39,6 +43,9 @@ const labels = {
   "browser.back": { title: "Go back" },
   "browser.forward": { title: "Go forward" },
   "browser.reload": { title: "Reload page", keywords: "refresh" },
+  "browser.zoomIn": { title: "Zoom in", keywords: "larger text scale" },
+  "browser.zoomOut": { title: "Zoom out", keywords: "smaller text scale" },
+  "browser.zoomReset": { title: "Reset zoom", keywords: "default text scale" },
   "sidebar.toggle": { title: "Show or hide sidebar" },
   "favorites.toggle": {
     title: "Add or remove Favorite",
@@ -48,6 +55,10 @@ const labels = {
   "tab.reset": {
     title: "Back to saved page",
     keywords: "reset pinned favorite",
+  },
+  "tabs.clearUnpinned": {
+    title: "Clear unpinned tabs",
+    keywords: "close ordinary today",
   },
   "browser.split": { title: "Open Split View", keywords: "side by side" },
   "browser.split.close": { title: "Close Split View", keywords: "unsplit" },
@@ -62,6 +73,8 @@ const labels = {
   "browser.focusPane.1": { title: "Focus first pane" },
   "browser.focusPane.2": { title: "Focus second pane" },
   "space.manage": { title: "Manage Spaces" },
+  "space.next": { title: "Next Space", keywords: "workspace" },
+  "space.prev": { title: "Previous Space", keywords: "workspace" },
   "settings.open": { title: "Open settings" },
   "window.new": { title: "New window", keywords: "second window" },
 } as const satisfies Record<string, Omit<ProductCommand, "id">>;
@@ -71,13 +84,17 @@ const commandKeys: Record<keyof typeof labels, TranslationKey> = {
   "tab.reopen": "command.reopenTab", "tab.next": "command.nextTab", "tab.prev": "command.previousTab",
   "location.focus": "command.editAddress", "commandPalette.open": "command.searchCommands",
   "history.open": "command.history", "find.open": "command.find", "browser.copyUrl": "command.copyUrl",
+  "browser.copyUrlMarkdown": "command.copyUrlMarkdown",
   "browser.captureShare": "command.captureShare",
   "browser.back": "command.back", "browser.forward": "command.forward", "browser.reload": "command.reload",
+  "browser.zoomIn": "command.zoomIn", "browser.zoomOut": "command.zoomOut", "browser.zoomReset": "command.zoomReset",
   "sidebar.toggle": "command.sidebar", "favorites.toggle": "command.favorite", "pins.toggle": "command.pin",
-  "tab.reset": "command.resetTab", "browser.split": "command.split", "browser.split.close": "command.closeSplit",
+  "tab.reset": "command.resetTab", "tabs.clearUnpinned": "command.clearUnpinned",
+  "browser.split": "command.split", "browser.split.close": "command.closeSplit",
   "browser.splitGroup.save": "command.saveSplitGroup", "browser.splitGroup.manage": "command.manageSplitGroups",
   "browser.focusPane.1": "command.focusFirst", "browser.focusPane.2": "command.focusSecond",
-  "space.manage": "command.spaces", "settings.open": "command.settings",
+  "space.manage": "command.spaces", "space.next": "command.nextSpace", "space.prev": "command.previousSpace",
+  "settings.open": "command.settings",
   "window.new": "command.windowNew",
 };
 
