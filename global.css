@@ -4,41 +4,41 @@
 /* src/theme.ts remains the palette/token source. These defaults let Metro
    compile semantic utilities; ThemeScope supplies each root's resolved colors. */
 @theme static {
-  --color-chrome: #d9cedf;
-  --color-sidebar: #ddd1e1;
-  --color-canvas: #ded4e2;
-  --color-surface: #fbfafb;
-  --color-surface-elevated: #fffefe;
+  --color-chrome: #d2ced6;
+  --color-sidebar: #d6d2da;
+  --color-canvas: #d4d0d8;
+  --color-surface: #f7f6f7;
+  --color-surface-elevated: #fbfafb;
   --color-white: #ffffff;
-  --color-sunken: #f4eff5;
-  --color-sunken-strong: #ece3ee;
-  --color-field-on-chrome: rgba(255, 255, 255, 0.46);
-  --color-pill: rgba(255, 255, 255, 0.6);
-  --color-fav-chip: rgba(255, 255, 255, 0.58);
-  --color-pinned-row: rgba(255, 255, 255, 0.35);
-  --color-rail-icon-tile: rgba(255, 255, 255, 0.75);
-  --color-manage-tile: rgba(255, 255, 255, 0.72);
+  --color-sunken: #eeebf0;
+  --color-sunken-strong: #e4e0e7;
+  --color-field-on-chrome: rgba(255, 255, 255, 0.38);
+  --color-pill: rgba(255, 255, 255, 0.42);
+  --color-fav-chip: rgba(255, 255, 255, 0.4);
+  --color-pinned-row: rgba(255, 255, 255, 0.28);
+  --color-rail-icon-tile: rgba(255, 255, 255, 0.55);
+  --color-manage-tile: rgba(255, 255, 255, 0.5);
   --color-ghost: rgba(255, 255, 255, 0.96);
-  --color-accent: #9d7f9e;
-  --color-accent-strong: #8a6f92;
-  --color-pane-focus: #bba8c2;
-  --color-ring-shadow: #79667d;
-  --color-ink: #43384a;
-  --color-ink-muted: #5b4d60;
-  --color-ink-faint: #65536a;
-  --color-icon: #574d5c;
-  --color-card-border: #cfc1d5;
-  --color-hairline: #e7dfe9;
-  --color-hairline-on-chrome: #cbbdce;
-  --color-tile-border: rgba(90, 70, 96, 0.16);
-  --color-switch-off: #e3dae6;
-  --color-scrim: rgba(55, 44, 59, 0.36);
-  --color-notice-bg: rgba(68, 56, 72, 0.92);
-  --color-notice-ink: #fffafd;
+  --color-accent: #8f7a93;
+  --color-accent-strong: #7d697f;
+  --color-pane-focus: #a89aad;
+  --color-ring-shadow: #6a5f70;
+  --color-ink: #3d3642;
+  --color-ink-muted: #564e5c;
+  --color-ink-faint: #564d5c;
+  --color-icon: #4d4554;
+  --color-card-border: #c4bec9;
+  --color-hairline: #e2dee6;
+  --color-hairline-on-chrome: #c3bcc8;
+  --color-tile-border: rgba(70, 62, 78, 0.14);
+  --color-switch-off: #dbd6df;
+  --color-scrim: rgba(45, 40, 52, 0.32);
+  --color-notice-bg: rgba(55, 48, 62, 0.92);
+  --color-notice-ink: #faf8fb;
   --color-error-bg: #f5dfe4;
   --color-error-ink: #7b2934;
-  --color-drop-border: #9475a1;
-  --color-drop-fill: rgba(180, 151, 191, 0.22);
+  --color-drop-border: #887690;
+  --color-drop-fill: rgba(143, 122, 147, 0.16);
 
   --spacing: 4px;
   --spacing-hairline: hairlineWidth();
@@ -108,25 +108,15 @@
   border-right-width: hairlineWidth();
 }
 
-/* Raised chrome keeps the existing offsets, blur radii, opacity and Android
-   elevation. Palette tint resolves inside each ScopedVariables boundary. */
+/* Quiet elevation: overlays get a hairline lift; resting chrome uses fill
+   and border instead of soft stacked shadows (Stageshow restraint). */
 @utility shadow-favorite-active {
-  --yeoyu-shadow-color: color-mix(
-    in srgb,
-    var(--color-ring-shadow) 13%,
-    transparent
-  );
-  box-shadow: 0px 1px 3px var(--yeoyu-shadow-color);
-  elevation: 1;
+  box-shadow: none;
+  elevation: 0;
 }
 @utility shadow-content {
-  --yeoyu-shadow-color: color-mix(
-    in srgb,
-    var(--color-ring-shadow) 14%,
-    transparent
-  );
-  box-shadow: 0px 4px 14px var(--yeoyu-shadow-color);
-  elevation: 4;
+  box-shadow: none;
+  elevation: 0;
 }
 @utility shadow-content-fullscreen {
   box-shadow: none;
@@ -135,63 +125,53 @@
 @utility shadow-drag-ghost {
   --yeoyu-shadow-color: color-mix(
     in srgb,
-    var(--color-ring-shadow) 20%,
-    transparent
-  );
-  box-shadow: 0px 4px 10px var(--yeoyu-shadow-color);
-  elevation: 10;
-}
-@utility shadow-new-tab-tile-icon {
-  --yeoyu-shadow-color: color-mix(
-    in srgb,
-    var(--color-ring-shadow) 8%,
+    var(--color-ring-shadow) 12%,
     transparent
   );
   box-shadow: 0px 2px 6px var(--yeoyu-shadow-color);
-  elevation: 2;
+  elevation: 3;
+}
+@utility shadow-new-tab-tile-icon {
+  box-shadow: none;
+  elevation: 0;
 }
 @utility shadow-quick-open-tile-icon {
-  --yeoyu-shadow-color: color-mix(
-    in srgb,
-    var(--color-ring-shadow) 8%,
-    transparent
-  );
-  box-shadow: 0px 2px 5px var(--yeoyu-shadow-color);
-  elevation: 2;
+  box-shadow: none;
+  elevation: 0;
 }
 @utility shadow-mini {
   --yeoyu-shadow-color: color-mix(
     in srgb,
-    var(--color-ring-shadow) 22%,
+    var(--color-ring-shadow) 10%,
     transparent
   );
-  box-shadow: 0px 6px 16px var(--yeoyu-shadow-color);
-  elevation: 7;
+  box-shadow: 0px 2px 8px var(--yeoyu-shadow-color);
+  elevation: 2;
 }
 @utility shadow-dialog {
   --yeoyu-shadow-color: color-mix(
     in srgb,
-    var(--color-ring-shadow) 24%,
+    var(--color-ring-shadow) 12%,
     transparent
   );
-  box-shadow: 0px 10px 24px var(--yeoyu-shadow-color);
-  elevation: 10;
+  box-shadow: 0px 4px 12px var(--yeoyu-shadow-color);
+  elevation: 4;
 }
 @utility shadow-action-menu {
   --yeoyu-shadow-color: color-mix(
     in srgb,
-    var(--color-ring-shadow) 20%,
+    var(--color-ring-shadow) 10%,
     transparent
   );
-  box-shadow: 0px 6px 18px var(--yeoyu-shadow-color);
-  elevation: 12;
+  box-shadow: 0px 2px 8px var(--yeoyu-shadow-color);
+  elevation: 3;
 }
 @utility shadow-find-bar {
   --yeoyu-shadow-color: color-mix(
     in srgb,
-    var(--color-ring-shadow) 20%,
+    var(--color-ring-shadow) 10%,
     transparent
   );
-  box-shadow: 0px 4px 12px var(--yeoyu-shadow-color);
-  elevation: 8;
+  box-shadow: 0px 2px 6px var(--yeoyu-shadow-color);
+  elevation: 2;
 }

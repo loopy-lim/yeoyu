@@ -54,7 +54,7 @@ export function ActionMenu({
       accessibilityViewIsModal
       accessibilityLabel={title}
       onLayout={({ nativeEvent }) => setHeight(nativeEvent.layout.height)}
-      className="absolute p-md rounded-tile bg-surface-elevated border border-hairline shadow-action-menu"
+      className="absolute p-md rounded-control bg-surface-elevated border border-hairline shadow-action-menu"
       // Placement depends on the measured menu and current native window.
       style={position}
     >

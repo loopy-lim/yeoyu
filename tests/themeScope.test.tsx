@@ -21,9 +21,9 @@ Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
 
 test("scoped theme variables include every role with stable CSS names", () => {
   const variables = themeToVariables(themes.warm);
-  expect(variables["--color-chrome"]).toBe("#dfcfd1");
-  expect(variables["--color-ink-muted"]).toBe("#63504d");
-  expect(variables["--color-hairline-on-chrome"]).toBe("#d4bfbc");
+  expect(variables["--color-chrome"]).toBe("#d6cfcf");
+  expect(variables["--color-ink-muted"]).toBe("#5c504e");
+  expect(variables["--color-hairline-on-chrome"]).toBe("#c9bfbd");
   expect(Object.keys(variables).sort()).toEqual(
     [
       "--color-chrome",
@@ -95,10 +95,10 @@ test("sibling roots and nested Spaces resolve their own theme without changing g
     tree.root.findByProps({ id }).find((node) => node.props.style !== undefined)
       .props.style;
   expect(styleFor("outer")).toMatchObject({
-    backgroundColor: "#ddd1e1",
-    color: "#43384a",
+    backgroundColor: "#d6d2da",
+    color: "#3d3642",
     fontSize: 11,
-    borderColor: "#cbbdce",
+    borderColor: "#c3bcc8",
   });
   expect(styleFor("after-space")).toEqual(styleFor("outer"));
   expect(styleFor("space")).toMatchObject({
@@ -110,8 +110,8 @@ test("sibling roots and nested Spaces resolve their own theme without changing g
     color: "#f7eeeb",
   });
   expect(resolveTestClassNames("bg-sidebar text-ink")).toMatchObject({
-    backgroundColor: "#ddd1e1",
-    color: "#43384a",
+    backgroundColor: "#d6d2da",
+    color: "#3d3642",
   });
   await act(() => tree.unmount());
 });
@@ -129,7 +129,7 @@ test("compiled semantic utilities retain existing control geometry and text size
     height: 48,
     borderRadius: 9,
     fontSize: 14,
-    color: "#5b4d60",
+    color: "#564e5c",
     opacity: 0.38,
   });
   expect(
@@ -141,7 +141,7 @@ test("compiled semantic utilities retain existing control geometry and text size
     height: 32,
     borderRadius: 5,
     fontSize: 16,
-    color: "#574d5c",
+    color: "#4d4554",
     opacity: 0.58,
   });
 });

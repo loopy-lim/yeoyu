@@ -29,7 +29,7 @@ const spaceRowVariants = cva("min-h-bookmark-row px-xxl rounded-field flex-row i
   defaultVariants: { selected: false },
 });
 const dialogClasses = {
-  dialog: "w-[92%] max-w-[520px] max-h-[80%] p-xxxl bg-surface-elevated rounded-dialog gap-lg shadow-dialog",
+  dialog: "w-[92%] max-w-[520px] max-h-[80%] p-xxxl bg-surface-elevated rounded-dialog gap-lg border border-hairline shadow-dialog",
   title: "text-ink text-title font-bold",
   closeButton: "size-action-row rounded-control items-center justify-center",
   row: spaceRowVariants(),

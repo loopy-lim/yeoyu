@@ -10,7 +10,7 @@ import { cn } from "@/ui/cn";
 export const settingsClasses = {
   // Inset card that groups related rows. Rows inside carry their own
   // dividers, so the card only owns radius, fill, and clipping.
-  group: "rounded-card bg-surface border border-hairline",
+  group: "rounded-control bg-sunken border border-hairline overflow-hidden",
   // Quiet header above a group. Uppercase is a latin-only concern and a
   // no-op for Korean copy; letter spacing carries the hierarchy instead.
   groupHeader:
