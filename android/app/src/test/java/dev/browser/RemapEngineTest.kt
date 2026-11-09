@@ -42,10 +42,15 @@ class RemapEngineTest {
   assertEquals(KeyAction.Pass, e.route("K", false))
   assertEquals(KeyAction.Command("commandPalette.open"), e.route("K", true, ctrl=true))
  }
- @Test fun focusedAddressCapturesArrowsAndEscapeOnceAndConsumesTheirPairs() {
+ @Test fun focusedAddressCapturesArrowsEscapeAndTabOnceAndConsumesTheirPairs() {
   val e = RemapEngine()
   e.addressInputActive = true
-  for ((key, expected) in mapOf("DPAD_UP" to "ArrowUp", "DPAD_DOWN" to "ArrowDown", "ESCAPE" to "Escape")) {
+  for ((key, expected) in mapOf(
+    "DPAD_UP" to "ArrowUp",
+    "DPAD_DOWN" to "ArrowDown",
+    "ESCAPE" to "Escape",
+    "TAB" to "Tab",
+  )) {
    assertEquals(KeyAction.InputKey(expected), e.route(key, true))
    assertEquals(KeyAction.Consume, e.route(key, true))
    e.addressInputActive = false

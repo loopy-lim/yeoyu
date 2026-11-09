@@ -10,6 +10,7 @@ import {
   liveSplitLayout,
   batchCloseTargets,
   batchMoveTargets,
+  clearUnpinnedTargets,
 } from "../src/sidebarModel";
 
 test("a retained saved tab cannot survive in a frozen split after its live page closes", () => {
@@ -187,4 +188,16 @@ test("batch move skips favorites, private tabs, and same-Space rows", () => {
   expect(batchMoveTargets(["a", "b", "c", "d"], tabs, "work")).toEqual([
     "c",
   ]);
+});
+
+test("clear unpinned keeps favorites, pins, private tabs, and other Spaces", () => {
+  const tabs = [
+    { id: "fav", favorite: true, workspaceId: "home" },
+    { id: "pin", pinned: true, workspaceId: "home" },
+    { id: "priv", private: true, workspaceId: "home" },
+    { id: "closed", suspended: true, workspaceId: "home" },
+    { id: "today", workspaceId: "home" },
+    { id: "other", workspaceId: "work" },
+  ];
+  expect(clearUnpinnedTargets(tabs, "home")).toEqual(["today"]);
 });

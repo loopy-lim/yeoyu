@@ -29,6 +29,8 @@ class RemapEngine {
                 "DPAD_UP" -> "ArrowUp"
                 "DPAD_DOWN" -> "ArrowDown"
                 "ESCAPE" -> "Escape"
+                // Arc Site Search: bare Tab enters keyword mode in AddressBox.
+                "TAB" -> "Tab"
                 else -> null
             }
             if (inputKey != null) {

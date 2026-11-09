@@ -157,6 +157,30 @@ export function batchCloseTargets(
     .map((tab) => tab.id);
 }
 
+/** Arc ⌘⇧K — close ordinary (unpinned, non-favorite) tabs in one Space. */
+export function clearUnpinnedTargets(
+  tabs: readonly {
+    id: string;
+    workspaceId?: string;
+    favorite?: boolean;
+    pinned?: boolean;
+    private?: boolean;
+    suspended?: boolean;
+  }[],
+  workspaceId: string
+): string[] {
+  return tabs
+    .filter(
+      (tab) =>
+        !tab.favorite &&
+        !tab.pinned &&
+        !tab.private &&
+        !tab.suspended &&
+        tab.workspaceId === workspaceId
+    )
+    .map((tab) => tab.id);
+}
+
 /**
  * Tabs a multi-select move may move to a Space: favorites live in every
  * Space, private tabs never persist, and same-Space rows have nothing to do.

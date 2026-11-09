@@ -1,5 +1,9 @@
 import { expect, test } from "bun:test";
-import { normalizeInput, suggest } from "../src/suggestions";
+import {
+  matchSiteSearchKeyword,
+  normalizeInput,
+  suggest,
+} from "../src/suggestions";
 import { matchingCommands } from "../src/commandRegistry";
 
 test("addresses with ports and IPv6 are navigated instead of treated as schemes or searches", () => {
@@ -81,4 +85,12 @@ test("input without a keyword match keeps the ordinary address and engine paths"
   expect(normalizeInput("example.com", "google", entries)).toBe(
     "https://example.com/"
   );
+});
+
+test("Tab site-search matches an exact keyword or a unique prefix", () => {
+  expect(matchSiteSearchKeyword("gh", entries)?.keyword).toBe("gh");
+  expect(matchSiteSearchKeyword("nav", entries)?.keyword).toBe("naver");
+  expect(matchSiteSearchKeyword("g", entries)?.keyword).toBe("gh");
+  expect(matchSiteSearchKeyword("x", entries)).toBe(null);
+  expect(matchSiteSearchKeyword("gh react", entries)).toBe(null);
 });

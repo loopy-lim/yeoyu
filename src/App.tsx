@@ -134,6 +134,7 @@ import {
   favoriteMoveIndex,
   sidebarAddressLabel,
   batchCloseTargets,
+  clearUnpinnedTargets,
   batchMoveTargets,
   type TileBounds,
 } from "@/sidebarModel";
@@ -1303,6 +1304,18 @@ function BrowserApp() {
       })
     );
   };
+  const stepSpace = (delta: number) => {
+    if (!state?.workspaces.length) return;
+    const index = state.workspaces.findIndex(
+      (workspace) => workspace.id === state.activeWorkspaceId
+    );
+    if (index < 0) return;
+    const next =
+      state.workspaces[
+        (index + delta + state.workspaces.length) % state.workspaces.length
+      ];
+    if (next) switchSpace(next.id);
+  };
   const openBookmark = (bookmark: { id: string }) => {
     haptic("click");
     run(
@@ -1564,6 +1577,35 @@ function BrowserApp() {
       flashNotice(tr("chrome.urlCopied"));
     }
   });
+  registry.register("browser.copyUrlMarkdown", () => {
+    const current = state?.tabs.find((t) => t.id === target);
+    if (!current) return;
+    if (typeof platform.copyToClipboard !== "function") return;
+    const title = (current.customTitle || current.title || current.url).replace(
+      /[\[\]]/g,
+      ""
+    );
+    platform.copyToClipboard(`[${title}](${current.url})`);
+    flashNotice(tr("chrome.urlMarkdownCopied"));
+  });
+  registry.register("browser.zoomIn", () => {
+    if (target) platform.zoom?.(target, "in");
+  });
+  registry.register("browser.zoomOut", () => {
+    if (target) platform.zoom?.(target, "out");
+  });
+  registry.register("browser.zoomReset", () => {
+    if (target) platform.zoom?.(target, "reset");
+  });
+  registry.register("tabs.clearUnpinned", () => {
+    if (!state) return;
+    const targets = clearUnpinnedTargets(state.tabs, state.activeWorkspaceId);
+    targets.forEach((tabId) => closeTab(tabId));
+    if (targets.length)
+      flashNotice(tr("chrome.clearedUnpinned", { count: targets.length }));
+  });
+  registry.register("space.next", () => stepSpace(1));
+  registry.register("space.prev", () => stepSpace(-1));
   registry.register("browser.captureShare", () => {
     const current = state?.tabs.find((t) => t.id === target);
     if (!current || current.private || current.suspended || current.url === NEW_TAB_URL) {
@@ -1685,13 +1727,16 @@ function BrowserApp() {
       command: "tab.prev",
     },
   ];
-  const windowBindings: KeyBinding[] = [
+  // Arc N-family fill-ins for snapshots that predate Rust keymap v2.
+  // Rust restore already remaps when keymapVersion < 2; this covers live
+  // sessions whose snapshot arrived before that migration ran.
+  const arcHostNBindings: KeyBinding[] = [
     {
       key: "n",
       meta: true,
       ctrl: false,
       alt: false,
-      shift: true,
+      shift: false,
       command: "window.new",
     },
     {
@@ -1699,43 +1744,226 @@ function BrowserApp() {
       meta: false,
       ctrl: true,
       alt: false,
-      shift: true,
+      shift: false,
       command: "window.new",
     },
-    // Devices that swallow Ctrl/Cmd+Shift+N still get a chord.
+    {
+      key: "n",
+      meta: true,
+      ctrl: false,
+      alt: false,
+      shift: true,
+      command: "private.newTab",
+    },
+    {
+      key: "n",
+      meta: false,
+      ctrl: true,
+      alt: false,
+      shift: true,
+      command: "private.newTab",
+    },
+    // Little Arc stand-in (⌥⌘N / ⌥⌃N).
+    {
+      key: "n",
+      meta: true,
+      ctrl: false,
+      alt: true,
+      shift: false,
+      command: "window.new",
+    },
+    {
+      key: "n",
+      meta: false,
+      ctrl: true,
+      alt: true,
+      shift: false,
+      command: "window.new",
+    },
+    // Devices that swallow Ctrl/Cmd+Shift+N still get a private chord.
     {
       key: "n",
       meta: false,
       ctrl: false,
       alt: true,
       shift: true,
-      command: "window.new",
+      command: "private.newTab",
+    },
+    // keymap v3 Arc extras (clear / zoom / space / markdown).
+    {
+      key: "k",
+      meta: true,
+      ctrl: false,
+      alt: false,
+      shift: true,
+      command: "tabs.clearUnpinned",
+    },
+    {
+      key: "k",
+      meta: false,
+      ctrl: true,
+      alt: false,
+      shift: true,
+      command: "tabs.clearUnpinned",
+    },
+    {
+      key: "PLUS",
+      meta: true,
+      ctrl: false,
+      alt: false,
+      shift: false,
+      command: "browser.zoomIn",
+    },
+    {
+      key: "PLUS",
+      meta: false,
+      ctrl: true,
+      alt: false,
+      shift: false,
+      command: "browser.zoomIn",
+    },
+    {
+      key: "EQUALS",
+      meta: true,
+      ctrl: false,
+      alt: false,
+      shift: false,
+      command: "browser.zoomIn",
+    },
+    {
+      key: "EQUALS",
+      meta: false,
+      ctrl: true,
+      alt: false,
+      shift: false,
+      command: "browser.zoomIn",
+    },
+    {
+      key: "MINUS",
+      meta: true,
+      ctrl: false,
+      alt: false,
+      shift: false,
+      command: "browser.zoomOut",
+    },
+    {
+      key: "MINUS",
+      meta: false,
+      ctrl: true,
+      alt: false,
+      shift: false,
+      command: "browser.zoomOut",
+    },
+    {
+      key: "0",
+      meta: true,
+      ctrl: false,
+      alt: false,
+      shift: false,
+      command: "browser.zoomReset",
+    },
+    {
+      key: "0",
+      meta: false,
+      ctrl: true,
+      alt: false,
+      shift: false,
+      command: "browser.zoomReset",
+    },
+    {
+      key: "c",
+      meta: true,
+      ctrl: false,
+      alt: true,
+      shift: true,
+      command: "browser.copyUrlMarkdown",
+    },
+    {
+      key: "c",
+      meta: false,
+      ctrl: true,
+      alt: true,
+      shift: true,
+      command: "browser.copyUrlMarkdown",
+    },
+    {
+      key: "DPAD_LEFT",
+      meta: true,
+      ctrl: false,
+      alt: true,
+      shift: false,
+      command: "space.prev",
+    },
+    {
+      key: "DPAD_LEFT",
+      meta: false,
+      ctrl: true,
+      alt: true,
+      shift: false,
+      command: "space.prev",
+    },
+    {
+      key: "DPAD_RIGHT",
+      meta: true,
+      ctrl: false,
+      alt: true,
+      shift: false,
+      command: "space.next",
+    },
+    {
+      key: "DPAD_RIGHT",
+      meta: false,
+      ctrl: true,
+      alt: true,
+      shift: false,
+      command: "space.next",
     },
   ];
   useEffect(() => {
     if (!state || keymapMigrated.current) return;
     keymapMigrated.current = true;
-    const bindings = state.keyBindings ?? [];
+    let bindings = [...(state.keyBindings ?? [])];
     const additions: KeyBinding[] = [];
     if (!bindings.some((binding) => binding.key === "TAB"))
       additions.push(...tabCycleBindings);
+    // Remap leftover pre-v2 Shift+N window chords in-place when the chord is
+    // still the old default shape (do not touch user remaps to other commands).
+    bindings = bindings.map((binding) => {
+      if (
+        binding.key !== "n" ||
+        binding.command !== "window.new" ||
+        !binding.shift
+      )
+        return binding;
+      if (
+        (!binding.alt && binding.meta !== binding.ctrl) ||
+        (binding.alt && !binding.meta && !binding.ctrl)
+      )
+        return { ...binding, command: "private.newTab" };
+      return binding;
+    });
     // Append only chords the snapshot keymap is actually missing, so an
     // earlier partial migration still receives the Alt fallback.
+    const occupied = (binding: KeyBinding) =>
+      bindings.some(
+        (existing) =>
+          existing.key === binding.key &&
+          existing.meta === binding.meta &&
+          existing.ctrl === binding.ctrl &&
+          existing.alt === binding.alt &&
+          existing.shift === binding.shift
+      );
     additions.push(
-      ...windowBindings.filter(
-        (binding) =>
-          !bindings.some(
-            (existing) =>
-              existing.key === binding.key &&
-              existing.meta === binding.meta &&
-              existing.ctrl === binding.ctrl &&
-              existing.alt === binding.alt &&
-              existing.shift === binding.shift &&
-              existing.command === binding.command
-          )
-      )
+      ...arcHostNBindings.filter((binding) => !occupied(binding))
     );
-    if (additions.length) run(controller.keymap([...bindings, ...additions]));
+    const next = additions.length ? [...bindings, ...additions] : bindings;
+    const changed =
+      additions.length > 0 ||
+      next.some(
+        (binding, index) =>
+          binding.command !== (state.keyBindings ?? [])[index]?.command
+      );
+    if (changed) run(controller.keymap(next));
   }, [state]);
 
   // The trailing snapshot save is forced to disk when the app backgrounds

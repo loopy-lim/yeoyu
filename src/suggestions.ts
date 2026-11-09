@@ -75,6 +75,19 @@ export function resolveSiteSearch(
   return entry.urlTemplate.replace("%s", encodeURIComponent(match[2].trim()));
 }
 
+/** Arc Tab-to-search: exact keyword or a unique prefix becomes the site mode. */
+export function matchSiteSearchKeyword(
+  query: string,
+  entries: readonly SiteSearchEntry[]
+): SiteSearchEntry | null {
+  const trimmed = query.trim().toLowerCase();
+  if (!trimmed || /\s/.test(query.trim())) return null;
+  const exact = entries.find((entry) => entry.keyword === trimmed);
+  if (exact) return exact;
+  const prefixes = entries.filter((entry) => entry.keyword.startsWith(trimmed));
+  return prefixes.length === 1 ? prefixes[0] : null;
+}
+
 export interface Suggestion {
   url: string;
   title: string;
