@@ -31,6 +31,8 @@ export function useBrowserWorkflows(options: {
   onError(message: string): void;
   onNotice(message: string): void;
   onExternalTab(snapshot: Snapshot): void;
+  /** A page left for another app; temporary surfaces (Little Arc) can dismiss themselves. */
+  onExternalHandoff?(tabId: string): void;
   onCommand(command: string): void;
 }) {
   const callbacks = useRef(options);
@@ -107,6 +109,7 @@ export function useBrowserWorkflows(options: {
       }),
       DeviceEventEmitter.addListener("BrowserExternalLinkFailed", (event: { error: string }) => report(event.error)),
       DeviceEventEmitter.addListener("BrowserExternalNavigationFailed", (event: { tabId: string; error: string }) => { if (valid(event.tabId)) report(event.error); }),
+      DeviceEventEmitter.addListener("BrowserExternalNavigationHandoff", (event: { tabId: string }) => { if (valid(event.tabId)) callbacks.current.onExternalHandoff?.(event.tabId); }),
       DeviceEventEmitter.addListener("BrowserTextScale", (event: { textScale: number }) => {
         settings.acceptTextScale(event.textScale);
       }),

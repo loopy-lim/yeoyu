@@ -1,6 +1,7 @@
 package dev.browser
 
 import android.app.Activity
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -30,7 +31,9 @@ object ExternalNavigationCoordinator {
             failed(tabId, "This external link is malformed or too long.")
             return GeckoResult.fromValue(AllowOrDeny.DENY)
         }
-        if (!request.hasUserGesture || isSubframe) {
+        val admitted = !isSubframe &&
+            ExternalLinkPolicy.navigationAdmitted(request.hasUserGesture, request.isRedirect)
+        if (!admitted) {
             if (!isSubframe) failed(tabId, "This page tried to open another app without a user action.")
             return GeckoResult.fromValue(AllowOrDeny.DENY)
         }
@@ -40,27 +43,54 @@ object ExternalNavigationCoordinator {
             return GeckoResult.fromValue(AllowOrDeny.DENY)
         }
         var fallback: String? = null
+        var target: ExternalAppTarget? = null
+        // The intent's own escape hatch for a missing handler; guarded like any launch.
+        fun loadWebFallback(web: String) {
+            if (!guard.acquire(tabId, request.triggerUri.orEmpty(), "fallback:$web", SystemClock.elapsedRealtime())) {
+                failed(tabId, "This page is repeatedly opening the same app. Tap the link again in a few seconds.")
+                return
+            }
+            main.post { if (isCurrent()) session.load(GeckoSession.Loader().uri(web).flags(GeckoSession.LOAD_FLAGS_EXTERNAL)) }
+        }
         try {
             val wrapped = scheme == "intent"
             val parsed = if (wrapped) Intent.parseUri(request.uri, Intent.URI_INTENT_SCHEME) else null
             fallback = if (wrapped) ExternalLinkPolicy.webUri(parsed?.getStringExtra("browser_fallback_url")) else null
             val data = if (wrapped) parsed?.dataString else request.uri
-            val target = data?.let { ExternalLinkPolicy.appTarget(it, true, false, parsed?.`package`, wrapped, app.packageName) }
+            target = data?.let { ExternalLinkPolicy.appTarget(it, admitted, false, parsed?.`package`, wrapped, app.packageName) }
             check(target != null) { "This external link type is not supported." }
             check(guard.acquire(tabId, request.triggerUri.orEmpty(), target.uri, SystemClock.elapsedRealtime())) {
                 "This page is repeatedly opening the same app. Tap the link again in a few seconds."
             }
             val intent = Intent(if (scheme == "tel") Intent.ACTION_DIAL else Intent.ACTION_VIEW, Uri.parse(target.uri))
                 .addCategory(Intent.CATEGORY_BROWSABLE)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             target.targetPackage?.let { intent.setPackage(it) }
-            val resolved = intent.resolveActivity(activity.packageManager)
-            check(resolved?.packageName != app.packageName) { "The external link would reopen this browser." }
+            // Package visibility (Android 11+) hides foreign scheme handlers from
+            // resolveActivity even when startActivity would reach them, so the
+            // resolver is only trusted to speak about this app itself — and only
+            // for packageless targets: a set launch package already excludes us.
+            if (target.targetPackage == null) {
+                check(Intent(intent).setPackage(app.packageName).resolveActivity(activity.packageManager) == null) {
+                    "The external link would reopen this browser."
+                }
+            }
             activity.startActivity(intent)
+            handedOff(tabId)
+        } catch (missing: ActivityNotFoundException) {
+            // Nothing on this device can handle the target. Fall back in the Chrome
+            // order: the intent's web fallback, the package's store listing, a notice.
+            val web = fallback
+            val missingPackage = target?.targetPackage
+            when {
+                web != null -> loadWebFallback(web)
+                missingPackage != null && launchStoreListing(activity, tabId, missingPackage, request.triggerUri.orEmpty()) -> Unit
+                else -> failed(tabId, "No app on this device can open this link.")
+            }
         } catch (failure: Exception) {
             val web = fallback
-            if (web != null && guard.acquire(tabId, request.triggerUri.orEmpty(), "fallback:$web", SystemClock.elapsedRealtime())) {
-                main.post { if (isCurrent()) session.load(GeckoSession.Loader().uri(web).flags(GeckoSession.LOAD_FLAGS_EXTERNAL)) }
-            } else failed(tabId, failure.message ?: "No app can open this link.")
+            if (web != null) loadWebFallback(web)
+            else failed(tabId, failure.message ?: "No app can open this link.")
         }
         return GeckoResult.fromValue(AllowOrDeny.DENY)
     }
@@ -105,5 +135,27 @@ object ExternalNavigationCoordinator {
         GeckoSessionRegistry.emit?.invoke("BrowserExternalNavigationFailed", Arguments.createMap().apply {
             putString("tabId", tabId); putString("error", error)
         })
+    }
+
+    /** The page left for another app; a temporary surface (Little Arc) can dismiss itself. */
+    private fun handedOff(tabId: String) {
+        GeckoSessionRegistry.emit?.invoke("BrowserExternalNavigationHandoff", Arguments.createMap().apply {
+            putString("tabId", tabId)
+        })
+    }
+
+    /** Store listing fallback for an installed-nowhere package; false when no store can open either. */
+    private fun launchStoreListing(activity: Activity, tabId: String, targetPackage: String, document: String): Boolean {
+        if (!guard.acquire(tabId, document, "market:$targetPackage", SystemClock.elapsedRealtime())) return false
+        val listing = Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$targetPackage"))
+            .addCategory(Intent.CATEGORY_BROWSABLE)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        return try {
+            activity.startActivity(listing)
+            handedOff(tabId)
+            true
+        } catch (_: ActivityNotFoundException) {
+            false
+        }
     }
 }
