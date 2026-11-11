@@ -1,6 +1,7 @@
 package dev.browser
 
 import android.app.Activity
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -42,9 +43,13 @@ object ExternalNavigationCoordinator {
             return GeckoResult.fromValue(AllowOrDeny.DENY)
         }
         var fallback: String? = null
+        var target: ExternalAppTarget? = null
         // The intent's own escape hatch for a missing handler; guarded like any launch.
         fun loadWebFallback(web: String) {
-            if (!guard.acquire(tabId, request.triggerUri.orEmpty(), "fallback:$web", SystemClock.elapsedRealtime())) return
+            if (!guard.acquire(tabId, request.triggerUri.orEmpty(), "fallback:$web", SystemClock.elapsedRealtime())) {
+                failed(tabId, "This page is repeatedly opening the same app. Tap the link again in a few seconds.")
+                return
+            }
             main.post { if (isCurrent()) session.load(GeckoSession.Loader().uri(web).flags(GeckoSession.LOAD_FLAGS_EXTERNAL)) }
         }
         try {
@@ -52,7 +57,7 @@ object ExternalNavigationCoordinator {
             val parsed = if (wrapped) Intent.parseUri(request.uri, Intent.URI_INTENT_SCHEME) else null
             fallback = if (wrapped) ExternalLinkPolicy.webUri(parsed?.getStringExtra("browser_fallback_url")) else null
             val data = if (wrapped) parsed?.dataString else request.uri
-            val target = data?.let { ExternalLinkPolicy.appTarget(it, admitted, false, parsed?.`package`, wrapped, app.packageName) }
+            target = data?.let { ExternalLinkPolicy.appTarget(it, admitted, false, parsed?.`package`, wrapped, app.packageName) }
             check(target != null) { "This external link type is not supported." }
             check(guard.acquire(tabId, request.triggerUri.orEmpty(), target.uri, SystemClock.elapsedRealtime())) {
                 "This page is repeatedly opening the same app. Tap the link again in a few seconds."
@@ -61,28 +66,23 @@ object ExternalNavigationCoordinator {
                 .addCategory(Intent.CATEGORY_BROWSABLE)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             target.targetPackage?.let { intent.setPackage(it) }
-            val resolved = intent.resolveActivity(activity.packageManager)
-            check(resolved?.packageName != app.packageName) { "The external link would reopen this browser." }
-            if (resolved == null) {
-                // Nothing on this device declares a browsable handler. Fall back in
-                // the Chrome order: the intent's web fallback, then the package's
-                // store listing, then a clear notice.
-                val store = target.targetPackage?.let { pkg ->
-                    Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$pkg"))
-                        .addCategory(Intent.CATEGORY_BROWSABLE)
-                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        .takeIf { it.resolveActivity(activity.packageManager) != null }
-                }
-                val web = fallback
-                when {
-                    web != null -> loadWebFallback(web)
-                    store != null && guard.acquire(tabId, request.triggerUri.orEmpty(), "market:${target.targetPackage}", SystemClock.elapsedRealtime()) ->
-                        activity.startActivity(store)
-                    else -> failed(tabId, "No app on this device can open this link.")
-                }
-            } else {
-                activity.startActivity(intent)
-                handedOff(tabId)
+            // Package visibility (Android 11+) hides foreign scheme handlers from
+            // resolveActivity even when startActivity would reach them, so the
+            // resolver is only trusted to speak about this app itself.
+            check(Intent(intent).setPackage(app.packageName).resolveActivity(activity.packageManager) == null) {
+                "The external link would reopen this browser."
+            }
+            activity.startActivity(intent)
+            handedOff(tabId)
+        } catch (missing: ActivityNotFoundException) {
+            // Nothing on this device can handle the target. Fall back in the Chrome
+            // order: the intent's web fallback, the package's store listing, a notice.
+            val web = fallback
+            val missingPackage = target?.targetPackage
+            when {
+                web != null -> loadWebFallback(web)
+                missingPackage != null && launchStoreListing(activity, tabId, missingPackage, request.triggerUri.orEmpty()) -> Unit
+                else -> failed(tabId, "No app on this device can open this link.")
             }
         } catch (failure: Exception) {
             val web = fallback
@@ -139,5 +139,20 @@ object ExternalNavigationCoordinator {
         GeckoSessionRegistry.emit?.invoke("BrowserExternalNavigationHandoff", Arguments.createMap().apply {
             putString("tabId", tabId)
         })
+    }
+
+    /** Store listing fallback for an installed-nowhere package; false when no store can open either. */
+    private fun launchStoreListing(activity: Activity, tabId: String, targetPackage: String, document: String): Boolean {
+        if (!guard.acquire(tabId, document, "market:$targetPackage", SystemClock.elapsedRealtime())) return false
+        val listing = Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$targetPackage"))
+            .addCategory(Intent.CATEGORY_BROWSABLE)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        return try {
+            activity.startActivity(listing)
+            handedOff(tabId)
+            true
+        } catch (_: ActivityNotFoundException) {
+            false
+        }
     }
 }

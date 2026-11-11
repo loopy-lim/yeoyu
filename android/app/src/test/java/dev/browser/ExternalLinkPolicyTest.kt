@@ -35,6 +35,9 @@ class ExternalLinkPolicyTest {
         assertNotNull(allowed("authapp:callback", packagedIntent = true))
         assertNull(allowed("authapp:callback", target = "bad/package", packagedIntent = true))
         assertNotNull(allowed("authapp:callback", target = "com.example.app", packagedIntent = true))
+        // A web address only leaves the engine for a fully identified app deep link.
+        assertNull(allowed("https://example.com", packagedIntent = true))
+        assertNotNull(allowed("https://example.com", target = "com.example.app", packagedIntent = true))
     }
 
     @Test fun loginRedirectsAreAdmittedWithoutTheirOwnUserGesture() {

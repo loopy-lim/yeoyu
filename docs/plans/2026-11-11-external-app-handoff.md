@@ -30,13 +30,26 @@
 
 ## 검증 증거(V-*)
 
-- **V-1** `:app:testDebugUnitTest`(android/) 전체 — BUILD SUCCESSFUL(2026-11-11, 변경 후). `ExternalLinkPolicyTest` 갱신 케이스 포함.
+- **V-1** `:app:testDebugUnitTest`(android/) 전체 — BUILD SUCCESSFUL(2026-11-11, 초기 커밋 a0665a4와 G3 수정 커밋 각각). `ExternalLinkPolicyTest` 갱신 케이스 포함.
 - **V-2** `bun run typecheck` exit 0, `bun test tests` 590 pass / 0 fail(변경 후, Little Arc 진행 중 작업 트리 포함).
-- **V-3** 독립 G3 코드 리뷰(Staff Code Reviewer + 보안 렌즈) — PR 게시 후 본 문서에 판정 기록.
-- **V-4** G5 Release Gatekeeper — 동일.
+- **V-3** 독립 G3 리뷰 2건(클린 컨텍스트 병행 스폰) — 아래 원장 참조. 수정 반영 후 재판정.
+- **V-4** G5 Release Gatekeeper — 재판정 완료 후 기록.
+- **CI** PR #6 `android`·`check` 2개 체크 a0665a4에서 통과(수정 커밋에는 재실행됨).
+
+## G3 리뷰 원장(독립 평가, 2026-11-11)
+
+**Staff Code Reviewer: PASS(P3 2건)** — 재실행 검증(`--rerun-tasks`, typecheck, bun 590/0)으로 플랜 증거 정합 확인, AC-1~4 충족 인정.
+- F-C1(P3) http/https 게이트가 패키지 없는 packaged-intent를 허용(구 코드는 `targetPackage != null`까지 요구) → 게이트에 `targetPackage == null` 거부 복원 + 회귀 테스트 추가. **수정 반영**
+- F-C2(P3) `loadWebFallback`의 루프가드 거부가 무음 → `failed()` 안내 복원. **수정 반영**
+
+**Security & Reliability Reviewer: FAIL(P1 1건, P3 1건)** — 인텐트 재구성 경계·무제스처 완화 범위·URI 파싱은 우회 없음 확인(공식 문서 대조). 결함:
+- F-S1(P1) `resolveActivity != null` 발사 게이트가 Android 11+ 패키지 가시성과 충돌 — manifest에 스킴 기반 `<queries>`가 없어 설치된 스킴 핸들러(slack://·mailto: 등)가 resolver에 안 보여 핵심 핸드오프 전면 사망, 기존 mailto/tel도 퇴행. `startActivity()`는 가시성 불필요(공식 문서). → 발사를 `startActivity`+`ActivityNotFoundException` 캐치 기본으로 복원, 자기 재오픈 검사는 자가 가시성이 보장되는 `setPackage(자기)` resolution으로 교체(외부 가시성과 무관). **수정 반영**
+- F-S2(P3) market 폴백 발사 시 `handedOff` 미발행 → `launchStoreListing` 추출과 함께 발행 추가. **수정 반영**
+
+교차검증 트리아지: 채택 4건(F-C1·F-C2·F-S1·F-S2, 전부 코드 경로 재현 확인) / 기각 0건.
 
 ## 잔여 한계
 
 - 제스처도 리다이렉트도 아닌 최상위 JS 내비게이션(비동기 콜백 뒤 `location.href`)은 여전히 차단 — 자동 앱 실행 광거동 방지. 실사용에서 막히면 `isRedirect` 외 세션 근접 제스처 완화 후속 과제.
-- `browser_fallback_url`/market 폴백은 유닛테스트로 검증하지 못함(디바이스 의존) — 에뮬레이터 실측은 Little Arc 브랜치 통합 시점에 함께 권장.
+- 코디네이터 발사 경로(302→커스텀 스킴 실핸드오프, `browser_fallback_url`, market 폴백)는 유닛테스트·에뮬레이터 실측 미포함 — 발사 메커니즘은 기존 production 경로(startActivity+catch)로 복원되어 회귀 위험은 낮으나, 에뮬레이터 실측은 Little Arc 브랜치 통합 시점에 함께 권장(잔여 한계로 유지).
 - AC-4의 App.tsx 소비 코드는 이 PR에 포함되지 않는다(진행 중 미커밋 Little Arc 작업 보존).

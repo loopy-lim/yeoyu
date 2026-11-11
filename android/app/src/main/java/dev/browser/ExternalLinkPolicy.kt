@@ -49,7 +49,7 @@ internal object ExternalLinkPolicy {
             !Regex("[A-Za-z][A-Za-z0-9_]*(\\.[A-Za-z][A-Za-z0-9_]*)+").matches(targetPackage))) return null
         // Web addresses stay in the engine unless a packaged intent claims them
         // as an app deep link; anything else may resolve to a browsable handler.
-        if (scheme in webSchemes && (!packagedIntent || webUri(uri) == null)) return null
+        if (scheme in webSchemes && (!packagedIntent || targetPackage == null || webUri(uri) == null)) return null
         return ExternalAppTarget(uri, targetPackage)
     }
 }
