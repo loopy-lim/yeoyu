@@ -68,9 +68,12 @@ object ExternalNavigationCoordinator {
             target.targetPackage?.let { intent.setPackage(it) }
             // Package visibility (Android 11+) hides foreign scheme handlers from
             // resolveActivity even when startActivity would reach them, so the
-            // resolver is only trusted to speak about this app itself.
-            check(Intent(intent).setPackage(app.packageName).resolveActivity(activity.packageManager) == null) {
-                "The external link would reopen this browser."
+            // resolver is only trusted to speak about this app itself — and only
+            // for packageless targets: a set launch package already excludes us.
+            if (target.targetPackage == null) {
+                check(Intent(intent).setPackage(app.packageName).resolveActivity(activity.packageManager) == null) {
+                    "The external link would reopen this browser."
+                }
             }
             activity.startActivity(intent)
             handedOff(tabId)

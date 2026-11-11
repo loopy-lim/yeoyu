@@ -46,7 +46,10 @@
 - F-S1(P1) `resolveActivity != null` 발사 게이트가 Android 11+ 패키지 가시성과 충돌 — manifest에 스킴 기반 `<queries>`가 없어 설치된 스킴 핸들러(slack://·mailto: 등)가 resolver에 안 보여 핵심 핸드오프 전면 사망, 기존 mailto/tel도 퇴행. `startActivity()`는 가시성 불필요(공식 문서). → 발사를 `startActivity`+`ActivityNotFoundException` 캐치 기본으로 복원, 자기 재오픈 검사는 자가 가시성이 보장되는 `setPackage(자기)` resolution으로 교체(외부 가시성과 무관). **수정 반영**
 - F-S2(P3) market 폴백 발사 시 `handedOff` 미발행 → `launchStoreListing` 추출과 함께 발행 추가. **수정 반영**
 
-교차검증 트리아지: 채택 4건(F-C1·F-C2·F-S1·F-S2, 전부 코드 경로 재현 확인) / 기각 0건.
+재판정(9472fd2): **PASS** — F-S1·F-S2 해소 확인, 보안 경계 보존 재확인, 에뮬레이터 실측 연기 수용(단 G5 인수인계). 신규:
+- F-3(P3) 자기 재오픈 probe가 `setPackage(자기)`로 교체한 뒤 resolve하므로 외부 패키지 지정 https 딥링크가 우리 http/https 필터에 매칭되어 과잉 차단됨 → `target.targetPackage == null`인 경우만 probe. **수정 반영**
+
+교차검증 트리아지: 채택 5건(F-C1·F-C2·F-S1·F-S2·F-3, 전부 코드 경로 재현 확인) / 기각 0건.
 
 ## 잔여 한계
 
