@@ -32,9 +32,9 @@
 
 - **V-1** `:app:testDebugUnitTest`(android/) 전체 — BUILD SUCCESSFUL(2026-11-11, 초기 커밋 a0665a4와 G3 수정 커밋 각각). `ExternalLinkPolicyTest` 갱신 케이스 포함.
 - **V-2** `bun run typecheck` exit 0, `bun test tests` 590 pass / 0 fail(변경 후, Little Arc 진행 중 작업 트리 포함).
-- **V-3** 독립 G3 리뷰 2건(클린 컨텍스트 병행 스폰) — 아래 원장 참조. 수정 반영 후 재판정.
-- **V-4** G5 Release Gatekeeper — 재판정 완료 후 기록.
-- **CI** PR #6 `android`·`check` 2개 체크 a0665a4에서 통과(수정 커밋에는 재실행됨).
+- **V-3** 독립 G3 리뷰 2건(클린 컨텍스트 병행 스폰) — 최종 판정 모두 **PASS @c4fa402**(Staff Code Reviewer: F-C1·F-C2·F-3 해소 확인·동치 검증·`--rerun-tasks` 재현, Security & Reliability: F-S1·F-S2·F-3 해소 확인·경계 보존 재확인·증거 신선성 확인). 미해소 결함 0, 채택 5건/기각 0건.
+- **V-4** G5 Release Gatekeeper — 최종 판정 기록(아래).
+- **CI** PR #6: a0665a4·c4fa402 모두 `android`(유닛테스트+LocalRelease 빌드)·`check`(Rust/계약/코드젠/typecheck) 4개 체크 전부 통과.
 
 ## G3 리뷰 원장(독립 평가, 2026-11-11)
 
@@ -53,6 +53,7 @@
 
 ## 잔여 한계
 
+- market 폴백의 루프가드 거부 시 "No app on this device can open this link." 안내가 반복 시도 상황에서는 부정확할 수 있음(양 리뷰어 공통 비차단 관찰, cosmetic) — 후속 개선.
 - 제스처도 리다이렉트도 아닌 최상위 JS 내비게이션(비동기 콜백 뒤 `location.href`)은 여전히 차단 — 자동 앱 실행 광거동 방지. 실사용에서 막히면 `isRedirect` 외 세션 근접 제스처 완화 후속 과제.
 - 코디네이터 발사 경로(302→커스텀 스킴 실핸드오프, `browser_fallback_url`, market 폴백)는 유닛테스트·에뮬레이터 실측 미포함 — 발사 메커니즘은 기존 production 경로(startActivity+catch)로 복원되어 회귀 위험은 낮으나, 에뮬레이터 실측은 Little Arc 브랜치 통합 시점에 함께 권장(잔여 한계로 유지).
 - AC-4의 App.tsx 소비 코드는 이 PR에 포함되지 않는다(진행 중 미커밋 Little Arc 작업 보존).
