@@ -33,7 +33,7 @@
 - **V-1** `:app:testDebugUnitTest`(android/) 전체 — BUILD SUCCESSFUL(2026-11-11, 초기 커밋 a0665a4와 G3 수정 커밋 각각). `ExternalLinkPolicyTest` 갱신 케이스 포함.
 - **V-2** `bun run typecheck` exit 0, `bun test tests` 590 pass / 0 fail(변경 후, Little Arc 진행 중 작업 트리 포함).
 - **V-3** 독립 G3 리뷰 2건(클린 컨텍스트 병행 스폰) — 최종 판정 모두 **PASS @c4fa402**(Staff Code Reviewer: F-C1·F-C2·F-3 해소 확인·동치 검증·`--rerun-tasks` 재현, Security & Reliability: F-S1·F-S2·F-3 해소 확인·경계 보존 재확인·증거 신선성 확인). 미해소 결함 0, 채택 5건/기각 0건.
-- **V-4** G5 Release Gatekeeper — 최종 판정 기록(아래).
+- **V-4** G5 Release Gatekeeper(독립 스폰, completion 모드): **PASS** — AC-1~4 충족(AC-4 범위 분할 적정 판정), 전 검증 독립 재실행 일치(단위테스트 `--rerun-tasks` 460/0, typecheck 0, bun 590/0, CI 4/4), 미커밋 보존·혼입 0, stale 증거 0. 조건부: 에뮬레이터 실측 의무를 Little Arc 통합 관문에 승계(초안 계획 문서 §5로 명시 완료).
 - **CI** PR #6: a0665a4·c4fa402 모두 `android`(유닛테스트+LocalRelease 빌드)·`check`(Rust/계약/코드젠/typecheck) 4개 체크 전부 통과.
 
 ## G3 리뷰 원장(독립 평가, 2026-11-11)
