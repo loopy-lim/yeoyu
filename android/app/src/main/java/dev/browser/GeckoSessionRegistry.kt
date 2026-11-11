@@ -1030,6 +1030,20 @@ object GeckoSessionRegistry {
                 else save()
             }
         }
+        session.scrollDelegate = object : GeckoSession.ScrollDelegate {
+            private var lastY = 0
+            override fun onScrollChanged(s: GeckoSession, scrollX: Int, scrollY: Int) {
+                if (!current()) return
+                val deltaY = scrollY - lastY
+                lastY = scrollY
+                emit?.invoke("BrowserScroll", Arguments.createMap().apply {
+                    putString("tabId", id)
+                    putInt("scrollX", scrollX)
+                    putInt("scrollY", scrollY)
+                    putInt("deltaY", deltaY)
+                })
+            }
+        }
         session.permissionDelegate = object : GeckoSession.PermissionDelegate {
             // Per-origin decisions: a stored rule decides outright; anything
             // else goes to the JS dialog (BrowserPermissionRequest) and

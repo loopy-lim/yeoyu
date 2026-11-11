@@ -71,8 +71,8 @@ export function AddressTrigger({
       className={cn(
         "justify-center rounded-control px-xl active:opacity-pressed",
         compact
-          ? "flex-1 h-address-compact ml-sm bg-sunken"
-          : "self-stretch h-address bg-field-on-chrome"
+          ? "flex-1 h-address-compact ml-sm bg-sunken border border-hairline"
+          : "self-stretch h-address bg-field-on-chrome border border-hairline-on-chrome"
       )}
     >
       <View className="flex-row items-center gap-lg">

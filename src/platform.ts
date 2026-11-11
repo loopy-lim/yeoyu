@@ -57,6 +57,8 @@ export interface BrowserRuntime {
   getInputViewport?(scope: string): Promise<string>;
   windowMission?(): Promise<string>;
   configureWindowPermissionPrompt?(tabId: string, enabled: boolean): void;
+  minimizeToCaller?(): Promise<boolean>;
+  setWindowTranslucent?(translucent: boolean): Promise<boolean>;
   acknowledgeExternalLink(id: string): Promise<void>;
   rejectExternalLink(id: string): Promise<void>;
   getDefaultBrowserStatus(): Promise<string>;

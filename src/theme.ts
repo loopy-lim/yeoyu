@@ -190,15 +190,15 @@ export const themes: Record<Appearance, Theme> = {
   },
 };
 
-// Dark roles use bright ink on low-luminance surfaces. Raised and translucent
-// controls stay dark too: reusing the light white-alpha fills washes out ink.
+// Dark roles use bright ink on low-luminance surfaces. Controls use calibrated
+// alpha fills to provide clear contrast and shape without washing out ink.
 const sharedDark = {
-  fieldOnChrome: "rgba(255,255,255,0.04)",
-  pill: "rgba(255,255,255,0.06)",
-  favChip: "rgba(255,255,255,0.04)",
-  pinnedRow: "rgba(255,255,255,0.03)",
-  railIconTile: "rgba(255,255,255,0.05)",
-  manageTile: "rgba(255,255,255,0.05)",
+  fieldOnChrome: "rgba(255,255,255,0.09)",
+  pill: "rgba(255,255,255,0.14)",
+  favChip: "rgba(255,255,255,0.08)",
+  pinnedRow: "rgba(255,255,255,0.08)",
+  railIconTile: "rgba(255,255,255,0.10)",
+  manageTile: "rgba(255,255,255,0.10)",
   ghost: "rgba(39,34,43,0.98)",
   scrim: "rgba(0,0,0,0.58)",
   noticeBg: "rgba(238,231,243,0.96)",

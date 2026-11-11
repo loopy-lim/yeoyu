@@ -1,5 +1,6 @@
 import React from "react";
 import { Text, View } from "react-native";
+import { Card } from "@unikit-bridge/ui";
 import { cn } from "@/ui/cn";
 
 // One visual system for settings surfaces: inset group cards under quiet
@@ -51,7 +52,7 @@ export function SettingsGroup({
           {heading}
         </Text>
       )}
-      <View className={settingsClasses.group}>{children}</View>
+      <Card className={settingsClasses.group}>{children}</Card>
     </View>
   );
 }

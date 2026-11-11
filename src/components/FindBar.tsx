@@ -34,7 +34,7 @@ export function FindBar({
     return () => clearTimeout(timer);
   }, [query]);
   return (
-    <View className="absolute top-md self-center w-[94%] max-w-[400px] z-30 flex-row items-center gap-md px-lg h-input rounded-tile bg-white shadow-find-bar">
+    <View className="absolute top-md self-center w-[94%] max-w-[400px] z-30 flex-row items-center gap-md px-lg h-input rounded-tile bg-white border border-card-border shadow-find-bar">
       <TextInput
         ref={input}
         accessibilityLabel={tr("find.inPage")}
@@ -46,7 +46,7 @@ export function FindBar({
         disableFullscreenUI
         placeholder={tr("find.inPage")}
         placeholderTextColor={t.inkFaint}
-        className="flex-1 min-w-0 h-address px-xl rounded-control bg-sunken text-ink text-body-plus"
+        className="flex-1 min-w-0 h-address px-xl rounded-control bg-sunken border border-hairline text-ink text-body-plus"
       />
       <Text
         accessibilityLiveRegion="polite"

@@ -112,7 +112,7 @@ const labels = (tree: ReactTestRenderer) =>
     .map((node) => node.children.join(""));
 
 test("expanded and compact App addresses show verified trust while displaying a short host", async () => {
-  expect(entries).toHaveLength(2);
+  expect(entries).toHaveLength(3);
   for (let index = 0; index < entries.length; index++) {
     const tree = await mount(
       appEntry(index, "https://www.example.com:8443/docs?q=tab", secure)
