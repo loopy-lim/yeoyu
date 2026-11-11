@@ -1,37 +1,44 @@
 [English](README.md)
 
 <p align="center">
-  <img src="assets/brand/yeoyu-icon.png" width="112" alt="여유 아이콘">
+  <img src="assets/brand/yeoyu-icon.png" width="96" alt="여유 아이콘">
 </p>
 
-# 여유 · Yeoyu
+<h1 align="center">여유 · Yeoyu</h1>
 
-넓은 화면과 키보드 중심 탐색을 실험하는 Android 태블릿 브라우저입니다. React Native 인터페이스, GeckoView 렌더링, generated JSI 뒤의 Rust 도메인 코어를 결합합니다.
+<p align="center">
+  넓은 화면과 키보드 중심 탐색을 실험하는 Android 태블릿 브라우저입니다.<br>
+  React Native chrome, GeckoView 페이지, generated JSI 뒤의 Rust 도메인 코어를 결합합니다.
+</p>
 
-[![Host verification](https://github.com/loopy-lim/yeoyu/actions/workflows/check.yml/badge.svg)](https://github.com/loopy-lim/yeoyu/actions/workflows/check.yml)
-[![Android verification](https://github.com/loopy-lim/yeoyu/actions/workflows/android.yml/badge.svg)](https://github.com/loopy-lim/yeoyu/actions/workflows/android.yml)
+<p align="center">
+  <a href="https://github.com/loopy-lim/yeoyu/actions/workflows/check.yml"><img src="https://github.com/loopy-lim/yeoyu/actions/workflows/check.yml/badge.svg" alt="Host verification"></a>
+  <a href="https://github.com/loopy-lim/yeoyu/actions/workflows/android.yml"><img src="https://github.com/loopy-lim/yeoyu/actions/workflows/android.yml/badge.svg" alt="Android verification"></a>
+</p>
 
 ![사이드바를 펼친 여유](docs/images/expanded.png)
 
 > [!WARNING]
 > 여유는 제품 출시본이나 보안 감사를 마친 브라우저가 아닌 POC입니다. 배포 파일과 검증 범위는 [GitHub Releases](https://github.com/loopy-lim/yeoyu/releases)에서 확인하세요. 시험하기 전에 중요한 브라우징 데이터를 백업하세요.
 
-## 무엇을 실험하나요?
+## 왜 여유인가
 
-- **Space와 저장된 탐색** — 모든 Space에서 보이는 Favorite, Space별 pinned tab, 폴더, 북마크, 방문 기록, 빠른 열기.
-- **태블릿 우선 인터랙션** — 펼치고 접는 사이드바, 가로·세로 분할, 터치 드래그, 마우스 메뉴, 편집 가능한 키보드 단축키.
-- **Android 웹 통합** — GeckoView 세션, 사이트 권한, 파일 선택, 다운로드, 외부 링크, 팝업, 미디어 세션, Android PIP.
-- **로컬 상태 소유권** — workspace·tab·bookmark·keymap 규칙은 Rust가, 화면과 조정은 React Native가 담당합니다.
-- **권한과 화면 설정** — 기기 접근 미리 허용, 사이트별 선택 기억, 조용한 자동 재생 기본값, 한국어·영어 UI, 화면 폭에 맞춘 설정.
-- **Android 창과 확장 프로그램** — 별도 창, 호환되는 Mozilla 확장 검색·설치, 백그라운드 미디어 제어.
-- **프라이버시 실험** — 비공개 탭, 추적 보호 설정, 범위를 제한한 가져오기·내보내기, 보수적인 탭 해제 정책.
+여유는 Space·분할·단축키가 **태블릿에 먼저** 맞게 설계된 브라우저가 어떤 느낌인지 실험합니다. 폰용 chrome에 기능을 얹는 방식이 아닙니다.
+
+제품의 축은 세 가지입니다.
+
+1. **머무를 수 있는 Space** — 모든 Space에서 보이는 Favorite, Space별 pinned tab, 폴더·북마크·방문 기록·빠른 열기로 맥락을 잃지 않고 탐색을 정리합니다.
+2. **손과 키보드를 함께** — 펼치고 접는 사이드바, 가로·세로 분할, 터치 드래그, 마우스 메뉴, 편집 가능한 단축키를 가로 태블릿에 맞춥니다.
+3. **상태를 로컬에서 소유** — workspace·tab·bookmark·keymap 규칙은 Rust가, 화면은 React Native가 담당합니다. Android는 실제 GeckoView 세션과 권한·다운로드·PIP·창·호환 Mozilla 확장을 유지합니다.
+
+비공개 탭, 추적 보호, 범위를 제한한 가져오기·내보내기 같은 프라이버시 실험은 의도적으로 좁게 둡니다. 범위는 [프로젝트 상태](docs/project-status.ko.md)를 보세요.
 
 <p>
   <img src="docs/images/collapsed.png" width="49%" alt="사이드바를 접은 여유">
   <img src="docs/images/split.png" width="49%" alt="두 화면으로 분할한 여유">
 </p>
 
-## 구조 한눈에 보기
+## 구조
 
 ```text
 React Native UI
@@ -44,17 +51,11 @@ BrowserController와 typed port
                                         검증된 snapshot
 ```
 
-브라우저 엔진과 저장 가능한 브라우저 모델을 의도적으로 분리했습니다. Android가 실제 `GeckoSession`을 소유하고, Rust가 직렬화 가능한 ID와 상태 전이를 소유합니다. 경계와 데이터 흐름은 [아키텍처](docs/architecture.ko.md)에서 자세히 설명합니다.
-
-## 요구 사항
-
-- Android 8 / API 26 이상. 현재 UI 대상은 가로 화면 태블릿입니다.
-- Node.js 26 (`.node-version`), Bun 1.4.3 (`.bun-version`)
-- Rust 1.99.0 (`rust-toolchain.toml`), `aarch64-linux-android` target
-- JDK 17 이상, Android SDK 37.1, Build Tools 37.0.0, NDK 27.1.12297006
-- Android 빌드용 `cargo-ndk` 4.1.2
+엔진과 저장 가능한 브라우저 모델을 의도적으로 분리했습니다. Android가 실제 `GeckoSession`을, Rust가 직렬화 가능한 ID와 상태 전이를 소유합니다. 자세한 경계는 [아키텍처](docs/architecture.ko.md).
 
 ## 빠른 시작
+
+**필요:** Android 8+ (가로 태블릿), Node.js 26, Bun 1.4.3, `aarch64-linux-android`가 있는 Rust 1.99.0, JDK 17+, Android SDK 37.1 / Build Tools 37.0.0 / NDK 27.1.12297006, `cargo-ndk` 4.1.2. 버전은 `.node-version`, `.bun-version`, `rust-toolchain.toml`에 고정되어 있습니다.
 
 ```sh
 rustup target add aarch64-linux-android
@@ -65,47 +66,38 @@ cargo install cargo-ndk --version 4.1.2 --locked
 bun start
 ```
 
-`bootstrap.sh`는 고정된 [Rustra](https://github.com/loopy-lim/rustra) 소스를 Git에서 제외된 `.deps/`에 내려받고, 의존성을 설치한 뒤 generated binding을 검증합니다. Android 기본 ABI는 `arm64-v8a`입니다.
+`bootstrap.sh`는 고정된 [Rustra](https://github.com/loopy-lim/rustra) 소스를 무시 경로 `.deps/`에 받고, 의존성을 설치한 뒤 generated binding을 검증합니다. 기본 ABI는 `arm64-v8a`입니다.
 
-기기 설치, 빌드 프로필, 환경 변수, 전체 검증 절차는 [개발 가이드](docs/development.ko.md)를 확인하세요.
+기기 설치·빌드 프로필·환경 변수·전체 검증은 [개발 가이드](docs/development.ko.md).
 
-## 프로젝트 구성
+## 구성
 
-| 경로 | 책임 |
+| 경로 | 역할 |
 | --- | --- |
-| `src/` | React Native 브라우저 chrome, controller, policy, UI 상태 |
-| `native/` | Rust workspace/tab/bookmark 도메인과 snapshot 검증 |
-| `android/` | GeckoView surface·session registry·Android 연동·앱 shell |
-| `modules/rustra-jsi/` | generated Rust-to-React Native bridge runtime |
-| `generated/` | generated TypeScript contract와 codec |
-| `tests/` | 브라우저 policy·UI·controller·acceptance helper |
-| `docs/` | 공개용 아키텍처·개발·프로젝트 상태 문서 |
+| `src/` | React Native chrome, controller, policy, UI 상태 |
+| `native/` | Rust workspace / tab / bookmark 도메인과 snapshot 검증 |
+| `android/` | GeckoView surface, session, Android 연동, 앱 shell |
+| `modules/rustra-jsi/` | generated Rust ↔ React Native bridge |
+| `generated/` | generated TypeScript contract·codec |
+| `tests/` | policy·UI·controller·acceptance helper |
+| `docs/` | 아키텍처·개발·프로젝트 상태 |
 
 ## 검증
-
-기본 host gate는 Rust formatting/test/Clippy, Bun test, Python check, layout geometry assertion, contrast check, TypeScript, generated-code consistency를 실행합니다.
 
 ```sh
 ./scripts/check.sh
 ```
 
-Android unit test와 로컬 서명 테스트 APK는 CI에서 별도로 확인합니다. 빌드 성공을 실기기 acceptance나 공개 release로 확대하지 않습니다. 현재 검증 범위와 남은 항목은 [프로젝트 상태](docs/project-status.ko.md)에 정리했습니다.
+Host gate는 Rust format/test/Clippy, Bun test, Python check, layout geometry, contrast, TypeScript, generated-code consistency를 돌립니다. Android unit test와 서명 테스트 APK는 CI에서 따로 확인합니다. 빌드 성공을 실기기 acceptance나 공개 release로 보지 않습니다 — [프로젝트 상태](docs/project-status.ko.md).
 
 ## 문서
 
-- [문서 안내](docs/README.ko.md)
-- [아키텍처](docs/architecture.ko.md)
-- [개발과 검증](docs/development.ko.md)
-- [프로젝트 상태와 한계](docs/project-status.ko.md)
-- [기여 안내](CONTRIBUTING.md)
-- [보안 정책](SECURITY.md)
+[안내](docs/README.ko.md) · [아키텍처](docs/architecture.ko.md) · [개발](docs/development.ko.md) · [상태](docs/project-status.ko.md) · [기여](CONTRIBUTING.md) · [보안](SECURITY.md)
 
-## 현재 상태
+## 상태와 라이선스
 
-여유는 현재 Android POC로만 실행됩니다. iOS browser-surface interface는 있지만 실행 가능한 iOS 앱은 없습니다. 동기화, 저장되는 split group, 분리된 계정 profile, 자동 archive는 구현하지 않았습니다. 확장 프로그램은 호환되는 Mozilla 부가기능을 대상으로 하며 Chrome CRX나 모든 Firefox API를 지원하지는 않습니다.
+지금은 Android POC만 실행됩니다. iOS browser-surface interface는 있지만 실행 가능한 iOS 앱은 없습니다. 동기화, 저장되는 split group, 분리된 계정 profile, 자동 archive는 없습니다. 확장은 호환 Mozilla 부가기능만 대상이며 Chrome CRX나 모든 Firefox API는 지원하지 않습니다.
 
-여유는 공간 중심 브라우징 workflow에서 영감을 받았지만 The Browser Company, Arc, Mozilla, Google과 제휴하거나 승인을 받은 프로젝트가 아닙니다. GeckoView와 다른 외부 구성요소의 라이선스·상표는 각 권리자에게 있습니다.
+공간 중심 브라우징에서 영감을 받았지만 The Browser Company, Arc, Mozilla, Google과 제휴·승인 관계가 아닙니다. 외부 구성요소의 라이선스·상표는 각 권리자에게 있습니다.
 
-## 라이선스
-
-여유는 [Apache License 2.0](LICENSE)으로 배포합니다.
+[Apache License 2.0](LICENSE)으로 배포합니다.
