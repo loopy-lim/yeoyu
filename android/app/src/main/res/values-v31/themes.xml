@@ -6,6 +6,8 @@
         <item name="android:editTextBackground">@drawable/rn_edit_text_material</item>
         <item name="android:windowSplashScreenBackground">@color/yeoyu_icon_background</item>
         <item name="android:windowSplashScreenAnimatedIcon">@drawable/yeoyu_icon</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
     </style>
 
 </resources>

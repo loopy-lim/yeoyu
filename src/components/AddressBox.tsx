@@ -282,7 +282,7 @@ export const AddressBox = forwardRef<
   }, [focused]);
   return (
     <View className="self-stretch min-h-0 shrink">
-      <View className="flex-row items-center gap-xl px-xxl min-h-action-row rounded-tile bg-sunken">
+      <View className="flex-row items-center gap-xl px-xxl min-h-action-row rounded-tile bg-sunken border border-hairline">
         <ChromeIcon name="search" size={18} color={t.inkMuted} />
         <TextInput
           ref={setRefs}

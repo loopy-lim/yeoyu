@@ -6,8 +6,8 @@ export const appClasses = {
   sidebar: "w-sidebar bg-sidebar rounded-card overflow-hidden",
   sidebarCollapsed: "w-rail",
   sidebarLayer: "absolute inset-0",
-  sidebarLayerExpanded: "flex-col px-xxl pt-xxl pb-xl",
-  sidebarLayerRail: "flex-col px-sm pt-xxl pb-lg",
+  sidebarLayerExpanded: "flex-col px-xxl pt-lg pb-xl",
+  sidebarLayerRail: "flex-col px-sm pt-lg pb-lg",
   sidebarResizeHandle:
     "absolute top-0 bottom-0 right-0 w-[12px] items-center justify-center",
   sidebarResizeGrip: "w-[3px] h-[32px] rounded-[2px] bg-ink-muted",
@@ -40,7 +40,7 @@ export const appClasses = {
   spaceHeader: "min-h-[28px] px-lg gap-sm flex-row items-center mb-xs",
   spaceHeaderTitle: "flex-1 text-ink-muted text-small font-medium",
   rowPressed: "bg-field-on-chrome",
-  tabSelected: "bg-pill",
+  tabSelected: "bg-pill border border-hairline-on-chrome",
   tabClose: "w-[32px] h-tab-row justify-center items-center rounded-control",
   sectionRule: "h-hairline bg-hairline-on-chrome my-md",
   privateSection: "mt-md",
@@ -66,8 +66,8 @@ export const appClasses = {
   spaceRailScroll: "flex-1",
   spaceRail: "flex-row items-center justify-center grow gap-xs",
   spaceChip: "w-[32px] h-[34px] rounded-control items-center justify-center",
-  spaceChipActive: "bg-field-on-chrome",
-  spaceIndicator: "absolute bottom-xs w-[3px] h-[3px] rounded-[2px] bg-icon",
+  spaceChipActive: "bg-field-on-chrome border border-hairline-on-chrome",
+  spaceIndicator: "absolute bottom-xs w-[4px] h-[4px] rounded-[2px] bg-accent",
   bookmarkTreeRow:
     "h-tab-row px-xl rounded-control flex-row items-center gap-lg",
   bookmarkTreeActive: "bg-pill",
@@ -80,9 +80,15 @@ export const appClasses = {
   content:
     "flex-1 ml-sm border border-card-border rounded-card overflow-hidden bg-surface",
   contentFullscreen: "ml-0 border-0 rounded-none",
+  contentLittleArc:
+    "absolute z-[2] ml-0 rounded-dialog border border-card-border shadow-dialog overflow-hidden bg-surface",
   paneFullscreen: "border-0",
   canvasToolbar:
     "h-toolbar px-xxl flex-row items-center border-b-hairline-width border-b-hairline bg-surface-elevated",
+  littleArcToolbar:
+    "h-toolbar px-md flex-row items-center border-b-hairline-width border-b-hairline bg-surface-elevated",
+  littleArcPromoteButton:
+    "h-control px-md rounded-control bg-accent flex-row items-center gap-xs border border-accent active:opacity-90",
   compactNavigation: "flex-1 flex-row items-center gap-md",
   panes: "flex-1 flex-row bg-canvas",
   panesVertical: "flex-col",

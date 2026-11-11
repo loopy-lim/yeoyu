@@ -80,7 +80,7 @@ export const ChromeIcon = memo(function ChromeIcon({
         d={paths[name]}
         fill="none"
         stroke={color ?? resolved.color}
-        strokeWidth={1.65}
+        strokeWidth={1.8}
         strokeLinecap="round"
         strokeLinejoin="round"
       />

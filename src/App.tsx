@@ -184,6 +184,7 @@ import {
 
 // Custom/native hosts resolve classes before merging measured or animated styles.
 const AnimatedView = withUniwind(Animated.View);
+const AnimatedPressable = withUniwind(Animated.createAnimatedComponent(Pressable));
 const SafeAreaView = withUniwind(NativeSafeAreaView);
 const Surface = withUniwind(NativeSurface);
 
@@ -194,6 +195,8 @@ type SuggestionSources = {
   tabs: { id?: string; url: string; title: string }[];
   history: HistoryEntry[];
 };
+import { Button as UnikitButton, Badge as UnikitBadge } from "@unikit-bridge/ui";
+
 const buttonClasses = cva(c.button, {
   variants: { disabled: { true: c.disabled } },
 });
@@ -215,22 +218,25 @@ const Button = ({
   label,
   onPress,
   disabled = false,
+  variant = "secondary",
+  className,
 }: {
   label: string;
   onPress: () => void;
   disabled?: boolean;
+  variant?: "default" | "secondary" | "destructive" | "outline" | "ghost" | "link";
+  className?: string;
 }) => {
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      accessibilityState={{ disabled }}
+    <UnikitButton
+      variant={variant}
       disabled={disabled}
-      className={buttonClasses({ disabled })}
+      accessibilityLabel={label}
       onPress={onPress}
+      className={className}
     >
-      <Text className={c.buttonText}>{label}</Text>
-    </Pressable>
+      {label}
+    </UnikitButton>
   );
 };
 const IconButton = ({
@@ -939,13 +945,53 @@ function BrowserApp() {
     if (noticeTimer.current) clearTimeout(noticeTimer.current);
     noticeTimer.current = setTimeout(() => setNotice(""), 4000);
   };
+  const [littleArcTabId, setLittleArcTabId] = useState<string | null>(null);
+  const isExternalLaunchRef = useRef(false);
+  const littleArcTranslateY = useRef(new Animated.Value(0)).current;
+  const littleArcOpacity = useRef(new Animated.Value(1)).current;
+  const littleArcHeaderCollapsed = useRef(new Animated.Value(0)).current;
+  const [littleArcHeaderHidden, setLittleArcHeaderHidden] = useState(false);
+  const littleArcHeaderHiddenRef = useRef(false);
+  useEffect(() => {
+    if (Platform.OS === "android") {
+      platform.setWindowTranslucent?.(!!littleArcTabId);
+    }
+    if (littleArcTabId) {
+      littleArcTranslateY.setValue(40);
+      littleArcOpacity.setValue(0);
+      littleArcHeaderCollapsed.setValue(0);
+      littleArcHeaderHiddenRef.current = false;
+      setLittleArcHeaderHidden(false);
+      Animated.parallel([
+        Animated.spring(littleArcTranslateY, {
+          toValue: 0,
+          bounciness: 4,
+          speed: 14,
+          useNativeDriver: true,
+        }),
+        Animated.timing(littleArcOpacity, {
+          toValue: 1,
+          duration: 180,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [littleArcHeaderCollapsed, littleArcOpacity, littleArcTabId, littleArcTranslateY]);
   const browser = useBrowserWorkflows({
     onError: setError,
     onNotice: flashNotice,
     onCommand: (command) => registry.execute(command),
     onExternalTab: (snapshot) => {
       setSplitLayout(null);
-      setFocused(snapshot.activeTabId ?? null);
+      const id = snapshot.activeTabId ?? null;
+      setFocused(id);
+      setLittleArcTabId(id);
+      isExternalLaunchRef.current = true;
+    },
+    onExternalHandoff: (tabId) => {
+      // A Little Arc page that left for another app (OAuth return, mailto:)
+      // finished its job: dismiss the card and its temporary tab.
+      if (littleArcTabId && tabId === littleArcTabId) closeLittleArc();
     },
   });
   // Tabs hosted in secondary OS windows. They stay in the global session;
@@ -1029,6 +1075,11 @@ function BrowserApp() {
   const fixedSplitGeometry =
     pipVisible || splitRestoreToken !== undefined || splitMotion.settled;
   const contentFullscreen = !!fullscreenTabId;
+  const isLittleArc = Boolean(
+    littleArcTabId &&
+      target === littleArcTabId &&
+      state?.tabs.some((t) => t.id === littleArcTabId)
+  );
   const splitPaneIds = [first?.id, second?.id];
   const sidebar = useMemo(
     () =>
@@ -1133,6 +1184,7 @@ function BrowserApp() {
         .then(() => {
           if (leaveSplit) setSplitLayout(null);
           setFocused(id);
+          if (littleArcTabId && id !== littleArcTabId) setLittleArcTabId(null);
         })
     );
   };
@@ -1353,6 +1405,7 @@ function BrowserApp() {
         className={cn(
           rowVariants({ density: "tab", selected: isActive }),
           c.tab,
+          isActive && "border border-hairline-on-chrome shadow-favorite-active",
           indented && c.bookmarkTreeIndent
         )}
       >
@@ -1528,6 +1581,134 @@ function BrowserApp() {
       })
     );
   };
+
+  const promoteLittleArc = useCallback(() => {
+    const spaceName = activeWorkspace?.name || tr("chrome.thisSpace");
+    isExternalLaunchRef.current = false;
+    littleArcTranslateY.setValue(0);
+    littleArcOpacity.setValue(1);
+    littleArcHeaderCollapsed.setValue(0);
+    littleArcHeaderHiddenRef.current = false;
+    setLittleArcHeaderHidden(false);
+    setLittleArcTabId(null);
+    flashNotice(tr("littleArc.openInSpace", { space: spaceName }));
+  }, [
+    activeWorkspace?.name,
+    flashNotice,
+    littleArcHeaderCollapsed,
+    littleArcOpacity,
+    littleArcTranslateY,
+    tr,
+  ]);
+  const closeLittleArc = useCallback(() => {
+    const id = littleArcTabId;
+    const wasExternal = isExternalLaunchRef.current;
+    isExternalLaunchRef.current = false;
+    Animated.parallel([
+      Animated.timing(littleArcTranslateY, {
+        toValue: 800,
+        duration: 180,
+        useNativeDriver: true,
+      }),
+      Animated.timing(littleArcOpacity, {
+        toValue: 0,
+        duration: 160,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      littleArcTranslateY.setValue(0);
+      littleArcOpacity.setValue(1);
+      littleArcHeaderCollapsed.setValue(0);
+      littleArcHeaderHiddenRef.current = false;
+      setLittleArcHeaderHidden(false);
+      setLittleArcTabId(null);
+      if (id) closeTab(id);
+      if (wasExternal) {
+        platform.minimizeToCaller?.().then((handled) => {
+          if (!handled && Platform.OS === "android") {
+            BackHandler.exitApp();
+          }
+        });
+      }
+    });
+  }, [
+    closeTab,
+    littleArcHeaderCollapsed,
+    littleArcOpacity,
+    littleArcTabId,
+    littleArcTranslateY,
+  ]);
+  const littleArcPanResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => false,
+        onMoveShouldSetPanResponder: (_, gesture) =>
+          Math.abs(gesture.dy) > 6 && Math.abs(gesture.dy) > Math.abs(gesture.dx) * 1.5,
+        onPanResponderMove: (_, gesture) => {
+          if (gesture.dy > 0) {
+            littleArcTranslateY.setValue(gesture.dy);
+          } else if (gesture.dy < -10 && !littleArcHeaderHiddenRef.current) {
+            littleArcHeaderHiddenRef.current = true;
+            setLittleArcHeaderHidden(true);
+            Animated.timing(littleArcHeaderCollapsed, {
+              toValue: 1,
+              duration: 200,
+              useNativeDriver: false,
+            }).start();
+          }
+        },
+        onPanResponderRelease: (_, gesture) => {
+          if (gesture.dy < -20 && !littleArcHeaderHiddenRef.current) {
+            littleArcHeaderHiddenRef.current = true;
+            setLittleArcHeaderHidden(true);
+            Animated.timing(littleArcHeaderCollapsed, {
+              toValue: 1,
+              duration: 200,
+              useNativeDriver: false,
+            }).start();
+          } else if (gesture.dy > 0 && (gesture.dy > 120 || gesture.vy > 0.6)) {
+            Animated.parallel([
+              Animated.timing(littleArcTranslateY, {
+                toValue: 800,
+                duration: 180,
+                useNativeDriver: true,
+              }),
+              Animated.timing(littleArcOpacity, {
+                toValue: 0,
+                duration: 160,
+                useNativeDriver: true,
+              }),
+            ]).start(() => {
+              littleArcTranslateY.setValue(0);
+              littleArcOpacity.setValue(1);
+              littleArcHeaderCollapsed.setValue(0);
+              littleArcHeaderHiddenRef.current = false;
+              setLittleArcHeaderHidden(false);
+              closeLittleArc();
+            });
+          } else {
+            Animated.spring(littleArcTranslateY, {
+              toValue: 0,
+              bounciness: 4,
+              useNativeDriver: true,
+            }).start();
+          }
+        },
+        onPanResponderTerminate: () => {
+          Animated.spring(littleArcTranslateY, {
+            toValue: 0,
+            bounciness: 4,
+            useNativeDriver: true,
+          }).start();
+        },
+      }),
+    [
+      closeLittleArc,
+      littleArcHeaderCollapsed,
+      littleArcOpacity,
+      littleArcTranslateY,
+    ]
+  );
   const stepTab = (delta: number) => {
     const tabs =
       state?.tabs.filter(
@@ -2070,6 +2251,50 @@ function BrowserApp() {
     windowWidth,
   ]);
   const compactWindow = windowWidth < 840;
+  const littleArcCardStyle = useMemo(() => {
+    if (!isLittleArc) return undefined;
+    const bodyWidth = windowWidth - safeInsets.left - safeInsets.right;
+    const bodyHeight = windowHeight - safeInsets.top - safeInsets.bottom;
+    const isLandscape = windowWidth >= windowHeight;
+
+    if (!isLandscape) {
+      // Portrait (e.g. mobile phone):
+      // Clean sheet appearance: close to top status bar, generous width, balanced margins.
+      const horizontalGutter = 12;
+      const cardWidth = Math.max(bodyWidth - horizontalGutter * 2, 280);
+      const topGutter = 6;
+      const bottomGutter = 10;
+      const cardHeight = Math.max(bodyHeight - topGutter - bottomGutter, 360);
+      return {
+        width: cardWidth,
+        height: cardHeight,
+        left: horizontalGutter,
+        top: topGutter,
+      };
+    }
+
+    // Landscape (e.g. tablet / wide desktop):
+    // Elegant floating modal centered horizontally & vertically with balanced margins.
+    const cardWidth = Math.min(bodyWidth * 0.84, 1120);
+    const maxCardHeight = bodyHeight - 48;
+    const cardHeight = Math.min(maxCardHeight, 820);
+    const cardLeft = Math.round((bodyWidth - cardWidth) / 2);
+    const cardTop = Math.round((bodyHeight - cardHeight) / 2);
+    return {
+      width: cardWidth,
+      height: cardHeight,
+      left: cardLeft,
+      top: cardTop,
+    };
+  }, [
+    isLittleArc,
+    windowWidth,
+    windowHeight,
+    safeInsets.left,
+    safeInsets.right,
+    safeInsets.top,
+    safeInsets.bottom,
+  ]);
   const [appLifecycleState, setAppLifecycleState] = useState(
     AppState.currentState
   );
@@ -2120,6 +2345,33 @@ function BrowserApp() {
         (event: { tabId: string; current: number; total: number }) => {
           if (findTab === event.tabId)
             setFindResult({ current: event.current, total: event.total });
+        }
+      ),
+      DeviceEventEmitter.addListener(
+        "BrowserScroll",
+        (event: { tabId: string; scrollY: number; deltaY: number }) => {
+          if (event.tabId === littleArcTabId) {
+            if (event.deltaY > 15 && !littleArcHeaderHiddenRef.current) {
+              littleArcHeaderHiddenRef.current = true;
+              setLittleArcHeaderHidden(true);
+              Animated.timing(littleArcHeaderCollapsed, {
+                toValue: 1,
+                duration: 200,
+                useNativeDriver: false,
+              }).start();
+            } else if (
+              (event.deltaY < -15 || event.scrollY <= 10) &&
+              littleArcHeaderHiddenRef.current
+            ) {
+              littleArcHeaderHiddenRef.current = false;
+              setLittleArcHeaderHidden(false);
+              Animated.spring(littleArcHeaderCollapsed, {
+                toValue: 0,
+                bounciness: 4,
+                useNativeDriver: false,
+              }).start();
+            }
+          }
         }
       ),
       DeviceEventEmitter.addListener(
@@ -2313,9 +2565,17 @@ function BrowserApp() {
     const dismissTop = () => fullscreen.dismiss(closeTopModal);
     const syncModalCapture = () =>
       platform.setChromeModalActive?.(
-        modals.some(([open]) => open) || !!fullscreen.tabId
+        modals.some(([open]) => open) || !!fullscreen.tabId || isLittleArc
       );
-    registry.register("chrome.dismiss", dismissTop);
+    const dismissChrome = () => {
+      if (dismissTop()) return true;
+      if (isLittleArc) {
+        closeLittleArc();
+        return true;
+      }
+      return false;
+    };
+    registry.register("chrome.dismiss", dismissChrome);
     syncModalCapture();
     const focusSubscription = DeviceEventEmitter.addListener(
       "BrowserWindowFocus",
@@ -2334,6 +2594,10 @@ function BrowserApp() {
         const surface = target ? refs.current.get(target) : null;
         if (surface && navigation[target!]?.canGoBack) {
           Commands.goBack(surface);
+          return true;
+        }
+        if (isLittleArc) {
+          closeLittleArc();
           return true;
         }
         return false;
@@ -2368,6 +2632,8 @@ function BrowserApp() {
     navigation,
     fullscreen.dismiss,
     fullscreen.tabId,
+    isLittleArc,
+    closeLittleArc,
   ]);
   const onNavigation = (event: Navigation) => {
     const publishedTab = controller
@@ -2889,7 +3155,7 @@ function BrowserApp() {
   const frameStyle = {
     paddingLeft: framePxToDp(ui.framePx.left),
     paddingRight: framePxToDp(ui.framePx.right),
-    paddingTop: framePxToDp(ui.framePx.top),
+    paddingTop: Math.max(0, framePxToDp(ui.framePx.top) - (safeInsets.top > 0 ? 6 : 0)),
     paddingBottom: framePxToDp(ui.framePx.bottom),
   };
   // While a sheet is open the whole body behind it stops receiving touches
@@ -2925,7 +3191,11 @@ function BrowserApp() {
             ? selectedTabIds.has(tab.id)
             : splitPaneIds.includes(tab.id) && !tab.suspended,
         }),
-        c.tab
+        c.tab,
+        (selectionMode
+          ? selectedTabIds.has(tab.id)
+          : splitPaneIds.includes(tab.id) && !tab.suspended) &&
+          "border border-hairline-on-chrome shadow-favorite-active"
       )}
     >
       <DragSource
@@ -3360,6 +3630,7 @@ function BrowserApp() {
         <ThemeScope theme={theme}>
           <SafeAreaView
             className={c.app}
+            style={[isLittleArc && { backgroundColor: "transparent" }]}
             edges={contentFullscreen ? ["left", "right", "bottom"] : undefined}
           >
             {!!error && !contentFullscreen && (
@@ -3404,15 +3675,39 @@ function BrowserApp() {
             <View
               collapsable={false}
               className={c.body}
-              style={[!contentFullscreen && frameStyle]}
+              style={[
+                !contentFullscreen && !isLittleArc && frameStyle,
+                isLittleArc && { backgroundColor: "transparent" },
+              ]}
               pointerEvents={bodyBlocking ? "none" : "auto"}
               accessibilityElementsHidden={accessibilityBlocking}
               importantForAccessibility={
                 accessibilityBlocking ? "no-hide-descendants" : "auto"
               }
             >
+              {isLittleArc && (
+                <AnimatedPressable
+                  accessibilityRole="button"
+                  accessibilityLabel={tr("littleArc.close")}
+                  className="bg-black/60 z-[1]"
+                  style={[
+                    {
+                      position: "absolute",
+                      top: -safeInsets.top,
+                      bottom: -safeInsets.bottom,
+                      left: -safeInsets.left,
+                      right: -safeInsets.right,
+                      opacity: littleArcOpacity,
+                    },
+                  ]}
+                  onPress={closeLittleArc}
+                />
+              )}
               <AnimatedView
-                className={cn(c.sidebar, contentFullscreen && c.hidden)}
+                className={cn(
+                  c.sidebar,
+                  (contentFullscreen || isLittleArc) && c.hidden
+                )}
                 style={[
                   {
                     width: sideP.interpolate({
@@ -3420,11 +3715,16 @@ function BrowserApp() {
                       outputRange: [size.rail, sidebarLimits.width],
                     }),
                   },
+                  isLittleArc && { width: 0, display: "none" },
                 ]}
               >
                 <SidebarLayer
-                  visible={sidebarMotion.expanded && !contentFullscreen}
-                  active={!ui.sidebarCollapsed && !contentFullscreen}
+                  visible={
+                    sidebarMotion.expanded && !contentFullscreen && !isLittleArc
+                  }
+                  active={
+                    !ui.sidebarCollapsed && !contentFullscreen && !isLittleArc
+                  }
                   className={cn(c.sidebarLayer, c.sidebarLayerExpanded)}
                   style={[
                     {
@@ -3469,7 +3769,8 @@ function BrowserApp() {
                       />
                     </View>
                     {activePrivate && (
-                      <View
+                      <UnikitBadge
+                        variant="secondary"
                         className={c.privateBadge}
                         accessibilityLabel={tr("chrome.privateActive")}
                         accessibilityRole="text"
@@ -3481,7 +3782,7 @@ function BrowserApp() {
                         <Text className={c.privateBadgeText}>
                           {tr("chrome.private")}
                         </Text>
-                      </View>
+                      </UnikitBadge>
                     )}
                     <AddressTrigger
                       url={addressValue}
@@ -4003,8 +4304,12 @@ function BrowserApp() {
                   </View>
                 </SidebarLayer>
                 <SidebarLayer
-                  visible={sidebarMotion.rail && !contentFullscreen}
-                  active={ui.sidebarCollapsed && !contentFullscreen}
+                  visible={
+                    sidebarMotion.rail && !contentFullscreen && !isLittleArc
+                  }
+                  active={
+                    ui.sidebarCollapsed && !contentFullscreen && !isLittleArc
+                  }
                   className={cn(c.sidebarLayer, c.sidebarLayerRail, "w-[48px]")}
                   style={[
                     {
@@ -4204,15 +4509,139 @@ function BrowserApp() {
               <AnimatedView
                 className={cn(
                   c.content,
-                  contentFullscreen && c.contentFullscreen
+                  contentFullscreen && c.contentFullscreen,
+                  isLittleArc && c.contentLittleArc
                 )}
-                style={[{ opacity: spaceMotion.opacity }]}
+                style={[
+                  { opacity: spaceMotion.opacity },
+                  isLittleArc && littleArcCardStyle,
+                  isLittleArc && {
+                    opacity: littleArcOpacity,
+                    transform: [{ translateY: littleArcTranslateY }],
+                  },
+                ]}
               >
+                {isLittleArc && (
+                  <Animated.View
+                    {...littleArcPanResponder.panHandlers}
+                    style={{
+                      maxHeight: littleArcHeaderCollapsed.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [58, 14],
+                      }),
+                      overflow: "hidden",
+                      backgroundColor: theme.surfaceElevated,
+                    }}
+                  >
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={
+                        littleArcHeaderHidden
+                          ? tr("littleArc.expandHeader")
+                          : tr("littleArc.collapseHeader")
+                      }
+                      onPress={() => {
+                        const next = !littleArcHeaderHidden;
+                        littleArcHeaderHiddenRef.current = next;
+                        setLittleArcHeaderHidden(next);
+                        if (next) {
+                          Animated.timing(littleArcHeaderCollapsed, {
+                            toValue: 1,
+                            duration: 200,
+                            useNativeDriver: false,
+                          }).start();
+                        } else {
+                          Animated.spring(littleArcHeaderCollapsed, {
+                            toValue: 0,
+                            bounciness: 4,
+                            useNativeDriver: false,
+                          }).start();
+                        }
+                      }}
+                      className="h-[14px] items-center justify-center bg-surface-elevated active:opacity-60"
+                    >
+                      <View className="w-[36px] h-[4px] rounded-full bg-ink-muted/30" />
+                    </Pressable>
+                    <Animated.View
+                      className={c.littleArcToolbar}
+                      style={{
+                        opacity: littleArcHeaderCollapsed.interpolate({
+                          inputRange: [0, 0.6, 1],
+                          outputRange: [1, 0, 0],
+                        }),
+                        transform: [
+                          {
+                            translateY: littleArcHeaderCollapsed.interpolate({
+                              inputRange: [0, 1],
+                              outputRange: [0, -44],
+                            }),
+                          },
+                        ],
+                      }}
+                    >
+                      <View className={c.compactNavigation}>
+                        <IconButton
+                          label={tr("chrome.back")}
+                          icon="back"
+                          onPress={goBack}
+                          disabled={!canGoBack}
+                        />
+                        <IconButton
+                          label={tr("chrome.forward")}
+                          icon="forward"
+                          onPress={() => invoke(Commands.goForward)}
+                          disabled={!canGoForward}
+                        />
+                        <IconButton
+                          label={tr(targetLoading ? "chrome.stop" : "chrome.reload")}
+                          icon={targetLoading ? "close" : "reload"}
+                          onPress={() =>
+                            invoke(targetLoading ? Commands.stop : Commands.reload)
+                          }
+                        />
+                        <AddressTrigger
+                          compact
+                          url={addressValue}
+                          security={target ? browser.security[target] : undefined}
+                          onPress={() => openLocationEditor("touch")}
+                        />
+                      </View>
+                      <View className="flex-row items-center gap-xs">
+                        <UnikitButton
+                          variant="default"
+                          size="sm"
+                          accessibilityLabel={tr("littleArc.promote")}
+                          className={cn(
+                            c.littleArcPromoteButton,
+                            compactWindow && "px-sm min-w-0"
+                          )}
+                          onPress={promoteLittleArc}
+                        >
+                          <ChromeIcon name="pin" className="size-[14px] text-white" />
+                          {!compactWindow && (
+                            <Text className="text-white text-small font-bold">
+                              {tr("littleArc.promote")}
+                            </Text>
+                          )}
+                        </UnikitButton>
+                        <IconButton
+                          label={tr("littleArc.close")}
+                          icon="close"
+                          onPress={closeLittleArc}
+                        />
+                      </View>
+                    </Animated.View>
+                  </Animated.View>
+                )}
                 <SidebarLayer
-                  visible={sidebarMotion.rail && !contentFullscreen}
-                  active={ui.sidebarCollapsed && !contentFullscreen}
+                  visible={
+                    sidebarMotion.rail && !contentFullscreen && !isLittleArc
+                  }
+                  active={
+                    ui.sidebarCollapsed && !contentFullscreen && !isLittleArc
+                  }
                   className={cn(
-                    contentFullscreen ? "hidden" : "flex",
+                    contentFullscreen || isLittleArc ? "hidden" : "flex",
                     "overflow-hidden"
                   )}
                   style={{

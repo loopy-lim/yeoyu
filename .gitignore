@@ -30,3 +30,6 @@ android/.kotlin/
 
 # Local Python acceptance helpers
 __pycache__/
+
+# Desktop build artifacts and workspace
+desktop/

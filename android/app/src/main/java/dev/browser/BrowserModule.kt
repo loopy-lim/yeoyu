@@ -80,6 +80,29 @@ class BrowserModule(context:ReactApplicationContext):ReactContextBaseJavaModule(
   activity.goHome()
   promise.resolve(null)
  }
+ @ReactMethod fun minimizeToCaller(promise:Promise) = onUi(promise) {
+  val activity = reactApplicationContext.currentActivity
+  if (activity != null) {
+   val moved = activity.moveTaskToBack(true)
+   promise.resolve(moved)
+  } else {
+   promise.resolve(false)
+  }
+ }
+ @ReactMethod fun setWindowTranslucent(translucent:Boolean, promise:Promise) = onUi(promise) {
+  val activity = reactApplicationContext.currentActivity as? com.workspacebrowser.MainActivity
+  if (activity != null) {
+   val window = activity.window
+   if (translucent) {
+    window.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT))
+   } else {
+    BrowserAppearance.refreshSystemBars(activity)
+   }
+   promise.resolve(true)
+  } else {
+   promise.resolve(false)
+  }
+ }
  @ReactMethod fun exitContentFullscreen(id:String) {
   UiThreadUtil.runOnUiThread { GeckoSessionRegistry.exitContentFullscreen(id) }
  }

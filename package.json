@@ -15,6 +15,7 @@
     "@rustra/generated-react-native": "workspace:*",
     "@rustra/react-native": "file:.deps/rustra-main/packages/react-native",
     "@rustra/types": "file:.deps/rustra-main/packages/types",
+    "@unikit-bridge/ui": "file:.deps/unikit",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
     "react": "19.3.0",
