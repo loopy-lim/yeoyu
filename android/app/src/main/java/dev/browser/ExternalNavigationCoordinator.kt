@@ -30,7 +30,9 @@ object ExternalNavigationCoordinator {
             failed(tabId, "This external link is malformed or too long.")
             return GeckoResult.fromValue(AllowOrDeny.DENY)
         }
-        if (!request.hasUserGesture || isSubframe) {
+        val admitted = !isSubframe &&
+            ExternalLinkPolicy.navigationAdmitted(request.hasUserGesture, request.isRedirect)
+        if (!admitted) {
             if (!isSubframe) failed(tabId, "This page tried to open another app without a user action.")
             return GeckoResult.fromValue(AllowOrDeny.DENY)
         }
@@ -40,27 +42,52 @@ object ExternalNavigationCoordinator {
             return GeckoResult.fromValue(AllowOrDeny.DENY)
         }
         var fallback: String? = null
+        // The intent's own escape hatch for a missing handler; guarded like any launch.
+        fun loadWebFallback(web: String) {
+            if (!guard.acquire(tabId, request.triggerUri.orEmpty(), "fallback:$web", SystemClock.elapsedRealtime())) return
+            main.post { if (isCurrent()) session.load(GeckoSession.Loader().uri(web).flags(GeckoSession.LOAD_FLAGS_EXTERNAL)) }
+        }
         try {
             val wrapped = scheme == "intent"
             val parsed = if (wrapped) Intent.parseUri(request.uri, Intent.URI_INTENT_SCHEME) else null
             fallback = if (wrapped) ExternalLinkPolicy.webUri(parsed?.getStringExtra("browser_fallback_url")) else null
             val data = if (wrapped) parsed?.dataString else request.uri
-            val target = data?.let { ExternalLinkPolicy.appTarget(it, true, false, parsed?.`package`, wrapped, app.packageName) }
+            val target = data?.let { ExternalLinkPolicy.appTarget(it, admitted, false, parsed?.`package`, wrapped, app.packageName) }
             check(target != null) { "This external link type is not supported." }
             check(guard.acquire(tabId, request.triggerUri.orEmpty(), target.uri, SystemClock.elapsedRealtime())) {
                 "This page is repeatedly opening the same app. Tap the link again in a few seconds."
             }
             val intent = Intent(if (scheme == "tel") Intent.ACTION_DIAL else Intent.ACTION_VIEW, Uri.parse(target.uri))
                 .addCategory(Intent.CATEGORY_BROWSABLE)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             target.targetPackage?.let { intent.setPackage(it) }
             val resolved = intent.resolveActivity(activity.packageManager)
             check(resolved?.packageName != app.packageName) { "The external link would reopen this browser." }
-            activity.startActivity(intent)
+            if (resolved == null) {
+                // Nothing on this device declares a browsable handler. Fall back in
+                // the Chrome order: the intent's web fallback, then the package's
+                // store listing, then a clear notice.
+                val store = target.targetPackage?.let { pkg ->
+                    Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$pkg"))
+                        .addCategory(Intent.CATEGORY_BROWSABLE)
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        .takeIf { it.resolveActivity(activity.packageManager) != null }
+                }
+                val web = fallback
+                when {
+                    web != null -> loadWebFallback(web)
+                    store != null && guard.acquire(tabId, request.triggerUri.orEmpty(), "market:${target.targetPackage}", SystemClock.elapsedRealtime()) ->
+                        activity.startActivity(store)
+                    else -> failed(tabId, "No app on this device can open this link.")
+                }
+            } else {
+                activity.startActivity(intent)
+                handedOff(tabId)
+            }
         } catch (failure: Exception) {
             val web = fallback
-            if (web != null && guard.acquire(tabId, request.triggerUri.orEmpty(), "fallback:$web", SystemClock.elapsedRealtime())) {
-                main.post { if (isCurrent()) session.load(GeckoSession.Loader().uri(web).flags(GeckoSession.LOAD_FLAGS_EXTERNAL)) }
-            } else failed(tabId, failure.message ?: "No app can open this link.")
+            if (web != null) loadWebFallback(web)
+            else failed(tabId, failure.message ?: "No app can open this link.")
         }
         return GeckoResult.fromValue(AllowOrDeny.DENY)
     }
@@ -104,6 +131,13 @@ object ExternalNavigationCoordinator {
     private fun failed(tabId: String, error: String) {
         GeckoSessionRegistry.emit?.invoke("BrowserExternalNavigationFailed", Arguments.createMap().apply {
             putString("tabId", tabId); putString("error", error)
+        })
+    }
+
+    /** The page left for another app; a temporary surface (Little Arc) can dismiss itself. */
+    private fun handedOff(tabId: String) {
+        GeckoSessionRegistry.emit?.invoke("BrowserExternalNavigationHandoff", Arguments.createMap().apply {
+            putString("tabId", tabId)
         })
     }
 }

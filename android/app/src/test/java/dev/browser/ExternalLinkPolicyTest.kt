@@ -14,7 +14,17 @@ class ExternalLinkPolicyTest {
         assertNull(allowed("mailto:person@example.com", gesture = false))
         assertNull(allowed("tel:123", subframe = true))
         assertNull(allowed("https://example.com"))
-        assertNull(allowed("unknown:payload"))
+    }
+
+    @Test fun admittedTopLevelNavigationsMayUseAnyNonEngineScheme() {
+        // Login and messaging apps register arbitrary browsable schemes; the
+        // scheme allowlist is gone, the engine-dangerous blocklist is not.
+        assertNotNull(allowed("slack://channel/general"))
+        assertNotNull(allowed("kakaotalk://login/callback?code=1"))
+        assertNotNull(allowed("tauthlink://oauth?state=abc"))
+        assertNull(allowed("mailto:"))
+        assertNull(allowed("intent://scan/#Intent;end", packagedIntent = true))
+        assertNull(allowed("android-app://com.example/doc"))
     }
 
     @Test fun aPackagedIntentCannotBypassDangerousSchemeOrSelfLoopChecks() {
@@ -22,9 +32,15 @@ class ExternalLinkPolicyTest {
             assertNull(allowed(it, target = "com.example.app", packagedIntent = true))
         }
         assertNull(allowed("authapp:callback", target = "com.workspacebrowser", packagedIntent = true))
-        assertNull(allowed("authapp:callback", packagedIntent = true))
+        assertNotNull(allowed("authapp:callback", packagedIntent = true))
         assertNull(allowed("authapp:callback", target = "bad/package", packagedIntent = true))
         assertNotNull(allowed("authapp:callback", target = "com.example.app", packagedIntent = true))
+    }
+
+    @Test fun loginRedirectsAreAdmittedWithoutTheirOwnUserGesture() {
+        assertTrue(ExternalLinkPolicy.navigationAdmitted(hasUserGesture = false, isRedirect = true))
+        assertTrue(ExternalLinkPolicy.navigationAdmitted(hasUserGesture = true, isRedirect = false))
+        assertFalse(ExternalLinkPolicy.navigationAdmitted(hasUserGesture = false, isRedirect = false))
     }
 
     @Test fun fallbackAndContextTargetsOnlyAcceptHttpWithAHost() {

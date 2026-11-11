@@ -6,10 +6,18 @@ import java.net.URL
 
 internal data class ExternalAppTarget(val uri: String, val targetPackage: String?)
 
-/** Pure input policy. A packaged browsable intent is the only custom-scheme escape hatch. */
+/** Pure input policy. Any well-formed scheme outside the engine blocklist may resolve to a browsable app handler. */
 internal object ExternalLinkPolicy {
-    private val directSchemes = setOf("mailto", "tel", "sms", "smsto", "geo", "market")
     private val forbiddenSchemes = setOf("javascript", "file", "content", "data", "blob", "about", "chrome", "resource", "jar", "view-source", "intent", "android-app")
+    private val webSchemes = setOf("http", "https")
+
+    /**
+     * A top-level navigation may leave the browser only when the user acted on it directly
+     * or when it continues a chain the user started — the HTTP/JS redirects that carry
+     * OAuth and login callbacks back into the requesting app have no gesture of their own.
+     */
+    fun navigationAdmitted(hasUserGesture: Boolean, isRedirect: Boolean): Boolean =
+        hasUserGesture || isRedirect
     private fun parsed(value: String?): URI? {
         if (value.isNullOrEmpty() || value.length > 16_384 || value.any { it.isISOControl() }) return null
         return runCatching { URI(value) }.getOrNull()
@@ -31,16 +39,17 @@ internal object ExternalLinkPolicy {
             (uri.rawQuery?.let { "?$it" }.orEmpty()) + (uri.rawFragment?.let { "#$it" }.orEmpty())
     }
 
-    fun appTarget(uri: String, userGesture: Boolean, subframe: Boolean,
+    fun appTarget(uri: String, admittedNavigation: Boolean, subframe: Boolean,
         targetPackage: String?, packagedIntent: Boolean, ownPackage: String): ExternalAppTarget? {
-        if (!userGesture || subframe) return null
+        if (!admittedNavigation || subframe) return null
         val parsed = parsed(uri) ?: return null
         val scheme = parsed.scheme?.lowercase() ?: return null
         if (scheme in forbiddenSchemes || parsed.rawSchemeSpecificPart.isNullOrEmpty()) return null
         if (targetPackage != null && (targetPackage == ownPackage ||
             !Regex("[A-Za-z][A-Za-z0-9_]*(\\.[A-Za-z][A-Za-z0-9_]*)+").matches(targetPackage))) return null
-        if (scheme !in directSchemes && !(packagedIntent && targetPackage != null)) return null
-        if (scheme in setOf("http", "https") && webUri(uri) == null) return null
+        // Web addresses stay in the engine unless a packaged intent claims them
+        // as an app deep link; anything else may resolve to a browsable handler.
+        if (scheme in webSchemes && (!packagedIntent || webUri(uri) == null)) return null
         return ExternalAppTarget(uri, targetPackage)
     }
 }
