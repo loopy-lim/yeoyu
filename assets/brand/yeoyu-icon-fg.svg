@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="Yeoyu mark">
+  <!-- Launcher foreground: transparent plate, mark only (adaptive bg supplies the fill). -->
+  <path
+    d="M714 236H348C286 236 236 286 236 348V676C236 738 286 788 348 788H676C738 788 788 738 788 676V400"
+    fill="none"
+    stroke="#54465F"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="76"
+  />
+</svg>
