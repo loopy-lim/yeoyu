@@ -464,6 +464,66 @@ class BrowserModule(context:ReactApplicationContext):ReactContextBaseJavaModule(
   reactApplicationContext.getSharedPreferences("browser-site-permissions",0).edit().putString("rules",json).apply()
   promise.resolve(null)
  }
+ // ---- Firefox Sync (receive-only Phase 1) ----
+ /** All sync storage/network runs off the RN bridge queue; these payloads are
+  *  tiny (credentials) or large (bookmark tree), never latency-sensitive. */
+ private val syncIo=java.util.concurrent.Executors.newSingleThreadExecutor { job ->
+  Thread(job,"yeoyu-sync-store").apply { isDaemon=true } }
+ /** Gecko-stack HTTP for the sync protocol; see GeckoSessionRegistry.syncFetch. */
+ @ReactMethod fun httpRequest(requestJson:String,promise:Promise) = onUi(promise) {
+  GeckoSessionRegistry.syncFetch(reactApplicationContext,JSONObject(requestJson)) { complete(promise,it) }
+ }
+ @ReactMethod fun readSyncSecrets(promise:Promise) {
+  syncIo.execute {
+   try { promise.resolve(SyncSecretsStore.read(reactApplicationContext)) }
+   catch(failure:Exception) { promise.reject("SYNC",failure) }
+  }
+ }
+ @ReactMethod fun saveSyncSecrets(json:String,promise:Promise) {
+  syncIo.execute {
+   try { SyncSecretsStore.save(reactApplicationContext,json); promise.resolve(null) }
+   catch(failure:Exception) { promise.reject("SYNC",failure) }
+  }
+ }
+ @ReactMethod fun clearSyncSecrets(promise:Promise) {
+  syncIo.execute {
+   try { SyncSecretsStore.clear(reactApplicationContext); promise.resolve(null) }
+   catch(failure:Exception) { promise.reject("SYNC",failure) }
+  }
+ }
+ @ReactMethod fun readSyncTree(promise:Promise) {
+  syncIo.execute {
+   try { promise.resolve(SyncTreeStore.read(reactApplicationContext)) }
+   catch(failure:Exception) { promise.reject("SYNC",failure) }
+  }
+ }
+ @ReactMethod fun saveSyncTree(json:String,promise:Promise) {
+  syncIo.execute {
+   try { SyncTreeStore.save(reactApplicationContext,json); promise.resolve(null) }
+   catch(failure:Exception) { promise.reject("SYNC",failure) }
+  }
+ }
+ @ReactMethod fun clearSyncTree(promise:Promise) {
+  syncIo.execute {
+   try { SyncTreeStore.clear(reactApplicationContext); promise.resolve(null) }
+   catch(failure:Exception) { promise.reject("SYNC",failure) }
+  }
+ }
+ /** URL-safe base64 (no padding) random bytes for OAuth state/PKCE/nonce. */
+ @ReactMethod fun secureRandomB64(count:Double,promise:Promise) {
+  syncIo.execute {
+   try {
+    val n=count.toInt().coerceIn(1,1024)
+    val bytes=ByteArray(n); java.security.SecureRandom().nextBytes(bytes)
+    promise.resolve(android.util.Base64.encodeToString(bytes,
+     android.util.Base64.URL_SAFE or android.util.Base64.NO_WRAP or android.util.Base64.NO_PADDING))
+   } catch(failure:Exception) { promise.reject("SYNC",failure) }
+  }
+ }
+ /** Arms the FxA webchannel URN interception for the login tab's lifetime. */
+ @ReactMethod fun setSyncLoginCapture(enabled:Boolean,tabId:String?) {
+  UiThreadUtil.runOnUiThread { GeckoSessionRegistry.setSyncLoginCapture(enabled,tabId) }
+ }
  override fun invalidate() {
   val retiringEmitter = GeckoSessionRegistry.emit
   UiThreadUtil.runOnUiThread {

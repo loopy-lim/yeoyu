@@ -134,5 +134,23 @@ export interface BrowserRuntime {
   saveSnapshot(json: string): Promise<void>;
   readLastGoodSnapshot(): Promise<string | null>;
   quarantineSnapshot(json: string): Promise<void>;
+  /** Firefox Sync (receive-only). httpRequest takes a JSON string
+   *  {method:"GET"|"POST", url, headers?, body?} and resolves with a JSON
+   *  string {status, headers (lowercased), body}; runs on Gecko's network
+   *  stack with no cookie/cache reuse. All optional: absent on non-Android
+   *  hosts so sync simply reports "unavailable". */
+  httpRequest?(requestJson: string): Promise<string>;
+  readSyncSecrets?(): Promise<string | null>;
+  saveSyncSecrets?(json: string): Promise<void>;
+  clearSyncSecrets?(): Promise<void>;
+  readSyncTree?(): Promise<string | null>;
+  saveSyncTree?(json: string): Promise<void>;
+  clearSyncTree?(): Promise<void>;
+  /** URL-safe unpadded base64 of `count` secure-random bytes (max 1024). */
+  secureRandomB64?(count: number): Promise<string>;
+  /** Arms/disarms interception of the FxA webchannel redirect URN; a captured
+   *  code+state pair arrives as a "BrowserSyncLoginCode" device event. When
+   *  armed with a tabId, only that tab's navigation is intercepted. */
+  setSyncLoginCapture?(enabled: boolean, tabId?: string | null): void;
 }
 export const platform = NativeModules.BrowserRuntime as BrowserRuntime;

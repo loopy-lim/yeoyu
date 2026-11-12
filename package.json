@@ -12,6 +12,9 @@
     "codegen": "bun .deps/rustra-main/packages/cli/src/index.ts codegen --config rustra.json"
   },
   "dependencies": {
+    "@noble/ciphers": "2.4.0",
+    "@noble/curves": "2.4.0",
+    "@noble/hashes": "2.4.0",
     "@rustra/generated-react-native": "workspace:*",
     "@rustra/react-native": "file:.deps/rustra-main/packages/react-native",
     "@rustra/types": "file:.deps/rustra-main/packages/types",

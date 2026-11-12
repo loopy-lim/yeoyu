@@ -52,6 +52,40 @@ const en = {
   "category.privacyDetail": "Tracking protection and website data",
   "category.data": "Your data and downloads",
   "category.dataDetail": "History, bookmarks, export and import",
+  "category.sync": "Firefox Sync",
+  "category.syncDetail": "Read bookmarks from your Firefox account",
+  "sync.title": "Firefox Sync",
+  "sync.connectDetail":
+    "Sign in with your Firefox account to read the bookmarks synced by your other Firefox-based browsers. Nothing is sent back.",
+  "sync.connect": "Connect",
+  "sync.connectingTitle": "Connecting to Firefox",
+  "sync.connectingDetail":
+    "Finish signing in on the Firefox Accounts page that opened. Cancel here if you changed your mind.",
+  "sync.accountFallback": "Firefox account",
+  "sync.lastSynced": "Last synced {{age}} ago",
+  "sync.neverSynced": "Bookmarks not fetched yet",
+  "sync.syncNow": "Sync now",
+  "sync.syncing": "Syncing…",
+  "sync.disconnectTitle": "Disconnect Firefox Sync?",
+  "sync.disconnectConfirm":
+    "Synced bookmarks are removed from this device. Nothing is deleted from your Firefox account or your other devices.",
+  "sync.disconnectAction": "Disconnect",
+  "sync.sidebarHeader": "Firefox",
+  "sync.empty": "No synced bookmarks",
+  "sync.folderLabel": "Folder {{name}}",
+  "sync.bookmarkLabel": "Bookmark {{name}}",
+  "sync.untitledFolder": "Untitled folder",
+  "sync.unavailable":
+    "Firefox Sync is unavailable on this device.",
+  "sync.error.network":
+    "Firefox Sync could not be reached. Check the connection and try again.",
+  "sync.error.auth":
+    "The Firefox session expired. Connect again to continue syncing.",
+  "sync.error.server":
+    "Firefox Sync servers asked us to wait. Try again in a moment.",
+  "sync.error.protocol":
+    "Firefox Sync replied in an unexpected way. Try updating the app.",
+  "sync.error.backoff": "Try again in {{seconds}}s.",
   "category.media": "Video",
   "category.mediaDetail": "Floating video and system permissions",
   "category.advanced": "Advanced",
@@ -926,6 +960,40 @@ const ko: { [K in keyof typeof en]: string } = {
   "category.dataDetail": "기록, 북마크, 내보내기와 가져오기",
   "category.media": "동영상",
   "category.mediaDetail": "떠 있는 동영상과 시스템 권한",
+  "category.sync": "Firefox 동기화",
+  "category.syncDetail": "Firefox 계정의 북마크 읽어오기",
+  "sync.title": "Firefox 동기화",
+  "sync.connectDetail":
+    "Firefox 계정으로 로그인하면 다른 Firefox 계열 브라우저에서 동기화된 북마크를 읽어옵니다. 여유에서는 보내지 않습니다.",
+  "sync.connect": "연결",
+  "sync.connectingTitle": "Firefox에 연결 중",
+  "sync.connectingDetail":
+    "열린 Firefox 계정 페이지에서 로그인을 마쳐 주세요. 마음이 바뀌었다면 여기서 취소할 수 있습니다.",
+  "sync.accountFallback": "Firefox 계정",
+  "sync.lastSynced": "{{age}} 전에 동기화됨",
+  "sync.neverSynced": "아직 북마크를 가져오지 않았습니다",
+  "sync.syncNow": "지금 동기화",
+  "sync.syncing": "동기화 중…",
+  "sync.disconnectTitle": "Firefox 동기화를 해제할까요?",
+  "sync.disconnectConfirm":
+    "이 기기에서 동기화 북마크가 지워집니다. Firefox 계정이나 다른 기기에서는 아무것도 지워지지 않습니다.",
+  "sync.disconnectAction": "해제",
+  "sync.sidebarHeader": "Firefox",
+  "sync.empty": "동기화된 북마크가 없습니다",
+  "sync.folderLabel": "폴더 {{name}}",
+  "sync.bookmarkLabel": "북마크 {{name}}",
+  "sync.untitledFolder": "이름 없는 폴더",
+  "sync.unavailable":
+    "이 기기에서는 Firefox 동기화를 사용할 수 없습니다.",
+  "sync.error.network":
+    "Firefox 동기화 서버에 연결할 수 없습니다. 연결 상태를 확인하고 다시 시도해 주세요.",
+  "sync.error.auth":
+    "Firefox 로그인이 만료되었습니다. 다시 연결하면 동기화가 계속됩니다.",
+  "sync.error.server":
+    "Firefox 동기화 서버가 잠시 기다려 달라고 요청했습니다. 잠시 후 다시 시도해 주세요.",
+  "sync.error.protocol":
+    "Firefox 동기화 응답을 이해할 수 없습니다. 앱을 업데이트해 보세요.",
+  "sync.error.backoff": "{{seconds}}초 후에 다시 시도할 수 있습니다.",
   "category.advanced": "고급",
   "category.advancedDetail": "메모리, 사이트 CSS, 키보드 단축키",
   "language.title": "앱 언어",

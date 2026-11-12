@@ -95,6 +95,10 @@ function renderList(rail: boolean, grouped = false) {
     SplitSidebarItem: "SplitSidebarItem",
     SidebarFolderItem: "SidebarFolderItem",
     FolderDisclosure: "FolderDisclosure",
+    SidebarSyncRegion: "SidebarSyncRegion",
+    // The read-only Firefox region renders nothing without a synced tree.
+    syncState: { tree: null, syncing: false, lastResult: null },
+    createTabAndShow: () => {},
     sidebar,
     sidebarMenu: null,
     expandedFolders: new Set(),

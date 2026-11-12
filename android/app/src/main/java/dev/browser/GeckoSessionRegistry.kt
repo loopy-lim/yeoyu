@@ -17,11 +17,24 @@ import java.util.concurrent.atomic.AtomicInteger
 
 private const val PERMISSION_REQUEST_TIMEOUT_MS = 60_000L
 
+/** FxA webchannel redirect URN prefix (urn:ietf:wg:oauth:2.0:oob:…). */
+private const val SYNC_LOGIN_REDIRECT_PREFIX = "urn:ietf:wg:oauth:2.0:oob"
+private const val SYNC_HTTP_LIMIT_BYTES = 16L * 1024 * 1024
+private const val SYNC_HTTP_READ_TIMEOUT_MS = 30_000L
+
 /** Process-local browser objects. Rust owns IDs/metadata, never these objects. Main thread only. */
 object GeckoSessionRegistry {
     private var runtime: GeckoRuntime? = null
     private val main = Handler(Looper.getMainLooper())
     private val io = Executors.newSingleThreadExecutor { job -> Thread(job, "yeoyu-session-storage").apply { isDaemon = true } }
+    private val syncIo = Executors.newSingleThreadExecutor { job -> Thread(job, "yeoyu-sync-io").apply { isDaemon = true } }
+    private var syncExecutor: GeckoWebExecutor? = null
+    /** Armed while the FxA login tab is open; the webchannel redirect URN is
+     *  denied as a navigation and surfaced as BrowserSyncLoginCode instead.
+     *  Capture is bound to the tab that started the flow — a URN in any other
+     *  tab is just a denied navigation (JS also validates `state`). */
+    private var syncLoginCapture = false
+    private var syncLoginTabId: String? = null
     private var toolsConfig = BrowserToolsConfig()
     private val configurationGate = BrowserConfigurationGate()
     private var initialized = false
@@ -933,6 +946,28 @@ object GeckoSessionRegistry {
                 if (!current() || isolation.clearing) return GeckoResult.deny()
                 if (request.target != GeckoSession.NavigationDelegate.TARGET_WINDOW_NEW && request.uri == "about:blank")
                     e.initialNavigation.navigationRequested(request.uri)
+                // FxA OAuth completion: the server "redirects" to the webchannel
+                // URN, which is not a navigable page. Intercept it, hand the
+                // code+state to JS, and deny the load. Malformed URN hits stay
+                // armed so a retry in the same tab still captures.
+                if (syncLoginCapture && (syncLoginTabId == null || syncLoginTabId == id) &&
+                    request.uri.startsWith(SYNC_LOGIN_REDIRECT_PREFIX)) {
+                    val params = request.uri.substringAfter('?', "").split('&')
+                        .mapNotNull { pair ->
+                            val separator = pair.indexOf('=')
+                            if (separator <= 0) null
+                            else pair.substring(0, separator) to pair.substring(separator + 1)
+                        }.toMap()
+                    val code = params["code"]
+                    val state = params["state"]
+                    if (!code.isNullOrEmpty() && !state.isNullOrEmpty()) {
+                        syncLoginCapture = false
+                        emit?.invoke("BrowserSyncLoginCode", Arguments.createMap().apply {
+                            putString("code", code); putString("state", state)
+                        })
+                    }
+                    return GeckoResult.deny()
+                }
                 if (request.target != GeckoSession.NavigationDelegate.TARGET_WINDOW_NEW && canonicalBrowserOrigin(request.uri) != null) {
                     requestedWebUrl = request.uri
                     applySiteSettings(e, request.uri)
@@ -1507,6 +1542,87 @@ object GeckoSessionRegistry {
             }
         } catch(failure:Exception) { reply(failure) }
     }
+    /** Arms/disarms the FxA webchannel URN capture (main thread). A null
+     *  tabId keeps the legacy behavior of capturing in any tab; the login flow
+     *  always passes the tab it navigated. */
+    fun setSyncLoginCapture(enabled: Boolean, tabId: String?) {
+        syncLoginCapture = enabled
+        syncLoginTabId = if (enabled) tabId else null
+    }
+
+    /**
+     * HTTP for the sync protocol (FxA OAuth, tokenserver, storage), executed on
+     * Gecko's own network stack so certificates, DNS (incl. TRR) and HTTP/2-3
+     * behavior match what the browser itself sees. Input JSON contract:
+     * {method: "GET"|"POST", url, headers?: {name: value}, body?}. The reply is
+     * Result<{status, headers (lowercased names), body}> as a JSON string, read
+     * on a background thread with a 16 MB cap. No cookies, no caching.
+     */
+    fun syncFetch(appContext: Context, requestJson: JSONObject, reply: (Result<String>) -> Unit) {
+        val app = appContext.applicationContext
+        val url = requestJson.optString("url")
+        val method = requestJson.optString("method").uppercase()
+        // https only: the tokenserver-reported api_endpoint is server data, so
+        // the transport itself must never carry Hawk credentials over cleartext.
+        if (method !in setOf("GET", "POST") || !url.startsWith("https://"))
+            return reply(Result.failure(IllegalArgumentException("sync request must be GET/POST over https")))
+        if (url.length > 8_192) return reply(Result.failure(IllegalArgumentException("sync request url too long")))
+        val builder = WebRequest.Builder(url)
+            .method(method)
+            .cacheMode(WebRequest.CACHE_MODE_NO_STORE)
+        val headers = requestJson.optJSONObject("headers")
+        if (headers != null) for (name in headers.keys()) builder.header(name, headers.optString(name))
+        val body = requestJson.optString("body", "")
+        if (body.isNotEmpty()) builder.body(body)
+        val executor = syncExecutor ?: GeckoWebExecutor(getRuntime(app)).also { syncExecutor = it }
+        try {
+            executor.fetch(builder.build()).accept { response ->
+                syncIo.execute {
+                    val result = readSyncResponse(response)
+                    main.post { reply(result) }
+                }
+            }.exceptionally { failure ->
+                main.post {
+                    reply(Result.failure(if (failure is Exception) failure
+                        else IllegalStateException(failure?.message ?: "sync request failed")))
+                }
+                GeckoResult.fromValue(null)
+            }
+        } catch (failure: Exception) {
+            reply(Result.failure(failure))
+        }
+    }
+
+    private fun readSyncResponse(response: WebResponse?): Result<String> {
+        if (response == null) return Result.failure(IllegalStateException("sync response is empty"))
+        return try {
+            response.setReadTimeoutMillis(SYNC_HTTP_READ_TIMEOUT_MS)
+            val body = response.body?.use { stream ->
+                val buffer = java.io.ByteArrayOutputStream(64 * 1024)
+                val chunk = ByteArray(64 * 1024)
+                var total = 0L
+                while (true) {
+                    val read = stream.read(chunk)
+                    if (read < 0) break
+                    total += read
+                    if (total > SYNC_HTTP_LIMIT_BYTES) throw IOException("sync response too large")
+                    buffer.write(chunk, 0, read)
+                }
+                String(buffer.toByteArray(), Charsets.UTF_8)
+            } ?: ""
+            val headers = JSONObject()
+            response.headers.forEach { (name, value) -> headers.put(name.lowercase(), value) }
+            Result.success(JSONObject()
+                .put("status", response.statusCode)
+                .put("headers", headers)
+                .put("body", body)
+                .toString())
+        } catch (failure: Exception) {
+            runCatching { response.body?.close() }
+            Result.failure(failure)
+        }
+    }
+
     /** Replace the boost map (bare host → css) and restyle live sessions. */
     fun setBoosts(map:Map<String,String>) {
         boosts=map

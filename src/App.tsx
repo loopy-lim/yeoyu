@@ -74,6 +74,19 @@ import { NavigationEventOrder } from "@/navigationEvents";
 import { NEW_TAB_URL } from "@/BrowserController";
 import { favicons } from "@/favicons";
 import { platform } from "@/platform";
+import { SidebarSyncRegion } from "@/components/SidebarSyncRegion";
+import { SyncSettingsSection } from "@/components/SyncSettingsSection";
+import { decodeBase64Url } from "@/sync/base64";
+import {
+  buildAuthorizationFlow,
+  type AuthorizationRequest,
+  type HttpTransport,
+} from "@/sync/fxa";
+import {
+  SyncStore,
+  classifySyncFailure,
+  type SyncStoreState,
+} from "@/syncStore";
 import { history, type HistoryEntry } from "@/history";
 import { SEARCH_ENGINES, type SearchEngineId } from "@/suggestions";
 import { CommandRegistry, type ProductCommand } from "@/commandRegistry";
@@ -1298,6 +1311,137 @@ function BrowserApp() {
         })
     );
   };
+  // Firefox Sync (receive-only): store singleton, platform adapters and the
+  // login-tab flow. The URN redirect the FxA form fires is intercepted by the
+  // native capture armed for exactly this tab, and the code comes back as a
+  // BrowserSyncLoginCode device event — never through user-typed input.
+  const syncStoreRef = useRef<SyncStore | null>(null);
+  if (!syncStoreRef.current)
+    syncStoreRef.current = new SyncStore(undefined, undefined, {
+      // Hermes drains the microtask queue before native events: a macrotask
+      // hop is what actually returns control to touch/scroll between
+      // decryption batches (F-G1-2).
+      yieldControl: () => new Promise((resolve) => setTimeout(resolve, 0)),
+    });
+  const syncStore = syncStoreRef.current;
+  const [syncState, setSyncState] = useState<SyncStoreState>(() =>
+    syncStore.getState()
+  );
+  const [syncLogin, setSyncLogin] = useState<{
+    request: AuthorizationRequest;
+    tabId: string | null;
+  } | null>(null);
+  const syncLoginRef = useRef(syncLogin);
+  syncLoginRef.current = syncLogin;
+  // No native bridge (tests, hosts without the sync methods): the store keeps
+  // its unreachable transport and nothing can ever hit the network (AC-6).
+  const syncPlatformAvailable = !!(
+    platform.httpRequest &&
+    platform.readSyncSecrets &&
+    platform.saveSyncSecrets &&
+    platform.clearSyncSecrets &&
+    platform.readSyncTree &&
+    platform.saveSyncTree &&
+    platform.clearSyncTree &&
+    platform.secureRandomB64 &&
+    platform.setSyncLoginCapture
+  );
+  useEffect(() => {
+    if (!syncPlatformAvailable) return;
+    const syncHttp: HttpTransport = {
+      // GeckoWebExecutor fetch: no cookies, no cache, GET/POST http(s) only.
+      request: async (input) => {
+        const response = JSON.parse(
+          await platform.httpRequest!(JSON.stringify(input))
+        ) as { status: number; headers?: Record<string, string>; body: string };
+        return {
+          status: response.status,
+          headers: response.headers ?? {},
+          body: response.body,
+        };
+      },
+    };
+    syncStore.attach(
+      {
+        readSecrets: platform.readSyncSecrets,
+        saveSecrets: platform.saveSyncSecrets,
+        clearSecrets: platform.clearSyncSecrets,
+        readTree: platform.readSyncTree,
+        saveTree: platform.saveSyncTree,
+        clearTree: platform.clearSyncTree,
+      },
+      syncHttp
+    );
+    const unsubscribe = syncStore.subscribe(() =>
+      setSyncState(syncStore.getState())
+    );
+    void syncStore.load();
+    return unsubscribe;
+  }, [syncStore, syncPlatformAvailable]);
+  // While the login tab is open the store is still "disconnected"; the panel
+  // shows the connect-in-progress state for that whole phase.
+  const syncPanelState: SyncStoreState = syncLogin
+    ? { ...syncState, connection: "connecting" }
+    : syncState;
+  const closeSyncLoginTab = (tabId: string | null) => {
+    if (!tabId) return;
+    // The user may have closed the login tab themselves; closing again
+    // would surface a controller error for a tab that is already gone.
+    if (controller.getSnapshot()?.tabs.some((tab) => tab.id === tabId))
+      run(controller.close(tabId));
+  };
+  const startSyncConnect = () => {
+    if (!syncPlatformAvailable || syncLoginRef.current) return;
+    const secureRandomB64 = platform.secureRandomB64;
+    if (!secureRandomB64) return;
+    secureRandomB64(128)
+      .then((poolB64) => {
+        // One fresh pool per login attempt; the flow draws verifier (32) +
+        // state (16) + ephemeral key (32) = 80 bytes, so 128 leaves slack.
+        const pool = decodeBase64Url(poolB64);
+        let cursor = 0;
+        const { url, request } = buildAuthorizationFlow((count) => {
+          if (cursor + count > pool.length)
+            throw new Error("sync random pool exhausted");
+          const slice = pool.subarray(cursor, cursor + count);
+          cursor += count;
+          return slice;
+        });
+        run(
+          controller.createTab(url).then((snapshot) => {
+            const tabId = snapshot.activeTabId ?? null;
+            platform.setSyncLoginCapture?.(true, tabId);
+            setSyncLogin({ request, tabId });
+          })
+        );
+      })
+      .catch(() => flashNotice(tr("sync.error.network")));
+  };
+  const cancelSyncConnect = () => {
+    const login = syncLoginRef.current;
+    if (!login) return;
+    syncLoginRef.current = null;
+    setSyncLogin(null);
+    platform.setSyncLoginCapture?.(false, null);
+    closeSyncLoginTab(login.tabId);
+  };
+  const completeSyncLogin = async (code: string) => {
+    const login = syncLoginRef.current;
+    if (!login) return;
+    syncLoginRef.current = null;
+    setSyncLogin(null);
+    platform.setSyncLoginCapture?.(false, null);
+    closeSyncLoginTab(login.tabId);
+    try {
+      await syncStore.connect(login.request, code);
+    } catch (failure) {
+      // The exchange itself failed: back to disconnected, surface why.
+      flashNotice(tr(`sync.error.${classifySyncFailure(failure)}`));
+      return;
+    }
+    // First sync right away; sync errors land in lastResult, not a notice.
+    await syncStore.runSync();
+  };
   // New tabs stay in the browsing mode the user is in: submitting an address
   // while a private tab is focused opens a private tab, like other browsers.
   const createTabInActiveMode = (url?: string) => {
@@ -2504,6 +2648,17 @@ function BrowserApp() {
               setFocused(snapshot.activeTabId ?? null);
             })
           );
+        }
+      ),
+      DeviceEventEmitter.addListener(
+        "BrowserSyncLoginCode",
+        (event: { code: string; state: string }) => {
+          const login = syncLoginRef.current;
+          // State match: a stale or foreign-tab event must not consume our
+          // verifier — without it the code exchange would simply fail, but
+          // ignoring early keeps the armed login tab usable.
+          if (login && event.state === login.request.state)
+            void completeSyncLogin(event.code);
         }
       ),
       DeviceEventEmitter.addListener(
@@ -4157,6 +4312,23 @@ function BrowserApp() {
                                 );
                               }
                             )}
+                            <SidebarSyncRegion
+                              tree={syncState.tree}
+                              syncing={syncState.syncing}
+                              errorKind={
+                                syncState.lastResult &&
+                                syncState.lastResult.kind !== "ok"
+                                  ? syncState.lastResult.kind
+                                  : null
+                              }
+                              retryAfterSeconds={
+                                syncState.lastResult &&
+                                syncState.lastResult.kind !== "ok"
+                                  ? syncState.lastResult.retryAfterSeconds
+                                  : null
+                              }
+                              onOpenUrl={createTabAndShow}
+                            />
                             {sidebar.pinnedTabs.map((tab) =>
                               renderSidebarTab(tab)
                             )}
@@ -6730,6 +6902,27 @@ function BrowserApp() {
                           </Pressable>
                           </SettingsGroup>
                         </>
+                      ),
+                    },
+                    {
+                      id: "sync",
+                      title: tr("category.sync"),
+                      description: tr("category.syncDetail"),
+                      keywords:
+                        "firefox sync bookmarks zen account 파이어폭스 동기화 북마크 계정",
+                      content: (
+                        <SyncSettingsSection
+                          state={syncPanelState}
+                          platformAvailable={syncPlatformAvailable}
+                          onConnect={startSyncConnect}
+                          onCancelConnect={cancelSyncConnect}
+                          onSyncNow={() => {
+                            void syncStore.runSync();
+                          }}
+                          onDisconnect={() => {
+                            void syncStore.disconnect();
+                          }}
+                        />
                       ),
                     },
                     {
