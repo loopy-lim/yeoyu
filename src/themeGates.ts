@@ -42,6 +42,10 @@ export const paletteContrastGates = (variant: string, t: Theme) => [
   gate(t, variant, "inkFaint", "sunken", 4.5),
   gate(t, variant, "accent", "sunken", 3),
   gate(t, variant, "accentStrong", "surfaceElevated", 3),
+  // Little Arc promote CTA: the `white` role (light #ffffff / dark plum)
+  // carries the label and pin glyph on the accentStrong fill. ThemeScope
+  // retints --color-white per mode, so this pair must hold in every variant.
+  gate(t, variant, "white", "accentStrong", 4.5),
   gate(t, variant, "errorInk", "errorBg", 4.5),
   // The address-bar shield glyph (secure/attention) lives on the pill and
   // compact-toolbar fills; it is an icon, so the graphic 3:1 bar applies.

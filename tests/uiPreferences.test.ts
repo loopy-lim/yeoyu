@@ -391,3 +391,87 @@ test("site search entries cap at 32 with unique keywords", () => {
   const keywords = new Set(reduced.map((entry) => entry.keyword));
   expect(keywords.size).toBe(32);
 });
+
+// --- Little Arc crash-recovery marker lifecycle -----------------------------
+// The marker is a runtime breadcrumb, not a user setting: onExternalTab sets
+// it while the card is open, and every path that dismisses the overlay
+// (close, promote, focus another tab, create a tab) must clear it, or crash
+// recovery would reopen a card whose tab no longer exists as the overlay.
+
+test("Little Arc marker round-trips set → clear with stable identity on no-op", () => {
+  const marked = reduceUiPreferences(defaultUiPreferences, {
+    type: "setLittleArcActiveTab",
+    id: "tab-1",
+  });
+  expect(marked.littleArcActiveTabId).toBe("tab-1");
+  // Clearing on an already-clear store returns the SAME object so tab
+  // activations don't churn persistence rewrites.
+  expect(
+    reduceUiPreferences(defaultUiPreferences, {
+      type: "setLittleArcActiveTab",
+      id: null,
+    })
+  ).toBe(defaultUiPreferences);
+  const cleared = reduceUiPreferences(marked, {
+    type: "setLittleArcActiveTab",
+    id: null,
+  });
+  expect(cleared.littleArcActiveTabId).toBeUndefined();
+  // Re-setting the same id is also identity-stable.
+  expect(
+    reduceUiPreferences(marked, {
+      type: "setLittleArcActiveTab",
+      id: "tab-1",
+    })
+  ).toBe(marked);
+});
+
+test("Little Arc marker survives preferences persistence round-trip", async () => {
+  const stored = {
+    ...defaultUiPreferences,
+    littleArcActiveTabId: "tab-overlay",
+  };
+  const loaded = await loadUiPreferences(async () => JSON.stringify(stored));
+  expect(loaded.littleArcActiveTabId).toBe("tab-overlay");
+  // Persisted JSON keeps the field for the next boot.
+  let written: string | null = null;
+  await saveUiPreferences(async (json) => { written = json; }, loaded);
+  expect(JSON.parse(written ?? "{}").littleArcActiveTabId).toBe("tab-overlay");
+});
+
+test("Little Arc marker sanitizes on load: empty strings and non-strings drop", async () => {
+  const base = { sidebarCollapsed: false, appearance: "lavender" };
+  expect(
+    (await loadUiPreferences(async () =>
+      JSON.stringify({ ...base, littleArcActiveTabId: "" })
+    )).littleArcActiveTabId
+  ).toBeUndefined();
+  expect(
+    (await loadUiPreferences(async () =>
+      JSON.stringify({ ...base, littleArcActiveTabId: 42 })
+    )).littleArcActiveTabId
+  ).toBeUndefined();
+});
+
+test("restore keeps a runtime-set Little Arc marker over the stale stored one", () => {
+  // Cold boot from another app's link: the external tab set the live marker
+  // before hydration's async read resolved. The stored snapshot describes
+  // the dead session; the live marker must win.
+  const stored = { ...defaultUiPreferences, littleArcActiveTabId: "old-tab" };
+  const live = reduceUiPreferences(defaultUiPreferences, {
+    type: "setLittleArcActiveTab",
+    id: "fresh-tab",
+  });
+  const restored = reduceUiPreferences(live, {
+    type: "restore",
+    preferences: stored,
+  });
+  expect(restored.littleArcActiveTabId).toBe("fresh-tab");
+  // Without a live marker the stored one hydrates untouched.
+  const plain = reduceUiPreferences(defaultUiPreferences, {
+    type: "restore",
+    preferences: stored,
+  });
+  expect(plain.littleArcActiveTabId).toBe("old-tab");
+  expect(plain.sidebarCollapsed).toBe(stored.sidebarCollapsed);
+});

@@ -91,6 +91,7 @@ import {
   type PermissionKind,
   type SiteSearchEntry,
 } from "@/uiPreferences";
+import { littleArcOrphaned } from "@/littleArcLifecycle";
 import { permissionKindsFromEvent } from "@/permissions";
 import {
   sitePermissions,
@@ -977,6 +978,43 @@ function BrowserApp() {
       ]).start();
     }
   }, [littleArcHeaderCollapsed, littleArcOpacity, littleArcTabId, littleArcTranslateY]);
+  // Crash recovery: a session that died with the Little Arc open reopens the
+  // overlay for its temporary tab on boot instead of leaking the tab into the
+  // sidebar. Runs once, after the snapshot restores the tab list.
+  const littleArcRestoreRef = useRef(false);
+  useEffect(() => {
+    if (littleArcRestoreRef.current) return;
+    // Two async sources gate the one-shot: `state?.tabs` is the session
+    // snapshot, `uiHydrated` is the preferences read. Consuming the flag
+    // before hydration would read the default (marker-less) ui and skip
+    // the overlay forever.
+    if (!uiHydrated || !state?.tabs) return;
+    littleArcRestoreRef.current = true;
+    const id = ui.littleArcActiveTabId;
+    if (!id || littleArcTabId) return;
+    const tab = state.tabs.find(
+      (item) => item.id === id && !item.favorite && !item.pinned
+    );
+    if (tab) {
+      // A restored session has no calling app to hand back to: closing the
+      // card must reveal the main browser, never move the task to back.
+      setFocused(tab.id);
+      setLittleArcTabId(tab.id);
+      // The engine still holds whatever tab was active when the session
+      // died; activate the overlay tab or the translucent window would
+      // surface the wrong session beneath the card.
+      run(controller.activate(tab.id, [tab.id]));
+    } else {
+      updateUi({ type: "setLittleArcActiveTab", id: null });
+    }
+  }, [
+    state,
+    ui.littleArcActiveTabId,
+    littleArcTabId,
+    uiHydrated,
+    updateUi,
+    run,
+  ]);
   const browser = useBrowserWorkflows({
     onError: setError,
     onNotice: flashNotice,
@@ -987,6 +1025,9 @@ function BrowserApp() {
       setFocused(id);
       setLittleArcTabId(id);
       isExternalLaunchRef.current = true;
+      // Persist the overlay tab so a session that dies with the card open
+      // restores as the overlay, never as sidebar pollution.
+      updateUi({ type: "setLittleArcActiveTab", id });
     },
     onExternalHandoff: (tabId) => {
       // A Little Arc page that left for another app (OAuth return, mailto:)
@@ -1080,6 +1121,26 @@ function BrowserApp() {
       target === littleArcTabId &&
       state?.tabs.some((t) => t.id === littleArcTabId)
   );
+  // Marker safety net: the overlay stops rendering the moment focus leaves
+  // its tab (workspace switch, extension-driven activation, any path without
+  // an explicit clear). This keeps the persisted marker in lockstep with the
+  // rendered overlay so crash recovery can never reopen a card whose tab
+  // already lives in the main session. Explicit clears on known paths make
+  // the dismissal synchronous; this net catches the rest. The decision lives
+  // in littleArcOrphaned (littleArcLifecycle.ts) with its PiP-freeze tests.
+  useEffect(() => {
+    if (
+      littleArcOrphaned({
+        littleArcTabId,
+        target,
+        tabs: state?.tabs ?? [],
+        pipVisible,
+      })
+    ) {
+      setLittleArcTabId(null);
+      updateUi({ type: "setLittleArcActiveTab", id: null });
+    }
+  }, [littleArcTabId, target, state?.tabs, pipVisible, updateUi]);
   const splitPaneIds = [first?.id, second?.id];
   const sidebar = useMemo(
     () =>
@@ -1184,7 +1245,13 @@ function BrowserApp() {
         .then(() => {
           if (leaveSplit) setSplitLayout(null);
           setFocused(id);
-          if (littleArcTabId && id !== littleArcTabId) setLittleArcTabId(null);
+          // Focusing another tab implicitly dismisses the overlay; clear the
+          // crash marker with it or recovery would reopen a card whose tab
+          // already lives in the sidebar.
+          if (littleArcTabId && id !== littleArcTabId) {
+            setLittleArcTabId(null);
+            updateUi({ type: "setLittleArcActiveTab", id: null });
+          }
         })
     );
   };
@@ -1212,6 +1279,10 @@ function BrowserApp() {
       controller.createTab(url, workspaceId).then((snapshot) => {
         setSplitLayout(null);
         setFocused(snapshot.activeTabId ?? null);
+        // A new tab steals focus, which dismisses an open overlay without
+        // its close path; drop the card state and marker here too.
+        setLittleArcTabId(null);
+        updateUi({ type: "setLittleArcActiveTab", id: null });
       })
     );
   };
@@ -1222,6 +1293,8 @@ function BrowserApp() {
         .then((snapshot) => {
           setSplitLayout(null);
           setFocused(snapshot.activeTabId ?? null);
+          setLittleArcTabId(null);
+          updateUi({ type: "setLittleArcActiveTab", id: null });
         })
     );
   };
@@ -1591,6 +1664,8 @@ function BrowserApp() {
     littleArcHeaderHiddenRef.current = false;
     setLittleArcHeaderHidden(false);
     setLittleArcTabId(null);
+    // The promoted tab becomes a permanent resident; no overlay marker remains.
+    updateUi({ type: "setLittleArcActiveTab", id: null });
     flashNotice(tr("littleArc.openInSpace", { space: spaceName }));
   }, [
     activeWorkspace?.name,
@@ -1622,6 +1697,7 @@ function BrowserApp() {
       littleArcHeaderHiddenRef.current = false;
       setLittleArcHeaderHidden(false);
       setLittleArcTabId(null);
+      updateUi({ type: "setLittleArcActiveTab", id: null });
       if (id) closeTab(id);
       if (wasExternal) {
         platform.minimizeToCaller?.().then((handled) => {
@@ -2513,7 +2589,9 @@ function BrowserApp() {
     ];
     platform.refreshMedia();
     return () => subscriptions.forEach((sub) => sub.remove());
-  }, [findTab, reducedMotion, language]);
+    // littleArcTabId gates BrowserScroll-driven header collapse; without it
+    // the listener closes over a stale null and never matches the tab.
+  }, [findTab, reducedMotion, language, littleArcTabId]);
   useEffect(() => {
     // Hardware back closes the topmost surface in this priority order and
     // only falls through to web-content goBack when nothing is open.
@@ -3687,8 +3765,11 @@ function BrowserApp() {
             >
               {isLittleArc && (
                 <AnimatedPressable
-                  accessibilityRole="button"
-                  accessibilityLabel={tr("littleArc.close")}
+                  // Tap-outside-to-close is a pointing-device affordance;
+                  // the labeled X button is the accessible close path, so the
+                  // full-screen scrim must not be the first TalkBack focus.
+                  accessibilityElementsHidden
+                  importantForAccessibility="no-hide-descendants"
                   className="bg-black/60 z-[1]"
                   style={[
                     {
@@ -4606,11 +4687,20 @@ function BrowserApp() {
                           onPress={() => openLocationEditor("touch")}
                         />
                       </View>
-                      <View className="flex-row items-center gap-xs">
+                      <View className="flex-row items-center gap-lg">
                         <UnikitButton
                           variant="default"
                           size="sm"
+                          // Group icon+label into one focus target; without it
+                          // the inner Text announces separately from the button.
+                          accessible
                           accessibilityLabel={tr("littleArc.promote")}
+                          // hitSlop 8 per side widens the touch target past
+                          // the 32dp visual; vertically the h-toolbar row
+                          // bounds the effective target at 44dp (the slop
+                          // cannot cross into the drag handle above or the
+                          // webview below).
+                          hitSlop={8}
                           className={cn(
                             c.littleArcPromoteButton,
                             compactWindow && "px-sm min-w-0"

@@ -86,9 +86,14 @@ export const appClasses = {
   canvasToolbar:
     "h-toolbar px-xxl flex-row items-center border-b-hairline-width border-b-hairline bg-surface-elevated",
   littleArcToolbar:
-    "h-toolbar px-md flex-row items-center border-b-hairline-width border-b-hairline bg-surface-elevated",
+    "h-toolbar px-lg gap-lg flex-row items-center border-b-hairline-width border-b-hairline bg-surface-elevated",
+  // h-[32px] is explicit: the h-control token does not exist in size (only
+  // radius), so the class silently no-ops and the button hugs its content
+  // (~20dp). 32dp matches IconButton height inside the 44dp toolbar;
+  // hitSlop in App.tsx widens the target horizontally — vertically the
+  // toolbar row caps it at 44dp.
   littleArcPromoteButton:
-    "h-control px-md rounded-control bg-accent flex-row items-center gap-xs border border-accent active:opacity-90",
+    "h-[32px] px-lg rounded-control bg-accent-strong flex-row items-center gap-xs border border-accent-strong active:opacity-90",
   compactNavigation: "flex-1 flex-row items-center gap-md",
   panes: "flex-1 flex-row bg-canvas",
   panesVertical: "flex-col",

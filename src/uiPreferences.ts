@@ -127,6 +127,11 @@ export interface UiPreferences {
   siteSearches: SiteSearchEntry[];
   boosts: SiteBoost[];
   framePx: FramePadding;
+  // Crash-recovery marker for the Little Arc overlay, not a user setting: the
+  // external tab id persists while the card is open so a session that died
+  // with it open reopens the overlay on boot instead of leaking its temporary
+  // tab into the sidebar. Cleared on close and promote.
+  littleArcActiveTabId?: string;
 }
 
 export type UiPreferenceAction =
@@ -146,6 +151,7 @@ export type UiPreferenceAction =
   | { type: "setSiteSearches"; siteSearches: SiteSearchEntry[] }
   | { type: "setBoosts"; boosts: SiteBoost[] }
   | { type: "setFramePx"; side: FrameSide; value: number }
+  | { type: "setLittleArcActiveTab"; id: string | null }
   | { type: "restore"; preferences: UiPreferences };
 
 export const defaultUiPreferences: UiPreferences = {
@@ -222,7 +228,27 @@ export function reduceUiPreferences(
   preferences: UiPreferences,
   action: UiPreferenceAction
 ): UiPreferences {
-  if (action.type === "restore") return action.preferences;
+  if (action.type === "restore") {
+    // Hydration can race an external launch: a cold boot from another app's
+    // link can set the live overlay marker before the async preferences read
+    // resolves. The marker set since boot outranks the stored one, which
+    // describes the dead session being replaced.
+    return preferences.littleArcActiveTabId
+      ? {
+          ...action.preferences,
+          littleArcActiveTabId: preferences.littleArcActiveTabId,
+        }
+      : action.preferences;
+  }
+  if (action.type === "setLittleArcActiveTab") {
+    // Same value → same object: implicit-dismiss paths clear the marker on
+    // every tab activation, and the no-op keeps identity stable so
+    // persistence does not rewrite an unchanged store.
+    const next = action.id ?? undefined;
+    return preferences.littleArcActiveTabId === next
+      ? preferences
+      : { ...preferences, littleArcActiveTabId: next };
+  }
   if (action.type === "setLanguage") return { ...preferences, language: action.language };
   if (action.type === "setColorMode") return { ...preferences, colorMode: action.colorMode };
   if (action.type === "setCustomColor") {
@@ -399,6 +425,11 @@ export async function loadUiPreferences(
         boosts: sanitizeBoosts(prefs.boosts),
         framePx: sanitizeFramePadding(prefs.framePx),
         sidebarWidth: sanitizeSidebarWidth(prefs.sidebarWidth),
+        littleArcActiveTabId:
+          typeof prefs.littleArcActiveTabId === "string" &&
+          prefs.littleArcActiveTabId
+            ? prefs.littleArcActiveTabId
+            : undefined,
       };
     }
   } catch {

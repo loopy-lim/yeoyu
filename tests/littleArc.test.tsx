@@ -153,3 +153,55 @@ describe("Little Arc Overlay & Usability", () => {
     expect(minimizedToCaller).toBe(false);
   });
 });
+
+// --- Marker safety net (littleArcOrphaned) -----------------------------------
+// The net keeps the persisted crash marker in lockstep with the rendered
+// overlay: focus leaving the overlay tab, or the tab dying, orphans the
+// card. The PiP branch guards against the retain-freeze regression (G3 R1):
+// while native PiP owns the view, `target` is the frozen pre-PiP layout, so
+// an external link arriving mid-transition must NOT be read as focus
+// leaving.
+
+import { littleArcOrphaned } from "../src/littleArcLifecycle";
+
+describe("Little Arc marker safety net", () => {
+  const tabs = [{ id: "f" }, { id: "m" }, { id: "a" }];
+
+  test("renders-aligned state is not orphaned", () => {
+    expect(
+      littleArcOrphaned({ littleArcTabId: "m", target: "m", tabs, pipVisible: false })
+    ).toBe(false);
+    // No overlay → nothing to clear.
+    expect(
+      littleArcOrphaned({ littleArcTabId: null, target: "a", tabs, pipVisible: false })
+    ).toBe(false);
+  });
+
+  test("focus leaving or the tab dying orphans the overlay", () => {
+    // Focus switched away (workspace switch, tab activation, extension event).
+    expect(
+      littleArcOrphaned({ littleArcTabId: "m", target: "a", tabs, pipVisible: false })
+    ).toBe(true);
+    // Overlay tab removed from the session entirely.
+    expect(
+      littleArcOrphaned({ littleArcTabId: "m", target: "m", tabs: [{ id: "a" }], pipVisible: false })
+    ).toBe(true);
+  });
+
+  test("PiP retain freezes target: the net suspends until PiP ends (R1)", () => {
+    // External link M arrives while PiP retains the pre-PiP layout (target=F).
+    // Dismissing here would permanently kill the newborn card after the
+    // transition ends — the frozen target is not evidence about live focus.
+    expect(
+      littleArcOrphaned({ littleArcTabId: "m", target: "f", tabs, pipVisible: true })
+    ).toBe(false);
+    // PiP ends and live focus is the overlay tab: the card survives.
+    expect(
+      littleArcOrphaned({ littleArcTabId: "m", target: "m", tabs, pipVisible: false })
+    ).toBe(false);
+    // PiP ends and focus genuinely left: dismiss now, one frame late at worst.
+    expect(
+      littleArcOrphaned({ littleArcTabId: "m", target: "f", tabs, pipVisible: false })
+    ).toBe(true);
+  });
+});
