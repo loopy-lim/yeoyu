@@ -511,9 +511,24 @@ function WindowBody({
                 nav.fullscreen === true ||
                 (nav.url || boundUrl || NEW_TAB_URL) === NEW_TAB_URL
               }
+              canEdgeBack={nav.canGoBack}
+              canEdgeForward={nav.canGoForward}
+              edgeSwipeDisabled={
+                editing ||
+                !!permissionRequest ||
+                nav.fullscreen === true ||
+                (nav.url || boundUrl || NEW_TAB_URL) === NEW_TAB_URL
+              }
               refreshAccentColor={theme.accentStrong}
               refreshSurfaceColor={theme.surfaceElevated}
               onNavigation={(e) => applyNavigation(e.nativeEvent)}
+              onEdgeNavigate={(e) => {
+                const ref = surfaceRef.current;
+                if (!ref) return;
+                if (e.nativeEvent.direction === "back") Commands.goBack(ref);
+                else if (e.nativeEvent.direction === "forward")
+                  Commands.goForward(ref);
+              }}
             />
           ) : (
             <View className="flex-1 items-center justify-center">

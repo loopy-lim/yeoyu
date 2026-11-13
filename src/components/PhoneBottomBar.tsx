@@ -1,5 +1,5 @@
 import React from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { Animated, Pressable, ScrollView, Text, View } from "react-native";
 import { AddressTrigger } from "@/components/AddressTrigger";
 import { ExtensionActionsBar } from "@/components/ExtensionActionsBar";
 import { Favicon } from "@/components/Favicon";
@@ -10,6 +10,8 @@ import { cn } from "@/ui/cn";
 import { controlVariants } from "@/ui/variants";
 import type { ExtensionToolbarAction } from "@/browserExtensionActions";
 import type { BrowserSecurity } from "@/hooks/useBrowserWorkflows";
+import type { ToolbarTabSwipeBinding } from "@/hooks/useToolbarTabSwipe";
+import type { TabSwipePreview } from "@/tabSwipe";
 
 // Same target math as the compact toolbar's IconButton: a 32dp visual with
 // hitSlop 8 reaches 48dp inside the 44dp h-toolbar row (issue #24 pattern).
@@ -49,6 +51,42 @@ function BarButton({
   );
 }
 
+export function TabSwipePreviewBadge({
+  preview,
+}: {
+  preview: TabSwipePreview | null;
+}) {
+  if (!preview) return null;
+  return (
+    <View pointerEvents="none" className={appClasses.tabSwipeOverlay}>
+      <View
+        className={cn(
+          appClasses.tabSwipeBadge,
+          preview.ready && appClasses.tabSwipeBadgeReady
+        )}
+      >
+        {preview.delta === -1 && (
+          <ChromeIcon
+            name="back"
+            size={14}
+            className={preview.ready ? "text-accent-strong" : "text-ink-muted"}
+          />
+        )}
+        <Text numberOfLines={1} className={appClasses.tabSwipeBadgeLabel}>
+          {preview.title}
+        </Text>
+        {preview.delta === 1 && (
+          <ChromeIcon
+            name="forward"
+            size={14}
+            className={preview.ready ? "text-accent-strong" : "text-ink-muted"}
+          />
+        )}
+      </View>
+    </View>
+  );
+}
+
 // Phone compact chrome (issue #19), bottom mode: the canvasToolbar row
 // docks at the screen bottom instead of the content top. Back, forward,
 // reload/stop, extension actions and the address pill mirror that row; the
@@ -69,6 +107,7 @@ export function PhoneBottomBar({
   onOpenExtensionAction,
   onAddressPress,
   onOpenSpaces,
+  tabSwipe,
 }: {
   canGoBack: boolean;
   canGoForward: boolean;
@@ -88,11 +127,22 @@ export function PhoneBottomBar({
   ) => void;
   onAddressPress: () => void;
   onOpenSpaces: () => void;
+  tabSwipe?: ToolbarTabSwipeBinding;
 }) {
   const { tr } = useI18n();
   return (
-    <View className={appClasses.phoneBottomBar}>
-      <View className={appClasses.compactNavigation}>
+    <View
+      className={appClasses.phoneBottomBar}
+      {...(tabSwipe?.panHandlers ?? {})}
+    >
+      <Animated.View
+        className={appClasses.compactNavigation}
+        style={
+          tabSwipe
+            ? { transform: [{ translateX: tabSwipe.offsetX }] }
+            : undefined
+        }
+      >
         <BarButton
           label={tr("chrome.back")}
           icon="back"
@@ -131,12 +181,13 @@ export function PhoneBottomBar({
           actions={extensionActions}
           onOpen={onOpenExtensionAction}
         />
-      </View>
+      </Animated.View>
       <BarButton
         label={tr("chrome.openSpaces")}
         icon="space"
         onPress={onOpenSpaces}
       />
+      <TabSwipePreviewBadge preview={tabSwipe?.preview ?? null} />
     </View>
   );
 }

@@ -413,7 +413,7 @@ internal class PullToRefreshHelper(
         mainHandler.postDelayed(timeout, REFRESH_SAFETY_TIMEOUT_MS)
     }
 
-    private fun cancelActivePull() {
+    internal fun cancelActivePull() {
         gestureToken++
         wantDetailOnDown = false
         wantDetailOnMove = false

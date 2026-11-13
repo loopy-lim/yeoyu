@@ -100,6 +100,12 @@ export const appClasses = {
   // 48dp rail stays for tab/favorites/settings access.
   phoneBottomBar:
     "h-toolbar px-md gap-sm flex-row items-center border-t-hairline-width border-t-hairline bg-surface-elevated",
+  tabSwipeOverlay:
+    "absolute inset-0 items-center justify-center z-[5]",
+  tabSwipeBadge:
+    "flex-row items-center gap-xs px-lg h-[30px] max-w-[72%] rounded-control bg-surface-elevated border border-hairline shadow-mini",
+  tabSwipeBadgeReady: "bg-sunken-strong border-accent-strong",
+  tabSwipeBadgeLabel: "text-ink text-small font-semibold",
   phoneHybridTabs: "flex-1",
   phoneHybridTabsContent: "flex-row items-center gap-xs pr-xs",
   phoneHybridTab:

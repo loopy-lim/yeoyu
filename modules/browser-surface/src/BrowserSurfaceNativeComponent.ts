@@ -16,11 +16,17 @@ export interface NativeProps extends ViewProps {
   initialUrl: string;
   active?: boolean;
   pullToRefreshDisabled?: boolean;
+  canEdgeBack?: boolean;
+  canEdgeForward?: boolean;
+  edgeSwipeDisabled?: boolean;
   refreshAccentColor?: string;
   refreshSurfaceColor?: string;
   onNavigation?: CodegenTypes.DirectEventHandler<Navigation>;
   onFocused?: CodegenTypes.DirectEventHandler<Readonly<{ tabId: string }>>;
   onRefresh?: CodegenTypes.DirectEventHandler<Readonly<{ tabId: string }>>;
+  onEdgeNavigate?: CodegenTypes.DirectEventHandler<
+    Readonly<{ tabId: string; direction: string }>
+  >;
 }
 type Surface = HostComponent<NativeProps>;
 interface NativeCommands {

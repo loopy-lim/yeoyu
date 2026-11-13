@@ -27,11 +27,17 @@ class BrowserSurfaceView(val reactContext:ThemedReactContext):FrameLayout(reactC
  private lateinit var resizeCover:GeckoResizeCover
  @Suppress("UNNECESSARY_LATEINIT")
  private lateinit var pullToRefresh:PullToRefreshHelper
+ @Suppress("UNNECESSARY_LATEINIT")
+ private lateinit var edgeSwipe:EdgeSwipeHelper
  private val touchDetailObserver = object : GeckoTouchDetailObserver {
-  override fun shouldRequestDetailResult(event:MotionEvent) =
-   ::pullToRefresh.isInitialized && pullToRefresh.shouldRequestDetailResult(event)
+  override fun shouldRequestDetailResult(event:MotionEvent):Boolean {
+   val wantPtr=::pullToRefresh.isInitialized && pullToRefresh.shouldRequestDetailResult(event)
+   val wantEdge=::edgeSwipe.isInitialized && edgeSwipe.shouldRequestDetailResult(event)
+   return wantPtr || wantEdge
+  }
   override fun onDetailResult(actionMasked:Int, result:GeckoResult<PanZoomController.InputResultDetail>) {
    if(::pullToRefresh.isInitialized) pullToRefresh.onDetailResult(actionMasked, result)
+   if(::edgeSwipe.isInitialized) edgeSwipe.onDetailResult(actionMasked, result)
   }
  }
  private val childLayout=ResizeLayoutCoalescer(::layoutGecko)
@@ -44,6 +50,7 @@ class BrowserSurfaceView(val reactContext:ThemedReactContext):FrameLayout(reactC
    if(field!=value) {
     resizeCover.clear(); coverGesture.invalidate()
     if(::pullToRefresh.isInitialized) pullToRefresh.reset()
+    if(::edgeSwipe.isInitialized) edgeSwipe.reset()
    }
    field=value
   }
@@ -97,14 +104,36 @@ class BrowserSurfaceView(val reactContext:ThemedReactContext):FrameLayout(reactC
     GeckoSessionRegistry.navigate(reactContext,tabId,"reload")
    }
   }
+  edgeSwipe=EdgeSwipeHelper(
+   this,
+   onBeginDragging = { if(::pullToRefresh.isInitialized) pullToRefresh.cancelActivePull() },
+   onTriggerNavigate = { dir ->
+    if(tabId.isNotEmpty()) {
+     send("topEdgeNavigate",Arguments.createMap().apply{
+      putString("tabId",tabId)
+      putString("direction",if(dir==EdgeSwipeDirection.BACK)"back" else "forward")
+     })
+    }
+   },
+  )
   (gecko as? StableGeckoView)?.touchDetailObserver=touchDetailObserver
   addView(gecko,LayoutParams(LayoutParams.MATCH_PARENT,LayoutParams.MATCH_PARENT))
  }
  fun setPullToRefreshDisabled(disabled:Boolean) {
   if(::pullToRefresh.isInitialized) pullToRefresh.setDisabled(disabled)
  }
+ fun setCanEdgeBack(enabled:Boolean) {
+  if(::edgeSwipe.isInitialized) edgeSwipe.setCanGoBack(enabled)
+ }
+ fun setCanEdgeForward(enabled:Boolean) {
+  if(::edgeSwipe.isInitialized) edgeSwipe.setCanGoForward(enabled)
+ }
+ fun setEdgeSwipeDisabled(disabled:Boolean) {
+  if(::edgeSwipe.isInitialized) edgeSwipe.setDisabled(disabled)
+ }
  fun setRefreshColors(accent:String?, surface:String?) {
   if(::pullToRefresh.isInitialized) pullToRefresh.setColors(accent, surface)
+  if(::edgeSwipe.isInitialized) edgeSwipe.setColors(accent, surface)
  }
  internal fun updateUrl(url:String) {
   if(::pullToRefresh.isInitialized) pullToRefresh.updateUrl(url)
@@ -119,6 +148,7 @@ class BrowserSurfaceView(val reactContext:ThemedReactContext):FrameLayout(reactC
  fun release() {
   resizeCover.clear(); coverGesture.invalidate()
   if(::pullToRefresh.isInitialized) pullToRefresh.reset()
+  if(::edgeSwipe.isInitialized) edgeSwipe.reset()
   GeckoSessionRegistry.detach(this)
  }
  internal fun mediaPlaybackChanged(session:GeckoSession,playing:Boolean) {
@@ -192,6 +222,7 @@ class BrowserSurfaceView(val reactContext:ThemedReactContext):FrameLayout(reactC
   resizeCover.clear()
   coverGesture.invalidate()
   if(::pullToRefresh.isInitialized) pullToRefresh.reset()
+  if(::edgeSwipe.isInitialized) edgeSwipe.reset()
   val previous=gecko
   (previous as? StableGeckoView)?.touchDetailObserver=null
   if(previous.parent===this) removeView(previous)
@@ -208,6 +239,7 @@ class BrowserSurfaceView(val reactContext:ThemedReactContext):FrameLayout(reactC
   // Android can call this while the View constructor is still running.
   if(::resizeCover.isInitialized && !isShown) resizeCover.clear()
   if(::pullToRefresh.isInitialized && !isShown) pullToRefresh.reset()
+  if(::edgeSwipe.isInitialized && !isShown) edgeSwipe.reset()
  }
  override fun onViewRemoved(child:View) {
   if(child===gecko) { resizeCover.clear(); coverGesture.invalidate() }
@@ -234,6 +266,7 @@ class BrowserSurfaceView(val reactContext:ThemedReactContext):FrameLayout(reactC
  override fun dispatchDraw(canvas:Canvas) {
   super.dispatchDraw(canvas)
   if(::pullToRefresh.isInitialized) pullToRefresh.draw(canvas)
+  if(::edgeSwipe.isInitialized) edgeSwipe.draw(canvas)
  }
  override fun dispatchTouchEvent(event:MotionEvent):Boolean {
   val action=event.actionMasked
@@ -244,6 +277,7 @@ class BrowserSurfaceView(val reactContext:ThemedReactContext):FrameLayout(reactC
    gecko.session,
   )) {
    if(::pullToRefresh.isInitialized) pullToRefresh.reset()
+   if(::edgeSwipe.isInitialized) edgeSwipe.reset()
    return true
   }
   return super.dispatchTouchEvent(event)
@@ -253,10 +287,18 @@ class BrowserSurfaceView(val reactContext:ThemedReactContext):FrameLayout(reactC
    send("topFocused",Arguments.createMap().apply{putString("tabId",tabId)})
    gecko.requestFocus()
   }
-  if(::pullToRefresh.isInitialized && pullToRefresh.onInterceptTouchEvent(event)) return true
+  if(::edgeSwipe.isInitialized && edgeSwipe.onInterceptTouchEvent(event)) {
+   if(::pullToRefresh.isInitialized) pullToRefresh.cancelActivePull()
+   return true
+  }
+  if(::pullToRefresh.isInitialized && pullToRefresh.onInterceptTouchEvent(event)) {
+   if(::edgeSwipe.isInitialized) edgeSwipe.cancelActiveSwipe()
+   return true
+  }
   return super.onInterceptTouchEvent(event)
  }
  override fun onTouchEvent(event:MotionEvent):Boolean {
+  if(::edgeSwipe.isInitialized && edgeSwipe.onTouchEvent(event)) return true
   if(::pullToRefresh.isInitialized && pullToRefresh.onTouchEvent(event)) return true
   return super.onTouchEvent(event)
  }

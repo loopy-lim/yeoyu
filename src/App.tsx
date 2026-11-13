@@ -187,8 +187,11 @@ import { AddressTrigger } from "@/components/AddressTrigger";
 import {
   PhoneBottomBar,
   PhoneHybridBar,
+  TabSwipePreviewBadge,
   type HybridBarTab,
 } from "@/components/PhoneBottomBar";
+import { useToolbarTabSwipe } from "@/hooks/useToolbarTabSwipe";
+import { collectSwipeableTabs } from "@/tabSwipe";
 import { FindBar } from "@/components/FindBar";
 import { canToggleReaderMode, deriveReaderStyle } from "@/readerMode";
 import {
@@ -2837,6 +2840,25 @@ function BrowserApp() {
         ).values()
       )
     : [];
+  const swipeableTabs = collectSwipeableTabs(
+    state?.tabs ?? [],
+    state?.activeWorkspaceId
+  );
+  const toolbarTabSwipe = useToolbarTabSwipe({
+    enabled:
+      swipeableTabs.length > 1 &&
+      !overlayOpen &&
+      !selectionMode &&
+      !isLittleArc &&
+      !contentFullscreen &&
+      !permissionRequest &&
+      !findTab,
+    tabs: swipeableTabs,
+    currentTabId: target,
+    reducedMotion,
+    labelOf: tabLabel,
+    onSwitchTab: switchTab,
+  });
   const littleArcCardStyle = useMemo(() => {
     if (!isLittleArc) return undefined;
     const bodyWidth = windowWidth - safeInsets.left - safeInsets.right;
@@ -3787,11 +3809,42 @@ function BrowserApp() {
         fullscreenTabId === id ||
         url === NEW_TAB_URL
       }
+      canEdgeBack={
+        !!navigation[id]?.canGoBack || !!browser.readerStates[id]?.active
+      }
+      canEdgeForward={!!navigation[id]?.canGoForward}
+      edgeSwipeDisabled={
+        overlayOpen ||
+        bodyBlocking ||
+        !!permissionRequest ||
+        quickOpenEdit ||
+        selectionMode ||
+        fullscreenTabId === id ||
+        url === NEW_TAB_URL
+      }
       refreshAccentColor={theme.accentStrong}
       refreshSurfaceColor={theme.surfaceElevated}
       onNavigation={(e) => onNavigation(e.nativeEvent)}
       onFocused={(e) => {
         setFocused(e.nativeEvent.tabId);
+      }}
+      onEdgeNavigate={(e) => {
+        const { tabId: eventTabId, direction } = e.nativeEvent;
+        setFocused(eventTabId);
+        haptic("click");
+        if (direction === "back") {
+          if (browser.readerStates[eventTabId]?.active) {
+            void browser.setReaderMode(eventTabId, false);
+            return;
+          }
+          const ref = refs.current.get(eventTabId);
+          if (ref) Commands.goBack(ref);
+          return;
+        }
+        if (direction === "forward") {
+          const ref = refs.current.get(eventTabId);
+          if (ref) Commands.goForward(ref);
+        }
       }}
     />
   );
@@ -5385,8 +5438,16 @@ function BrowserApp() {
                     }),
                   }}
                 >
-                  <View className={c.canvasToolbar}>
-                    <View className={c.compactNavigation}>
+                  <View
+                    className={c.canvasToolbar}
+                    {...toolbarTabSwipe.panHandlers}
+                  >
+                    <AnimatedView
+                      className={c.compactNavigation}
+                      style={{
+                        transform: [{ translateX: toolbarTabSwipe.offsetX }],
+                      }}
+                    >
                       <IconButton
                         label={tr("chrome.back")}
                         icon="back"
@@ -5425,7 +5486,7 @@ function BrowserApp() {
                         actions={extensionActions}
                         onOpen={openExtensionAction}
                       />
-                    </View>
+                    </AnimatedView>
                     <IconButton
                       label={tr(
                         validSplit ? "chrome.unsplitButton" : "chrome.split"
@@ -5434,6 +5495,7 @@ function BrowserApp() {
                       onPress={toggleSplit}
                       disabled={!validSplit && !splitCandidate}
                     />
+                    <TabSwipePreviewBadge preview={toolbarTabSwipe.preview} />
                   </View>
                 </SidebarLayer>
                 <View
@@ -5754,6 +5816,7 @@ function BrowserApp() {
                 onOpenExtensionAction={openExtensionAction}
                 onAddressPress={() => openLocationEditor("touch")}
                 onOpenSpaces={() => setSpaceSwitcher(true)}
+                tabSwipe={toolbarTabSwipe}
               />
             )}
             {hybridChrome && !contentFullscreen && !isLittleArc && (

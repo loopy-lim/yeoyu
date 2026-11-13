@@ -11,6 +11,7 @@
 | [아키텍처](architecture.ko.md) | 소유권 경계, runtime 구성요소, 저장, privacy, generated code |
 | [개발](development.ko.md) | toolchain 설정, 검사, Android 빌드, 기기 실행, release 입력 |
 | [프로젝트 상태](project-status.ko.md) | 구현 범위, 검증 경계, 한계, roadmap |
+| [스와이프 제스처 정책](swipe-gestures-policy.ko.md) | 엣지 뒤로/앞으로, 툴바 탭 전환, 예측 백·캐러셀 충돌 회피 규칙 |
 | [기여](../CONTRIBUTING.md) | pull request 기준과 검증 |
 | [보안](../SECURITY.md) | 취약점 신고와 민감 정보 취급 |
 

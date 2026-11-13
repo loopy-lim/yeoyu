@@ -11,6 +11,7 @@ The public documentation is intentionally small and current. Raw device captures
 | [Architecture](architecture.md) | Ownership boundaries, runtime components, persistence, privacy, and generated code |
 | [Development](development.md) | Toolchain setup, checks, Android builds, device runs, and release inputs |
 | [Project status](project-status.md) | Implemented scope, verification boundaries, limitations, and roadmap |
+| [Swipe gestures policy](swipe-gestures-policy.md) | Edge back/forward, toolbar tab swipe, predictive back & carousel conflict rules |
 | [Contributing](../CONTRIBUTING.md) | Pull request expectations and validation |
 | [Security](../SECURITY.md) | Reporting vulnerabilities and handling sensitive data |
 
