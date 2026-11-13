@@ -86,6 +86,8 @@ const en = {
   "sync.error.protocol":
     "Firefox Sync replied in an unexpected way. Try updating the app.",
   "sync.error.backoff": "Try again in {{seconds}}s.",
+  "sync.uploading": "Uploading {{count}}",
+  "sync.resultSummary": "Received {{received}} · Sent {{uploaded}}",
   "category.media": "Video",
   "category.mediaDetail": "Floating video and system permissions",
   "category.advanced": "Advanced",
@@ -994,6 +996,8 @@ const ko: { [K in keyof typeof en]: string } = {
   "sync.error.protocol":
     "Firefox 동기화 응답을 이해할 수 없습니다. 앱을 업데이트해 보세요.",
   "sync.error.backoff": "{{seconds}}초 후에 다시 시도할 수 있습니다.",
+  "sync.uploading": "{{count}}개 항목 업로드 중",
+  "sync.resultSummary": "수신 {{received}} · 송신 {{uploaded}}",
   "category.advanced": "고급",
   "category.advancedDetail": "메모리, 사이트 CSS, 키보드 단축키",
   "language.title": "앱 언어",

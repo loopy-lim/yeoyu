@@ -19,6 +19,11 @@ private const val PERMISSION_REQUEST_TIMEOUT_MS = 60_000L
 
 /** FxA webchannel redirect URN prefix (urn:ietf:wg:oauth:2.0:oob:…). */
 private const val SYNC_LOGIN_REDIRECT_PREFIX = "urn:ietf:wg:oauth:2.0:oob"
+
+/** Web-context FxA completion: the OAuth code lands on an https interstitial
+ *  (verified on device 2026-11-13, V-7) that idles waiting for a WebChannel
+ *  host to close the tab — one a plain GV tab never provides. */
+private const val SYNC_LOGIN_SUCCESS_PREFIX = "https://accounts.firefox.com/oauth/success/"
 private const val SYNC_HTTP_LIMIT_BYTES = 16L * 1024 * 1024
 private const val SYNC_HTTP_READ_TIMEOUT_MS = 30_000L
 
@@ -29,9 +34,10 @@ object GeckoSessionRegistry {
     private val io = Executors.newSingleThreadExecutor { job -> Thread(job, "yeoyu-session-storage").apply { isDaemon = true } }
     private val syncIo = Executors.newSingleThreadExecutor { job -> Thread(job, "yeoyu-sync-io").apply { isDaemon = true } }
     private var syncExecutor: GeckoWebExecutor? = null
-    /** Armed while the FxA login tab is open; the webchannel redirect URN is
-     *  denied as a navigation and surfaced as BrowserSyncLoginCode instead.
-     *  Capture is bound to the tab that started the flow — a URN in any other
+    /** Armed while the FxA login tab is open; the OAuth completion — the
+     *  webchannel URN or the web-context /oauth/success page — is denied as a
+     *  navigation and surfaced as BrowserSyncLoginCode instead. Capture is
+     *  bound to the tab that started the flow; a completion URL in any other
      *  tab is just a denied navigation (JS also validates `state`). */
     private var syncLoginCapture = false
     private var syncLoginTabId: String? = null
@@ -946,27 +952,21 @@ object GeckoSessionRegistry {
                 if (!current() || isolation.clearing) return GeckoResult.deny()
                 if (request.target != GeckoSession.NavigationDelegate.TARGET_WINDOW_NEW && request.uri == "about:blank")
                     e.initialNavigation.navigationRequested(request.uri)
-                // FxA OAuth completion: the server "redirects" to the webchannel
-                // URN, which is not a navigable page. Intercept it, hand the
-                // code+state to JS, and deny the load. Malformed URN hits stay
-                // armed so a retry in the same tab still captures.
+                // FxA OAuth completion arrives in two shapes. The
+                // webchannel-context flow redirects to the URN, which is not a
+                // navigable page — always denied. The web-context flow (this
+                // build) redirects to /oauth/success/<client_id>?code=…&state=…,
+                // an interstitial that waits for a WebChannel host to close the
+                // tab; deny it once the code is captured so the login tab can
+                // close immediately. Malformed hits stay armed so a retry in
+                // the same tab still captures.
                 if (syncLoginCapture && (syncLoginTabId == null || syncLoginTabId == id) &&
-                    request.uri.startsWith(SYNC_LOGIN_REDIRECT_PREFIX)) {
-                    val params = request.uri.substringAfter('?', "").split('&')
-                        .mapNotNull { pair ->
-                            val separator = pair.indexOf('=')
-                            if (separator <= 0) null
-                            else pair.substring(0, separator) to pair.substring(separator + 1)
-                        }.toMap()
-                    val code = params["code"]
-                    val state = params["state"]
-                    if (!code.isNullOrEmpty() && !state.isNullOrEmpty()) {
-                        syncLoginCapture = false
-                        emit?.invoke("BrowserSyncLoginCode", Arguments.createMap().apply {
-                            putString("code", code); putString("state", state)
-                        })
+                    (request.uri.startsWith(SYNC_LOGIN_REDIRECT_PREFIX) ||
+                        request.uri.startsWith(SYNC_LOGIN_SUCCESS_PREFIX))) {
+                    val captured = captureSyncLogin(request.uri)
+                    if (captured || request.uri.startsWith(SYNC_LOGIN_REDIRECT_PREFIX)) {
+                        return GeckoResult.deny()
                     }
-                    return GeckoResult.deny()
                 }
                 if (request.target != GeckoSession.NavigationDelegate.TARGET_WINDOW_NEW && canonicalBrowserOrigin(request.uri) != null) {
                     requestedWebUrl = request.uri
@@ -982,6 +982,14 @@ object GeckoSessionRegistry {
             }
             override fun onLocationChange(s: GeckoSession, url: String?, perms: MutableList<GeckoSession.PermissionDelegate.ContentPermission>, hasUserGesture: Boolean) {
                 if (!current()) return
+                // Redirect-initiated loads may not surface in onLoadRequest;
+                // capture from the committed location as a fallback. Idempotent:
+                // captureSyncLogin disarms, so repeated events are no-ops.
+                if (syncLoginCapture && url != null &&
+                    (syncLoginTabId == null || syncLoginTabId == id) &&
+                    url.startsWith(SYNC_LOGIN_SUCCESS_PREFIX)) {
+                    captureSyncLogin(url)
+                }
                 traceBootstrap("location", url)
                 val wasReady = e.initialNavigationLocationAccepted
                 if (!e.initialNavigation.acceptLocation(url, hasUserGesture)) { traceBootstrap("suppressed-location", url); return }
@@ -1545,6 +1553,26 @@ object GeckoSessionRegistry {
     /** Arms/disarms the FxA webchannel URN capture (main thread). A null
      *  tabId keeps the legacy behavior of capturing in any tab; the login flow
      *  always passes the tab it navigated. */
+    /** Parses code+state out of an FxA OAuth completion URL and, when both are
+     *  present, disarms the capture and emits BrowserSyncLoginCode. Idempotent
+     *  per arming; returns whether the code was captured. */
+    private fun captureSyncLogin(uri: String): Boolean {
+        val params = uri.substringAfter('?', "").split('&')
+            .mapNotNull { pair ->
+                val separator = pair.indexOf('=')
+                if (separator <= 0) null
+                else pair.substring(0, separator) to pair.substring(separator + 1)
+            }.toMap()
+        val code = params["code"]
+        val state = params["state"]
+        if (code.isNullOrEmpty() || state.isNullOrEmpty()) return false
+        syncLoginCapture = false
+        emit?.invoke("BrowserSyncLoginCode", Arguments.createMap().apply {
+            putString("code", code); putString("state", state)
+        })
+        return true
+    }
+
     fun setSyncLoginCapture(enabled: Boolean, tabId: String?) {
         syncLoginCapture = enabled
         syncLoginTabId = if (enabled) tabId else null

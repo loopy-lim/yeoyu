@@ -1,11 +1,11 @@
-// Cryptographic primitives for Firefox Sync (receive-only):
-//   - sync15 key bundles (kSync split) and weave envelope decryption
-//     (HMAC-SHA256 verify + AES-256-CBC), mirroring application-services
-//     components/sync15/src/key_bundle.rs
+// Cryptographic primitives for Firefox Sync:
+//   - sync15 key bundles (kSync split) and weave envelope decryption and
+//     encryption (HMAC-SHA256 + AES-256-CBC), mirroring application-services
+//     components/sync15/src/key_bundle.rs and the Weave CryptoWrapper
 //   - JWE ECDH-ES + A256GCM decryption of the FxA keys_jwe response
 //     (RFC 7518 §4.3, ConcatKDF direct key agreement)
 //   - Hawk request signing for the sync storage server (taskcluster/rust-hawk
-//     normalized string format)
+//     normalized string format), with optional Hawk 1.1 payload validation
 // All functions are pure; randomness is injected where required.
 
 // noble v2: every subpath import requires the .js suffix (exports map), and
@@ -84,6 +84,38 @@ export function decryptEnvelope(
     ciphertext
   );
   return fromUtf8(plain);
+}
+
+/**
+ * Encrypt a cleartext JSON string into a weave envelope — the exact inverse
+ * of decryptEnvelope (Firefox Weave CryptoWrapper.encrypt / a-s
+ * bso/crypto.rs into_encrypted): AES-256-CBC with PKCS#7 padding, standard
+ * base64 ciphertext, and the legacy sync MAC computed over the base64
+ * ciphertext STRING bytes (not the decoded ciphertext), hex-encoded.
+ */
+export function encryptEnvelope(
+  bundle: KeyBundle,
+  cleartext: string,
+  random: (n: number) => Uint8Array = randomBytes
+): EnvelopePayload {
+  const iv = random(16);
+  if (iv.length !== 16) throw new Error("envelope IV must be 16 bytes");
+  const ciphertext = cbc(bundle.encKey, iv, { disablePadding: false }).encrypt(
+    utf8(cleartext)
+  );
+  const ciphertextB64 = encodeBase64(ciphertext);
+  const mac = hmac(sha256, bundle.macKey, utf8(ciphertextB64));
+  return {
+    IV: encodeBase64(iv),
+    hmac: toHex(mac),
+    ciphertext: ciphertextB64,
+  };
+}
+
+function toHex(bytes: Uint8Array): string {
+  let out = "";
+  for (const byte of bytes) out += byte.toString(16).padStart(2, "0");
+  return out;
 }
 
 function constantTimeEqual(a: Uint8Array, b: Uint8Array): boolean {
@@ -253,6 +285,26 @@ export interface HawkRequest {
   pathAndQuery: string;
   host: string;
   port: number;
+  /** Optional payload validation (Hawk 1.1): POST bodies. When present the
+   *  header carries hash = hawkPayloadHash(...) and the MAC normalized
+   *  string's hash field holds it; GETs keep the legacy empty hash. */
+  payload?: { contentType: string; body: string };
+}
+
+/**
+ * Hawk 1.1 payload hash artifact: BASE64(HMAC-SHA256(key,
+ * "hawk.1.payload\n" + contentType + "\n" + body + "\n")). The content type
+ * is the normalized (lowercase, parameter-free) value — "application/json"
+ * for storage POSTs.
+ */
+export function hawkPayloadHash(
+  macKey: string,
+  contentType: string,
+  body: string
+): string {
+  return encodeBase64(
+    hmac(sha256, utf8(macKey), utf8(`hawk.1.payload\n${contentType}\n${body}\n`))
+  );
 }
 
 /** Server-time in seconds — the tokenserver X-Timestamp keeps us in sync. */
@@ -263,17 +315,31 @@ export function hawkAuthorizationHeader(
   nonce: () => string
 ): string {
   const nonceValue = nonce();
+  // hawk.1.header: …\n{host}\n{port}\n{ext}\n{hash}\n — ext stays empty
+  // (never used against the storage server); hash is set only for bodied
+  // requests, keeping the GET wire format byte-identical to Phase 1.
+  const hash = request.payload
+    ? hawkPayloadHash(
+        credentials.key,
+        request.payload.contentType,
+        request.payload.body
+      )
+    : "";
   const normalized =
     `hawk.1.header\n${serverTimeSeconds}\n${nonceValue}\n` +
     `${request.method.toUpperCase()}\n${request.pathAndQuery}\n` +
-    `${request.host}\n${request.port}\n\n\n`;
+    `${request.host}\n${request.port}\n\n${hash}\n`;
   const mac = hmac(
     sha256,
     utf8(credentials.key),
     utf8(normalized)
   );
+  // Attribute order follows the reference hawk clients: id, ts, nonce,
+  // hash, mac (servers parse attributes by name, mac must sign them all).
   return (
     `Hawk id="${credentials.id}", ts="${serverTimeSeconds}", ` +
-    `nonce="${nonceValue}", mac="${encodeBase64(mac)}"`
+    `nonce="${nonceValue}"` +
+    (hash === "" ? "" : `, hash="${hash}"`) +
+    `, mac="${encodeBase64(mac)}"`
   );
 }

@@ -88,6 +88,9 @@ import {
   classifySyncFailure,
   type SyncStoreState,
 } from "@/syncStore";
+import { diffBookmarks } from "@/sync/changeDetector";
+import { platformRandomSource, type LocalApplyOp } from "@/sync/outbound";
+import type { LocalBookmarkSnapshot } from "@/sync/model";
 import { history, type HistoryEntry } from "@/history";
 import { SEARCH_ENGINES, type SearchEngineId } from "@/suggestions";
 import { CommandRegistry, type ProductCommand } from "@/commandRegistry";
@@ -1323,6 +1326,9 @@ function BrowserApp() {
       // hop is what actually returns control to touch/scroll between
       // decryption batches (F-G1-2).
       yieldControl: () => new Promise((resolve) => setTimeout(resolve, 0)),
+      ...(platform.secureRandomB64
+        ? { randomSource: platformRandomSource(platform.secureRandomB64) }
+        : {}),
     });
   const syncStore = syncStoreRef.current;
   const [syncState, setSyncState] = useState<SyncStoreState>(() =>
@@ -1344,9 +1350,17 @@ function BrowserApp() {
     platform.readSyncTree &&
     platform.saveSyncTree &&
     platform.clearSyncTree &&
+    platform.loadOutbound &&
+    platform.saveOutbound &&
+    platform.clearOutbound &&
     platform.secureRandomB64 &&
     platform.setSyncLoginCapture
   );
+  const syncBookmarkPrevRef = useRef<LocalBookmarkSnapshot | null>(null);
+  const syncDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const syncEchoSkipRef = useRef(new Set<string>());
+  const syncRetryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const syncRetryStepRef = useRef(0);
   useEffect(() => {
     if (!syncPlatformAvailable) return;
     const syncHttp: HttpTransport = {
@@ -1370,6 +1384,9 @@ function BrowserApp() {
         readTree: platform.readSyncTree,
         saveTree: platform.saveSyncTree,
         clearTree: platform.clearSyncTree,
+        readOutbound: platform.loadOutbound,
+        saveOutbound: platform.saveOutbound,
+        clearOutbound: platform.clearOutbound,
       },
       syncHttp
     );
@@ -1379,6 +1396,242 @@ function BrowserApp() {
     void syncStore.load();
     return unsubscribe;
   }, [syncStore, syncPlatformAvailable]);
+  useEffect(() => {
+    if (!syncPlatformAvailable) return;
+
+    const toLocalBookmarkSnapshot = (
+      snapshot: NonNullable<ReturnType<typeof controller.getSnapshot>>
+    ): LocalBookmarkSnapshot => ({
+      bookmarks: (snapshot.bookmarks ?? []).map((bookmark) => ({
+        id: bookmark.id,
+        title: bookmark.title,
+        url: bookmark.url,
+        folderId: bookmark.folderId ?? "",
+      })),
+      bookmarkFolders: (snapshot.bookmarkFolders ?? []).map((folder) => ({
+        id: folder.id,
+        title: folder.title,
+      })),
+    });
+
+    const consumeSkipped = (ids: string[]): string[] => {
+      const skip = syncEchoSkipRef.current;
+      return ids.filter((id) => {
+        if (skip.has(id)) {
+          skip.delete(id);
+          return false;
+        }
+        return true;
+      });
+    };
+
+    const scheduleSyncFromLocalChange = () => {
+      if (syncDebounceRef.current) clearTimeout(syncDebounceRef.current);
+      syncDebounceRef.current = setTimeout(() => {
+        syncDebounceRef.current = null;
+        if (syncStore.getState().connection === "connected")
+          void syncStore.runSync();
+      }, 8_000);
+    };
+
+    const adapter = {
+      getLocalSnapshot(): LocalBookmarkSnapshot {
+        const snap = controller.getSnapshot();
+        if (!snap) return { bookmarks: [], bookmarkFolders: [] };
+        return toLocalBookmarkSnapshot(snap);
+      },
+      async applyIncoming(ops: LocalApplyOp[]): Promise<void> {
+        const skip = syncEchoSkipRef.current;
+        for (const op of ops) {
+          if (op.kind === "deleteBookmark") {
+            skip.add(op.localId);
+            await controller.bookmarkRemove(op.localId);
+            continue;
+          }
+          if (op.kind === "deleteFolder") {
+            skip.add(op.localId);
+            await controller.bookmarkFolderRemove(op.localId);
+            continue;
+          }
+          if (op.kind === "upsertFolder") {
+            if (op.localId) {
+              skip.add(op.localId);
+              const existing = adapter
+                .getLocalSnapshot()
+                .bookmarkFolders.find((folder) => folder.id === op.localId);
+              if (existing && existing.title !== op.title)
+                await controller.bookmarkFolderRename(op.localId, op.title);
+            } else {
+              const before = adapter.getLocalSnapshot();
+              const afterSnap = await controller.bookmarkFolderCreate(op.title);
+              const created = diffBookmarks(
+                before,
+                toLocalBookmarkSnapshot(afterSnap)
+              ).foldersCreated;
+              const newId = created[0];
+              if (newId) {
+                skip.add(newId);
+                if (op.guid) syncStore.assignRemoteGuid(newId, op.guid);
+              }
+            }
+            continue;
+          }
+          if (op.kind === "upsertBookmark") {
+            if (op.localId) {
+              skip.add(op.localId);
+              const existing = adapter
+                .getLocalSnapshot()
+                .bookmarks.find((bookmark) => bookmark.id === op.localId);
+              if (!existing) continue;
+              if (
+                existing.title !== op.title ||
+                existing.url !== op.url
+              )
+                await controller.bookmarkUpdate(op.localId, op.title, op.url);
+              const folderId = existing.folderId ?? "";
+              if (folderId !== op.folderId)
+                await controller.bookmarkSetFolder(op.localId, op.folderId);
+            } else {
+              const before = adapter.getLocalSnapshot();
+              const afterSnap = await controller.bookmarkCreate(
+                op.title,
+                op.url,
+                op.folderId
+              );
+              const created = diffBookmarks(
+                before,
+                toLocalBookmarkSnapshot(afterSnap)
+              ).created;
+              const newId = created[0];
+              if (newId) {
+                skip.add(newId);
+                if (op.guid) syncStore.assignRemoteGuid(newId, op.guid);
+              }
+            }
+            continue;
+          }
+          if (op.kind === "setBookmarkFolder") {
+            skip.add(op.localId);
+            const existing = adapter
+              .getLocalSnapshot()
+              .bookmarks.find((bookmark) => bookmark.id === op.localId);
+            if (!existing) continue;
+            if ((existing.folderId ?? "") !== op.folderId)
+              await controller.bookmarkSetFolder(op.localId, op.folderId);
+            continue;
+          }
+          if (op.kind === "reorderInFolder") {
+            const folderId = op.folderId;
+            for (let target = 0; target < op.orderedLocalIds.length; target += 1) {
+              const id = op.orderedLocalIds[target]!;
+              skip.add(id);
+              const snap = adapter.getLocalSnapshot();
+              const siblings = snap.bookmarks.filter(
+                (bookmark) => (bookmark.folderId ?? "") === folderId
+              );
+              const current = siblings.findIndex((bookmark) => bookmark.id === id);
+              if (current < 0 || current === target) continue;
+              await controller.bookmarkMove(id, target);
+            }
+          }
+        }
+      },
+    };
+
+    syncStore.setLocalAdapter(adapter);
+    const initial = controller.getSnapshot();
+    syncBookmarkPrevRef.current = initial
+      ? toLocalBookmarkSnapshot(initial)
+      : { bookmarks: [], bookmarkFolders: [] };
+
+    const onBookmarksChanged = () => {
+      const snap = controller.getSnapshot();
+      if (!snap) return;
+      const next = toLocalBookmarkSnapshot(snap);
+      const prev = syncBookmarkPrevRef.current ?? {
+        bookmarks: [],
+        bookmarkFolders: [],
+      };
+      syncBookmarkPrevRef.current = next;
+      const diff = diffBookmarks(prev, next);
+      const changedAtMs = Date.now();
+      let dirty = false;
+      for (const id of consumeSkipped([
+        ...diff.created,
+        ...diff.updated,
+        ...diff.foldersCreated,
+        ...diff.foldersRenamed,
+      ])) {
+        syncStore.noteLocalChange(id, changedAtMs);
+        dirty = true;
+      }
+      for (const id of consumeSkipped([
+        ...diff.deleted,
+        ...diff.foldersDeleted,
+      ])) {
+        syncStore.noteLocalDelete(id, changedAtMs);
+        dirty = true;
+      }
+      if (dirty && syncStore.getState().connection === "connected")
+        scheduleSyncFromLocalChange();
+    };
+
+    const unsubscribeController = controller.subscribe(onBookmarksChanged);
+    return () => {
+      unsubscribeController();
+      syncStore.setLocalAdapter(null);
+      if (syncDebounceRef.current) {
+        clearTimeout(syncDebounceRef.current);
+        syncDebounceRef.current = null;
+      }
+    };
+  }, [syncStore, syncPlatformAvailable]);
+  useEffect(() => {
+    if (!syncPlatformAvailable) return;
+    const subscription = AppState.addEventListener("change", (next) => {
+      if (next === "active" && syncStore.getState().connection === "connected")
+        void syncStore.runSync();
+    });
+    return () => subscription.remove();
+  }, [syncStore, syncPlatformAvailable]);
+  useEffect(() => {
+    if (!syncPlatformAvailable) return;
+    const { connection, lastResult, pendingUploads, syncing } = syncState;
+    if (connection !== "connected" || pendingUploads === 0) {
+      syncRetryStepRef.current = 0;
+      return;
+    }
+    if (!lastResult || lastResult.kind === "ok") {
+      syncRetryStepRef.current = 0;
+      return;
+    }
+    // Network failures always retry; server failures (412/503) with a non-empty
+    // outbox also retry so a lost race or overloaded POST does not stall until
+    // the next manual/AppState sync.
+    const retryable =
+      lastResult.kind === "network" || lastResult.kind === "server";
+    if (!retryable || syncing) return;
+    const delays = [30_000, 60_000, 300_000] as const;
+    const step = Math.min(syncRetryStepRef.current, delays.length - 1);
+    const headerMs =
+      lastResult.retryAfterSeconds != null
+        ? Math.max(0, lastResult.retryAfterSeconds * 1000)
+        : 0;
+    const delay = Math.max(delays[step]!, headerMs);
+    syncRetryStepRef.current = step + 1;
+    if (syncRetryTimerRef.current) clearTimeout(syncRetryTimerRef.current);
+    syncRetryTimerRef.current = setTimeout(() => {
+      syncRetryTimerRef.current = null;
+      if (syncStore.getState().connection === "connected")
+        void syncStore.runSync();
+    }, delay);
+    return () => {
+      if (syncRetryTimerRef.current) {
+        clearTimeout(syncRetryTimerRef.current);
+        syncRetryTimerRef.current = null;
+      }
+    };
+  }, [syncPlatformAvailable, syncState, syncStore]);
   // While the login tab is open the store is still "disconnected"; the panel
   // shows the connect-in-progress state for that whole phase.
   const syncPanelState: SyncStoreState = syncLogin

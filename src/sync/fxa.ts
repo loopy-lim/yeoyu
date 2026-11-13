@@ -10,8 +10,10 @@
 // the host embeds the fxawebchannel extension; in a plain GV tab the page
 // resets back to the email step right after submission (V-7 defect,
 // reproduced twice on device). The default web context renders the
-// standard OAuth page and still redirects to the registered webchannel
-// URN on completion, which GeckoSessionRegistry intercepts.
+// standard OAuth page and completes by redirecting to
+// /oauth/success/<client_id>?code=…&state=… (not the webchannel URN,
+// verified on device 2026-11-13); GeckoSessionRegistry intercepts that
+// URL and surfaces the code as BrowserSyncLoginCode.
 
 import { sha256 as defaultSha256 } from "@noble/hashes/sha2.js";
 import { decodeBase64Url, encodeBase64Url, utf8 } from "./base64";

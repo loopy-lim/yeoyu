@@ -4,18 +4,22 @@
 // from the upstream sources cached during the research phase.
 
 import { describe, expect, test } from "bun:test";
+import { hmac } from "@noble/hashes/hmac.js";
+import { sha256 } from "@noble/hashes/sha2.js";
 import {
   decodeBase64,
   decodeBase64Url,
   encodeBase64,
   encodeBase64Url,
   fromUtf8,
+  utf8,
 } from "../../src/sync/base64";
 import {
   decryptEnvelope,
   decryptJwe,
   generateEphemeralKeyPair,
   hawkAuthorizationHeader,
+  hawkPayloadHash,
   keyBundleFromBase64Pair,
   keyBundleFromKSyncBase64Url,
   EphemeralKeyPair,
@@ -124,13 +128,64 @@ describe("hawk header", () => {
       () => "noncenonce"
     );
     // Reconstruct the expected mac with the documented normalized string.
-    const { hmac } = require("@noble/hashes/hmac.js");
-    const { sha256 } = require("@noble/hashes/sha2.js");
     const normalized =
       "hawk.1.header\n1700000000\nnoncenonce\nGET\n/1.5/123/storage/bookmarks?full=1\nsync-1-us-east-1.storage.mozilla.com\n443\n\n\n";
-    const mac = encodeBase64(hmac(sha256, new TextEncoder().encode("my-key"), new TextEncoder().encode(normalized)));
+    const mac = encodeBase64(hmac(sha256, utf8("my-key"), utf8(normalized)));
     expect(header).toBe(
       `Hawk id="my-id", ts="1700000000", nonce="noncenonce", mac="${mac}"`
     );
+  });
+
+  test("GET without payload keeps the legacy empty-hash format (no hash attribute)", () => {
+    const header = hawkAuthorizationHeader(
+      { id: "my-id", key: "my-key" },
+      { method: "GET", pathAndQuery: "/1.5/123/info/configuration", host: "sync-1-us-east-1.storage.mozilla.com", port: 443 },
+      1700000000,
+      () => "noncenonce"
+    );
+    expect(header).not.toContain("hash=");
+    expect(header).toMatch(/^Hawk id="my-id", ts="1700000000", nonce="noncenonce", mac="[A-Za-z0-9+/]+={0,2}"$/);
+  });
+
+  test("bodied request carries the Hawk 1.1 payload hash and a mac over it", () => {
+    const body = JSON.stringify([
+      { id: "abc", sortindex: 1000000, payload: '{"IV":"…","hmac":"…","ciphertext":"…"}' },
+    ]);
+    const header = hawkAuthorizationHeader(
+      { id: "my-id", key: "my-key" },
+      {
+        method: "post",
+        pathAndQuery: "/1.5/123/storage/bookmarks?batch=true&commit=true",
+        host: "sync-1-us-east-1.storage.mozilla.com",
+        port: 443,
+        payload: { contentType: "application/json", body },
+      },
+      1700000000,
+      () => "noncenonce"
+    );
+    // hawk.1.payload artifact, then the header mac over hawk.1.header with
+    // the hash in the (otherwise empty) hash field.
+    const hash = encodeBase64(
+      hmac(sha256, utf8("my-key"), utf8(`hawk.1.payload\napplication/json\n${body}\n`))
+    );
+    const normalized =
+      "hawk.1.header\n1700000000\nnoncenonce\nPOST\n" +
+      "/1.5/123/storage/bookmarks?batch=true&commit=true\n" +
+      "sync-1-us-east-1.storage.mozilla.com\n443\n\n" +
+      `${hash}\n`;
+    const mac = encodeBase64(hmac(sha256, utf8("my-key"), utf8(normalized)));
+    expect(header).toBe(
+      `Hawk id="my-id", ts="1700000000", nonce="noncenonce", hash="${hash}", mac="${mac}"`
+    );
+  });
+
+  test("hawkPayloadHash matches the hawk.1.payload normalization", () => {
+    const body = '{"id":"x","payload":"y"}';
+    const expected = encodeBase64(
+      hmac(sha256, utf8("feedf00d"), utf8(`hawk.1.payload\napplication/json\n${body}\n`))
+    );
+    expect(hawkPayloadHash("feedf00d", "application/json", body)).toBe(expected);
+    // The body is included verbatim — different bytes, different hash.
+    expect(hawkPayloadHash("feedf00d", "application/json", body + " ")).not.toBe(expected);
   });
 });

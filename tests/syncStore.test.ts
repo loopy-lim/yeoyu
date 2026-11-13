@@ -24,8 +24,21 @@ import {
   generateEphemeralKeyPair,
   KeyBundle,
 } from "../src/sync/crypto";
+import {
+  LocalAdapter,
+  LocalApplyOp,
+  RandomSource,
+  deserializeOutbound,
+  emptyOutboundState,
+  markAllDirty,
+  noteRemoteRecord,
+  reconcileLocalToRemote,
+} from "../src/sync/outbound";
+import type {
+  LocalBookmarkSnapshot,
+} from "../src/sync/model";
 import { buildAuthorizationFlow } from "../src/sync/fxa";
-import { TOKENSERVER_URL } from "../src/sync/sync15";
+import { TOKENSERVER_URL, decryptRecordCleartext } from "../src/sync/sync15";
 import {
   SyncStore,
   SyncPlatformStorage,
@@ -172,33 +185,47 @@ function storageHawkMatches(request: HttpRequest): boolean {
   const ts = /ts="(\d+)"/.exec(header)?.[1];
   const nonce = /nonce="([^"]+)"/.exec(header)?.[1];
   const mac = /mac="([^"]+)"/.exec(header)?.[1];
+  const hashAttr = /hash="([^"]+)"/.exec(header)?.[1];
   if (ts === undefined || !nonce || !mac) return false;
   const url = new URL(request.url);
-  // hawk.1.header layout ends with a newline after the (empty) payload hash
-  // field: …{port}\n{ext}\n{hash}\n — hence the trailing "\n" beyond the join.
   const normalized =
     [
       "hawk.1.header",
       ts,
       nonce,
-      request.method,
+      request.method.toUpperCase(),
       url.pathname + url.search,
       url.host,
       url.protocol === "https:" ? "443" : "80",
       "",
-      "",
+      hashAttr ?? "",
     ].join("\n") + "\n";
   const expected = encodeBase64(hmac(sha256, utf8("hawk-key"), utf8(normalized)));
-  return expected === mac;
+  if (expected !== mac) return false;
+  if (request.body !== undefined) {
+    const contentType = request.headers?.["Content-Type"] ?? "";
+    const expectedHash = encodeBase64(
+      hmac(
+        sha256,
+        utf8("hawk-key"),
+        utf8(`hawk.1.payload\n${contentType}\n${request.body}\n`)
+      )
+    );
+    return hashAttr === expectedHash;
+  }
+  return hashAttr === undefined;
 }
 
 class FakeStorage implements SyncPlatformStorage {
   secrets: string | null = null;
   tree: string | null = null;
+  outbound: string | null = null;
   secretsWrites: string[] = [];
   treeWrites: string[] = [];
+  outboundWrites: string[] = [];
   secretsClears = 0;
   treeClears = 0;
+  outboundClears = 0;
   readSecrets = async () => this.secrets;
   saveSecrets = async (json: string) => {
     this.secrets = json;
@@ -216,6 +243,15 @@ class FakeStorage implements SyncPlatformStorage {
   clearTree = async () => {
     this.tree = null;
     this.treeClears += 1;
+  };
+  readOutbound = async () => this.outbound;
+  saveOutbound = async (json: string) => {
+    this.outbound = json;
+    this.outboundWrites.push(json);
+  };
+  clearOutbound = async () => {
+    this.outbound = null;
+    this.outboundClears += 1;
   };
 }
 
@@ -258,8 +294,8 @@ const BOOKMARK_PAYLOADS: Array<[string, string]> = [
   ["b2", JSON.stringify({ id: "b2", parentid: "menu________", type: "bookmark", title: "Two", bmkUri: "https://two.example" })],
 ];
 
-function bso(id: string, payload: string) {
-  return { id, modified: 1.0, payload };
+function bso(id: string, payload: string, modified = 1.0) {
+  return { id, modified, payload };
 }
 
 interface SyncServerScript {
@@ -269,7 +305,108 @@ interface SyncServerScript {
   keysStatus?: number;
   keysEnvelope?: string | null;
   bookmarksStatus?: number;
-  bookmarksRecords?: Array<{ id: string; payload: string }>;
+  bookmarksRecords?: Array<{ id: string; payload: string; modified?: number }>;
+  /** POST /storage/bookmarks HTTP status (default 200). */
+  postStatus?: number;
+  /** X-Last-Modified / body.modified after a successful POST (seconds). */
+  postModified?: number;
+}
+
+function fixedRandomSource(guidSlots: number): RandomSource {
+  const bytes = new Uint8Array(guidSlots * 9);
+  for (let g = 0; g < guidSlots; g += 1) {
+    let n = g + 0x11;
+    for (let b = 0; b < 9; b += 1) {
+      bytes[g * 9 + b] = n % 256;
+      n = Math.floor(n / 256);
+    }
+  }
+  let served = false;
+  return {
+    randomB64: async (count: number) => {
+      if (served) throw new Error("test random source exhausted");
+      served = true;
+      return encodeBase64Url(bytes.slice(0, count));
+    },
+  };
+}
+
+class MockLocalAdapter implements LocalAdapter {
+  incoming: LocalApplyOp[] = [];
+  constructor(private snapshot: LocalBookmarkSnapshot) {}
+  getLocalSnapshot(): LocalBookmarkSnapshot {
+    return this.snapshot;
+  }
+  async applyIncoming(ops: LocalApplyOp[]): Promise<void> {
+    this.incoming.push(...ops);
+    for (const op of ops) {
+      if (op.kind === "upsertBookmark") {
+        const id = op.localId ?? `remote:${op.guid ?? "?"}`;
+        const existing = this.snapshot.bookmarks.find((b) => b.id === id);
+        if (existing) {
+          existing.title = op.title;
+          existing.url = op.url;
+          existing.folderId = op.folderId;
+        } else {
+          this.snapshot.bookmarks.push({
+            id,
+            title: op.title,
+            url: op.url,
+            folderId: op.folderId,
+          });
+        }
+      } else if (op.kind === "upsertFolder") {
+        const id = op.localId ?? `remote-folder:${op.guid ?? "?"}`;
+        const folder = this.snapshot.bookmarkFolders.find((f) => f.id === id);
+        if (folder) folder.title = op.title;
+        else this.snapshot.bookmarkFolders.push({ id, title: op.title });
+      } else if (op.kind === "deleteBookmark") {
+        this.snapshot.bookmarks = this.snapshot.bookmarks.filter((b) => b.id !== op.localId);
+      } else if (op.kind === "deleteFolder") {
+        this.snapshot.bookmarkFolders = this.snapshot.bookmarkFolders.filter(
+          (f) => f.id !== op.localId
+        );
+      } else if (op.kind === "setBookmarkFolder") {
+        const existing = this.snapshot.bookmarks.find((b) => b.id === op.localId);
+        if (existing) existing.folderId = op.folderId;
+      } else if (op.kind === "reorderInFolder") {
+        const inFolder = this.snapshot.bookmarks.filter(
+          (b) => (b.folderId ?? "") === op.folderId
+        );
+        const others = this.snapshot.bookmarks.filter(
+          (b) => (b.folderId ?? "") !== op.folderId
+        );
+        const byId = new Map(inFolder.map((b) => [b.id, b]));
+        const ordered = op.orderedLocalIds
+          .map((id) => byId.get(id))
+          .filter((b): b is NonNullable<typeof b> => !!b);
+        const rest = inFolder.filter((b) => !op.orderedLocalIds.includes(b.id));
+        this.snapshot.bookmarks = [...others, ...ordered, ...rest];
+      }
+    }
+  }
+}
+
+function localSnapshot(
+  bookmarks: { id: string; title: string; url: string; folderId?: string }[],
+  bookmarkFolders: { id: string; title: string }[] = []
+): LocalBookmarkSnapshot {
+  return {
+    bookmarks: bookmarks.map((b) => ({ ...b })),
+    bookmarkFolders: bookmarkFolders.map((f) => ({ ...f })),
+  };
+}
+
+function postCalls(http: FakeHttp): HttpRequest[] {
+  return http.calls.filter(
+    (c) => c.method === "POST" && c.url.includes("/storage/bookmarks")
+  );
+}
+
+function bookmarkGetCalls(http: FakeHttp): number {
+  return http.calls.filter(
+    (c) => c.method === "GET" && c.url.includes("/storage/bookmarks")
+  ).length;
 }
 
 /** FxA token/profile + tokenserver + storage wiring. */
@@ -336,7 +473,51 @@ function scriptHttp(script: SyncServerScript) {
       const records =
         script.bookmarksRecords ??
         BOOKMARK_PAYLOADS.map(([id, payload]) => bso(id, envelope(BOOKMARK_KEYS.bundle, payload)));
-      return { status: 200, body: JSON.stringify(records) };
+      return {
+        status: 200,
+        body: JSON.stringify(
+          records.map((record) =>
+            bso(record.id, record.payload, record.modified ?? 1.0)
+          )
+        ),
+      };
+    }
+    if (request.url === `${API_ENDPOINT}/info/configuration`) {
+      return {
+        status: 200,
+        body: JSON.stringify({
+          max_request_bytes: 266240,
+          max_record_payload_bytes: 262144,
+          max_post_records: 100,
+          max_post_bytes: 2621440,
+          max_total_records: 10000,
+          max_total_bytes: 100000000,
+        }),
+      };
+    }
+    if (
+      request.method === "POST" &&
+      request.url.startsWith(`${API_ENDPOINT}/storage/bookmarks`)
+    ) {
+      const status = script.postStatus ?? 200;
+      if (status === 412) {
+        return {
+          status: 412,
+          headers: { "X-Last-Modified": String(script.collectionsModified ?? 7.25) },
+          body: JSON.stringify({}),
+        };
+      }
+      const posted = JSON.parse(request.body ?? "[]") as Array<{ id: string }>;
+      const modified = script.postModified ?? (script.collectionsModified ?? 7.25) + 1;
+      return {
+        status,
+        headers: { "X-Last-Modified": String(modified) },
+        body: JSON.stringify({
+          modified,
+          success: posted.map((item) => item.id),
+          failed: {},
+        }),
+      };
     }
     return { status: 404, body: "" };
   };
@@ -359,6 +540,58 @@ function connectedStore(script: SyncServerScript = {}) {
   const http = scriptHttp(script);
   const store = new SyncStore(storage, http, { nonce: () => "nonce12345" });
   return { storage, http, store };
+}
+
+function connectedStoreWithAdapter(
+  adapter: MockLocalAdapter,
+  script: SyncServerScript = {},
+  nowMs?: () => number
+) {
+  const storage = new FakeStorage();
+  storage.secrets = credentialsJson("zen@example.com");
+  const http = scriptHttp({ postModified: 8.5, ...script });
+  const store = new SyncStore(storage, http, {
+    nonce: () => "nonce12345",
+    ...(nowMs ? { nowMs } : {}),
+    localAdapter: adapter,
+    randomSource: fixedRandomSource(32),
+  });
+  return { storage, http, store, adapter };
+}
+
+function mobileRemoteBookmarkRecords(
+  bookmarkGuid: string,
+  modifiedSeconds: number,
+  title = "Remote",
+  url = "https://remote.example"
+) {
+  const mobileCleartext = JSON.stringify({
+    id: "mobile",
+    type: "folder",
+    title: "mobile",
+    parentid: "places",
+    children: [bookmarkGuid],
+  });
+  const bookmarkCleartext = JSON.stringify({
+    id: bookmarkGuid,
+    parentid: "mobile",
+    parentName: "mobile",
+    type: "bookmark",
+    title,
+    bmkUri: url,
+  });
+  return [
+    {
+      id: "mobile",
+      payload: envelope(BOOKMARK_KEYS.bundle, mobileCleartext),
+      modified: 1.0,
+    },
+    {
+      id: bookmarkGuid,
+      payload: envelope(BOOKMARK_KEYS.bundle, bookmarkCleartext),
+      modified: modifiedSeconds,
+    },
+  ];
 }
 
 // ---------------------------------------------------------------------------
@@ -444,7 +677,7 @@ describe("runSync", () => {
     await store.load();
     const result = await store.runSync();
     expect(result.kind).toBe("ok");
-    if (result.kind === "ok") expect(result.changed).toBe(true);
+    if (result.kind === "ok") expect(result.received).toBeGreaterThan(0);
     const state = store.getState();
     expect(state.tree).not.toBeNull();
     expect(state.lastSyncAtMs).not.toBeNull();
@@ -467,7 +700,10 @@ describe("runSync", () => {
     const afterFirst = bookmarkCalls();
     const second = await store.runSync();
     expect(second.kind).toBe("ok");
-    if (second.kind === "ok") expect(second.changed).toBe(false);
+    if (second.kind === "ok") {
+      expect(second.received).toBe(0);
+      expect(second.uploaded).toBe(0);
+    }
     expect(bookmarkCalls()).toBe(afterFirst);
   });
 
@@ -786,16 +1022,21 @@ describe("disconnect()", () => {
     };
     const syncing = store.runSync();
     // Park the flight inside the gated bookmarks fetch, then disconnect.
+    // disconnect awaits the in-flight sync (outbound bookkeeping) before
+    // clearing channels, so the sync may persist briefly — final state must
+    // still be wiped.
     await new Promise((resolve) => setTimeout(resolve, 0));
-    await store.disconnect();
+    const disconnecting = store.disconnect();
     release!();
     const result = await syncing;
+    await disconnecting;
     expect(result.kind).toBe("ok");
     const state = store.getState();
     expect(state.connection).toBe("disconnected");
     expect(state.tree).toBeNull();
     expect(state.lastResult).toBeNull();
-    expect(storage.treeWrites.length).toBe(0);
+    expect(storage.tree).toBeNull();
+    expect(storage.secrets).toBeNull();
   });
 });
 
@@ -815,5 +1056,465 @@ describe("storage channel isolation (V-5)", () => {
       expect(write.includes("https://one.example")).toBe(false);
       expect(write.includes("roots")).toBe(false);
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Upload orchestration matrix (V-4 / T-6) — SyncStore receive → merge → POST
+
+describe("upload orchestration (V-4)", () => {
+  test("D10 initial full upload marks local snapshot dirty and POSTs bookmarks", async () => {
+    const adapter = new MockLocalAdapter(
+      localSnapshot([
+        { id: "lb1", title: "One", url: "https://local-one.example" },
+        { id: "lb2", title: "Two", url: "https://local-two.example" },
+      ])
+    );
+    const { store, storage, http } = connectedStoreWithAdapter(adapter, {
+      postModified: 8.5,
+    });
+    await store.load();
+    const result = await store.runSync();
+    expect(result.kind).toBe("ok");
+    if (result.kind !== "ok") return;
+    expect(result.uploaded).toBeGreaterThan(0);
+    expect(postCalls(http).length).toBeGreaterThan(0);
+    expect(http.storageHawkOk).toBe(true);
+    const outbound = deserializeOutbound(storage.outbound);
+    expect(Object.keys(outbound?.dirty ?? {}).length).toBe(0);
+    expect(store.getState().pendingUploads).toBe(0);
+    const tree = readPersistedTree(storage.tree);
+    expect(tree?.bookmarksModified).toBe(8.5);
+  });
+
+  test("early-skip still uploads when noteLocalChange dirtied outbound", async () => {
+    const adapter = new MockLocalAdapter(
+      localSnapshot([{ id: "lb1", title: "One", url: "https://local-one.example" }])
+    );
+    const { store, http } = connectedStoreWithAdapter(adapter, {
+      collectionsModified: 8.5,
+      postModified: 8.5,
+    });
+    await store.load();
+    await store.runSync();
+    const getsAfterFirst = bookmarkGetCalls(http);
+    store.noteLocalChange("lb1", 5_000_000_001);
+    expect(store.getState().pendingUploads).toBe(1);
+    const second = await store.runSync();
+    expect(second.kind).toBe("ok");
+    if (second.kind === "ok") expect(second.uploaded).toBeGreaterThan(0);
+    expect(bookmarkGetCalls(http)).toBe(getsAfterFirst);
+    expect(postCalls(http).length).toBeGreaterThanOrEqual(2);
+  });
+
+  test("LWW remote wins: older dirty local yields to newer remote without re-upload", async () => {
+    const adapter = new MockLocalAdapter(
+      localSnapshot([{ id: "lb1", title: "Local", url: "https://local.example" }])
+    );
+    const { store, storage, http } = connectedStoreWithAdapter(adapter, {}, () => 5_000_000_000);
+    await store.load();
+    await store.runSync();
+    const mappedGuid = deserializeOutbound(storage.outbound)?.guidByLocalId.lb1;
+    expect(mappedGuid).toBeTruthy();
+    const postsAfterFirst = postCalls(http).length;
+
+    const base = http.handler;
+    let useLwwRemote = false;
+    http.handler = chainHandlers(base, async (request) => {
+      if (request.url === `${API_ENDPOINT}/info/collections`) {
+        if (useLwwRemote) {
+          return { status: 200, body: JSON.stringify({ bookmarks: 9.0 }) };
+        }
+      }
+      if (request.url === `${API_ENDPOINT}/storage/bookmarks?full=1` && useLwwRemote) {
+        const records = mobileRemoteBookmarkRecords(
+          mappedGuid!,
+          4.0,
+          "Remote wins",
+          "https://r.example"
+        );
+        return {
+          status: 200,
+          body: JSON.stringify(
+            records.map((r) => bso(r.id, r.payload, r.modified ?? 1.0))
+          ),
+        };
+      }
+      if (
+        request.method === "POST" &&
+        request.url.startsWith(`${API_ENDPOINT}/storage/bookmarks`) &&
+        useLwwRemote
+      ) {
+        return { status: 404, body: "" };
+      }
+      return undefined;
+    });
+
+    adapter.incoming = [];
+    store.noteLocalChange("lb1", 1_000);
+    useLwwRemote = true;
+    const result = await store.runSync();
+    expect(result.kind).toBe("ok");
+    if (result.kind === "ok") expect(result.uploaded).toBe(0);
+    expect(adapter.incoming.some((op) => op.kind === "upsertBookmark")).toBe(true);
+    expect(deserializeOutbound(storage.outbound)?.dirty.lb1).toBeUndefined();
+    expect(postCalls(http).length).toBe(postsAfterFirst);
+  });
+
+  test("LWW local wins: newer dirty local is kept and uploaded", async () => {
+    const adapter = new MockLocalAdapter(
+      localSnapshot([{ id: "lb1", title: "Local", url: "https://local.example" }])
+    );
+    const { store, storage, http } = connectedStoreWithAdapter(adapter, {}, () => 5_000_000_000);
+    await store.load();
+    await store.runSync();
+    const mappedGuid = deserializeOutbound(storage.outbound)?.guidByLocalId.lb1!;
+    const postsAfterFirst = postCalls(http).length;
+
+    const base = http.handler;
+    let lwwRound = false;
+    http.handler = chainHandlers(base, async (request) => {
+      if (request.url === `${API_ENDPOINT}/info/collections` && lwwRound) {
+        return { status: 200, body: JSON.stringify({ bookmarks: 9.0 }) };
+      }
+      if (request.url === `${API_ENDPOINT}/storage/bookmarks?full=1` && lwwRound) {
+        const records = mobileRemoteBookmarkRecords(
+          mappedGuid,
+          2.0,
+          "Stale remote",
+          "https://old.example"
+        );
+        return {
+          status: 200,
+          body: JSON.stringify(
+            records.map((r) => bso(r.id, r.payload, r.modified ?? 1.0))
+          ),
+        };
+      }
+      return undefined;
+    });
+
+    adapter.incoming = [];
+    store.noteLocalChange("lb1", 9_000);
+    lwwRound = true;
+    const result = await store.runSync();
+    expect(result.kind).toBe("ok");
+    if (result.kind === "ok") expect(result.uploaded).toBeGreaterThan(0);
+    expect(postCalls(http).length).toBeGreaterThan(postsAfterFirst);
+    expect(deserializeOutbound(storage.outbound)?.dirty.lb1).toBeUndefined();
+    expect(adapter.incoming.filter((op) => op.kind === "upsertBookmark")).toHaveLength(0);
+  });
+
+  test("LWW tie on timestamps: remote wins (PLAN §2)", async () => {
+    const adapter = new MockLocalAdapter(
+      localSnapshot([{ id: "lb1", title: "Local", url: "https://local.example" }])
+    );
+    const { store, storage, http } = connectedStoreWithAdapter(adapter, {}, () => 5_000_000_000);
+    await store.load();
+    await store.runSync();
+    const mappedGuid = deserializeOutbound(storage.outbound)?.guidByLocalId.lb1!;
+    const base = http.handler;
+    let tieRound = false;
+    http.handler = chainHandlers(base, async (request) => {
+      if (request.url === `${API_ENDPOINT}/info/collections` && tieRound) {
+        return { status: 200, body: JSON.stringify({ bookmarks: 9.0 }) };
+      }
+      if (request.url === `${API_ENDPOINT}/storage/bookmarks?full=1` && tieRound) {
+        const records = mobileRemoteBookmarkRecords(
+          mappedGuid,
+          2.0,
+          "Tie remote",
+          "https://tie.example"
+        );
+        return {
+          status: 200,
+          body: JSON.stringify(
+            records.map((r) => bso(r.id, r.payload, r.modified ?? 1.0))
+          ),
+        };
+      }
+      return undefined;
+    });
+    adapter.incoming = [];
+    store.noteLocalChange("lb1", 2_000);
+    tieRound = true;
+    await store.runSync();
+    expect(adapter.incoming.some((op) => op.kind === "upsertBookmark")).toBe(true);
+    expect(deserializeOutbound(storage.outbound)?.dirty.lb1).toBeUndefined();
+  });
+
+  test("412 on POST aborts as server and preserves dirty outbound", async () => {
+    const adapter = new MockLocalAdapter(
+      localSnapshot([{ id: "lb1", title: "One", url: "https://one.example" }])
+    );
+    const { store, storage, http } = connectedStoreWithAdapter(adapter, {
+      collectionsModified: 8.5,
+      postModified: 8.5,
+    });
+    await store.load();
+    await store.runSync();
+    store.noteLocalChange("lb1", 6_000_000_000);
+    const base = http.handler;
+    let rejectPost = true;
+    http.handler = chainHandlers(base, async (request) => {
+      if (
+        rejectPost &&
+        request.method === "POST" &&
+        request.url.startsWith(`${API_ENDPOINT}/storage/bookmarks`)
+      ) {
+        return {
+          status: 412,
+          headers: { "X-Last-Modified": "8.5" },
+          body: JSON.stringify({}),
+        };
+      }
+      return undefined;
+    });
+    const result = await store.runSync();
+    expect(result.kind).toBe("server");
+    if (result.kind !== "ok") expect(result.retryAfterSeconds).toBeNull();
+    expect(store.getState().pendingUploads).toBeGreaterThan(0);
+    expect(deserializeOutbound(storage.outbound)?.dirty.lb1).toBeDefined();
+  });
+
+  test("tombstone upload ack clears pendingDeletes", async () => {
+    const adapter = new MockLocalAdapter(
+      localSnapshot([{ id: "lb1", title: "One", url: "https://one.example" }])
+    );
+    const { store, storage, http } = connectedStoreWithAdapter(adapter);
+    await store.load();
+    await store.runSync();
+    store.noteLocalDelete("lb1", 6_100_000_000);
+    expect(store.getState().pendingUploads).toBe(1);
+    const result = await store.runSync();
+    expect(result.kind).toBe("ok");
+    const post = postCalls(http).at(-1);
+    expect(post?.body).toBeDefined();
+    const posted = JSON.parse(post!.body!) as Array<{ id: string; payload: string }>;
+    const tombstone = posted.find((item) => {
+      const cleartext = decryptRecordCleartext(BOOKMARK_KEYS.bundle, {
+        id: item.id,
+        payload: item.payload,
+        modified: 1,
+      });
+      return cleartext.includes('"deleted":true');
+    });
+    expect(tombstone).toBeDefined();
+    const outbound = deserializeOutbound(storage.outbound);
+    expect(outbound?.pendingDeletes.lb1).toBeUndefined();
+    expect(store.getState().pendingUploads).toBe(0);
+  });
+
+  test("disconnect clears outbound channel after upload bookkeeping", async () => {
+    const adapter = new MockLocalAdapter(
+      localSnapshot([{ id: "lb1", title: "One", url: "https://one.example" }])
+    );
+    const { store, storage } = connectedStoreWithAdapter(adapter);
+    await store.load();
+    await store.runSync();
+    store.noteLocalChange("lb2", 6_000_000_000);
+    expect(storage.outboundWrites.length).toBeGreaterThan(0);
+    await store.disconnect();
+    expect(storage.outboundClears).toBe(1);
+    expect(storage.outbound).toBeNull();
+    expect(store.getState().pendingUploads).toBe(0);
+  });
+
+  test("runSync exposes pendingUploads and ok result received/uploaded counts", async () => {
+    const adapter = new MockLocalAdapter(
+      localSnapshot([{ id: "lb1", title: "One", url: "https://one.example" }])
+    );
+    const { store } = connectedStoreWithAdapter(adapter, {
+      collectionsModified: 8.5,
+      postModified: 8.5,
+    });
+    await store.load();
+    await store.runSync();
+    store.noteLocalChange("lb1", 6_000_000_001);
+    expect(store.getState().pendingUploads).toBe(1);
+    const syncingSeen: boolean[] = [];
+    const unsubscribe = store.subscribe(() => syncingSeen.push(store.getState().syncing));
+    const result = await store.runSync();
+    unsubscribe();
+    expect(syncingSeen).toContain(true);
+    expect(result.kind).toBe("ok");
+    if (result.kind === "ok") {
+      expect(result.received).toBe(0);
+      expect(result.uploaded).toBeGreaterThan(0);
+    }
+    expect(store.getState().pendingUploads).toBe(0);
+  });
+
+  test("mobile-rooted remote bookmark triggers applyIncoming (echo/merge)", async () => {
+    const adapter = new MockLocalAdapter(localSnapshot([]));
+    const script = {
+      collectionsModified: 7.5,
+      bookmarksRecords: mobileRemoteBookmarkRecords("remoteguid01", 5.0),
+    };
+    const { store } = connectedStoreWithAdapter(adapter, script);
+    await store.load();
+    const result = await store.runSync();
+    expect(result.kind).toBe("ok");
+    if (result.kind === "ok") expect(result.received).toBeGreaterThanOrEqual(1);
+    expect(adapter.incoming.some((op) => op.kind === "upsertBookmark")).toBe(true);
+  });
+
+  test("P0: initial upload forces receive when tree cache matches but remoteRaw empty", async () => {
+    const zenGuid = "zenonlyguid01";
+    const adapter = new MockLocalAdapter(
+      localSnapshot([{ id: "lb1", title: "Local", url: "https://local.example" }])
+    );
+    const { store, storage, http } = connectedStoreWithAdapter(adapter, {
+      collectionsModified: 7.25,
+      bookmarksRecords: mobileRemoteBookmarkRecords(
+        zenGuid,
+        5.0,
+        "Zen Only",
+        "https://zen-only.example"
+      ),
+      postModified: 8.5,
+    });
+    // Phase-1 leftover: matching tree cache, empty outbound (no remoteRaw).
+    storage.tree = JSON.stringify({
+      roots: [{ guid: "mobile", type: "folder", title: "mobile", children: [] }],
+      fetchedAt: 1,
+      bookmarksModified: 7.25,
+    });
+    await store.load();
+    expect(deserializeOutbound(storage.outbound)).toBeNull();
+    const result = await store.runSync();
+    expect(result.kind).toBe("ok");
+    expect(bookmarkGetCalls(http)).toBeGreaterThan(0);
+    const mobilePost = postCalls(http)
+      .flatMap((call) => JSON.parse(call.body!) as Array<{ id: string; payload: string }>)
+      .find((item) => item.id === "mobile");
+    expect(mobilePost).toBeDefined();
+    const cleartext = JSON.parse(
+      decryptRecordCleartext(BOOKMARK_KEYS.bundle, {
+        id: "mobile",
+        payload: mobilePost!.payload,
+        modified: 1,
+      })
+    ) as { children?: string[] };
+    expect(cleartext.children).toContain(zenGuid);
+  });
+
+  test("POST 503 surfaces Retry-After on SyncResult", async () => {
+    const adapter = new MockLocalAdapter(
+      localSnapshot([{ id: "lb1", title: "One", url: "https://one.example" }])
+    );
+    const { store, http } = connectedStoreWithAdapter(adapter, {
+      collectionsModified: 8.5,
+      postModified: 8.5,
+    });
+    await store.load();
+    await store.runSync();
+    store.noteLocalChange("lb1", 6_000_000_000);
+    const base = http.handler;
+    http.handler = chainHandlers(base, async (request) => {
+      if (
+        request.method === "POST" &&
+        request.url.startsWith(`${API_ENDPOINT}/storage/bookmarks`)
+      ) {
+        return {
+          status: 503,
+          headers: { "Retry-After": "17" },
+          body: "",
+        };
+      }
+      return undefined;
+    });
+    const result = await store.runSync();
+    expect(result.kind).toBe("server");
+    if (result.kind !== "ok") expect(result.retryAfterSeconds).toBe(17);
+    expect(store.getState().pendingUploads).toBeGreaterThan(0);
+  });
+
+  test("disconnect waits for in-flight sync so POST ack persists before clear", async () => {
+    const adapter = new MockLocalAdapter(
+      localSnapshot([{ id: "lb1", title: "One", url: "https://one.example" }])
+    );
+    const { store, storage, http } = connectedStoreWithAdapter(adapter, {
+      postModified: 8.5,
+    });
+    await store.load();
+    let releasePost: (() => void) | null = null;
+    const postGate = new Promise<void>((resolve) => {
+      releasePost = resolve;
+    });
+    const base = http.handler;
+    http.handler = async (request) => {
+      if (
+        request.method === "POST" &&
+        request.url.startsWith(`${API_ENDPOINT}/storage/bookmarks`)
+      ) {
+        await postGate;
+      }
+      return base(request);
+    };
+    const syncing = store.runSync();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    const disconnecting = store.disconnect();
+    releasePost!();
+    await syncing;
+    await disconnecting;
+    // Cleared after the flight finished — no resurrected connection state.
+    expect(store.getState().connection).toBe("disconnected");
+    expect(storage.outbound).toBeNull();
+    expect(storage.outboundClears).toBe(1);
+  });
+
+  test("reconcileLocalToRemote reuses server GUIDs by URL after outbound clear", () => {
+    const state = emptyOutboundState();
+    noteRemoteRecord(
+      state,
+      "serverguid01",
+      {
+        id: "serverguid01",
+        type: "bookmark",
+        title: "One",
+        bmkUri: "https://one.example",
+        parentid: "mobile",
+      },
+      1000
+    );
+    markAllDirty(
+      state,
+      localSnapshot([{ id: "lb1", title: "One", url: "https://one.example" }]),
+      2000
+    );
+    reconcileLocalToRemote(
+      state,
+      localSnapshot([{ id: "lb1", title: "One", url: "https://one.example" }])
+    );
+    expect(state.guidByLocalId.lb1).toBe("serverguid01");
+    expect(state.dirty.lb1).toBeUndefined();
+  });
+
+  test("reconcileLocalToRemote ignores menu/toolbar receive-only bookmarks", () => {
+    const state = emptyOutboundState();
+    noteRemoteRecord(
+      state,
+      "b1",
+      {
+        id: "b1",
+        type: "bookmark",
+        title: "One",
+        bmkUri: "https://one.example",
+        parentid: "menu________",
+      },
+      1000
+    );
+    markAllDirty(
+      state,
+      localSnapshot([{ id: "lb1", title: "One", url: "https://one.example" }]),
+      2000
+    );
+    reconcileLocalToRemote(
+      state,
+      localSnapshot([{ id: "lb1", title: "One", url: "https://one.example" }])
+    );
+    expect(state.guidByLocalId.lb1).toBeUndefined();
+    expect(state.dirty.lb1).toBeDefined();
   });
 });

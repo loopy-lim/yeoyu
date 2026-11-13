@@ -64,3 +64,30 @@ export interface SyncHttpError extends Error {
   kind: SyncErrorKind;
   status?: number;
 }
+
+// ---------------------------------------------------------------------------
+// Outbound (send) support — local model mirrors. Structurally compatible with
+// the generated native types (@generated/types Bookmark / BookmarkFolder) so
+// App.tsx can pass controller snapshots straight through; kept as plain
+// interfaces here so the sync module has no generated-code dependency.
+
+/** Local bookmark (native domain.rs Bookmark). */
+export interface LocalBookmark {
+  id: string;
+  title: string;
+  url: string;
+  /** "" (absent in legacy snapshots) = root level; otherwise a folder id. */
+  folderId?: string;
+}
+
+/** Local bookmark folder (native domain.rs BookmarkFolder) — flat, folders
+ *  never nest in the local model (all sit at root level). */
+export interface LocalBookmarkFolder {
+  id: string;
+  title: string;
+}
+
+export interface LocalBookmarkSnapshot {
+  bookmarks: LocalBookmark[];
+  bookmarkFolders: LocalBookmarkFolder[];
+}

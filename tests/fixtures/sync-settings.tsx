@@ -101,6 +101,7 @@ const state = (overrides: Record<string, unknown>) =>
     tree: null,
     lastSyncAtMs: Date.now() - 5 * 60 * 1000,
     lastResult: null,
+    pendingUploads: 0,
     ...overrides,
   }) as never;
 
@@ -184,6 +185,79 @@ test("an in-flight sync disables the row and relabels it", async () => {
   const sync = button(tree, "Syncing…")!;
   expect(sync.props.disabled).toBe(true);
   expect(button(tree, "Disconnect")!.props.disabled).toBe(true);
+});
+
+test("pending uploads ride the syncing label", async () => {
+  const tree = await mount(
+    <SyncSettingsSection
+      state={state({ syncing: true, pendingUploads: 3 })}
+      platformAvailable
+      onConnect={() => {}}
+      onCancelConnect={() => {}}
+      onSyncNow={() => {}}
+      onDisconnect={() => {}}
+    />
+  );
+  expect(texts(tree)).toContain("Syncing… · Uploading 3");
+});
+
+test("an ok result appends its counts to the last-sync line", async () => {
+  const tree = await mount(
+    <SyncSettingsSection
+      state={state({
+        lastResult: { kind: "ok", atMs: Date.now(), received: 3, uploaded: 2 },
+      })}
+      platformAvailable
+      onConnect={() => {}}
+      onCancelConnect={() => {}}
+      onSyncNow={() => {}}
+      onDisconnect={() => {}}
+    />
+  );
+  expect(texts(tree)).toContain("Last synced 5m ago · Received 3 · Sent 2");
+});
+
+test("zero or absent counts keep the plain status lines", async () => {
+  let tree = await mount(
+    <SyncSettingsSection
+      state={state({ syncing: true, pendingUploads: 0 })}
+      platformAvailable
+      onConnect={() => {}}
+      onCancelConnect={() => {}}
+      onSyncNow={() => {}}
+      onDisconnect={() => {}}
+    />
+  );
+  expect(texts(tree)).toContain("Syncing…");
+  expect(texts(tree).some((text) => text.includes("Uploading"))).toBe(false);
+
+  tree = await mount(
+    <SyncSettingsSection
+      state={state({
+        lastResult: { kind: "ok", atMs: Date.now(), received: 0, uploaded: 0 },
+      })}
+      platformAvailable
+      onConnect={() => {}}
+      onCancelConnect={() => {}}
+      onSyncNow={() => {}}
+      onDisconnect={() => {}}
+    />
+  );
+  expect(texts(tree)).toContain("Last synced 5m ago");
+  expect(texts(tree).some((text) => text.includes("Received"))).toBe(false);
+
+  // Pre-T-3 ok shape (no count fields yet) renders the plain line unchanged.
+  tree = await mount(
+    <SyncSettingsSection
+      state={state({ lastResult: { kind: "ok", atMs: Date.now(), received: 0, uploaded: 0 } })}
+      platformAvailable
+      onConnect={() => {}}
+      onCancelConnect={() => {}}
+      onSyncNow={() => {}}
+      onDisconnect={() => {}}
+    />
+  );
+  expect(texts(tree)).toContain("Last synced 5m ago");
 });
 
 test("classified errors surface with backoff seconds", async () => {

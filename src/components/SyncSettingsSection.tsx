@@ -17,9 +17,9 @@ function formatLastSync(atMs: number | null): string {
 }
 
 /**
- * Firefox Sync settings panel (receive-only Phase 1). Presentation only:
- * the connection lifecycle lives in the injected callbacks App wires to the
- * sync store. States follow §3: 미연결 → 연결 중 → 연결됨/동기화 중 → 오류.
+ * Firefox Sync settings panel. Presentation only: the connection lifecycle
+ * lives in the injected callbacks App wires to the sync store. States follow
+ * §3: 미연결 → 연결 중 → 연결됨/동기화 중 → 오류.
  */
 export function SyncSettingsSection({
   state,
@@ -131,6 +131,29 @@ export function SyncSettingsSection({
         })
       : null;
 
+  const pendingUploads = state.pendingUploads;
+  const okCounts =
+    state.lastResult && state.lastResult.kind === "ok" ? state.lastResult : null;
+  const received = okCounts?.received ?? 0;
+  const uploaded = okCounts?.uploaded ?? 0;
+  const resultSummary =
+    state.lastSyncAtMs !== null && (received > 0 || uploaded > 0)
+      ? tr("sync.resultSummary", { received, uploaded })
+      : null;
+  const lastSyncText =
+    state.lastSyncAtMs === null
+      ? tr("sync.neverSynced")
+      : [
+          tr("sync.lastSynced", { age: formatLastSync(state.lastSyncAtMs) }),
+          resultSummary,
+        ]
+          .filter((part): part is string => part !== null)
+          .join(" · ");
+  const syncingText =
+    pendingUploads > 0
+      ? `${tr("sync.syncing")} · ${tr("sync.uploading", { count: pendingUploads })}`
+      : tr("sync.syncing");
+
   return (
     <SettingsGroup heading={tr("sync.title")}>
       <SettingsGroupRow>
@@ -138,11 +161,7 @@ export function SyncSettingsSection({
           <Text className={settingsClasses.rowTitle} numberOfLines={1}>
             {state.email ?? tr("sync.accountFallback")}
           </Text>
-          <Text className={settingsClasses.rowDetail}>
-            {state.lastSyncAtMs === null
-              ? tr("sync.neverSynced")
-              : tr("sync.lastSynced", { age: formatLastSync(state.lastSyncAtMs) })}
-          </Text>
+          <Text className={settingsClasses.rowDetail}>{lastSyncText}</Text>
         </View>
       </SettingsGroupRow>
       {!!errorText && (
@@ -162,7 +181,7 @@ export function SyncSettingsSection({
           onPress={onSyncNow}
         >
           <Text className="text-ink text-input-plus font-semibold">
-            {state.syncing ? tr("sync.syncing") : tr("sync.syncNow")}
+            {state.syncing ? syncingText : tr("sync.syncNow")}
           </Text>
         </Pressable>
         <Pressable

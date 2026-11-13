@@ -146,6 +146,12 @@ export interface BrowserRuntime {
   readSyncTree?(): Promise<string | null>;
   saveSyncTree?(json: string): Promise<void>;
   clearSyncTree?(): Promise<void>;
+  /** Outbound sync bookkeeping channel (guid mappings, dirty log, last
+   *  received cleartexts) — same plaintext-file contract as the tree
+   *  channel: load returns null when absent/corrupt, clear wipes it. */
+  loadOutbound?(): Promise<string | null>;
+  saveOutbound?(json: string): Promise<void>;
+  clearOutbound?(): Promise<void>;
   /** URL-safe unpadded base64 of `count` secure-random bytes (max 1024). */
   secureRandomB64?(count: number): Promise<string>;
   /** Arms/disarms interception of the FxA webchannel redirect URN; a captured

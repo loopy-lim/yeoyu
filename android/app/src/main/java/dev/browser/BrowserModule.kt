@@ -509,6 +509,24 @@ class BrowserModule(context:ReactApplicationContext):ReactContextBaseJavaModule(
    catch(failure:Exception) { promise.reject("SYNC",failure) }
   }
  }
+ @ReactMethod fun loadOutbound(promise:Promise) {
+  syncIo.execute {
+   try { promise.resolve(OutboundStore.read(reactApplicationContext)) }
+   catch(failure:Exception) { promise.reject("SYNC",failure) }
+  }
+ }
+ @ReactMethod fun saveOutbound(json:String,promise:Promise) {
+  syncIo.execute {
+   try { OutboundStore.save(reactApplicationContext,json); promise.resolve(null) }
+   catch(failure:Exception) { promise.reject("SYNC",failure) }
+  }
+ }
+ @ReactMethod fun clearOutbound(promise:Promise) {
+  syncIo.execute {
+   try { OutboundStore.clear(reactApplicationContext); promise.resolve(null) }
+   catch(failure:Exception) { promise.reject("SYNC",failure) }
+  }
+ }
  /** URL-safe base64 (no padding) random bytes for OAuth state/PKCE/nonce. */
  @ReactMethod fun secureRandomB64(count:Double,promise:Promise) {
   syncIo.execute {

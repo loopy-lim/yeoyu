@@ -139,3 +139,46 @@ object SyncTreeStore {
 
     private fun file(context: Context): File = File(context.applicationContext.filesDir, FILE_NAME)
 }
+
+/** Plaintext JSON of the outbound sync bookkeeping (local id ↔ guid mappings,
+ *  dirty log, pending tombstones, last-received cleartexts). Not secret — the
+ *  bookmark contents it mirrors already live in the tree channel/profile —
+ *  but large, hence the same file + atomic-replace contract as SyncTreeStore.
+ *  Cleared together with the other channels on disconnect (V-9). */
+object OutboundStore {
+    private const val FILE_NAME = "sync-outbound-v1.json"
+    private const val MAX_BYTES = 16L * 1024 * 1024
+
+    fun read(context: Context): String? {
+        val file = file(context)
+        if (!file.isFile) return null
+        val length = file.length()
+        if (length > MAX_BYTES) throw IllegalStateException("sync outbound file too large")
+        return file.readText(Charsets.UTF_8)
+    }
+
+    fun save(context: Context, json: String) {
+        val app = context.applicationContext
+        val file = file(app)
+        val temp = File(file.parentFile, "$FILE_NAME.tmp")
+        if (json.toByteArray(Charsets.UTF_8).size > MAX_BYTES)
+            throw IllegalStateException("sync outbound state too large to save")
+        try {
+            temp.writeText(json, Charsets.UTF_8)
+            if (!temp.renameTo(file)) {
+                // Cross-filesystem rename can fail; fall back to copy+delete.
+                temp.copyTo(file, overwrite = true)
+                temp.delete()
+            }
+        } finally {
+            if (temp.exists()) temp.delete()
+        }
+    }
+
+    fun clear(context: Context) {
+        val file = file(context)
+        if (file.exists()) file.delete()
+    }
+
+    private fun file(context: Context): File = File(context.applicationContext.filesDir, FILE_NAME)
+}
