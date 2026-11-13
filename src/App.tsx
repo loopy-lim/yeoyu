@@ -79,6 +79,7 @@ import { SyncSettingsSection } from "@/components/SyncSettingsSection";
 import { decodeBase64Url } from "@/sync/base64";
 import {
   buildAuthorizationFlow,
+  FXA_ORIGIN,
   type AuthorizationRequest,
   type HttpTransport,
 } from "@/sync/fxa";
@@ -1407,12 +1408,27 @@ function BrowserApp() {
           cursor += count;
           return slice;
         });
+        // A previous login attempt can leave an FxA tab behind (the app died
+        // mid-login and session restore brought the tab back). Two live
+        // accounts.firefox.com pages share origin storage and corrupt each
+        // other's OAuth flow state — the fresh page advances to the password
+        // step, then resets to the email step (observed on device and
+        // emulator). Close stragglers before opening the login tab.
+        const staleFxaTabs = (controller.getSnapshot()?.tabs ?? []).filter(
+          (tab) => tab.id && tab.url.startsWith(`${FXA_ORIGIN}/`)
+        );
         run(
-          controller.createTab(url).then((snapshot) => {
-            const tabId = snapshot.activeTabId ?? null;
-            platform.setSyncLoginCapture?.(true, tabId);
-            setSyncLogin({ request, tabId });
-          })
+          Promise.all(
+            staleFxaTabs.map((tab) =>
+              controller.close(tab.id!).catch(() => undefined)
+            )
+          )
+            .then(() => controller.createTab(url))
+            .then((snapshot) => {
+              const tabId = snapshot.activeTabId ?? null;
+              platform.setSyncLoginCapture?.(true, tabId);
+              setSyncLogin({ request, tabId });
+            })
         );
       })
       .catch(() => flashNotice(tr("sync.error.network")));

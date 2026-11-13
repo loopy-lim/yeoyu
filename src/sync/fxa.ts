@@ -1,20 +1,29 @@
 // FxA OAuth client for the receive-only sync integration. Mirrors
 // application-services components/fxa-client/src/internal/oauth.rs:
-// PKCE S256, ephemeral ECDH keys_jwk, context=oauth_webchannel_v1, and no
-// redirect_uri (the server default for the Fenix client is the webchannel
-// URN, which the host browser intercepts as a navigation).
+// PKCE S256, ephemeral ECDH keys_jwk, and no redirect_uri (the server
+// default for the Fenix client is the webchannel URN, which the host
+// browser intercepts as a navigation).
+//
+// Unlike Fenix we deliberately omit context=oauth_webchannel_v1. That
+// context makes the FxA content server drive the flow through the Firefox
+// WebChannel bridge (WebChannelMessageToChrome), which only exists when
+// the host embeds the fxawebchannel extension; in a plain GV tab the page
+// resets back to the email step right after submission (V-7 defect,
+// reproduced twice on device). The default web context renders the
+// standard OAuth page and still redirects to the registered webchannel
+// URN on completion, which GeckoSessionRegistry intercepts.
 
 import { sha256 as defaultSha256 } from "@noble/hashes/sha2.js";
 import { decodeBase64Url, encodeBase64Url, utf8 } from "./base64";
 import { decryptJwe, EphemeralKeyPair, generateEphemeralKeyPair } from "./crypto";
 
 export const FXA_CLIENT_ID = "a2270f727f45f648"; // Fenix (public constant, user-approved)
-export const FXA_AUTHORIZATION_URL = "https://accounts.firefox.com/authorization";
+export const FXA_ORIGIN = "https://accounts.firefox.com";
+export const FXA_AUTHORIZATION_URL = `${FXA_ORIGIN}/authorization`;
 export const FXA_TOKEN_URL = "https://oauth.accounts.firefox.com/v1/token";
 export const FXA_PROFILE_URL = "https://profile.accounts.firefox.com/v1/profile";
 export const OAUTH_WEBCHANNEL_REDIRECT =
   "urn:ietf:wg:oauth:2.0:oob:oauth-redirect-webchannel";
-export const OAUTH_CONTEXT = "oauth_webchannel_v1";
 export const OLD_SYNC_SCOPE = "https://identity.mozilla.com/apps/oldsync";
 export const FXA_SCOPES = `profile ${OLD_SYNC_SCOPE}`;
 
@@ -57,8 +66,9 @@ export function buildAuthorizationFlow(random: (n: number) => Uint8Array): {
     `&code_challenge=${sha256Base64Url(codeVerifier)}` +
     `&access_type=offline` +
     `&keys_jwk=${encodeURIComponent(encodeBase64Url(utf8(JSON.stringify(keys.publicJwk))))}` +
-    `&scope=${encodeURIComponent(FXA_SCOPES)}` +
-    `&context=${encodeURIComponent(OAUTH_CONTEXT)}`;
+    `&scope=${encodeURIComponent(FXA_SCOPES)}`;
+  // No context param: see the header comment — webchannel contexts expect a
+  // WebChannel bridge that a plain GV tab cannot provide.
   return { url, request: { state, codeVerifier, keys } };
 }
 
