@@ -215,9 +215,6 @@ type SuggestionSources = {
 };
 import { Button as UnikitButton, Badge as UnikitBadge } from "@unikit-bridge/ui";
 
-const buttonClasses = cva(c.button, {
-  variants: { disabled: { true: c.disabled } },
-});
 const favoriteClasses = cva(c.favorite, {
   variants: { selected: { true: c.favoriteActive } },
 });

@@ -84,6 +84,38 @@
   --text-title: 18px;
 }
 
+/* UniKit bridge (issue #26): @unikit-bridge/ui variants speak shadcn
+   semantics (bg-primary, text-secondary-foreground, …). Map each onto the
+   yeoyu rolls above so every ThemeScope root keeps its resolved colors.
+   --color-accent intentionally stays the yeoyu accent roll — unikit hover
+   and active states read as the same soft purple, not a redefinition.
+   --color-input is deliberately NOT mapped: a color named "input" would
+   collide with the --text-input font-size token and drop the font-size
+   from the compiled text-input utility (Tailwind resolves text-* against
+   both namespaces, color wins). border-input stays a no-op until the
+   outline variant is actually adopted.
+   inline (not static) keeps utilities referencing the roll variables
+   directly, so ScopedVariables overrides reach them without an extra hop. */
+@theme inline {
+  --color-background: var(--color-surface);
+  --color-foreground: var(--color-ink);
+  --color-card: var(--color-surface-elevated);
+  --color-card-foreground: var(--color-ink);
+  --color-popover: var(--color-surface-elevated);
+  --color-popover-foreground: var(--color-ink);
+  --color-primary: var(--color-ink);
+  --color-primary-foreground: var(--color-ghost);
+  --color-secondary: var(--color-sunken);
+  --color-secondary-foreground: var(--color-ink);
+  --color-muted: var(--color-sunken);
+  --color-muted-foreground: var(--color-ink-muted);
+  --color-accent-foreground: var(--color-ghost);
+  --color-destructive: var(--color-error-ink);
+  --color-destructive-foreground: var(--color-notice-ink);
+  --color-border: var(--color-card-border);
+  --color-ring: var(--color-accent-strong);
+}
+
 @utility opacity-pressed {
   opacity: 0.58;
 }
