@@ -8,5 +8,6 @@ bun test tests
 python3 scripts/check-split-geometry.py
 python3 -m unittest discover -s tests -p 'test_*.py'
 bun scripts/contrast-check.ts
+node scripts/css-compile-check.mjs
 bun run typecheck
 bun run codegen --check
