@@ -95,6 +95,11 @@ export const appClasses = {
   littleArcPromoteButton:
     "h-[32px] px-lg rounded-control bg-accent-strong flex-row items-center gap-xs border border-accent-strong active:opacity-90",
   compactNavigation: "flex-1 flex-row items-center gap-md",
+  // Phone compact chrome (issue #19): the toolbar row docks at the screen
+  // bottom, mirroring canvasToolbar with the hairline on its top edge. The
+  // 48dp rail stays for tab/favorites/settings access.
+  phoneBottomBar:
+    "h-toolbar px-md gap-sm flex-row items-center border-t-hairline-width border-t-hairline bg-surface-elevated",
   panes: "flex-1 flex-row bg-canvas",
   panesVertical: "flex-col",
   pane: "flex-1 basis-0 bg-white border border-transparent overflow-hidden",
@@ -153,7 +158,15 @@ export const appClasses = {
   overlay:
     "absolute top-0 left-0 right-0 bottom-0 bg-scrim justify-center items-center",
   overlayTouch: "absolute inset-0 justify-center items-center",
+  // Bottom-sheet sibling of overlayTouch: packs content to the bottom edge
+  // instead of floating it centered (issue #19 phone Space picker).
+  overlayBottom: "absolute inset-0 justify-end",
   sheetUnderlay: "absolute inset-0",
+  // Docked Space sheet card: full width and height-capped so long Space
+  // lists scroll inside it. Per-corner radius utilities do not compile in
+  // uniwind (verified), so the card rounds all corners like the mini cards.
+  spaceSheet:
+    "max-h-[62%] p-xxxl gap-lg bg-surface-elevated rounded-tile border-t-hairline-width border-t-hairline shadow-dialog",
   dialog:
     "w-[90%] max-w-[620px] max-h-[78%] p-xxxl bg-surface-elevated rounded-dialog gap-lg border border-hairline shadow-dialog",
   dialogTitle: "text-ink text-title font-bold",

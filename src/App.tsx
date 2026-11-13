@@ -98,6 +98,7 @@ import { KeyboardSettings } from "@/components/KeyboardSettings";
 import {
   defaultUiPreferences,
   resolveColorMode,
+  resolvePhoneChromeLayout,
   FRAME_PX_MAX,
   FRAME_PX_MIN,
   FRAME_PX_STEP,
@@ -183,13 +184,16 @@ import { sidebarPresentation, type SidebarFolder } from "@/sidebarPresentation";
 import { AddressBox } from "@/components/AddressBox";
 import { SettingsGroup } from "@/components/settings/kit";
 import { AddressTrigger } from "@/components/AddressTrigger";
+import { PhoneBottomBar } from "@/components/PhoneBottomBar";
 import { FindBar } from "@/components/FindBar";
 import {
   BoostsDialog,
   HistoryDialog,
   PermissionDialog,
+  SpaceSheet,
   SpaceSwitcherDialog,
   TabContextMenuDialog,
+  type SpaceSwitcherProps,
 } from "@/components/Dialogs";
 import {
   clampSplitRatio,
@@ -1851,6 +1855,37 @@ function BrowserApp() {
       ];
     if (next) switchSpace(next.id);
   };
+  // Shared Space-switcher payload (issue #19): one open state drives both
+  // the centered dialog and the phone bottom sheet, so switching, creating,
+  // and hardware-back dismissal behave identically in either presentation.
+  const spaceSwitcherProps: SpaceSwitcherProps | null = state
+    ? {
+        workspaces: state.workspaces,
+        activeWorkspaceId: state.activeWorkspaceId,
+        counts: Object.fromEntries(
+          state.workspaces.map((w) => [
+            w.id,
+            state.tabs.filter((t) => t.workspaceId === w.id).length,
+          ])
+        ),
+        onSwitch: (id) => {
+          setSpaceSwitcher(false);
+          switchSpace(id);
+        },
+        onCreate: () => {
+          run(
+            controller
+              .workspace(`Space ${(state.workspaces.length ?? 0) + 1}`)
+              .then((snapshot) => {
+                setSplitLayout(null);
+                setFocused(snapshot.activeTabId ?? null);
+                setSpaceSwitcher(false);
+              })
+          );
+        },
+        onClose: () => setSpaceSwitcher(false),
+      }
+    : null;
   const openBookmark = (bookmark: { id: string }) => {
     haptic("click");
     run(
@@ -2737,6 +2772,11 @@ function BrowserApp() {
     windowWidth,
   ]);
   const compactWindow = windowWidth < 840;
+  // Issue #19: only the compact tier re-layouts — wider windows resolve to
+  // "top" no matter what the stored phone preference says, so the tablet
+  // path keeps today's structure.
+  const bottomChrome =
+    resolvePhoneChromeLayout(ui.phoneChromeLayout, compactWindow) === "bottom";
   const littleArcCardStyle = useMemo(() => {
     if (!isLittleArc) return undefined;
     const bodyWidth = windowWidth - safeInsets.left - safeInsets.right;
@@ -3247,6 +3287,37 @@ function BrowserApp() {
           {/* The card must be a direct child of the full-screen centerer:
               its percent width/height resolve against that container. */}
           <View className={c.overlayTouch} pointerEvents="box-none">
+            {node}
+          </View>
+        </>
+      )}
+    </Overlay>
+  );
+  // Phone bottom sheet (issue #19): same overlay scaffold as sheet(), but
+  // the wrapper packs to the bottom edge and the card rises (lift) instead
+  // of popping from the center.
+  const bottomSheet = (
+    open: boolean,
+    onClose: () => void,
+    node: React.ReactNode
+  ) => (
+    <Overlay
+      open={open}
+      className={c.overlay}
+      style={{ bottom: keyboardInset }}
+      lift={16}
+      dim={false}
+      reducedMotion={reducedMotion}
+    >
+      {open && (
+        <>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={tr("common.close")}
+            className={c.sheetUnderlay}
+            onPress={onClose}
+          />
+          <View className={c.overlayBottom} pointerEvents="box-none">
             {node}
           </View>
         </>
@@ -4171,13 +4242,27 @@ function BrowserApp() {
               </View>
             )}
             {/* pointerEvents must not flatten/unflatten the native Gecko ancestors. */}
+            {/* The column wrapper (issue #19) owns the frame padding so the
+                docked phone bar floats on the same mat as the content; the
+                modal gates repeat on it so the bar hides behind sheets like
+                the body does. Body children keep their original depth. */}
             <View
               collapsable={false}
-              className={c.body}
+              className="flex-1"
               style={[
                 !contentFullscreen && !isLittleArc && frameStyle,
                 isLittleArc && { backgroundColor: "transparent" },
               ]}
+              pointerEvents={bodyBlocking ? "none" : "auto"}
+              accessibilityElementsHidden={accessibilityBlocking}
+              importantForAccessibility={
+                accessibilityBlocking ? "no-hide-descendants" : "auto"
+              }
+            >
+            <View
+              collapsable={false}
+              className={c.body}
+              style={[isLittleArc && { backgroundColor: "transparent" }]}
               pointerEvents={bodyBlocking ? "none" : "auto"}
               accessibilityElementsHidden={accessibilityBlocking}
               importantForAccessibility={
@@ -5163,7 +5248,12 @@ function BrowserApp() {
                 )}
                 <SidebarLayer
                   visible={
-                    sidebarMotion.rail && !contentFullscreen && !isLittleArc
+                    sidebarMotion.rail &&
+                    !contentFullscreen &&
+                    !isLittleArc &&
+                    // Bottom phone chrome replaces this top row (issue #19);
+                    // the rail column beside the content stays.
+                    !bottomChrome
                   }
                   active={
                     ui.sidebarCollapsed && !contentFullscreen && !isLittleArc
@@ -5521,6 +5611,23 @@ function BrowserApp() {
                   )}
                 </Overlay>
               </AnimatedView>
+            </View>
+            {bottomChrome && !contentFullscreen && !isLittleArc && (
+              <PhoneBottomBar
+                canGoBack={canGoBack}
+                canGoForward={canGoForward}
+                loading={targetLoading}
+                onBack={goBack}
+                onForward={() => invoke(Commands.goForward)}
+                onReloadStop={() =>
+                  invoke(targetLoading ? Commands.stop : Commands.reload)
+                }
+                url={addressValue}
+                security={target ? browser.security[target] : undefined}
+                onAddressPress={() => openLocationEditor("touch")}
+                onOpenSpaces={() => setSpaceSwitcher(true)}
+              />
+            )}
             </View>
             <Overlay
               open={notice !== ""}
@@ -6038,39 +6145,18 @@ function BrowserApp() {
                   </View>
                 )
             )}
-            {sheet(
+            {/* One open state, two presentations (issue #19): the phone
+                bottom mode docks the Space picker at the bottom edge; every
+                other layout keeps the centered dialog. */}
+            {(bottomChrome ? bottomSheet : sheet)(
               !!spaceSwitcher,
               () => setSpaceSwitcher(false),
-              state && (
-                <SpaceSwitcherDialog
-                  workspaces={state.workspaces}
-                  activeWorkspaceId={state.activeWorkspaceId}
-                  counts={Object.fromEntries(
-                    state.workspaces.map((w) => [
-                      w.id,
-                      state.tabs.filter((t) => t.workspaceId === w.id).length,
-                    ])
-                  )}
-                  onSwitch={(id) => {
-                    setSpaceSwitcher(false);
-                    switchSpace(id);
-                  }}
-                  onCreate={() => {
-                    run(
-                      controller
-                        .workspace(
-                          `Space ${(state.workspaces.length ?? 0) + 1}`
-                        )
-                        .then((snapshot) => {
-                          setSplitLayout(null);
-                          setFocused(snapshot.activeTabId ?? null);
-                          setSpaceSwitcher(false);
-                        })
-                    );
-                  }}
-                  onClose={() => setSpaceSwitcher(false)}
-                />
-              )
+              spaceSwitcherProps &&
+                (bottomChrome ? (
+                  <SpaceSheet {...spaceSwitcherProps} />
+                ) : (
+                  <SpaceSwitcherDialog {...spaceSwitcherProps} />
+                ))
             )}
             {sheet(
               !!historyOpen,
@@ -6747,7 +6833,7 @@ function BrowserApp() {
                       title: tr("category.appearance"),
                       description: tr("category.appearanceDetail"),
                       keywords:
-                        "custom hex colour color theme palette space lavender warm padding px dp size layout display fullscreen 색 컬러 테마 여백 사이드바 크기 화면",
+                        "custom hex colour color theme palette space lavender warm padding px dp size layout display fullscreen toolbar bottom top 하단 상단 툴바 색 컬러 테마 여백 사이드바 크기 화면",
                       content: (
                         <>
                           <AppearanceSettings

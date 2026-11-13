@@ -4,6 +4,7 @@ import {
   loadUiPreferences,
   normalizeBoostHost,
   reduceUiPreferences,
+  resolvePhoneChromeLayout,
   saveUiPreferences,
   validateBoostDrafts,
 } from "../src/uiPreferences";
@@ -474,4 +475,56 @@ test("restore keeps a runtime-set Little Arc marker over the stale stored one", 
   });
   expect(plain.littleArcActiveTabId).toBe("old-tab");
   expect(plain.sidebarCollapsed).toBe(stored.sidebarCollapsed);
+});
+
+// --- Phone chrome layout (issue #19) ----------------------------------------
+// The preference is optional: unset follows the window tier (compact docks
+// the toolbar at the bottom), and an explicit pick never re-layouts a
+// tablet-class window.
+
+test("phone chrome layout round-trips a pick and drops junk on load", async () => {
+  expect(defaultUiPreferences.phoneChromeLayout).toBeUndefined();
+  const picked = reduceUiPreferences(defaultUiPreferences, {
+    type: "setPhoneChromeLayout",
+    layout: "top",
+  });
+  expect(picked).toEqual({ ...defaultUiPreferences, phoneChromeLayout: "top" });
+  let stored = "";
+  await saveUiPreferences(async (json) => {
+    stored = json;
+  }, picked);
+  expect(
+    (await loadUiPreferences(async () => stored)).phoneChromeLayout
+  ).toBe("top");
+  for (const phoneChromeLayout of [undefined, null, "sideways", 3]) {
+    expect(
+      (await loadUiPreferences(async () =>
+        JSON.stringify({
+          sidebarCollapsed: false,
+          appearance: "warm",
+          phoneChromeLayout,
+        })
+      )).phoneChromeLayout
+    ).toBeUndefined();
+  }
+});
+
+test("resetLayout returns the chrome to following the window tier", () => {
+  const picked = reduceUiPreferences(defaultUiPreferences, {
+    type: "setPhoneChromeLayout",
+    layout: "bottom",
+  });
+  const reset = reduceUiPreferences(picked, { type: "resetLayout" });
+  expect(reset.phoneChromeLayout).toBeUndefined();
+  expect(reset.sidebarWidth).toBe(defaultUiPreferences.sidebarWidth);
+  expect(reset.framePx).toEqual(defaultUiPreferences.framePx);
+});
+
+test("resolvePhoneChromeLayout defaults compact windows to the bottom bar and never moves wide ones", () => {
+  expect(resolvePhoneChromeLayout(undefined, false)).toBe("top");
+  expect(resolvePhoneChromeLayout(undefined, true)).toBe("bottom");
+  expect(resolvePhoneChromeLayout("top", true)).toBe("top");
+  expect(resolvePhoneChromeLayout("bottom", false)).toBe("top");
+  // "hybrid" ships in a later slice and reads as today's structure until then.
+  expect(resolvePhoneChromeLayout("hybrid", true)).toBe("top");
 });

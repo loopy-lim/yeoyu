@@ -14,6 +14,32 @@ export function normalizeColorMode(value: unknown): ColorMode {
   return value === "light" || value === "dark" ? value : "system";
 }
 
+// Which edge carries the compact toolbar (issue #19). "hybrid" is reserved
+// for the top-address + bottom-tabs slice; until it ships the resolver
+// reads it as the current top structure.
+export type PhoneChromeLayout = "bottom" | "top" | "hybrid";
+
+export function normalizePhoneChromeLayout(
+  value: unknown
+): PhoneChromeLayout | undefined {
+  return value === "bottom" || value === "top" || value === "hybrid"
+    ? value
+    : undefined;
+}
+
+// Missing means follow the window tier: compact windows dock the toolbar at
+// the bottom, everything else keeps the top row. An explicit choice only
+// re-layouts the compact tier — a tablet never moves for a phone pick.
+export function resolvePhoneChromeLayout(
+  layout: PhoneChromeLayout | undefined,
+  compactWindow: boolean
+): "bottom" | "top" {
+  if (!compactWindow) return "top";
+  // Unset follows the compact default (bottom); "hybrid" reads as the
+  // current top structure until its slice ships.
+  return layout === "top" || layout === "hybrid" ? "top" : "bottom";
+}
+
 export function resolveColorMode(
   mode: ColorMode | undefined,
   systemScheme?: ResolvedColorMode | null
@@ -127,6 +153,8 @@ export interface UiPreferences {
   siteSearches: SiteSearchEntry[];
   boosts: SiteBoost[];
   framePx: FramePadding;
+  // Missing means follow the window tier (compact → bottom bar, issue #19).
+  phoneChromeLayout?: PhoneChromeLayout;
   // Crash-recovery marker for the Little Arc overlay, not a user setting: the
   // external tab id persists while the card is open so a session that died
   // with it open reopens the overlay on boot instead of leaking its temporary
@@ -151,6 +179,7 @@ export type UiPreferenceAction =
   | { type: "setSiteSearches"; siteSearches: SiteSearchEntry[] }
   | { type: "setBoosts"; boosts: SiteBoost[] }
   | { type: "setFramePx"; side: FrameSide; value: number }
+  | { type: "setPhoneChromeLayout"; layout: PhoneChromeLayout }
   | { type: "setLittleArcActiveTab"; id: string | null }
   | { type: "restore"; preferences: UiPreferences };
 
@@ -264,7 +293,10 @@ export function reduceUiPreferences(
     return { ...rest, appearance: defaultUiPreferences.appearance, colorMode: "system" };
   }
   if (action.type === "resetLayout") {
-    return { ...preferences, sidebarWidth: defaultUiPreferences.sidebarWidth,
+    // The chrome layout is part of the layout reset: back to following the
+    // window tier instead of a stale phone pick.
+    const { phoneChromeLayout: _chrome, ...rest } = preferences;
+    return { ...rest, sidebarWidth: defaultUiPreferences.sidebarWidth,
       sidebarCollapsed: defaultUiPreferences.sidebarCollapsed, framePx: { ...defaultFramePadding } };
   }
   if (action.type === "toggleSidebar") {
@@ -309,6 +341,9 @@ export function reduceUiPreferences(
         ),
       },
     };
+  }
+  if (action.type === "setPhoneChromeLayout") {
+    return { ...preferences, phoneChromeLayout: action.layout };
   }
   return { ...preferences, appearance: action.appearance };
 }
@@ -405,14 +440,16 @@ export async function loadUiPreferences(
       const customColor = normalizeCustomColor(prefs.customColor);
       const colorSource = ["appearance", "space", "custom"].includes(prefs.colorSource ?? "") &&
         (prefs.colorSource !== "custom" || customColor) ? prefs.colorSource : undefined;
+      const phoneChromeLayout = normalizePhoneChromeLayout(prefs.phoneChromeLayout);
       // Reconstruct color fields: malformed optional values must not reach rendering.
-      const { colorSource: _source, customColor: _color, ...existing } = prefs;
+      const { colorSource: _source, customColor: _color, phoneChromeLayout: _chrome, ...existing } = prefs;
       return {
         ...existing,
         colorMode: normalizeColorMode(prefs.colorMode),
         language: normalizeLanguage(prefs.language),
         ...(colorSource ? { colorSource } : {}),
         ...(customColor ? { customColor } : {}),
+        ...(phoneChromeLayout ? { phoneChromeLayout } : {}),
         fullscreen: typeof prefs.fullscreen === "boolean" ? prefs.fullscreen : true,
         autoPictureInPicture:
           typeof prefs.autoPictureInPicture === "boolean"

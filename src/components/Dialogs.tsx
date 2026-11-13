@@ -13,6 +13,7 @@ import { Favicon } from "@/components/Favicon";
 import { josaRo } from "@/i18n";
 import { ActionMenu, type MenuAnchor, type MenuItem } from "@/components/ActionMenu";
 import { ChromeIcon } from "@/chrome/ChromeIcon";
+import { appClasses } from "@/chrome/appStyles";
 import type { HistoryEntry } from "@/history";
 import {
   PERMISSION_KINDS,
@@ -85,6 +86,69 @@ function DialogHeader({
   );
 }
 
+// One Space row, shared by the centered switcher dialog and the phone
+// bottom sheet (issue #19) so both present the same dot/count/active mark.
+function SpaceRow({
+  workspace,
+  selected,
+  count,
+  onSwitch,
+}: {
+  workspace: { id: string; name: string; color?: string };
+  selected: boolean;
+  count: number;
+  onSwitch: () => void;
+}) {
+  const { tr } = useI18n();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={tr("dialog.switchSpace", {
+        name: workspace.name,
+        ro: josaRo(workspace.name),
+      })}
+      className={cn(spaceRowVariants({ selected }))}
+      onPress={onSwitch}
+    >
+      <View
+        className={cn(dialogClasses.spaceDot, !workspace.color && "bg-accent")}
+        // Workspace colors are user/domain data, independent of the theme palette.
+        style={workspace.color ? { backgroundColor: workspace.color } : undefined}
+      />
+      <View className="flex-1">
+        <Text className={dialogClasses.rowTitle}>{workspace.name}</Text>
+      </View>
+      <Text className={dialogClasses.rowMeta}>{count}</Text>
+      {selected && (
+        <ChromeIcon name="check" className="size-[16px] text-accent-strong" />
+      )}
+    </Pressable>
+  );
+}
+
+function NewSpaceRow({ onPress }: { onPress: () => void }) {
+  const { tr } = useI18n();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={tr("dialog.newSpace")}
+      className={dialogClasses.row}
+      onPress={onPress}
+    >
+      <Text className={dialogClasses.rowTitle}>＋ {tr("dialog.newSpace")}</Text>
+    </Pressable>
+  );
+}
+
+export interface SpaceSwitcherProps {
+  workspaces: { id: string; name: string; color?: string }[];
+  activeWorkspaceId: string;
+  counts: Record<string, number>;
+  onSwitch: (id: string) => void;
+  onCreate: () => void;
+  onClose: () => void;
+}
+
 export function SpaceSwitcherDialog({
   workspaces,
   activeWorkspaceId,
@@ -92,14 +156,7 @@ export function SpaceSwitcherDialog({
   onSwitch,
   onCreate,
   onClose,
-}: {
-  workspaces: { id: string; name: string; color?: string }[];
-  activeWorkspaceId: string;
-  counts: Record<string, number>;
-  onSwitch: (id: string) => void;
-  onCreate: () => void;
-  onClose: () => void;
-}) {
+}: SpaceSwitcherProps) {
   const { tr } = useI18n();
   return (
     <>
@@ -115,43 +172,57 @@ export function SpaceSwitcherDialog({
           keyboardShouldPersistTaps="handled"
         >
           {workspaces.map((workspace) => (
-            <Pressable
+            <SpaceRow
               key={workspace.id}
-              accessibilityRole="button"
-              accessibilityLabel={
-                tr("dialog.switchSpace", {
-                  name: workspace.name,
-                  ro: josaRo(workspace.name),
-                })
-              }
-              className={cn(spaceRowVariants({ selected: workspace.id === activeWorkspaceId }))}
-              onPress={() => onSwitch(workspace.id)}
-            >
-              <View
-                className={cn(dialogClasses.spaceDot, !workspace.color && "bg-accent")}
-                // Workspace colors are user/domain data, independent of the theme palette.
-                style={workspace.color ? { backgroundColor: workspace.color } : undefined}
-              />
-              <View className="flex-1">
-                <Text className={dialogClasses.rowTitle}>{workspace.name}</Text>
-              </View>
-              <Text className={dialogClasses.rowMeta}>{counts[workspace.id] ?? 0}</Text>
-              {workspace.id === activeWorkspaceId && (
-                <ChromeIcon name="check" className="size-[16px] text-accent-strong" />
-              )}
-            </Pressable>
+              workspace={workspace}
+              selected={workspace.id === activeWorkspaceId}
+              count={counts[workspace.id] ?? 0}
+              onSwitch={() => onSwitch(workspace.id)}
+            />
           ))}
         </ScrollView>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={tr("dialog.newSpace")}
-          className={dialogClasses.row}
-          onPress={onCreate}
-        >
-          <Text className={dialogClasses.rowTitle}>＋ {tr("dialog.newSpace")}</Text>
-        </Pressable>
+        <NewSpaceRow onPress={onCreate} />
       </View>
     </>
+  );
+}
+
+// Phone-docked Space picker (issue #19): the same rows as the centered
+// dialog in a full-width bottom card; the list scrolls between the fixed
+// header and the new-Space action so long sets stay reachable.
+export function SpaceSheet({
+  workspaces,
+  activeWorkspaceId,
+  counts,
+  onSwitch,
+  onCreate,
+  onClose,
+}: SpaceSwitcherProps) {
+  const { tr } = useI18n();
+  return (
+    <View className={appClasses.spaceSheet}>
+      <DialogHeader
+        title={<Text className={cn(dialogClasses.title, "flex-1")}>{tr("dialog.spaces")}</Text>}
+        closeLabel={tr("dialog.closeSpaces")}
+        onClose={onClose}
+      />
+      <ScrollView
+        className="grow-0 shrink"
+        contentContainerClassName="gap-lg"
+        keyboardShouldPersistTaps="handled"
+      >
+        {workspaces.map((workspace) => (
+          <SpaceRow
+            key={workspace.id}
+            workspace={workspace}
+            selected={workspace.id === activeWorkspaceId}
+            count={counts[workspace.id] ?? 0}
+            onSwitch={() => onSwitch(workspace.id)}
+          />
+        ))}
+      </ScrollView>
+      <NewSpaceRow onPress={onCreate} />
+    </View>
   );
 }
 
