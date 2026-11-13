@@ -1,0 +1,215 @@
+html[data-yeoyu-reader="on"] {
+  background-color: var(--yr-bg, #f7f6f7) !important;
+  color: var(--yr-fg, #3d3642) !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+  min-height: 100% !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  font-size: var(--yr-font-size, 18px) !important;
+  -webkit-text-size-adjust: 100% !important;
+}
+
+html[data-yeoyu-reader="on"] body {
+  background-color: var(--yr-bg, #f7f6f7) !important;
+  color: var(--yr-fg, #3d3642) !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+  min-height: 100% !important;
+  position: static !important;
+  display: block !important;
+  overflow: visible !important;
+  max-width: none !important;
+  font-family: system-ui, -apple-system, "Noto Sans KR", "Apple SD Gothic Neo", sans-serif !important;
+  font-size: var(--yr-font-size, 18px) !important;
+  line-height: 1.72 !important;
+}
+
+html[data-yeoyu-reader="on"] body > *:not(#yeoyu-reader-root) {
+  display: none !important;
+}
+
+#yeoyu-reader-root {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 100vh;
+  background-color: var(--yr-bg, #f7f6f7);
+  color: var(--yr-fg, #3d3642);
+  padding: 28px 20px 64px;
+}
+
+#yeoyu-reader-root *,
+#yeoyu-reader-root *::before,
+#yeoyu-reader-root *::after {
+  box-sizing: border-box;
+}
+
+#yeoyu-reader-root .yr-container {
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+#yeoyu-reader-root .yr-header {
+  margin-bottom: 20px;
+}
+
+#yeoyu-reader-root .yr-domain {
+  font-size: 0.78em;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--yr-accent, #7d697f);
+  margin-bottom: 8px;
+  word-break: break-word;
+}
+
+#yeoyu-reader-root .yr-title {
+  margin: 0 0 12px;
+  font-size: 1.72em;
+  font-weight: 750;
+  line-height: 1.3;
+  color: var(--yr-fg, #3d3642);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+#yeoyu-reader-root .yr-byline {
+  margin: 0 0 6px;
+  font-size: 0.85em;
+  line-height: 1.45;
+  color: var(--yr-muted, #564e5c);
+}
+
+#yeoyu-reader-root .yr-meta {
+  font-size: 0.8em;
+  line-height: 1.4;
+  color: var(--yr-muted, #564e5c);
+}
+
+#yeoyu-reader-root .yr-divider {
+  border: 0;
+  border-top: 1px solid var(--yr-border, #e2dee6);
+  margin: 20px 0 24px;
+}
+
+#yeoyu-reader-root .yr-content {
+  font-size: 1em;
+  line-height: 1.75;
+  color: var(--yr-fg, #3d3642);
+  overflow-wrap: anywhere;
+}
+
+#yeoyu-reader-root .yr-content h1,
+#yeoyu-reader-root .yr-content h2,
+#yeoyu-reader-root .yr-content h3,
+#yeoyu-reader-root .yr-content h4,
+#yeoyu-reader-root .yr-content h5,
+#yeoyu-reader-root .yr-content h6 {
+  color: var(--yr-fg, #3d3642);
+  line-height: 1.35;
+  margin: 1.5em 0 0.6em;
+  font-weight: 700;
+}
+
+#yeoyu-reader-root .yr-content h1 { font-size: 1.45em; }
+#yeoyu-reader-root .yr-content h2 { font-size: 1.3em; }
+#yeoyu-reader-root .yr-content h3 { font-size: 1.15em; }
+
+#yeoyu-reader-root .yr-content p {
+  margin: 0 0 1.15em;
+}
+
+#yeoyu-reader-root .yr-content a {
+  color: var(--yr-accent, #7d697f);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+#yeoyu-reader-root .yr-content img,
+#yeoyu-reader-root .yr-content video,
+#yeoyu-reader-root .yr-content picture,
+#yeoyu-reader-root .yr-content svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 1.2em auto;
+  border-radius: 10px;
+}
+
+#yeoyu-reader-root .yr-content figure {
+  margin: 1.4em 0;
+}
+
+#yeoyu-reader-root .yr-content figcaption {
+  margin-top: 6px;
+  font-size: 0.82em;
+  line-height: 1.45;
+  color: var(--yr-muted, #564e5c);
+  text-align: center;
+}
+
+#yeoyu-reader-root .yr-content blockquote {
+  margin: 1.3em 0;
+  padding: 10px 16px;
+  border-left: 3px solid var(--yr-accent, #7d697f);
+  background-color: var(--yr-sunken, #eeebf0);
+  border-radius: 0 8px 8px 0;
+  color: var(--yr-muted, #564e5c);
+}
+
+#yeoyu-reader-root .yr-content pre {
+  margin: 1.2em 0;
+  padding: 14px 16px;
+  background-color: var(--yr-sunken, #eeebf0);
+  border: 1px solid var(--yr-border, #e2dee6);
+  border-radius: 10px;
+  overflow-x: auto;
+  font-size: 0.86em;
+  line-height: 1.55;
+}
+
+#yeoyu-reader-root .yr-content code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.9em;
+  background-color: var(--yr-sunken, #eeebf0);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+#yeoyu-reader-root .yr-content pre code {
+  background: transparent;
+  padding: 0;
+}
+
+#yeoyu-reader-root .yr-content ul,
+#yeoyu-reader-root .yr-content ol {
+  margin: 0 0 1.2em;
+  padding-left: 1.4em;
+}
+
+#yeoyu-reader-root .yr-content li {
+  margin-bottom: 0.45em;
+}
+
+#yeoyu-reader-root .yr-content table {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  margin: 1.3em 0;
+  font-size: 0.9em;
+}
+
+#yeoyu-reader-root .yr-content th,
+#yeoyu-reader-root .yr-content td {
+  border: 1px solid var(--yr-border, #e2dee6);
+  padding: 8px 10px;
+  text-align: left;
+}
+
+#yeoyu-reader-root .yr-content th {
+  background-color: var(--yr-sunken, #eeebf0);
+  font-weight: 600;
+}

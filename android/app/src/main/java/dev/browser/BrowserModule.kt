@@ -369,6 +369,12 @@ class BrowserModule(context:ReactApplicationContext):ReactContextBaseJavaModule(
  }
  @ReactMethod fun findClose(id:String) {UiThreadUtil.runOnUiThread {GeckoSessionRegistry.findClear(id)}}
  @ReactMethod fun zoom(id:String,direction:String) {UiThreadUtil.runOnUiThread {GeckoSessionRegistry.zoom(id,direction)}}
+ @ReactMethod fun setReaderMode(tabId:String,enabled:Boolean,promise:Promise) = onUi(promise) {
+  BrowserReaderMode.setReaderMode(tabId,enabled) { complete(promise,it) }
+ }
+ @ReactMethod fun configureReaderStyle(json:String) {
+  UiThreadUtil.runOnUiThread { BrowserReaderMode.configureStyle(json) }
+ }
  @ReactMethod fun copyToClipboard(text:String) {
   reactApplicationContext.getSystemService(ClipboardManager::class.java)
    .setPrimaryClip(ClipData.newPlainText("URL",text))

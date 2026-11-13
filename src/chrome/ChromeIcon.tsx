@@ -42,6 +42,7 @@ const paths = {
   lock: "M6 11h12v9H6z M9 11V7a3 3 0 0 1 6 0v4",
   warning: "M12 4L2.5 20h19z M12 10v4 M12 17v.01",
   window: "M4 5h16v14H4z M4 9h16",
+  reader: "M6 4h12a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1 M8 9h8 M8 12.5h8 M8 16h5",
 } as const;
 
 export type IconName = keyof typeof paths;

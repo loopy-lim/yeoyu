@@ -102,6 +102,8 @@ export interface BrowserRuntime {
   findInPage(tabId: string, text: string, backward: boolean): void;
   findClose(tabId: string): void;
   zoom(tabId: string, direction: "in" | "out" | "reset"): void;
+  setReaderMode?(tabId: string, enabled: boolean): Promise<boolean>;
+  configureReaderStyle?(json: string): void;
   copyToClipboard(text: string): void;
   haptic(kind: "tick" | "click"): void;
   setBoosts(json: string): void;

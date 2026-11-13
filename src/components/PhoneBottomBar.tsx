@@ -19,26 +19,32 @@ function BarButton({
   icon,
   onPress,
   disabled = false,
+  active = false,
 }: {
   label: string;
   icon: IconName;
   onPress: () => void;
   disabled?: boolean;
+  active?: boolean;
 }) {
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={label}
-      accessibilityState={{ disabled }}
+      accessibilityState={{ disabled, selected: active }}
       disabled={disabled}
       hitSlop={8}
       onPress={onPress}
       className={cn(
         controlVariants({ size: "icon", disabled }),
+        active && "bg-sunken-strong border border-accent-strong",
         "active:opacity-pressed"
       )}
     >
-      <ChromeIcon name={icon} />
+      <ChromeIcon
+        name={icon}
+        className={active ? "text-accent-strong" : undefined}
+      />
     </Pressable>
   );
 }
@@ -56,6 +62,9 @@ export function PhoneBottomBar({
   onReloadStop,
   url,
   security,
+  readerAvailable = false,
+  readerActive = false,
+  onToggleReader,
   extensionActions,
   onOpenExtensionAction,
   onAddressPress,
@@ -69,6 +78,9 @@ export function PhoneBottomBar({
   onReloadStop: () => void;
   url: string;
   security: BrowserSecurity | undefined;
+  readerAvailable?: boolean;
+  readerActive?: boolean;
+  onToggleReader?: () => void;
   extensionActions: ExtensionToolbarAction[];
   onOpenExtensionAction: (
     action: ExtensionToolbarAction,
@@ -104,6 +116,17 @@ export function PhoneBottomBar({
           security={security}
           onPress={onAddressPress}
         />
+        {onToggleReader && (
+          <BarButton
+            label={tr(
+              readerActive ? "chrome.readerModeExit" : "chrome.readerMode"
+            )}
+            icon="reader"
+            onPress={onToggleReader}
+            disabled={!readerAvailable}
+            active={readerActive}
+          />
+        )}
         <ExtensionActionsBar
           actions={extensionActions}
           onOpen={onOpenExtensionAction}

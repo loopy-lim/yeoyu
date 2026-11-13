@@ -46,6 +46,10 @@ const labels = {
   "browser.zoomIn": { title: "Zoom in", keywords: "larger text scale" },
   "browser.zoomOut": { title: "Zoom out", keywords: "smaller text scale" },
   "browser.zoomReset": { title: "Reset zoom", keywords: "default text scale" },
+  "browser.readerMode": {
+    title: "Toggle Reader Mode",
+    keywords: "reader view article simplify read",
+  },
   "sidebar.toggle": { title: "Show or hide sidebar" },
   "favorites.toggle": {
     title: "Add or remove Favorite",
@@ -88,6 +92,7 @@ const commandKeys: Record<keyof typeof labels, TranslationKey> = {
   "browser.captureShare": "command.captureShare",
   "browser.back": "command.back", "browser.forward": "command.forward", "browser.reload": "command.reload",
   "browser.zoomIn": "command.zoomIn", "browser.zoomOut": "command.zoomOut", "browser.zoomReset": "command.zoomReset",
+  "browser.readerMode": "command.readerMode",
   "sidebar.toggle": "command.sidebar", "favorites.toggle": "command.favorite", "pins.toggle": "command.pin",
   "tab.reset": "command.resetTab", "tabs.clearUnpinned": "command.clearUnpinned",
   "browser.split": "command.split", "browser.split.close": "command.closeSplit",

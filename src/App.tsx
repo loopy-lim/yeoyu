@@ -190,6 +190,7 @@ import {
   type HybridBarTab,
 } from "@/components/PhoneBottomBar";
 import { FindBar } from "@/components/FindBar";
+import { canToggleReaderMode, deriveReaderStyle } from "@/readerMode";
 import {
   BoostsDialog,
   HistoryDialog,
@@ -267,11 +268,13 @@ const IconButton = ({
   icon,
   onPress,
   disabled = false,
+  active = false,
 }: {
   label: string;
   icon: IconName;
   onPress: () => void;
   disabled?: boolean;
+  active?: boolean;
 }) => {
   const sidebarActive = useSidebarActive();
   const [scale] = useState(() => new Animated.Value(1));
@@ -310,7 +313,7 @@ const IconButton = ({
     <SidebarPressable
       accessibilityRole="button"
       accessibilityLabel={label}
-      accessibilityState={{ disabled }}
+      accessibilityState={{ disabled, selected: active }}
       disabled={disabled}
       hitSlop={8}
       onPress={onPress}
@@ -320,11 +323,15 @@ const IconButton = ({
       <AnimatedView
         className={cn(
           controlVariants({ size: "icon", disabled }),
-          c.iconButton
+          c.iconButton,
+          active && "bg-sunken-strong border border-accent-strong"
         )}
         style={[{ transform: [{ scale }] }]}
       >
-        <ChromeIcon className={cn("size-[18px]")} name={icon} />
+        <ChromeIcon
+          className={cn("size-[18px]", active && "text-accent-strong")}
+          name={icon}
+        />
       </AnimatedView>
     </SidebarPressable>
   );
@@ -1057,6 +1064,18 @@ function BrowserApp() {
       if (littleArcTabId && tabId === littleArcTabId) closeLittleArc();
     },
   });
+  useEffect(() => {
+    if (!browser.ready) return;
+    platform.configureReaderStyle?.(
+      JSON.stringify(
+        deriveReaderStyle(
+          theme,
+          browser.config?.textScale,
+          tr("reader.readTimeFormat")
+        )
+      )
+    );
+  }, [browser.ready, theme, browser.config?.textScale, tr]);
   // Tabs hosted in secondary OS windows. They stay in the global session;
   // tapping one in the sidebar closes its window and reveals it here.
   const {
@@ -2074,6 +2093,16 @@ function BrowserApp() {
       return ["http:", "https:"].includes(parsed.protocol) ? parsed.origin : null;
     } catch { return null; }
   })();
+  const targetTab = target
+    ? state?.tabs.find((tab) => tab.id === target) ?? null
+    : null;
+  const targetReaderState = target ? browser.readerStates[target] : undefined;
+  const canToggleReader = canToggleReaderMode(targetTab, targetReaderState);
+  const readerActive = Boolean(targetReaderState?.active);
+  const toggleReaderMode = useCallback(() => {
+    if (!target || !canToggleReaderMode(targetTab, browser.readerStates[target])) return;
+    void browser.setReaderMode(target, !browser.readerStates[target]?.active);
+  }, [target, targetTab, browser]);
   const menuTab = ctxMenuTabId
     ? state?.tabs.find((t) => t.id === ctxMenuTabId) ?? null
     : null;
@@ -2303,6 +2332,7 @@ function BrowserApp() {
   registry.register("browser.zoomReset", () => {
     if (target) platform.zoom?.(target, "reset");
   });
+  registry.register("browser.readerMode", toggleReaderMode);
   registry.register("tabs.clearUnpinned", () => {
     if (!state) return;
     const targets = clearUnpinnedTargets(state.tabs, state.activeWorkspaceId);
@@ -3160,6 +3190,10 @@ function BrowserApp() {
       "hardwareBackPress",
       () => {
         if (dismissTop()) return true;
+        if (target && browser.readerStates[target]?.active) {
+          void browser.setReaderMode(target, false);
+          return true;
+        }
         const surface = target ? refs.current.get(target) : null;
         if (surface && navigation[target!]?.canGoBack) {
           Commands.goBack(surface);
@@ -3199,6 +3233,8 @@ function BrowserApp() {
     bookmarkManager,
     target,
     navigation,
+    browser.readerStates,
+    browser.setReaderMode,
     fullscreen.dismiss,
     fullscreen.tabId,
     isLittleArc,
@@ -4025,6 +4061,15 @@ function BrowserApp() {
           },
         },
         {
+          id: "reader-mode",
+          label: tr(
+            readerActive ? "chrome.readerModeExit" : "chrome.readerMode"
+          ),
+          icon: "reader",
+          disabled: !canToggleReader,
+          onPress: toggleReaderMode,
+        },
+        {
           id: "capture-share",
           label: tr("chrome.captureShare"),
           icon: "copy",
@@ -4401,11 +4446,26 @@ function BrowserApp() {
                         </Text>
                       </UnikitBadge>
                     )}
-                    <AddressTrigger
-                      url={addressValue}
-                      security={target ? browser.security[target] : undefined}
-                      onPress={() => openLocationEditor("touch")}
-                    />
+                    <View className="flex-row items-center gap-sm">
+                      <View className="flex-1">
+                        <AddressTrigger
+                          url={addressValue}
+                          security={target ? browser.security[target] : undefined}
+                          onPress={() => openLocationEditor("touch")}
+                        />
+                      </View>
+                      <IconButton
+                        label={tr(
+                          readerActive
+                            ? "chrome.readerModeExit"
+                            : "chrome.readerMode"
+                        )}
+                        icon="reader"
+                        onPress={toggleReaderMode}
+                        disabled={!canToggleReader}
+                        active={readerActive}
+                      />
+                    </View>
                     <ExtensionActionsBar
                       actions={extensionActions}
                       onOpen={openExtensionAction}
@@ -5239,6 +5299,17 @@ function BrowserApp() {
                           security={target ? browser.security[target] : undefined}
                           onPress={() => openLocationEditor("touch")}
                         />
+                        <IconButton
+                          label={tr(
+                            readerActive
+                              ? "chrome.readerModeExit"
+                              : "chrome.readerMode"
+                          )}
+                          icon="reader"
+                          onPress={toggleReaderMode}
+                          disabled={!canToggleReader}
+                          active={readerActive}
+                        />
                       </View>
                       <View className="flex-row items-center gap-lg">
                         <UnikitButton
@@ -5327,6 +5398,17 @@ function BrowserApp() {
                         url={addressValue}
                         security={target ? browser.security[target] : undefined}
                         onPress={() => openLocationEditor("touch")}
+                      />
+                      <IconButton
+                        label={tr(
+                          readerActive
+                            ? "chrome.readerModeExit"
+                            : "chrome.readerMode"
+                        )}
+                        icon="reader"
+                        onPress={toggleReaderMode}
+                        disabled={!canToggleReader}
+                        active={readerActive}
                       />
                       <ExtensionActionsBar
                         actions={extensionActions}
@@ -5654,6 +5736,9 @@ function BrowserApp() {
                 }
                 url={addressValue}
                 security={target ? browser.security[target] : undefined}
+                readerAvailable={canToggleReader}
+                readerActive={readerActive}
+                onToggleReader={toggleReaderMode}
                 extensionActions={extensionActions}
                 onOpenExtensionAction={openExtensionAction}
                 onAddressPress={() => openLocationEditor("touch")}

@@ -3,6 +3,7 @@ import { AppState, DeviceEventEmitter } from "react-native";
 import { controller } from "@/controllerRuntime";
 import { platform } from "@/platform";
 import { BrowserToolsStore, ExternalLinkDrain, parseBrowserTools, parseExternalLinks, retainLiveTabs, type BrowserToolsConfig, type BrowserToolsUpdate } from "@/browserWorkflows";
+import type { ReaderTabState } from "@/readerMode";
 import type { Snapshot } from "@generated/types";
 
 export interface BrowserSecurity {
@@ -46,6 +47,7 @@ export function useBrowserWorkflows(options: {
     async () => parseBrowserTools(await platform.initializeBrowserTools()),
   ));
   const [security, setSecurity] = useState<Record<string, BrowserSecurity>>({});
+  const [readerStates, setReaderStates] = useState<Record<string, ReaderTabState>>({});
   const [context, setContext] = useState<BrowserContentRequest | null>(null);
   const contextRequest = useRef<BrowserContentRequest | null>(null);
   const [startupAttempt, retryStartup] = useState(0);
@@ -107,6 +109,20 @@ export function useBrowserWorkflows(options: {
       DeviceEventEmitter.addListener("BrowserSecurity", (event: BrowserSecurity) => {
         if (valid(event.tabId)) setSecurity((old) => ({ ...old, [event.tabId]: event }));
       }),
+      DeviceEventEmitter.addListener(
+        "BrowserReaderState",
+        (event: { tabId: string; readerable: boolean; active: boolean }) => {
+          if (valid(event.tabId)) {
+            setReaderStates((old) => ({
+              ...old,
+              [event.tabId]: {
+                readerable: Boolean(event.readerable),
+                active: Boolean(event.active),
+              },
+            }));
+          }
+        }
+      ),
       DeviceEventEmitter.addListener("BrowserExternalLinkFailed", (event: { error: string }) => report(event.error)),
       DeviceEventEmitter.addListener("BrowserExternalNavigationFailed", (event: { tabId: string; error: string }) => { if (valid(event.tabId)) report(event.error); }),
       DeviceEventEmitter.addListener("BrowserExternalNavigationHandoff", (event: { tabId: string }) => { if (valid(event.tabId)) callbacks.current.onExternalHandoff?.(event.tabId); }),
@@ -123,13 +139,37 @@ export function useBrowserWorkflows(options: {
     ];
     const unsubscribe = controller.subscribe(() => {
       const tabs = controller.snapshot?.tabs;
-      if (tabs) setSecurity((old) => retainLiveTabs(old, new Set(tabs.map((tab) => tab.id))));
+      if (tabs) {
+        const liveIds = new Set(tabs.map((tab) => tab.id));
+        const activeIds = new Set(tabs.filter((tab) => !tab.suspended).map((tab) => tab.id));
+        setSecurity((old) => retainLiveTabs(old, liveIds));
+        setReaderStates((old) => retainLiveTabs(old, activeIds));
+      }
     });
     drain();
     return () => { live = false; unsubscribe(); subscriptions.forEach((subscription) => subscription.remove()); };
   }, [links, ready, settings]);
 
   const saveConfig = useCallback((update: BrowserToolsUpdate) => settings.save(update), [settings]);
+
+  const setReaderMode = useCallback(async (tabId: string, enabled: boolean) => {
+    try {
+      const active = await platform.setReaderMode?.(tabId, enabled);
+      if (typeof active === "boolean") {
+        setReaderStates((old) => ({
+          ...old,
+          [tabId]: {
+            readerable: active || Boolean(old[tabId]?.readerable),
+            active,
+          },
+        }));
+      }
+      return Boolean(active);
+    } catch (error) {
+      callbacks.current.onError(String(error));
+      return false;
+    }
+  }, []);
 
   const selectContext = useCallback(async (requestId: string, target: "link" | "image", action: ContentAction) => {
     try {
@@ -155,5 +195,5 @@ export function useBrowserWorkflows(options: {
     }
   }, []);
 
-  return { ready, startupError, retryStartup: () => retryStartup((v) => v + 1), config, saveConfig, security, context, selectContext, closeContext: () => { contextRequest.current = null; setContext(null); } };
+  return { ready, startupError, retryStartup: () => retryStartup((v) => v + 1), config, saveConfig, security, readerStates, setReaderMode, context, selectContext, closeContext: () => { contextRequest.current = null; setContext(null); } };
 }

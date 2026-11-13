@@ -1,0 +1,16 @@
+{
+  "manifest_version": 2,
+  "name": "Yeoyu reader mode",
+  "version": "1.0.0",
+  "browser_specific_settings": {
+    "gecko": { "id": "reader-mode@yeoyu" }
+  },
+  "permissions": ["<all_urls>", "geckoViewAddons", "nativeMessaging", "nativeMessagingFromContent"],
+  "content_scripts": [{
+    "matches": ["http://*/*", "https://*/*"],
+    "js": ["Readability-readerable.js", "Readability.js", "content.js"],
+    "css": ["reader.css"],
+    "run_at": "document_idle",
+    "all_frames": false
+  }]
+}

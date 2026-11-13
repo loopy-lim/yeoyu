@@ -404,11 +404,13 @@ object GeckoSessionRegistry {
         installNotificationWindowDelegate(it)
         BrowserExtensionHost.initialize(it)
         BrowserVideoRegions.initialize(it, diagnostics = (app.packageName == "ll3.kr.yeoyu.acceptance" || app.packageName.startsWith("com.workspacebrowser.acceptance.")))
+        BrowserReaderMode.initialize(it)
     }
 
     private fun applyRuntimeSettings(rt: GeckoRuntime) {
         BrowserAppearance.applyRuntimeSettings(rt.settings)
         rt.settings.setAutomaticFontSizeAdjustment(false).setFontSizeFactor(toolsConfig.textScale.toFloat())
+        BrowserReaderMode.updateTextScale(toolsConfig.textScale)
         // Secure DNS: "auto" keeps Gecko's resolver defaults; "off" pins
         // direct resolution; "custom" pins a validated resolver TRR-first.
         when (toolsConfig.secureDnsMode) {
@@ -904,6 +906,7 @@ object GeckoSessionRegistry {
         traceBootstrap("created", initialUrl)
         BrowserExtensionHost.bind(session, id)
         BrowserVideoRegions.bind(session, ::current, { e.documentGeneration })
+        BrowserReaderMode.bind(id, session, ::current, { e.documentGeneration })
         e.contentFullscreen = ContentFullscreenSession(session, ::current, {
             ExternalPictureInPicture.holdsSession(session) ||
                 e.owner?.let { it.isAttachedToWindow && it.isShown && it.width > 0 && it.height > 0 } == true
@@ -1000,6 +1003,7 @@ object GeckoSessionRegistry {
                 if (extensionPage || e.security?.optString("origin") != canonicalBrowserOrigin(e.url)) e.security = null
                 if (!wasReady && e.initialNavigationLocationAccepted) SpaceTransitionCover.initialNavigationReady(id, e)
                 changed(id)
+                BrowserReaderMode.locationChanged(s, e.url)
             }
             override fun onCanGoBack(s: GeckoSession, value: Boolean) { if (!current() || !e.initialNavigation.acceptHistoryChange()) return; e.back=value; changed(id) }
             override fun onCanGoForward(s: GeckoSession, value: Boolean) { if (!current() || !e.initialNavigation.acceptHistoryChange()) return; e.forward=value; changed(id) }
@@ -1180,6 +1184,7 @@ object GeckoSessionRegistry {
                 SpaceTransitionCover.coldDocumentChanged(id, e)
                 SpaceTransitionCover.returnDocumentChanged(id)
                 BrowserVideoRegions.navigationStarted(s)
+                BrowserReaderMode.navigationStarted(s)
                 e.activityVersion += 1
                 writeGate.register(id, e)
                 pendingStateWrites.remove(id)
@@ -1203,6 +1208,7 @@ object GeckoSessionRegistry {
                 // button stays a stop ✕ until some incidental delegate fires.
                 e.loading = false; e.progress = 100; changed(id); reportProgress(id, e)
                 injectBoost(id, e)
+                BrowserReaderMode.pageStopped(s, e.url)
                 s.flushSessionState()
             }
             override fun onSessionStateChange(s: GeckoSession, state: GeckoSession.SessionState) {
@@ -1364,6 +1370,7 @@ object GeckoSessionRegistry {
         fullscreenOperation { e.contentFullscreen.retire() }
         BrowserExtensionHost.unbind(e.session)
         BrowserVideoRegions.retire(e.session)
+        BrowserReaderMode.retire(e.session)
         PrivateDownloadConfirmation.cancel(e.session)
         writeGate.remove(id)
         pendingStateWrites.remove(id)
