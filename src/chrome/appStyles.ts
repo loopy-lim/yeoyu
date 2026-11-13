@@ -167,25 +167,10 @@ export const appClasses = {
   miniHeader:
     "h-[36px] pl-xxl pr-sm flex-row items-center bg-white border-b-hairline-width border-b-hairline",
   miniTitle: "flex-1 text-ink-muted text-small font-semibold",
-  overlay:
-    "absolute top-0 left-0 right-0 bottom-0 bg-scrim justify-center items-center",
-  overlayTouch: "absolute inset-0 justify-center items-center",
-  // Bottom-sheet sibling of overlayTouch: packs content to the bottom edge
-  // instead of floating it centered (issue #19 phone Space picker).
-  overlayBottom: "absolute inset-0 justify-end",
-  sheetUnderlay: "absolute inset-0",
-  // Docked Space sheet card: full width and height-capped so long Space
-  // lists scroll inside it. Per-corner radius utilities do not compile in
-  // uniwind (verified), so the card rounds all corners like the mini cards.
-  spaceSheet:
-    "max-h-[62%] p-xxxl gap-lg bg-surface-elevated rounded-tile border-t-hairline-width border-t-hairline shadow-dialog",
-  dialog:
-    "w-[90%] max-w-[620px] max-h-[78%] p-xxxl bg-surface-elevated rounded-dialog gap-lg border border-hairline shadow-dialog",
   dialogTitle: "text-ink text-title font-bold",
   dialogHelp: "text-ink-muted text-body leading-xxxl",
   dialogScroll: "grow-0 overflow-hidden",
-  settingsDialog: "w-[90%] max-w-[480px]",
-  bookmarkDialog: "w-[90%] max-w-[560px] max-h-[84%]",
+  bookmarkDialog: "max-w-[560px] max-h-[84%]",
   bookmarkForm: "gap-lg",
   bookmarkActions: "flex-row gap-md",
   bookmarkList: "max-h-[230px]",
@@ -194,7 +179,6 @@ export const appClasses = {
   bookmarkCopy: "flex-1 mr-sm",
   folderRow: "flex-1 flex-row items-center gap-lg",
   folderIcon: "text-icon-size",
-  dialogHeader: "flex-row items-start",
   dialogHeadingCopy: "flex-1",
   settingsSection: "mt-[20px] mb-lg text-ink text-[15px] font-semibold",
   optionRow: "flex-row gap-lg",

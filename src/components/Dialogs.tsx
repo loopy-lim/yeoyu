@@ -13,7 +13,8 @@ import { Favicon } from "@/components/Favicon";
 import { josaRo } from "@/i18n";
 import { ActionMenu, type MenuAnchor, type MenuItem } from "@/components/ActionMenu";
 import { ChromeIcon } from "@/chrome/ChromeIcon";
-import { appClasses } from "@/chrome/appStyles";
+import { DialogCard } from "@/components/DialogCard";
+import { DialogHeader } from "@/components/DialogHeader";
 import type { HistoryEntry } from "@/history";
 import {
   PERMISSION_KINDS,
@@ -30,7 +31,6 @@ const spaceRowVariants = cva("min-h-bookmark-row px-xxl rounded-field flex-row i
   defaultVariants: { selected: false },
 });
 const dialogClasses = {
-  dialog: "w-[92%] max-w-[520px] max-h-[80%] p-xxxl bg-surface-elevated rounded-dialog gap-lg border border-hairline shadow-dialog",
   title: "text-ink text-title font-bold",
   closeButton: "size-action-row rounded-control items-center justify-center",
   row: spaceRowVariants(),
@@ -55,36 +55,6 @@ const dialogClasses = {
   permissionPrimaryText: "text-surface-elevated text-[15px] leading-[22px] font-semibold",
   permissionButtonText: "text-ink text-[15px] leading-[22px] font-semibold",
 };
-
-// Shared dialog scaffold: the caller supplies the full title node (so it can
-// override font size or truncation) plus optional actions before the close ×.
-function DialogHeader({
-  title,
-  closeLabel,
-  onClose,
-  children,
-}: {
-  title: React.ReactNode;
-  closeLabel: string;
-  onClose: () => void;
-  children?: React.ReactNode;
-}) {
-  return (
-    <View className="flex-row items-center">
-      {title}
-      {children}
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={closeLabel}
-        hitSlop={8}
-        className={dialogClasses.closeButton}
-        onPress={onClose}
-      >
-        <ChromeIcon name="close" className="size-[16px] text-icon" />
-      </Pressable>
-    </View>
-  );
-}
 
 // One Space row, shared by the centered switcher dialog and the phone
 // bottom sheet (issue #19) so both present the same dot/count/active mark.
@@ -159,48 +129,7 @@ export function SpaceSwitcherDialog({
 }: SpaceSwitcherProps) {
   const { tr } = useI18n();
   return (
-    <>
-      <View className={dialogClasses.dialog}>
-        <DialogHeader
-          title={<Text className={cn(dialogClasses.title, "flex-1")}>{tr("dialog.spaces")}</Text>}
-          closeLabel={tr("dialog.closeSpaces")}
-          onClose={onClose}
-        />
-        <ScrollView
-          className="grow-0 shrink"
-          contentContainerClassName="gap-lg"
-          keyboardShouldPersistTaps="handled"
-        >
-          {workspaces.map((workspace) => (
-            <SpaceRow
-              key={workspace.id}
-              workspace={workspace}
-              selected={workspace.id === activeWorkspaceId}
-              count={counts[workspace.id] ?? 0}
-              onSwitch={() => onSwitch(workspace.id)}
-            />
-          ))}
-        </ScrollView>
-        <NewSpaceRow onPress={onCreate} />
-      </View>
-    </>
-  );
-}
-
-// Phone-docked Space picker (issue #19): the same rows as the centered
-// dialog in a full-width bottom card; the list scrolls between the fixed
-// header and the new-Space action so long sets stay reachable.
-export function SpaceSheet({
-  workspaces,
-  activeWorkspaceId,
-  counts,
-  onSwitch,
-  onCreate,
-  onClose,
-}: SpaceSwitcherProps) {
-  const { tr } = useI18n();
-  return (
-    <View className={appClasses.spaceSheet}>
+    <DialogCard variant="dialog">
       <DialogHeader
         title={<Text className={cn(dialogClasses.title, "flex-1")}>{tr("dialog.spaces")}</Text>}
         closeLabel={tr("dialog.closeSpaces")}
@@ -222,7 +151,46 @@ export function SpaceSheet({
         ))}
       </ScrollView>
       <NewSpaceRow onPress={onCreate} />
-    </View>
+    </DialogCard>
+  );
+}
+
+// Phone-docked Space picker (issue #19): the same rows as the centered
+// dialog in a full-width bottom card; the list scrolls between the fixed
+// header and the new-Space action so long sets stay reachable.
+export function SpaceSheet({
+  workspaces,
+  activeWorkspaceId,
+  counts,
+  onSwitch,
+  onCreate,
+  onClose,
+}: SpaceSwitcherProps) {
+  const { tr } = useI18n();
+  return (
+    <DialogCard variant="sheet">
+      <DialogHeader
+        title={<Text className={cn(dialogClasses.title, "flex-1")}>{tr("dialog.spaces")}</Text>}
+        closeLabel={tr("dialog.closeSpaces")}
+        onClose={onClose}
+      />
+      <ScrollView
+        className="grow-0 shrink"
+        contentContainerClassName="gap-lg"
+        keyboardShouldPersistTaps="handled"
+      >
+        {workspaces.map((workspace) => (
+          <SpaceRow
+            key={workspace.id}
+            workspace={workspace}
+            selected={workspace.id === activeWorkspaceId}
+            count={counts[workspace.id] ?? 0}
+            onSwitch={() => onSwitch(workspace.id)}
+          />
+        ))}
+      </ScrollView>
+      <NewSpaceRow onPress={onCreate} />
+    </DialogCard>
   );
 }
 
@@ -451,37 +419,35 @@ export function HistoryDialog({
     [open]
   );
   return (
-    <>
-      <View className={cn(dialogClasses.dialog, "max-w-[560px]")}>
-        <DialogHeader
-          title={<Text className={cn(dialogClasses.title, "flex-1")}>{tr("dialog.history")}</Text>}
-          closeLabel={tr("dialog.closeHistory")}
-          onClose={onClose}
+    <DialogCard variant="dialog" className="max-w-[560px]">
+      <DialogHeader
+        title={<Text className={cn(dialogClasses.title, "flex-1")}>{tr("dialog.history")}</Text>}
+        closeLabel={tr("dialog.closeHistory")}
+        onClose={onClose}
+      >
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={tr("dialog.clearHistory")}
+          className={cn(dialogClasses.row, "min-h-address")}
+          onPress={onClear}
         >
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={tr("dialog.clearHistory")}
-            className={cn(dialogClasses.row, "min-h-address")}
-            onPress={onClear}
-          >
-            <Text className={dialogClasses.rowTitle}>{tr("common.clear")}</Text>
-          </Pressable>
-        </DialogHeader>
-        <FlatList
-          className={dialogClasses.historyList}
-          data={entries}
-          keyboardShouldPersistTaps="handled"
-          initialNumToRender={12}
-          windowSize={5}
-          maxToRenderPerBatch={12}
-          keyExtractor={historyKey}
-          ListEmptyComponent={
-            <Text className={dialogClasses.emptyState}>{tr("dialog.noHistory")}</Text>
-          }
-          renderItem={renderEntry}
-        />
-      </View>
-    </>
+          <Text className={dialogClasses.rowTitle}>{tr("common.clear")}</Text>
+        </Pressable>
+      </DialogHeader>
+      <FlatList
+        className={dialogClasses.historyList}
+        data={entries}
+        keyboardShouldPersistTaps="handled"
+        initialNumToRender={12}
+        windowSize={5}
+        maxToRenderPerBatch={12}
+        keyExtractor={historyKey}
+        ListEmptyComponent={
+          <Text className={dialogClasses.emptyState}>{tr("dialog.noHistory")}</Text>
+        }
+        renderItem={renderEntry}
+      />
+    </DialogCard>
   );
 }
 
@@ -514,101 +480,99 @@ export function BoostsDialog({
       current.map((boost, i) => (i === index ? { ...boost, ...patch } : boost))
     );
   return (
-    <>
-      <View className={cn(dialogClasses.dialog, "max-w-[600px]")}>
-        <DialogHeader
-          title={<Text className={cn(dialogClasses.title, "flex-1")}>{tr("dialog.siteBoosts")}</Text>}
-          closeLabel={tr("dialog.closeBoosts")}
-          onClose={onClose}
-        />
-        <Text className={dialogClasses.rowMeta}>
-          {tr("dialog.boostHelp")}
-        </Text>
-        <ScrollView className="max-h-[420px]">
-          {draft.map((boost, index) => (
-            <View key={index} className={dialogClasses.boostForm}>
-              <View className="flex-row gap-md">
-                <TextInput
-                  accessibilityLabel={tr("dialog.boostHost", { number: index + 1 })}
-                  value={boost.host}
-                  onChangeText={(host) => update(index, { host })}
-                  placeholder="example.com"
-                  placeholderTextColorClassName="accent-ink-faint"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  className={cn(dialogClasses.input, "flex-1")}
-                  disableFullscreenUI
-                />
-                <Switch
-                  accessibilityLabel={tr("dialog.boostEnabled", { number: index + 1 })}
-                  value={boost.enabled}
-                  onValueChange={(enabled) => update(index, { enabled })}
-                  trackColorOffClassName="accent-switch-off"
-                  trackColorOnClassName="accent-accent"
-                  thumbColorClassName="accent-surface-elevated"
-                />
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={tr("dialog.removeBoost", { number: index + 1 })}
-                  className={dialogClasses.closeButton}
-                  onPress={() =>
-                    setDraft((current) => current.filter((_, i) => i !== index))
-                  }
-                >
-                  <ChromeIcon
-                    name="close"
-                    className="size-[16px] text-icon"
-                  />
-                </Pressable>
-              </View>
-              {!!validation.errors[index]?.host && <Text accessibilityRole="alert" className={cn(dialogClasses.rowMeta, "text-error-ink")}>{hostError(index)}</Text>}
-              {!validation.errors[index]?.host && <Text className={dialogClasses.rowMeta}>{tr("dialog.boostHostValue", { host: validation.boosts[index].host })}</Text>}
+    <DialogCard variant="dialog" className="max-w-[600px]">
+      <DialogHeader
+        title={<Text className={cn(dialogClasses.title, "flex-1")}>{tr("dialog.siteBoosts")}</Text>}
+        closeLabel={tr("dialog.closeBoosts")}
+        onClose={onClose}
+      />
+      <Text className={dialogClasses.rowMeta}>
+        {tr("dialog.boostHelp")}
+      </Text>
+      <ScrollView className="max-h-[420px]">
+        {draft.map((boost, index) => (
+          <View key={index} className={dialogClasses.boostForm}>
+            <View className="flex-row gap-md">
               <TextInput
-                accessibilityLabel={tr("dialog.boostCss", { number: index + 1 })}
-                value={boost.css}
-                onChangeText={(css) => update(index, { css })}
-                placeholder={"body { background: #222; }"}
+                accessibilityLabel={tr("dialog.boostHost", { number: index + 1 })}
+                value={boost.host}
+                onChangeText={(host) => update(index, { host })}
+                placeholder="example.com"
                 placeholderTextColorClassName="accent-ink-faint"
-                multiline
                 autoCapitalize="none"
                 autoCorrect={false}
-                className={dialogClasses.inputMultiline}
+                className={cn(dialogClasses.input, "flex-1")}
                 disableFullscreenUI
               />
-              {!!validation.errors[index]?.css && <Text accessibilityRole="alert" className={cn(dialogClasses.rowMeta, "text-error-ink")}>{tr("dialog.boostCssRequired")}</Text>}
+              <Switch
+                accessibilityLabel={tr("dialog.boostEnabled", { number: index + 1 })}
+                value={boost.enabled}
+                onValueChange={(enabled) => update(index, { enabled })}
+                trackColorOffClassName="accent-switch-off"
+                trackColorOnClassName="accent-accent"
+                thumbColorClassName="accent-surface-elevated"
+              />
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={tr("dialog.removeBoost", { number: index + 1 })}
+                className={dialogClasses.closeButton}
+                onPress={() =>
+                  setDraft((current) => current.filter((_, i) => i !== index))
+                }
+              >
+                <ChromeIcon
+                  name="close"
+                  className="size-[16px] text-icon"
+                />
+              </Pressable>
             </View>
-          ))}
-          {draft.length === 0 && (
-            <Text className={dialogClasses.emptyState}>
-              {tr("dialog.noBoosts")}
-            </Text>
-          )}
-        </ScrollView>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={tr("dialog.addBoost")}
-          className={dialogClasses.row}
-          onPress={() =>
-            setDraft((current) => [
-              ...current,
-              { host: "", css: "", enabled: true },
-            ])
-          }
-        >
-          <Text className={dialogClasses.rowTitle}>＋ {tr("dialog.addBoost")}</Text>
-        </Pressable>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={tr("dialog.saveBoosts")}
-          accessibilityState={{ disabled: !validation.valid }}
-          disabled={!validation.valid}
-          className={cn(dialogClasses.row, !validation.valid && "opacity-50")}
-          onPress={() => { if (validation.valid) onSave(validation.boosts); }}
-        >
-          <Text className={dialogClasses.rowTitle}>{tr("dialog.saveBoosts")}</Text>
-        </Pressable>
-      </View>
-    </>
+            {!!validation.errors[index]?.host && <Text accessibilityRole="alert" className={cn(dialogClasses.rowMeta, "text-error-ink")}>{hostError(index)}</Text>}
+            {!validation.errors[index]?.host && <Text className={dialogClasses.rowMeta}>{tr("dialog.boostHostValue", { host: validation.boosts[index].host })}</Text>}
+            <TextInput
+              accessibilityLabel={tr("dialog.boostCss", { number: index + 1 })}
+              value={boost.css}
+              onChangeText={(css) => update(index, { css })}
+              placeholder={"body { background: #222; }"}
+              placeholderTextColorClassName="accent-ink-faint"
+              multiline
+              autoCapitalize="none"
+              autoCorrect={false}
+              className={dialogClasses.inputMultiline}
+              disableFullscreenUI
+            />
+            {!!validation.errors[index]?.css && <Text accessibilityRole="alert" className={cn(dialogClasses.rowMeta, "text-error-ink")}>{tr("dialog.boostCssRequired")}</Text>}
+          </View>
+        ))}
+        {draft.length === 0 && (
+          <Text className={dialogClasses.emptyState}>
+            {tr("dialog.noBoosts")}
+          </Text>
+        )}
+      </ScrollView>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={tr("dialog.addBoost")}
+        className={dialogClasses.row}
+        onPress={() =>
+          setDraft((current) => [
+            ...current,
+            { host: "", css: "", enabled: true },
+          ])
+        }
+      >
+        <Text className={dialogClasses.rowTitle}>＋ {tr("dialog.addBoost")}</Text>
+      </Pressable>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={tr("dialog.saveBoosts")}
+        accessibilityState={{ disabled: !validation.valid }}
+        disabled={!validation.valid}
+        className={cn(dialogClasses.row, !validation.valid && "opacity-50")}
+        onPress={() => { if (validation.valid) onSave(validation.boosts); }}
+      >
+        <Text className={dialogClasses.rowTitle}>{tr("dialog.saveBoosts")}</Text>
+      </Pressable>
+    </DialogCard>
   );
 }
 
@@ -640,35 +604,82 @@ export function PermissionDialog({
       ? tr(`consent.kind.${kind as PermissionKind}`)
       : kind
   ).join(tr("permission.and")) || tr("permission.capability");
-  return <View className={cn(dialogClasses.dialog, "max-w-[460px]")} accessibilityViewIsModal>
-    <DialogHeader title={<Text className={cn(dialogClasses.title, "flex-1")}>{tr("permission.title")}</Text>}
-      closeLabel={tr("permission.dismiss")} onClose={onDismiss} />
-    <ScrollView className={dialogClasses.permissionScroll} contentContainerClassName={dialogClasses.permissionContent} keyboardShouldPersistTaps="handled">
-      <View className={dialogClasses.permissionSite}>
-        <Text selectable className={dialogClasses.permissionOrigin}>{request.origin}</Text>
-        <Text className={dialogClasses.permissionDescription}>{tr("permission.wants", { kinds })}</Text>
-      </View>
-      <Text className={dialogClasses.permissionDescription}>
-        {tr(persistentStorage ? "permission.storageWarning" : privateMedia ? "permission.onceHelp" : request.ephemeral ? "permission.privateScope" : "permission.savedScope")}
-      </Text>
-      <View className={dialogClasses.permissionActions}>
-        <Pressable accessibilityRole="button" accessibilityLabel={allowLabel}
-          className={cn(dialogClasses.permissionButton, dialogClasses.permissionPrimary)}
-          onPress={() => onDecide(privateMedia ? "once" : "always")}>
-          <Text className={dialogClasses.permissionPrimaryText}>{allowLabel}</Text>
-        </Pressable>
-        {!request.ephemeral && oneTimePermission && <Pressable accessibilityRole="button" accessibilityLabel={tr("permission.allowOnce")}
-          className={dialogClasses.permissionButton}
-          onPress={() => onDecide("once")}>
-          <Text className={dialogClasses.permissionButtonText}>{tr("permission.allowOnce")}</Text>
-        </Pressable>}
-        <Pressable accessibilityRole="button" accessibilityLabel={blockLabel}
-          className={dialogClasses.permissionButton}
-          onPress={() => onDecide("block")}>
-          <Text className={dialogClasses.permissionButtonText}>{blockLabel}</Text>
-        </Pressable>
-      </View>
-      <Text className={dialogClasses.permissionDescription}>{tr("permission.dismissHelp")}</Text>
-    </ScrollView>
-  </View>;
+  return (
+    <DialogCard variant="dialog" className="max-w-[460px]">
+      <DialogHeader
+        title={
+          <Text className={cn(dialogClasses.title, "flex-1")}>
+            {tr("permission.title")}
+          </Text>
+        }
+        closeLabel={tr("permission.dismiss")}
+        onClose={onDismiss}
+      />
+      <ScrollView
+        className={dialogClasses.permissionScroll}
+        contentContainerClassName={dialogClasses.permissionContent}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View className={dialogClasses.permissionSite}>
+          <Text selectable className={dialogClasses.permissionOrigin}>
+            {request.origin}
+          </Text>
+          <Text className={dialogClasses.permissionDescription}>
+            {tr("permission.wants", { kinds })}
+          </Text>
+        </View>
+        <Text className={dialogClasses.permissionDescription}>
+          {tr(
+            persistentStorage
+              ? "permission.storageWarning"
+              : privateMedia
+                ? "permission.onceHelp"
+                : request.ephemeral
+                  ? "permission.privateScope"
+                  : "permission.savedScope"
+          )}
+        </Text>
+        <View className={dialogClasses.permissionActions}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={allowLabel}
+            className={cn(
+              dialogClasses.permissionButton,
+              dialogClasses.permissionPrimary
+            )}
+            onPress={() => onDecide(privateMedia ? "once" : "always")}
+          >
+            <Text className={dialogClasses.permissionPrimaryText}>
+              {allowLabel}
+            </Text>
+          </Pressable>
+          {!request.ephemeral && oneTimePermission && (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={tr("permission.allowOnce")}
+              className={dialogClasses.permissionButton}
+              onPress={() => onDecide("once")}
+            >
+              <Text className={dialogClasses.permissionButtonText}>
+                {tr("permission.allowOnce")}
+              </Text>
+            </Pressable>
+          )}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={blockLabel}
+            className={dialogClasses.permissionButton}
+            onPress={() => onDecide("block")}
+          >
+            <Text className={dialogClasses.permissionButtonText}>
+              {blockLabel}
+            </Text>
+          </Pressable>
+        </View>
+        <Text className={dialogClasses.permissionDescription}>
+          {tr("permission.dismissHelp")}
+        </Text>
+      </ScrollView>
+    </DialogCard>
+  );
 }

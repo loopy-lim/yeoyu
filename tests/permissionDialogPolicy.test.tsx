@@ -23,9 +23,43 @@ const javascript = transformSync(source.slice(declaration.start!, declaration.en
 const classDeclarations = tree.program.body.filter((entry) => entry.type === "VariableDeclaration" && entry.declarations.some((item) => item.id.type === "Identifier" && ["spaceRowVariants", "dialogClasses"].includes(item.id.name)));
 const classesJavascript = transformSync(classDeclarations.map((entry) => source.slice(entry.start!, entry.end!)).join("\n"), { babelrc: false, configFile: false, plugins: ["@babel/plugin-transform-typescript"] }).code;
 const dialogClasses = new Function("cva", `${classesJavascript}; return dialogClasses;`)(cva);
-const PermissionDialog = new Function("React", "dialogClasses", "cn", "useI18n", "permissionSupportsOnce", "PERMISSION_KINDS", "View", "Text", "Pressable", "DialogHeader", "ScrollView", `${javascript}; return PermissionDialog;`)(
-  React, dialogClasses, cn, () => ({ tr: (key: Parameters<typeof translate>[1], values?: Parameters<typeof translate>[2]) => translate("en", key, values) }), permissionSupportsOnce, PERMISSION_KINDS, "View", "Text", "Pressable", "DialogHeader", "ScrollView",
-) as (props: { request: { kinds: string[]; origin: string; ephemeral?: boolean }; onDecide(choice: PermissionChoice): void; onDismiss(): void }) => ReactNode;
+const PermissionDialog = new Function(
+  "React",
+  "dialogClasses",
+  "cn",
+  "useI18n",
+  "permissionSupportsOnce",
+  "PERMISSION_KINDS",
+  "View",
+  "Text",
+  "Pressable",
+  "DialogHeader",
+  "DialogCard",
+  "ScrollView",
+  `${javascript}; return PermissionDialog;`
+)(
+  React,
+  dialogClasses,
+  cn,
+  () => ({
+    tr: (
+      key: Parameters<typeof translate>[1],
+      values?: Parameters<typeof translate>[2]
+    ) => translate("en", key, values),
+  }),
+  permissionSupportsOnce,
+  PERMISSION_KINDS,
+  "View",
+  "Text",
+  "Pressable",
+  "DialogHeader",
+  "DialogCard",
+  "ScrollView"
+) as (props: {
+  request: { kinds: string[]; origin: string; ephemeral?: boolean };
+  onDecide(choice: PermissionChoice): void;
+  onDismiss(): void;
+}) => ReactNode;
 
 type Props = { children?: ReactNode; accessibilityLabel?: string; onPress?: () => void };
 function dialog(kinds: string[], ephemeral = false) {

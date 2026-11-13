@@ -157,7 +157,9 @@ import {
   batchMoveTargets,
   type TileBounds,
 } from "@/sidebarModel";
-import { Overlay } from "@/chrome/Overlay";
+import { Overlay, OverlaySheet } from "@/chrome/Overlay";
+import { DialogCard } from "@/components/DialogCard";
+import { DialogHeader } from "@/components/DialogHeader";
 import { useReducedMotion } from "@/chrome/useReducedMotion";
 import {
   useSidebarMotion,
@@ -3349,69 +3351,6 @@ function BrowserApp() {
   // Drag ghost follows the finger from its center (half of appStyles
   // dragGhost, 144×36 — keep the two in sync).
   const ghostCenter = (x: number, y: number) => ({ x: x - 72, y: y - 18 });
-  // Every centered dialog shares the same full-screen Overlay: it grows
-  // from the center without dimming the page (Arc's floating sheets), and
-  // its surface captures touches so the page behind can't scroll or take
-  // selection. Tapping outside the card closes it (onClose); taps on the
-  // card itself are swallowed by the card's responder wrapper. Children
-  // freeze during the exit pass.
-  const sheet = (open: boolean, onClose: () => void, node: React.ReactNode) => (
-    <Overlay
-      open={open}
-      className={c.overlay}
-      style={{ bottom: keyboardInset }}
-      pop
-      dim={false}
-      reducedMotion={reducedMotion}
-    >
-      {open && (
-        <>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={tr("common.close")}
-            className={c.sheetUnderlay}
-            onPress={onClose}
-          />
-          {/* The card must be a direct child of the full-screen centerer:
-              its percent width/height resolve against that container. */}
-          <View className={c.overlayTouch} pointerEvents="box-none">
-            {node}
-          </View>
-        </>
-      )}
-    </Overlay>
-  );
-  // Phone bottom sheet (issue #19): same overlay scaffold as sheet(), but
-  // the wrapper packs to the bottom edge and the card rises (lift) instead
-  // of popping from the center.
-  const bottomSheet = (
-    open: boolean,
-    onClose: () => void,
-    node: React.ReactNode
-  ) => (
-    <Overlay
-      open={open}
-      className={c.overlay}
-      style={{ bottom: keyboardInset }}
-      lift={16}
-      dim={false}
-      reducedMotion={reducedMotion}
-    >
-      {open && (
-        <>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={tr("common.close")}
-            className={c.sheetUnderlay}
-            onPress={onClose}
-          />
-          <View className={c.overlayBottom} pointerEvents="box-none">
-            {node}
-          </View>
-        </>
-      )}
-    </Overlay>
-  );
   const beginDrag = (tabId: string, title: string, x: number, y: number) => {
     dragFrames.cancel();
     measurePanes();
@@ -5841,10 +5780,13 @@ function BrowserApp() {
                 <Text className={c.noticeText}>{notice}</Text>
               </View>
             </Overlay>
-            {sheet(
-              !!menuTab,
-              () => setCtxMenuTabId(null),
-              menuTab && state && (
+            <OverlaySheet
+              open={!!menuTab}
+              onClose={() => setCtxMenuTabId(null)}
+              bottomInset={keyboardInset}
+              reducedMotion={reducedMotion}
+            >
+              {menuTab && state && (
                 <TabContextMenuDialog
                   tab={
                     menuTab
@@ -6008,12 +5950,15 @@ function BrowserApp() {
                   }}
                   onClose={() => setCtxMenuTabId(null)}
                 />
-              )
-            )}
-            {sheet(
-              !!sidebarMenu,
-              () => setSidebarMenu(null),
-              sidebarMenu &&
+              )}
+            </OverlaySheet>
+            <OverlaySheet
+              open={!!sidebarMenu}
+              onClose={() => setSidebarMenu(null)}
+              bottomInset={keyboardInset}
+              reducedMotion={reducedMotion}
+            >
+              {sidebarMenu &&
                 (sidebarMenu.kind === "split" && sidebar.split ? (
                   <SidebarPageMenu
                     title={tr(
@@ -6131,8 +6076,8 @@ function BrowserApp() {
                     items={sidebarActions()}
                     onClose={() => setSidebarMenu(null)}
                   />
-                ))
-            )}
+                ))}
+            </OverlaySheet>
             {selectionMoveMenu && (
               <ActionMenu
                 title={tr("chrome.selectionMoveTitle")}
@@ -6145,10 +6090,13 @@ function BrowserApp() {
                 onClose={() => setSelectionMoveMenu(false)}
               />
             )}
-            {sheet(
-              !!splitPickerTabId,
-              () => setSplitPickerTabId(null),
-              splitPickerTabId && (
+            <OverlaySheet
+              open={!!splitPickerTabId}
+              onClose={() => setSplitPickerTabId(null)}
+              bottomInset={keyboardInset}
+              reducedMotion={reducedMotion}
+            >
+              {splitPickerTabId && (
                 <ActionMenu
                   title={tr("chrome.chooseSplitTab")}
                   onClose={() => setSplitPickerTabId(null)}
@@ -6188,13 +6136,16 @@ function BrowserApp() {
                       },
                     }))}
                 />
-              )
-            )}
-            {sheet(
-              newFolderOpen,
-              () => setNewFolderOpen(false),
-              newFolderOpen && (
-                <View className={cn(c.dialog, c.settingsDialog)}>
+              )}
+            </OverlaySheet>
+            <OverlaySheet
+              open={newFolderOpen}
+              onClose={() => setNewFolderOpen(false)}
+              bottomInset={keyboardInset}
+              reducedMotion={reducedMotion}
+            >
+              {newFolderOpen && (
+                <DialogCard variant="compact">
                   <Text className={c.dialogTitle}>
                     {tr("chrome.newFolder")}
                   </Text>
@@ -6222,14 +6173,17 @@ function BrowserApp() {
                       );
                     }}
                   />
-                </View>
-              )
-            )}
-            {sheet(
-              splitGroupDialog === "save",
-              () => setSplitGroupDialog(null),
-              splitGroupDialog === "save" && (
-                <View className={cn(c.dialog, c.settingsDialog)}>
+                </DialogCard>
+              )}
+            </OverlaySheet>
+            <OverlaySheet
+              open={splitGroupDialog === "save"}
+              onClose={() => setSplitGroupDialog(null)}
+              bottomInset={keyboardInset}
+              reducedMotion={reducedMotion}
+            >
+              {splitGroupDialog === "save" && (
+                <DialogCard variant="compact">
                   <Text className={c.dialogTitle}>
                     {tr(
                       pendingSplitSave.current?.splitGroupId
@@ -6252,14 +6206,17 @@ function BrowserApp() {
                     disabled={!splitGroupName.trim()}
                     onPress={confirmSplitGroupSave}
                   />
-                </View>
-              )
-            )}
-            {sheet(
-              !!renameTab,
-              () => setRenameTab(null),
-              renameTab && (
-                <View className={cn(c.dialog, c.settingsDialog)}>
+                </DialogCard>
+              )}
+            </OverlaySheet>
+            <OverlaySheet
+              open={!!renameTab}
+              onClose={() => setRenameTab(null)}
+              bottomInset={keyboardInset}
+              reducedMotion={reducedMotion}
+            >
+              {renameTab && (
+                <DialogCard variant="compact">
                   <Text className={c.dialogTitle}>
                     {tr("chrome.renameTab")}
                   </Text>
@@ -6279,15 +6236,18 @@ function BrowserApp() {
                     disabled={!renameTab.value.trim()}
                     onPress={confirmTabRename}
                   />
-                </View>
-              )
-            )}
-            {sheet(
-              splitGroupDialog === "manage",
-              () => setSplitGroupDialog(null),
-              splitGroupDialog === "manage" &&
+                </DialogCard>
+              )}
+            </OverlaySheet>
+            <OverlaySheet
+              open={splitGroupDialog === "manage"}
+              onClose={() => setSplitGroupDialog(null)}
+              bottomInset={keyboardInset}
+              reducedMotion={reducedMotion}
+            >
+              {splitGroupDialog === "manage" &&
                 state && (
-                  <View className={cn(c.dialog, c.settingsDialog)}>
+                  <DialogCard variant="compact">
                     <Text className={c.dialogTitle}>
                       {tr("splitGroup.manageTitle")}
                     </Text>
@@ -6343,25 +6303,34 @@ function BrowserApp() {
                         {tr("splitGroup.empty")}
                       </Text>
                     )}
-                  </View>
-                )
-            )}
+                  </DialogCard>
+                )}
+            </OverlaySheet>
             {/* One open state, two presentations (issue #19): phone bottom
                 and hybrid modes dock the Space picker at the bottom edge;
                 top/tablet layouts keep the centered dialog. */}
-            {(spaceBottomSheet ? bottomSheet : sheet)(
-              !!spaceSwitcher,
-              () => setSpaceSwitcher(false),
-              spaceSwitcherProps &&
+            <OverlaySheet
+              open={!!spaceSwitcher}
+              onClose={() => setSpaceSwitcher(false)}
+              position={spaceBottomSheet ? "bottom" : "center"}
+              bottomInset={keyboardInset}
+              reducedMotion={reducedMotion}
+            >
+              {spaceSwitcherProps &&
                 (spaceBottomSheet ? (
                   <SpaceSheet {...spaceSwitcherProps} />
                 ) : (
                   <SpaceSwitcherDialog {...spaceSwitcherProps} />
-                ))
-            )}
-            {sheet(
-              !!historyOpen,
-              () => closeSettingsChild("history", () => setHistoryOpen(false)),
+                ))}
+            </OverlaySheet>
+            <OverlaySheet
+              open={!!historyOpen}
+              onClose={() =>
+                closeSettingsChild("history", () => setHistoryOpen(false))
+              }
+              bottomInset={keyboardInset}
+              reducedMotion={reducedMotion}
+            >
               <HistoryDialog
                 entries={history.entries}
                 onOpen={(url) => {
@@ -6377,7 +6346,7 @@ function BrowserApp() {
                   closeSettingsChild("history", () => setHistoryOpen(false))
                 }
               />
-            )}
+            </OverlaySheet>
             {drag && (
               <AnimatedView
                 pointerEvents="none"
@@ -6398,11 +6367,14 @@ function BrowserApp() {
                 </Text>
               </AnimatedView>
             )}
-            {sheet(
-              !!quickOpen,
-              closeQuickOpen,
-              quickOpen && (
-                <View className={cn(c.dialog, c.quickOpenDialog)}>
+            <OverlaySheet
+              open={!!quickOpen}
+              onClose={closeQuickOpen}
+              bottomInset={keyboardInset}
+              reducedMotion={reducedMotion}
+            >
+              {quickOpen && (
+                <DialogCard variant="appDialog" className={c.quickOpenDialog}>
                   <AddressBox
                     key={quickOpenPresentation}
                     ref={quickOpenInputRef}
@@ -6488,13 +6460,16 @@ function BrowserApp() {
                       {tr("chrome.quickOpenLinkHint")}
                     </Text>
                   )}
-                </View>
-              )
-            )}
-            {sheet(
-              !!permissionRequest,
-              () => decidePermission("dismiss"),
-              permissionRequest && (
+                </DialogCard>
+              )}
+            </OverlaySheet>
+            <OverlaySheet
+              open={!!permissionRequest}
+              onClose={() => decidePermission("dismiss")}
+              bottomInset={keyboardInset}
+              reducedMotion={reducedMotion}
+            >
+              {permissionRequest && (
                 <PermissionDialog
                   request={{
                     origin: permissionRequest.origin,
@@ -6504,13 +6479,16 @@ function BrowserApp() {
                   onDecide={decidePermission}
                   onDismiss={() => decidePermission("dismiss")}
                 />
-              )
-            )}
-            {sheet(
-              !!palette,
-              () => setPalette(false),
-              palette && (
-                <View className={c.dialog}>
+              )}
+            </OverlaySheet>
+            <OverlaySheet
+              open={!!palette}
+              onClose={() => setPalette(false)}
+              bottomInset={keyboardInset}
+              reducedMotion={reducedMotion}
+            >
+              {palette && (
+                <DialogCard variant="appDialog">
                   <Text className={c.dialogTitle}>{tr("chrome.commands")}</Text>
                   <TextInput
                     accessibilityLabel={tr("chrome.findCommand")}
@@ -6545,31 +6523,35 @@ function BrowserApp() {
                     label={tr("chrome.closeCommands")}
                     onPress={() => setPalette(false)}
                   />
-                </View>
-              )
-            )}
-            {sheet(
-              !!bookmarkManager,
-              () =>
+                </DialogCard>
+              )}
+            </OverlaySheet>
+            <OverlaySheet
+              open={!!bookmarkManager}
+              onClose={() =>
                 closeSettingsChild("bookmarks", () =>
                   setBookmarkManager(false)
-                ),
-              bookmarkManager && (
-                <View className={cn(c.dialog, c.bookmarkDialog)}>
-                  <View className={c.dialogHeader}>
-                    <Text className={cn(c.dialogTitle, "flex-1")}>
-                      {tr("chrome.bookmarks")}
-                    </Text>
-                    <IconButton
-                      label={tr("chrome.closeBookmarks")}
-                      icon="close"
-                      onPress={() =>
-                        closeSettingsChild("bookmarks", () =>
-                          setBookmarkManager(false)
-                        )
-                      }
-                    />
-                  </View>
+                )
+              }
+              bottomInset={keyboardInset}
+              reducedMotion={reducedMotion}
+            >
+              {bookmarkManager && (
+                <DialogCard variant="appDialog" className={c.bookmarkDialog}>
+                  <DialogHeader
+                    className="items-start"
+                    title={
+                      <Text className={cn(c.dialogTitle, "flex-1")}>
+                        {tr("chrome.bookmarks")}
+                      </Text>
+                    }
+                    closeLabel={tr("chrome.closeBookmarks")}
+                    onClose={() =>
+                      closeSettingsChild("bookmarks", () =>
+                        setBookmarkManager(false)
+                      )
+                    }
+                  />
                   <Text className={c.dialogHelp}>
                     {bookmarkFolder
                       ? tr("chrome.bookmarkInside", {
@@ -6880,13 +6862,16 @@ function BrowserApp() {
                         );
                       })}
                   </ScrollView>
-                </View>
-              )
-            )}
-            {sheet(
-              !!settings,
-              () => setSettings(false),
-              settings && (
+                </DialogCard>
+              )}
+            </OverlaySheet>
+            <OverlaySheet
+              open={!!settings}
+              onClose={() => setSettings(false)}
+              bottomInset={keyboardInset}
+              reducedMotion={reducedMotion}
+            >
+              {settings && (
                 <SettingsDialog
                   query={settingsQuery}
                   onQueryChange={setSettingsQuery}
@@ -7597,11 +7582,16 @@ function BrowserApp() {
                     },
                   ]}
                 />
-              )
-            )}
-            {sheet(
-              !!boostsOpen,
-              () => closeSettingsChild("boosts", () => setBoostsOpen(false)),
+              )}
+            </OverlaySheet>
+            <OverlaySheet
+              open={!!boostsOpen}
+              onClose={() =>
+                closeSettingsChild("boosts", () => setBoostsOpen(false))
+              }
+              bottomInset={keyboardInset}
+              reducedMotion={reducedMotion}
+            >
               <BoostsDialog
                 boosts={ui.boosts}
                 onSave={(boosts) => {
@@ -7612,11 +7602,16 @@ function BrowserApp() {
                   closeSettingsChild("boosts", () => setBoostsOpen(false))
                 }
               />
-            )}
-            {sheet(
-              !!keys,
-              () => closeSettingsChild("keyboard", () => setKeys(false)),
-              keys && (
+            </OverlaySheet>
+            <OverlaySheet
+              open={!!keys}
+              onClose={() =>
+                closeSettingsChild("keyboard", () => setKeys(false))
+              }
+              bottomInset={keyboardInset}
+              reducedMotion={reducedMotion}
+            >
+              {keys && (
                 <KeyboardSettings
                   bindings={state?.keyBindings ?? []}
                   commands={registry.entries(language)}
@@ -7626,8 +7621,8 @@ function BrowserApp() {
                     closeSettingsChild("keyboard", () => setKeys(false))
                   }
                 />
-              )
-            )}
+              )}
+            </OverlaySheet>
           </SafeAreaView>
           <BrowserContentMenu
             request={browser.context}

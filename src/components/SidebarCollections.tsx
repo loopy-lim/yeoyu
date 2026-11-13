@@ -1,16 +1,16 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback } from "react";
 import {
   Pressable,
   FlatList,
   Text,
   View,
-  useWindowDimensions,
   type ListRenderItemInfo,
 } from "react-native";
 import { SidebarPressable } from "@/chrome/SidebarInteraction";
 import { ContextPressable } from "@/chrome/ContextPressable";
 import { ChromeIcon, type IconName } from "@/chrome/ChromeIcon";
-import { menuPosition, type MenuAnchor } from "@/menuLayout";
+import { AnchoredMenuSurface } from "@/components/AnchoredMenuSurface";
+import type { MenuAnchor } from "@/menuLayout";
 import { sidebarAddressLabel } from "@/sidebarModel";
 import type { SidebarSplit } from "@/sidebarPresentation";
 import { cva } from "class-variance-authority";
@@ -68,9 +68,6 @@ const collectionClasses = {
   count: "text-ink-muted text-body tabular-nums",
   railCount:
     "absolute right-[1px] bottom-[1px] bg-sidebar rounded-[4px] px-[3px]",
-  menu: "absolute p-md rounded-tile bg-surface-elevated border border-hairline",
-  menuHeading: "flex-row items-center pl-lg",
-  menuTitle: "flex-1 text-ink-muted text-body-plus font-medium",
   menuIcon: "size-input items-center justify-center",
   menuScroll: "grow-0 shrink",
   choiceRow: "flex-row items-center rounded-[8px]",
@@ -271,10 +268,6 @@ export function SidebarPageMenu({
   onClose: () => void;
 }) {
   const { tr } = useI18n();
-  const window = useWindowDimensions();
-  const [height, setHeight] = useState(
-    50 + pages.length * 56 + actions.length * 44
-  );
   const renderPage = useCallback(
     ({ item }: ListRenderItemInfo<SidebarPageChoice>) => (
       <SidebarPageRow page={item} onClose={onClose} />
@@ -282,27 +275,18 @@ export function SidebarPageMenu({
     [onClose]
   );
   return (
-    <View
-      accessibilityViewIsModal
-      accessibilityLabel={title}
-      onLayout={({ nativeEvent }) => setHeight(nativeEvent.layout.height)}
-      className={collectionClasses.menu}
-      // Anchored placement tracks the measured menu and native window bounds.
-      style={menuPosition(anchor, window, 300, height)}
+    <AnchoredMenuSurface
+      title={title}
+      anchor={anchor}
+      preferredWidth={300}
+      estimatedHeight={50 + pages.length * 56 + actions.length * 44}
+      onClose={onClose}
+      className="rounded-tile shadow-none"
+      headerClassName="min-h-0"
+      titleClassName="font-medium"
+      closeClassName={collectionClasses.menuIcon}
+      closeIconSize={16}
     >
-      <View className={collectionClasses.menuHeading}>
-        <Text numberOfLines={1} className={collectionClasses.menuTitle}>
-          {title}
-        </Text>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={`Close ${title}`}
-          onPress={onClose}
-          className={collectionClasses.menuIcon}
-        >
-          <ChromeIcon name="close" className="size-[16px]" />
-        </Pressable>
-      </View>
       <FlatList
         data={pages}
         keyExtractor={(page) => page.id}
@@ -341,7 +325,7 @@ export function SidebarPageMenu({
           ) : undefined
         }
       />
-    </View>
+    </AnchoredMenuSurface>
   );
 }
 

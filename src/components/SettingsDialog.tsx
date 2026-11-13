@@ -11,6 +11,8 @@ import {
 } from "react-native";
 import { useTheme } from "@/themeContext";
 import { ChromeIcon, type IconName } from "@/chrome/ChromeIcon";
+import { DialogCard } from "@/components/DialogCard";
+import { DialogHeader } from "@/components/DialogHeader";
 import { useI18n } from "@/i18nContext";
 
 const sectionIcons: Record<string, IconName> = {
@@ -35,8 +37,6 @@ export interface SettingsSection {
 export type SettingsSaveStatus = "loading" | "saving" | "saved" | "failed";
 
 const c = {
-  dialog:
-    "w-[94%] max-w-[1040px] max-h-[94%] rounded-dialog bg-surface-elevated border border-hairline overflow-hidden",
   headerScroll: "max-h-[34%] grow-0 shrink",
   header: "px-[20px] py-xxl gap-lg border-hairline border-b-hairline-width",
   row: "flex-row items-center gap-xxl",
@@ -118,39 +118,39 @@ export function SettingsDialog({
     : selected ?? (wide ? sections[0] : undefined);
   const split = wide && !!page;
   return (
-    <View
-      className={c.dialog}
+    <DialogCard
+      variant="wide"
       style={{ height: Math.max(160, height - 48) }}
-      accessibilityViewIsModal
     >
       <ScrollView
         className={c.headerScroll}
         contentContainerClassName={c.header}
         keyboardShouldPersistTaps="handled"
       >
-        <View className={c.row}>
-          {!wide && page && (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={tr("settings.back")}
-              className={c.action}
-              onPress={() => onSelect(null)}
-            >
-              <ChromeIcon name="back" size={20} />
-            </Pressable>
-          )}
-          <Text accessibilityRole="header" className={c.title}>
-            {tr("settings.title")}
-          </Text>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={tr("settings.close")}
-            className={c.close}
-            onPress={onClose}
-          >
-            <ChromeIcon name="close" size={20} />
-          </Pressable>
-        </View>
+        <DialogHeader
+          className="gap-xxl"
+          leading={
+            !wide && page ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={tr("settings.back")}
+                className={c.action}
+                onPress={() => onSelect(null)}
+              >
+                <ChromeIcon name="back" size={20} />
+              </Pressable>
+            ) : undefined
+          }
+          title={
+            <Text accessibilityRole="header" className={c.title}>
+              {tr("settings.title")}
+            </Text>
+          }
+          closeLabel={tr("settings.close")}
+          closeClassName={c.close}
+          closeIconSize={20}
+          onClose={onClose}
+        />
         <View className={c.row}>
           <TextInput
             accessibilityLabel={tr("settings.searchHint")}
@@ -260,6 +260,6 @@ export function SettingsDialog({
           </Pressable>
         )}
       </View>
-    </View>
+    </DialogCard>
   );
 }

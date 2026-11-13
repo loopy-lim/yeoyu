@@ -1,6 +1,7 @@
 import React, { useLayoutEffect, useRef, useState } from "react";
 import {
   Animated,
+  Pressable,
   StyleSheet,
   View,
   type StyleProp,
@@ -11,6 +12,7 @@ import { easing } from "@/chrome/motion";
 import { useReducedMotion } from "@/chrome/useReducedMotion";
 import { useResolveClassNames } from "uniwind";
 import { cn } from "@/ui/cn";
+import { useI18n } from "@/i18nContext";
 
 // Keep committed content frozen during exit. A reversal continues from the
 // visible pose; only a presentation after a completed exit starts afresh.
@@ -174,3 +176,84 @@ export function Overlay({
     </>
   );
 }
+
+export type OverlaySheetPosition = "center" | "bottom";
+
+/**
+ * Unified modal sheet surface over the GeckoView canvas: replaces separate
+ * centered/bottom sheet wrappers and raw scrim blocks while preserving
+ * `Overlay`'s native exit-freeze and `bodyBlocking` flash-guard timing.
+ */
+export function OverlaySheet({
+  open,
+  onClose,
+  children,
+  position = "center",
+  bottomInset,
+  dim = false,
+  backdropDismiss = true,
+  closeLabel,
+  reducedMotion,
+  className,
+  contentClassName,
+  style,
+  onExited,
+}: {
+  open: boolean;
+  onClose: () => void;
+  children: React.ReactNode;
+  position?: OverlaySheetPosition;
+  bottomInset?: number;
+  dim?: boolean;
+  backdropDismiss?: boolean;
+  closeLabel?: string;
+  reducedMotion?: boolean;
+  className?: string;
+  contentClassName?: string;
+  style?: StyleProp<ViewStyle>;
+  onExited?: () => void;
+}) {
+  const { tr } = useI18n();
+  const isBottom = position === "bottom";
+  const resolvedStyle =
+    bottomInset !== undefined ? [{ bottom: bottomInset }, style] : style;
+  return (
+    <Overlay
+      open={open}
+      className={cn(
+        "absolute inset-0 bg-scrim justify-center items-center",
+        className
+      )}
+      style={resolvedStyle}
+      pop={!isBottom}
+      lift={isBottom ? 16 : 0}
+      dim={dim}
+      reducedMotion={reducedMotion}
+      onExited={onExited}
+    >
+      {open && (
+        <>
+          {backdropDismiss && (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={closeLabel ?? tr("common.close")}
+              className="absolute inset-0"
+              onPress={onClose}
+            />
+          )}
+          <View
+            className={cn(
+              "absolute inset-0",
+              isBottom ? "justify-end" : "justify-center items-center",
+              contentClassName
+            )}
+            pointerEvents="box-none"
+          >
+            {children}
+          </View>
+        </>
+      )}
+    </Overlay>
+  );
+}
+

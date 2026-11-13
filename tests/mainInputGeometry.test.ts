@@ -10,11 +10,20 @@ const ast = parse(source, {
   sourceType: "module",
   plugins: ["typescript", "jsx"],
 });
-let sheetStyle = "",
+const overlaySource = readFileSync(
+  new URL("../src/chrome/Overlay.tsx", import.meta.url),
+  "utf8"
+);
+const overlayAst = parse(overlaySource, {
+  sourceType: "module",
+  plugins: ["typescript", "jsx"],
+});
+let sheetInsets: string[] = [],
   newTabInset = "",
   closeAddressSheet = "",
   addressInputRef = "",
-  addressInputKey = "";
+  addressInputKey = "",
+  overlaySheetStyle = "";
 const addressOpenBodies: Record<string, string> = {};
 function visit(node: any) {
   if (!node || typeof node !== "object") return;
@@ -52,18 +61,14 @@ function visit(node: any) {
   }
   if (
     node.type === "JSXOpeningElement" &&
-    node.name?.name === "Overlay" &&
-    node.attributes.some(
-      (attribute: any) =>
-        attribute.name?.name === "className" &&
-        attribute.value?.expression?.object?.name === "c" &&
-        attribute.value?.expression?.property?.name === "overlay"
-    )
+    node.name?.name === "OverlaySheet"
   ) {
     const expression = node.attributes.find(
-      (attribute: any) => attribute.name?.name === "style"
+      (attribute: any) => attribute.name?.name === "bottomInset"
     )?.value?.expression;
-    if (expression) sheetStyle = source.slice(expression.start, expression.end);
+    sheetInsets.push(
+      expression ? source.slice(expression.start, expression.end) : ""
+    );
   }
   for (const value of Object.values(node)) {
     if (Array.isArray(value)) value.forEach(visit);
@@ -71,6 +76,21 @@ function visit(node: any) {
   }
 }
 visit(ast);
+function visitOverlay(node: any) {
+  if (!node || typeof node !== "object") return;
+  if (
+    node.type === "VariableDeclarator" &&
+    node.id?.name === "resolvedStyle" &&
+    node.init
+  ) {
+    overlaySheetStyle = overlaySource.slice(node.init.start, node.init.end);
+  }
+  for (const value of Object.values(node)) {
+    if (Array.isArray(value)) value.forEach(visitOverlay);
+    else if (value && typeof value === "object") visitOverlay(value);
+  }
+}
+visitOverlay(overlayAst);
 const insetFor = (
   keyboardInset: number,
   visibleHeight: number,
@@ -89,10 +109,16 @@ const insetFor = (
 };
 
 test("main sheets center inside the owner-confirmed visible input viewport", () => {
-  expect(sheetStyle).not.toBe("");
-  const geometry = new Function("keyboardInset", `return (${sheetStyle});`);
-  expect(geometry(0)).toEqual({ bottom: 0 });
-  expect(geometry(320)).toEqual({ bottom: 320 });
+  expect(sheetInsets.length).toBeGreaterThan(0);
+  expect(sheetInsets.every((expr) => expr === "keyboardInset")).toBe(true);
+  expect(overlaySheetStyle).not.toBe("");
+  const geometry = new Function(
+    "bottomInset",
+    "style",
+    `return (${overlaySheetStyle});`
+  );
+  expect(geometry(0, undefined)).toEqual([{ bottom: 0 }, undefined]);
+  expect(geometry(320, undefined)).toEqual([{ bottom: 320 }, undefined]);
 });
 
 test("new-tab address bounds shrink only by the IME intersection with their own split pane", () => {

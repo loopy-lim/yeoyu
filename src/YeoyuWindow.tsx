@@ -37,6 +37,8 @@ import {
 } from "@/browserPermissionRuntime";
 import { permissionKindsFromEvent } from "@/permissions";
 import { PermissionDialog } from "@/components/Dialogs";
+import { OverlaySheet } from "@/chrome/Overlay";
+import { useReducedMotion } from "@/chrome/useReducedMotion";
 import type { PermissionChoice } from "@/permissionRequests";
 import { NEW_TAB_URL } from "@/BrowserController";
 import { ChromeIcon, type IconName } from "@/chrome/ChromeIcon";
@@ -187,6 +189,7 @@ function WindowBody({
   siteSearches?: SiteSearchEntry[];
 }) {
   const { tr } = useI18n();
+  const reducedMotion = useReducedMotion();
   // The generated Fabric host receives the compiled layout at its native seam.
   const surfaceStyle = useResolveClassNames("flex-1");
   const [tabId, setTabId] = useState<string | null>(initialTabId ?? null);
@@ -567,11 +570,15 @@ function WindowBody({
           </Text>
         )}
       </View>
-      {permissionRequest && (
-        <View
-          className="absolute inset-0 z-40 bg-scrim justify-center items-center"
-          style={{ bottom: keyboardInset }}
-        >
+      <OverlaySheet
+        open={!!permissionRequest}
+        onClose={() => decidePermission("dismiss")}
+        bottomInset={keyboardInset}
+        dim
+        reducedMotion={reducedMotion}
+        className="z-40"
+      >
+        {permissionRequest && (
           <PermissionDialog
             request={{
               origin: permissionRequest.origin,
@@ -581,8 +588,8 @@ function WindowBody({
             onDecide={decidePermission}
             onDismiss={() => decidePermission("dismiss")}
           />
-        </View>
-      )}
+        )}
+      </OverlaySheet>
     </WindowSafeArea>
   );
 }

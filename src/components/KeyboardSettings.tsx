@@ -7,10 +7,10 @@ import type { ProductCommand } from "@/commandRegistry";
 import { parseKeymap, shortcutLabel } from "@/keyboardEditor";
 import { withCtrlAlternatives } from "@/keyboardProfiles";
 import { useTheme } from "@/themeContext";
+import { DialogCard } from "@/components/DialogCard";
 import { useI18n } from "@/i18nContext";
 
 const c = {
-  root: "w-[92%] max-w-[760px] max-h-[88%] bg-surface-elevated rounded-card p-[20px] gap-xxl",
   title: "text-[20px] font-semibold text-ink",
   text: "text-input-plus text-ink leading-[21px]",
   muted: "text-input text-ink-muted leading-[20px]",
@@ -140,7 +140,7 @@ export function KeyboardSettings({
   const titleFor = (id: string) =>
     commands.find((c) => c.id === id)?.title ?? id;
   return (
-    <View className={c.root}>
+    <DialogCard variant="editor">
       <Text className={c.title}>{tr("keyboard.title")}</Text>
       <Text className={c.muted}>{tr("keyboard.help")}</Text>
       {error ? (
@@ -264,6 +264,6 @@ export function KeyboardSettings({
         {button(tr("keyboard.save"), () => void runAction("save"))}
         {button(tr("keyboard.cancel"), onClose)}
       </View>
-    </View>
+    </DialogCard>
   );
 }

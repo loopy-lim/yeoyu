@@ -6,7 +6,6 @@ import {
   AppState,
   DeviceEventEmitter,
   FlatList,
-  Modal,
   Pressable,
   Switch,
   Text,
@@ -16,7 +15,9 @@ import {
 import { platform } from "@/platform";
 import { useTheme } from "@/themeContext";
 import { useI18n } from "@/i18nContext";
-import { useReducedMotion } from "@/chrome/useReducedMotion";
+import { DialogCard } from "@/components/DialogCard";
+import { DialogHeader } from "@/components/DialogHeader";
+import { PortalModal } from "@/components/PortalModal";
 import {
   resetSitePreferences,
   updateSitePreference,
@@ -68,9 +69,6 @@ const c = {
   grow: "flex-1 min-w-0",
   action: settingsClasses.actionSecondary,
   choices: "flex-row flex-wrap gap-md",
-  overlay: "flex-1 items-center justify-center bg-scrim p-[20px]",
-  dialog:
-    "w-full max-w-[640px] h-[80%] rounded-dialog bg-surface-elevated p-[18px]",
   title: "text-title font-bold text-ink",
   search:
     "min-h-action-row my-xl px-xxl rounded-control bg-sunken text-ink text-icon-size",
@@ -116,7 +114,6 @@ export function BrowserToolsPanel({
     state in DOWNLOAD_STATES
       ? tr(DOWNLOAD_STATES[state as keyof typeof DOWNLOAD_STATES])
       : state;
-  const reducedMotion = useReducedMotion();
   const busyRef = useRef(false);
   const [busy, setBusy] = useState(false);
   const [defaultBrowser, setDefaultBrowser] = useState<boolean | null>(null);
@@ -782,175 +779,171 @@ export function BrowserToolsPanel({
           </View>
         </SettingsGroup>
       )}
-      <Modal
-        transparent
-        animationType={reducedMotion ? "none" : "fade"}
+      <PortalModal
         visible={sitePreferencesOpen && !privateTab}
-        onRequestClose={() => setSitePreferencesOpen(false)}
+        onClose={() => setSitePreferencesOpen(false)}
       >
-        <View className={c.overlay}>
-          <View className={c.dialog} accessibilityViewIsModal>
-            <View className={cn(c.horizontal, "mb-xxl")}>
+        <DialogCard variant="modal" className="max-w-[640px] h-[80%]">
+          <DialogHeader
+            className="gap-xxl mb-xxl"
+            title={
               <Text accessibilityRole="header" className={cn(c.title, c.grow)}>
                 {tr("tools.sitePreferences")}
               </Text>
-              {action(tr("tools.closeSites"), () =>
-                setSitePreferencesOpen(false)
-              )}
-            </View>
-            <Text className={c.detail}>{tr("tools.siteDefaults")}</Text>
-            <TextInput
-              accessibilityLabel={tr("tools.searchSites")}
-              placeholder={tr("tools.searchAddress")}
-              placeholderTextColor={theme.inkMuted}
-              value={siteQuery}
-              onChangeText={setSiteQuery}
-              autoCapitalize="none"
-              autoCorrect={false}
-              className={c.search}
-              disableFullscreenUI
-            />
-            {action(
-              tr("tools.resetAllSites"),
-              () => resetSites(),
-              !config?.sites.length
-            )}
-            <FlatList
-              data={filteredSites}
-              keyExtractor={(item) => item.origin}
-              initialNumToRender={10}
-              windowSize={5}
-              keyboardShouldPersistTaps="handled"
-              ListEmptyComponent={
-                <Text className={cn(c.detail, "mt-xxxl")}>
-                  {tr(
-                    siteQuery.trim()
-                      ? "tools.noMatchingSites"
-                      : "tools.allDefaults"
-                  )}
+            }
+            closeLabel={tr("tools.closeSites")}
+            onClose={() => setSitePreferencesOpen(false)}
+          />
+          <Text className={c.detail}>{tr("tools.siteDefaults")}</Text>
+          <TextInput
+            accessibilityLabel={tr("tools.searchSites")}
+            placeholder={tr("tools.searchAddress")}
+            placeholderTextColor={theme.inkMuted}
+            value={siteQuery}
+            onChangeText={setSiteQuery}
+            autoCapitalize="none"
+            autoCorrect={false}
+            className={c.search}
+            disableFullscreenUI
+          />
+          {action(
+            tr("tools.resetAllSites"),
+            () => resetSites(),
+            !config?.sites.length
+          )}
+          <FlatList
+            data={filteredSites}
+            keyExtractor={(item) => item.origin}
+            initialNumToRender={10}
+            windowSize={5}
+            keyboardShouldPersistTaps="handled"
+            ListEmptyComponent={
+              <Text className={cn(c.detail, "mt-xxxl")}>
+                {tr(
+                  siteQuery.trim()
+                    ? "tools.noMatchingSites"
+                    : "tools.allDefaults"
+                )}
+              </Text>
+            }
+            renderItem={({ item }) => (
+              <View className={c.row}>
+                <Text selectable className={c.text}>
+                  {item.origin}
                 </Text>
-              }
-              renderItem={({ item }) => (
-                <View className={c.row}>
-                  <Text selectable className={c.text}>
-                    {item.origin}
+                {!item.desktop && (
+                  <Text className={c.detail}>{tr("tools.mobile")}</Text>
+                )}
+                {item.trackingProtection !== null && (
+                  <Text className={c.detail}>
+                    {tr("tools.protectionStatus", {
+                      status: tr(
+                        item.trackingProtection ? "common.on" : "common.off"
+                      ),
+                    })}
                   </Text>
-                  {!item.desktop && (
-                    <Text className={c.detail}>{tr("tools.mobile")}</Text>
-                  )}
-                  {item.trackingProtection !== null && (
-                    <Text className={c.detail}>
-                      {tr("tools.protectionStatus", {
-                        status: tr(
-                          item.trackingProtection ? "common.on" : "common.off"
-                        ),
-                      })}
-                    </Text>
-                  )}
-                  {!!item.keepAlive && (
-                    <Text className={c.detail}>{tr("tools.keepMemory")}</Text>
-                  )}
-                  {action(
-                    tr("tools.resetOrigin", { origin: item.origin }),
-                    () => resetSites(item.origin)
-                  )}
-                </View>
-              )}
-            />
-          </View>
-        </View>
-      </Modal>
-      <Modal
-        transparent
-        animationType={reducedMotion ? "none" : "fade"}
+                )}
+                {!!item.keepAlive && (
+                  <Text className={c.detail}>{tr("tools.keepMemory")}</Text>
+                )}
+                {action(
+                  tr("tools.resetOrigin", { origin: item.origin }),
+                  () => resetSites(item.origin)
+                )}
+              </View>
+            )}
+          />
+        </DialogCard>
+      </PortalModal>
+      <PortalModal
         visible={downloadsOpen}
-        onRequestClose={() => setDownloadsOpen(false)}
+        onClose={() => setDownloadsOpen(false)}
       >
-        <View className={c.overlay}>
-          <View className={c.dialog} accessibilityViewIsModal>
-            <View className={cn(c.horizontal, "mb-xxl")}>
+        <DialogCard variant="modal" className="max-w-[640px] h-[80%]">
+          <DialogHeader
+            className="gap-xxl mb-xxl"
+            title={
               <Text accessibilityRole="header" className={cn(c.title, c.grow)}>
                 {tr("tools.downloads")}
               </Text>
-              {action(tr("tools.closeDownloads"), () =>
-                setDownloadsOpen(false)
+            }
+            closeLabel={tr("tools.closeDownloads")}
+            onClose={() => setDownloadsOpen(false)}
+          />
+          {!!downloadError && (
+            <Text accessibilityRole="alert" className={c.detail}>
+              {downloadError}
+            </Text>
+          )}
+          {!!downloadHistory?.message && (
+            <Text
+              accessibilityRole={
+                downloadHistory.state === "ready" ? undefined : "alert"
+              }
+              className={c.detail}
+            >
+              {downloadHistory.message}
+            </Text>
+          )}
+          {(!!downloadError || downloadHistory?.state !== "ready") && (
+            <View className={c.choices}>
+              {action(tr("tools.retryHistory"), () =>
+                setDownloadRefresh((value) => value + 1)
               )}
+              {!!downloadHistory?.canReset &&
+                action(tr("tools.recover"), recoverDownloadHistory)}
             </View>
-            {!!downloadError && (
-              <Text accessibilityRole="alert" className={c.detail}>
-                {downloadError}
-              </Text>
-            )}
-            {!!downloadHistory?.message && (
-              <Text
-                accessibilityRole={
-                  downloadHistory.state === "ready" ? undefined : "alert"
-                }
-                className={c.detail}
-              >
-                {downloadHistory.message}
-              </Text>
-            )}
-            {(!!downloadError || downloadHistory?.state !== "ready") && (
-              <View className={c.choices}>
-                {action(tr("tools.retryHistory"), () =>
-                  setDownloadRefresh((value) => value + 1)
+          )}
+          <FlatList
+            data={downloads}
+            keyExtractor={(item) => item.id}
+            initialNumToRender={10}
+            windowSize={5}
+            ListEmptyComponent={
+              <Text className={c.detail}>
+                {tr(
+                  downloadError ||
+                    (downloadHistory && downloadHistory.state !== "ready")
+                    ? "tools.historyUnavailable"
+                    : downloadHistory
+                    ? "tools.noDownloads"
+                    : "tools.loadingHistory"
                 )}
-                {!!downloadHistory?.canReset &&
-                  action(tr("tools.recover"), recoverDownloadHistory)}
+              </Text>
+            }
+            renderItem={({ item }) => (
+              <View className={c.row}>
+                <Text numberOfLines={2} className={c.text}>
+                  {item.filename}
+                </Text>
+                <Text className={c.detail}>
+                  {downloadStateLabel(item.state)} · {bytesLabel(item.bytes)}
+                  {item.totalBytes ? ` / ${bytesLabel(item.totalBytes)}` : ""}
+                </Text>
+                {!!item.error && (
+                  <Text className={c.detail}>{item.error}</Text>
+                )}
+                {(item.state === "failed" ||
+                  item.state === "interrupted") && (
+                  <Text className={c.detail}>
+                    {tr("tools.downloadAgain")}
+                  </Text>
+                )}
+                <View className={c.choices}>
+                  {item.state === "completed" &&
+                    action(tr("tools.openFile"), () =>
+                      perform(() => platform.openDownload(item.id))
+                    )}
+                  {["queued", "running"].includes(item.state) &&
+                    action(tr("tools.cancelDownload"), () =>
+                      perform(() => platform.cancelDownload(item.id))
+                    )}
+                </View>
               </View>
             )}
-            <FlatList
-              data={downloads}
-              keyExtractor={(item) => item.id}
-              initialNumToRender={10}
-              windowSize={5}
-              ListEmptyComponent={
-                <Text className={c.detail}>
-                  {tr(
-                    downloadError ||
-                      (downloadHistory && downloadHistory.state !== "ready")
-                      ? "tools.historyUnavailable"
-                      : downloadHistory
-                      ? "tools.noDownloads"
-                      : "tools.loadingHistory"
-                  )}
-                </Text>
-              }
-              renderItem={({ item }) => (
-                <View className={c.row}>
-                  <Text numberOfLines={2} className={c.text}>
-                    {item.filename}
-                  </Text>
-                  <Text className={c.detail}>
-                    {downloadStateLabel(item.state)} · {bytesLabel(item.bytes)}
-                    {item.totalBytes ? ` / ${bytesLabel(item.totalBytes)}` : ""}
-                  </Text>
-                  {!!item.error && (
-                    <Text className={c.detail}>{item.error}</Text>
-                  )}
-                  {(item.state === "failed" ||
-                    item.state === "interrupted") && (
-                    <Text className={c.detail}>
-                      {tr("tools.downloadAgain")}
-                    </Text>
-                  )}
-                  <View className={c.choices}>
-                    {item.state === "completed" &&
-                      action(tr("tools.openFile"), () =>
-                        perform(() => platform.openDownload(item.id))
-                      )}
-                    {["queued", "running"].includes(item.state) &&
-                      action(tr("tools.cancelDownload"), () =>
-                        perform(() => platform.cancelDownload(item.id))
-                      )}
-                  </View>
-                </View>
-              )}
-            />
-          </View>
-        </View>
-      </Modal>
+          />
+        </DialogCard>
+      </PortalModal>
     </>
   );
 }

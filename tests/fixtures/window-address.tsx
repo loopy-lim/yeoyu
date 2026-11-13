@@ -114,8 +114,43 @@ mock.module("react-native", () => ({
   ScrollView: "ScrollView",
   Switch: "Switch",
   useWindowDimensions: () => ({ width: 960, height: 700 }),
+  AccessibilityInfo: {
+    isReduceMotionEnabled: () => Promise.resolve(true),
+    addEventListener: () => ({ remove: () => {} }),
+  },
+  Easing: {
+    bezier: () => (value: number) => value,
+  },
+  Animated: {
+    View: "View",
+    Value: class {
+      constructor(public value: number) {}
+      setValue(value: number) {
+        this.value = value;
+      }
+    },
+    timing: () => ({
+      start: (cb?: (result: { finished: boolean }) => void) =>
+        cb?.({ finished: true }),
+      stop: () => {},
+    }),
+    parallel: () => ({
+      start: (cb?: (result: { finished: boolean }) => void) =>
+        cb?.({ finished: true }),
+      stop: () => {},
+    }),
+  },
   StyleSheet: {
     hairlineWidth: 1,
+    flatten: (style: unknown): Record<string, unknown> =>
+      Array.isArray(style)
+        ? Object.assign(
+            {},
+            ...style
+              .flat(Infinity)
+              .filter((item) => item && typeof item === "object")
+          )
+        : (style as Record<string, unknown>) ?? {},
     absoluteFill: {
       position: "absolute",
       top: 0,
@@ -286,8 +321,16 @@ try {
       tree.root.findAllByProps({ accessibilityViewIsModal: true });
     const promptInset = () => {
       for (let node = activeModals()[0].parent; node; node = node.parent) {
-        if (node.props.className?.includes("z-40"))
-          return node.props.style?.bottom;
+        if (node.props.className?.includes("z-40")) {
+          const styles = Array.isArray(node.props.style)
+            ? node.props.style.flat(Infinity)
+            : [node.props.style];
+          const bottomEntry = styles.find(
+            (entry): entry is { bottom: number } =>
+              !!entry && typeof entry === "object" && "bottom" in entry
+          );
+          if (bottomEntry) return bottomEntry.bottom;
+        }
       }
       throw new Error(
         "permission UI must remain inside its own window geometry"
