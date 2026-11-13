@@ -1911,6 +1911,25 @@ function BrowserApp() {
               })
           );
         },
+        onRename: (id, name) => {
+          run(
+            controller.renameWorkspace(id, name).then(() => {
+              flashNotice(tr("dialog.spaceRenamed"));
+            })
+          );
+        },
+        onDelete: (id) => {
+          run(
+            controller.removeWorkspace(id).then((snapshot) => {
+              setSplitLayout(null);
+              setFocused(snapshot.activeTabId ?? null);
+              flashNotice(tr("dialog.spaceDeleted"));
+            })
+          );
+        },
+        onReorder: (id, index) => {
+          run(controller.moveWorkspace(id, index));
+        },
         onClose: () => setSpaceSwitcher(false),
       }
     : null;

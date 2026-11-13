@@ -6,7 +6,7 @@
 // DO NOT EDIT — changes will be overwritten and fail codegen --check.
 // ────────────────────────────────────────────────────────────
 
-import { bookmarkCreateCodec, bookmarkFolderCreateCodec, bookmarkFolderRemoveCodec, bookmarkFolderRenameCodec, bookmarkMoveCodec, bookmarkOpenCodec, bookmarkRemoveCodec, bookmarkSetFolderCodec, bookmarkUpdateCodec, browserSnapshotCodec, keymapDefaultsCodec, keymapSetCodec, snapshotRestoreCodec, splitGroupRemoveCodec, splitGroupSaveCodec, tabActivateCodec, tabCloseCodec, tabCreateCodec, tabMoveCodec, tabNavigatedCodec, tabOpenExternalCodec, tabRenameCodec, tabResetCodec, tabSetFavoriteCodec, tabSetPinnedCodec, tabSetWorkspaceCodec, workArchiveExportCodec, workArchiveImportCodec, workArchivePrepareCodec, workArchivePreviewCodec, workspaceActivateCodec, workspaceCreateCodec } from './frame-codecs.js';
+import { bookmarkCreateCodec, bookmarkFolderCreateCodec, bookmarkFolderRemoveCodec, bookmarkFolderRenameCodec, bookmarkMoveCodec, bookmarkOpenCodec, bookmarkRemoveCodec, bookmarkSetFolderCodec, bookmarkUpdateCodec, browserSnapshotCodec, keymapDefaultsCodec, keymapSetCodec, snapshotRestoreCodec, splitGroupRemoveCodec, splitGroupSaveCodec, tabActivateCodec, tabCloseCodec, tabCreateCodec, tabMoveCodec, tabNavigatedCodec, tabOpenExternalCodec, tabRenameCodec, tabResetCodec, tabSetFavoriteCodec, tabSetPinnedCodec, tabSetWorkspaceCodec, workArchiveExportCodec, workArchiveImportCodec, workArchivePrepareCodec, workArchivePreviewCodec, workspaceActivateCodec, workspaceCreateCodec, workspaceMoveCodec, workspaceRemoveCodec, workspaceRenameCodec } from './frame-codecs.js';
 
 export const frameRegistry = new Map<string, import('@rustra/types').FrameCodec<any, any>>([
   // route: postcard
@@ -73,4 +73,10 @@ export const frameRegistry = new Map<string, import('@rustra/types').FrameCodec<
   ['workspaceActivate', workspaceActivateCodec],
   // route: postcard
   ['workspaceCreate', workspaceCreateCodec],
+  // route: postcard
+  ['workspaceMove', workspaceMoveCodec],
+  // route: postcard
+  ['workspaceRemove', workspaceRemoveCodec],
+  // route: postcard
+  ['workspaceRename', workspaceRenameCodec],
 ]);

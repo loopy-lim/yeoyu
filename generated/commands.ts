@@ -6,7 +6,7 @@
 // DO NOT EDIT — changes will be overwritten and fail codegen --check.
 // ────────────────────────────────────────────────────────────
 
-import type { BookmarkCreateInput, BookmarkFolderCreateInput, BookmarkFolderIdInput, BookmarkFolderRenameInput, BookmarkIdInput, BookmarkMoveInput, BookmarkOpenInput, BookmarkSetFolderInput, BookmarkUpdateInput, BrowserSnapshotInput, KeymapSetInput, Snapshot, SnapshotRestoreInput, SplitGroupIdInput, SplitGroupSaveInput, TabCreateInput, TabFavoriteInput, TabIdInput, TabMoveInput, TabNavigatedInput, TabOpenExternalInput, TabPinnedInput, TabRenameInput, TabWorkspaceInput, WorkArchiveExportInput, WorkArchiveImportInput, WorkArchivePrepareInput, WorkArchivePreview, WorkArchivePreviewInput, WorkspaceCreateInput, WorkspaceIdInput } from './types.js';
+import type { BookmarkCreateInput, BookmarkFolderCreateInput, BookmarkFolderIdInput, BookmarkFolderRenameInput, BookmarkIdInput, BookmarkMoveInput, BookmarkOpenInput, BookmarkSetFolderInput, BookmarkUpdateInput, BrowserSnapshotInput, KeymapSetInput, Snapshot, SnapshotRestoreInput, SplitGroupIdInput, SplitGroupSaveInput, TabCreateInput, TabFavoriteInput, TabIdInput, TabMoveInput, TabNavigatedInput, TabOpenExternalInput, TabPinnedInput, TabRenameInput, TabWorkspaceInput, WorkArchiveExportInput, WorkArchiveImportInput, WorkArchivePrepareInput, WorkArchivePreview, WorkArchivePreviewInput, WorkspaceCreateInput, WorkspaceIdInput, WorkspaceMoveInput, WorkspaceRenameInput } from './types.js';
 import { createGeneratedFields1, createGeneratedFields2, invokeGenerated, invokeGeneratedFields3 } from '@rustra/types';
 import type { InvokeOptions as CoreInvokeOptions } from '@rustra/types';
 
@@ -28,29 +28,29 @@ import type { InvokeOptions as CoreInvokeOptions } from '@rustra/types';
 export type InvokeOptions = CoreInvokeOptions;
 
 export function bookmarkCreate(input: BookmarkCreateInput, options?: InvokeOptions): Promise<Snapshot> {
-  return invokeGeneratedFields3<Snapshot>(20, 'bookmarkCreate', input, input["title"], input["url"], input["folderId"], options);
+  return invokeGeneratedFields3<Snapshot>(23, 'bookmarkCreate', input, input["title"], input["url"], input["folderId"], options);
 }
 bookmarkCreate.commandId = 'bookmarkCreate';
 
-export const bookmarkFolderCreate = createGeneratedFields1<BookmarkFolderCreateInput, Snapshot>(24, 'bookmarkFolderCreate', "title", 'bookmarkFolderCreate');
+export const bookmarkFolderCreate = createGeneratedFields1<BookmarkFolderCreateInput, Snapshot>(27, 'bookmarkFolderCreate', "title", 'bookmarkFolderCreate');
 
-export const bookmarkFolderRemove = createGeneratedFields1<BookmarkFolderIdInput, Snapshot>(26, 'bookmarkFolderRemove', "folderId", 'bookmarkFolderRemove');
+export const bookmarkFolderRemove = createGeneratedFields1<BookmarkFolderIdInput, Snapshot>(29, 'bookmarkFolderRemove', "folderId", 'bookmarkFolderRemove');
 
-export const bookmarkFolderRename = createGeneratedFields2<BookmarkFolderRenameInput, Snapshot>(25, 'bookmarkFolderRename', "folderId", "title", 'bookmarkFolderRename');
+export const bookmarkFolderRename = createGeneratedFields2<BookmarkFolderRenameInput, Snapshot>(28, 'bookmarkFolderRename', "folderId", "title", 'bookmarkFolderRename');
 
-export const bookmarkMove = createGeneratedFields2<BookmarkMoveInput, Snapshot>(23, 'bookmarkMove', "bookmarkId", "index", 'bookmarkMove');
+export const bookmarkMove = createGeneratedFields2<BookmarkMoveInput, Snapshot>(26, 'bookmarkMove', "bookmarkId", "index", 'bookmarkMove');
 
 export function bookmarkOpen(input: BookmarkOpenInput, options?: InvokeOptions): Promise<Snapshot> {
-  return invokeGeneratedFields3<Snapshot>(29, 'bookmarkOpen', input, input["bookmarkId"], input["reuseTabId"], input["private"], options);
+  return invokeGeneratedFields3<Snapshot>(32, 'bookmarkOpen', input, input["bookmarkId"], input["reuseTabId"], input["private"], options);
 }
 bookmarkOpen.commandId = 'bookmarkOpen';
 
-export const bookmarkRemove = createGeneratedFields1<BookmarkIdInput, Snapshot>(22, 'bookmarkRemove', "bookmarkId", 'bookmarkRemove');
+export const bookmarkRemove = createGeneratedFields1<BookmarkIdInput, Snapshot>(25, 'bookmarkRemove', "bookmarkId", 'bookmarkRemove');
 
-export const bookmarkSetFolder = createGeneratedFields2<BookmarkSetFolderInput, Snapshot>(27, 'bookmarkSetFolder', "bookmarkId", "folderId", 'bookmarkSetFolder');
+export const bookmarkSetFolder = createGeneratedFields2<BookmarkSetFolderInput, Snapshot>(30, 'bookmarkSetFolder', "bookmarkId", "folderId", 'bookmarkSetFolder');
 
 export function bookmarkUpdate(input: BookmarkUpdateInput, options?: InvokeOptions): Promise<Snapshot> {
-  return invokeGeneratedFields3<Snapshot>(21, 'bookmarkUpdate', input, input["bookmarkId"], input["title"], input["url"], options);
+  return invokeGeneratedFields3<Snapshot>(24, 'bookmarkUpdate', input, input["bookmarkId"], input["title"], input["url"], options);
 }
 bookmarkUpdate.commandId = 'bookmarkUpdate';
 
@@ -60,21 +60,21 @@ export function browserSnapshot(input: BrowserSnapshotInput, options?: InvokeOpt
 browserSnapshot.commandId = 'browserSnapshot';
 
 export function keymapDefaults(input: BrowserSnapshotInput, options?: InvokeOptions): Promise<KeymapSetInput> {
-  return invokeGenerated<KeymapSetInput>(19, 'keymapDefaults', input, options);
+  return invokeGenerated<KeymapSetInput>(22, 'keymapDefaults', input, options);
 }
 keymapDefaults.commandId = 'keymapDefaults';
 
 export function keymapSet(input: KeymapSetInput, options?: InvokeOptions): Promise<Snapshot> {
-  return invokeGenerated<Snapshot>(18, 'keymapSet', input, options);
+  return invokeGenerated<Snapshot>(21, 'keymapSet', input, options);
 }
 keymapSet.commandId = 'keymapSet';
 
-export const snapshotRestore = createGeneratedFields1<SnapshotRestoreInput, Snapshot>(17, 'snapshotRestore', "json", 'snapshotRestore');
+export const snapshotRestore = createGeneratedFields1<SnapshotRestoreInput, Snapshot>(20, 'snapshotRestore', "json", 'snapshotRestore');
 
-export const splitGroupRemove = createGeneratedFields1<SplitGroupIdInput, Snapshot>(31, 'splitGroupRemove', "splitGroupId", 'splitGroupRemove');
+export const splitGroupRemove = createGeneratedFields1<SplitGroupIdInput, Snapshot>(34, 'splitGroupRemove', "splitGroupId", 'splitGroupRemove');
 
 export function splitGroupSave(input: SplitGroupSaveInput, options?: InvokeOptions): Promise<Snapshot> {
-  return invokeGenerated<Snapshot>(30, 'splitGroupSave', input, options);
+  return invokeGenerated<Snapshot>(33, 'splitGroupSave', input, options);
 }
 splitGroupSave.commandId = 'splitGroupSave';
 
@@ -96,9 +96,9 @@ tabNavigated.commandId = 'tabNavigated';
 
 export const tabOpenExternal = createGeneratedFields2<TabOpenExternalInput, Snapshot>(8, 'tabOpenExternal', "requestId", "url", 'tabOpenExternal');
 
-export const tabRename = createGeneratedFields2<TabRenameInput, Snapshot>(32, 'tabRename', "tabId", "title", 'tabRename');
+export const tabRename = createGeneratedFields2<TabRenameInput, Snapshot>(35, 'tabRename', "tabId", "title", 'tabRename');
 
-export const tabReset = createGeneratedFields1<TabIdInput, Snapshot>(28, 'tabReset', "tabId", 'tabReset');
+export const tabReset = createGeneratedFields1<TabIdInput, Snapshot>(31, 'tabReset', "tabId", 'tabReset');
 
 export const tabSetFavorite = createGeneratedFields2<TabFavoriteInput, Snapshot>(12, 'tabSetFavorite', "tabId", "favorite", 'tabSetFavorite');
 
@@ -126,3 +126,9 @@ export const workArchivePreview = createGeneratedFields1<WorkArchivePreviewInput
 export const workspaceActivate = createGeneratedFields1<WorkspaceIdInput, Snapshot>(16, 'workspaceActivate', "workspaceId", 'workspaceActivate');
 
 export const workspaceCreate = createGeneratedFields1<WorkspaceCreateInput, Snapshot>(6, 'workspaceCreate', "name", 'workspaceCreate');
+
+export const workspaceMove = createGeneratedFields2<WorkspaceMoveInput, Snapshot>(19, 'workspaceMove', "workspaceId", "index", 'workspaceMove');
+
+export const workspaceRemove = createGeneratedFields1<WorkspaceIdInput, Snapshot>(18, 'workspaceRemove', "workspaceId", 'workspaceRemove');
+
+export const workspaceRename = createGeneratedFields2<WorkspaceRenameInput, Snapshot>(17, 'workspaceRename', "workspaceId", "name", 'workspaceRename');

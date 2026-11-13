@@ -63,11 +63,13 @@ function SpaceRow({
   selected,
   count,
   onSwitch,
+  onManage,
 }: {
   workspace: { id: string; name: string; color?: string };
   selected: boolean;
   count: number;
   onSwitch: () => void;
+  onManage: (anchor: MenuAnchor) => void;
 }) {
   const { tr } = useI18n();
   return (
@@ -79,6 +81,10 @@ function SpaceRow({
       })}
       className={cn(spaceRowVariants({ selected }))}
       onPress={onSwitch}
+      onLongPress={(event) => {
+        const { pageX, pageY } = event.nativeEvent;
+        onManage({ x: pageX, y: pageY, width: 1, height: 1 });
+      }}
     >
       <View
         className={cn(dialogClasses.spaceDot, !workspace.color && "bg-accent")}
@@ -92,6 +98,18 @@ function SpaceRow({
       {selected && (
         <ChromeIcon name="check" className="size-[16px] text-accent-strong" />
       )}
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={tr("dialog.manageSpace", { name: workspace.name })}
+        hitSlop={8}
+        className={dialogClasses.closeButton}
+        onPress={(event) => {
+          const { pageX, pageY } = event.nativeEvent;
+          onManage({ x: pageX, y: pageY, width: 1, height: 1 });
+        }}
+      >
+        <ChromeIcon name="more" className="size-[16px] text-icon" />
+      </Pressable>
     </Pressable>
   );
 }
@@ -116,82 +134,170 @@ export interface SpaceSwitcherProps {
   counts: Record<string, number>;
   onSwitch: (id: string) => void;
   onCreate: () => void;
+  onRename: (id: string, name: string) => void;
+  onDelete: (id: string) => void;
+  onReorder: (id: string, index: number) => void;
   onClose: () => void;
 }
 
-export function SpaceSwitcherDialog({
+function SpaceSwitcherContent({
   workspaces,
   activeWorkspaceId,
   counts,
   onSwitch,
   onCreate,
+  onRename,
+  onDelete,
+  onReorder,
   onClose,
-}: SpaceSwitcherProps) {
+  variant,
+}: SpaceSwitcherProps & { variant: "dialog" | "sheet" }) {
   const { tr } = useI18n();
+  const [menu, setMenu] = useState<{
+    id: string;
+    anchor?: MenuAnchor;
+  } | null>(null);
+  const [renaming, setRenaming] = useState<{ id: string; value: string } | null>(
+    null
+  );
+  const menuWorkspace = menu
+    ? workspaces.find((workspace) => workspace.id === menu.id)
+    : undefined;
+  const menuIndex = menu
+    ? workspaces.findIndex((workspace) => workspace.id === menu.id)
+    : -1;
   return (
-    <DialogCard variant="dialog">
+    <DialogCard variant={variant}>
       <DialogHeader
-        title={<Text className={cn(dialogClasses.title, "flex-1")}>{tr("dialog.spaces")}</Text>}
+        title={
+          <Text className={cn(dialogClasses.title, "flex-1")}>
+            {tr("dialog.spaces")}
+          </Text>
+        }
         closeLabel={tr("dialog.closeSpaces")}
         onClose={onClose}
       />
-      <ScrollView
-        className="grow-0 shrink"
-        contentContainerClassName="gap-lg"
-        keyboardShouldPersistTaps="handled"
-      >
-        {workspaces.map((workspace) => (
-          <SpaceRow
-            key={workspace.id}
-            workspace={workspace}
-            selected={workspace.id === activeWorkspaceId}
-            count={counts[workspace.id] ?? 0}
-            onSwitch={() => onSwitch(workspace.id)}
+      {renaming ? (
+        <View className="gap-lg">
+          <TextInput
+            accessibilityLabel={tr("dialog.renameSpace")}
+            value={renaming.value}
+            onChangeText={(value) =>
+              setRenaming((current) =>
+                current ? { ...current, value } : current
+              )
+            }
+            autoFocus
+            className={dialogClasses.input}
+            disableFullscreenUI
           />
-        ))}
-      </ScrollView>
-      <NewSpaceRow onPress={onCreate} />
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={tr("common.save")}
+            disabled={!renaming.value.trim()}
+            className={cn(
+              dialogClasses.permissionButton,
+              dialogClasses.permissionPrimary,
+              !renaming.value.trim() && "opacity-disabled"
+            )}
+            onPress={() => {
+              const value = renaming.value.trim();
+              if (!value) return;
+              onRename(renaming.id, value);
+              setRenaming(null);
+            }}
+          >
+            <Text className={dialogClasses.permissionPrimaryText}>
+              {tr("common.save")}
+            </Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={tr("common.cancel")}
+            className={dialogClasses.permissionButton}
+            onPress={() => setRenaming(null)}
+          >
+            <Text className={dialogClasses.permissionButtonText}>
+              {tr("common.cancel")}
+            </Text>
+          </Pressable>
+        </View>
+      ) : (
+        <>
+          <ScrollView
+            className="grow-0 shrink"
+            contentContainerClassName="gap-lg"
+            keyboardShouldPersistTaps="handled"
+          >
+            {workspaces.map((workspace) => (
+              <SpaceRow
+                key={workspace.id}
+                workspace={workspace}
+                selected={workspace.id === activeWorkspaceId}
+                count={counts[workspace.id] ?? 0}
+                onSwitch={() => onSwitch(workspace.id)}
+                onManage={(anchor) => setMenu({ id: workspace.id, anchor })}
+              />
+            ))}
+          </ScrollView>
+          <NewSpaceRow onPress={onCreate} />
+        </>
+      )}
+      {menu && menuWorkspace && (
+        <ActionMenu
+          title={menuWorkspace.name}
+          anchor={menu.anchor}
+          onClose={() => setMenu(null)}
+          items={[
+            {
+              id: "rename",
+              label: tr("dialog.renameSpace"),
+              icon: "edit",
+              onPress: () => {
+                setRenaming({
+                  id: menuWorkspace.id,
+                  value: menuWorkspace.name,
+                });
+              },
+            },
+            {
+              id: "up",
+              label: tr("dialog.moveSpaceUp"),
+              icon: "chevronUp",
+              disabled: menuIndex <= 0,
+              onPress: () => onReorder(menuWorkspace.id, menuIndex - 1),
+            },
+            {
+              id: "down",
+              label: tr("dialog.moveSpaceDown"),
+              icon: "chevronDown",
+              disabled: menuIndex < 0 || menuIndex >= workspaces.length - 1,
+              onPress: () => onReorder(menuWorkspace.id, menuIndex + 1),
+            },
+            {
+              id: "delete",
+              label: tr("dialog.deleteSpace"),
+              icon: "trash",
+              destructive: true,
+              disabled: workspaces.length <= 1,
+              onPress: () => onDelete(menuWorkspace.id),
+            },
+          ]}
+        />
+      )}
     </DialogCard>
   );
+}
+
+export function SpaceSwitcherDialog(props: SpaceSwitcherProps) {
+  return <SpaceSwitcherContent {...props} variant="dialog" />;
 }
 
 // Phone-docked Space picker (issue #19): the same rows as the centered
 // dialog in a full-width bottom card; the list scrolls between the fixed
 // header and the new-Space action so long sets stay reachable.
-export function SpaceSheet({
-  workspaces,
-  activeWorkspaceId,
-  counts,
-  onSwitch,
-  onCreate,
-  onClose,
-}: SpaceSwitcherProps) {
-  const { tr } = useI18n();
-  return (
-    <DialogCard variant="sheet">
-      <DialogHeader
-        title={<Text className={cn(dialogClasses.title, "flex-1")}>{tr("dialog.spaces")}</Text>}
-        closeLabel={tr("dialog.closeSpaces")}
-        onClose={onClose}
-      />
-      <ScrollView
-        className="grow-0 shrink"
-        contentContainerClassName="gap-lg"
-        keyboardShouldPersistTaps="handled"
-      >
-        {workspaces.map((workspace) => (
-          <SpaceRow
-            key={workspace.id}
-            workspace={workspace}
-            selected={workspace.id === activeWorkspaceId}
-            count={counts[workspace.id] ?? 0}
-            onSwitch={() => onSwitch(workspace.id)}
-          />
-        ))}
-      </ScrollView>
-      <NewSpaceRow onPress={onCreate} />
-    </DialogCard>
-  );
+export function SpaceSheet(props: SpaceSwitcherProps) {
+  return <SpaceSwitcherContent {...props} variant="sheet" />;
 }
 
 export interface TabMenuTab {

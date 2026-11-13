@@ -294,6 +294,149 @@ impl BrowserState {
         Ok(self.snapshot())
     }
 
+    pub fn rename_workspace(&mut self, workspace_id: &str, name: &str) -> Result<Snapshot> {
+        let name = name.trim();
+        if name.is_empty() {
+            return Err(domain_error("workspace name must not be empty"));
+        }
+        if self
+            .snapshot
+            .workspaces
+            .iter()
+            .any(|workspace| workspace.name == name && workspace.id != workspace_id)
+        {
+            return Err(domain_error("workspace name must be unique"));
+        }
+        let mut candidate = self.snapshot.clone();
+        let workspace = candidate
+            .workspaces
+            .iter_mut()
+            .find(|workspace| workspace.id == workspace_id)
+            .ok_or_else(|| domain_error("workspace does not exist"))?;
+        workspace.name = name.into();
+        self.commit(candidate)
+    }
+
+    /// Reorders `workspaces` by moving the named Space to `index`. Order is
+    /// the sole presentation sequence for pills, chips, and Space cycling.
+    pub fn reorder_workspace(&mut self, workspace_id: &str, index: u32) -> Result<Snapshot> {
+        let mut candidate = self.snapshot.clone();
+        let from = candidate
+            .workspaces
+            .iter()
+            .position(|workspace| workspace.id == workspace_id)
+            .ok_or_else(|| domain_error("workspace does not exist"))?;
+        let index =
+            usize::try_from(index).map_err(|_| domain_error("workspace index is out of bounds"))?;
+        if index >= candidate.workspaces.len() {
+            return Err(domain_error("workspace index is out of bounds"));
+        }
+        let workspace = candidate.workspaces.remove(from);
+        candidate.workspaces.insert(index, workspace);
+        self.commit(candidate)
+    }
+
+    /// Deletes a Space after migrating its tabs, bookmarks, folders, and
+    /// split groups onto a surviving neighbor. The last Space cannot go;
+    /// favorites keep their global rows but re-home onto the destination.
+    pub fn remove_workspace(&mut self, workspace_id: &str) -> Result<Snapshot> {
+        if self.snapshot.workspaces.len() <= 1 {
+            return Err(domain_error("the last workspace cannot be deleted"));
+        }
+        let from = self
+            .snapshot
+            .workspaces
+            .iter()
+            .position(|workspace| workspace.id == workspace_id)
+            .ok_or_else(|| domain_error("workspace does not exist"))?;
+        // Prefer the previous neighbor so deleting "Space 3 of 3" lands on 2.
+        let destination_id = self.snapshot.workspaces[if from > 0 { from - 1 } else { 1 }]
+            .id
+            .clone();
+        let mut candidate = self.snapshot.clone();
+        for tab in &mut candidate.tabs {
+            if tab.workspace_id == workspace_id {
+                tab.workspace_id = destination_id.clone();
+            }
+        }
+        for bookmark in &mut candidate.bookmarks {
+            if bookmark.workspace_id == workspace_id {
+                bookmark.workspace_id = destination_id.clone();
+            }
+        }
+        for folder in &mut candidate.bookmark_folders {
+            if folder.workspace_id == workspace_id {
+                folder.workspace_id = destination_id.clone();
+            }
+        }
+        for group in &mut candidate.split_groups {
+            if group.workspace_id == workspace_id {
+                group.workspace_id = destination_id.clone();
+            }
+        }
+        candidate.workspaces.remove(from);
+        let was_active = candidate.active_workspace_id == workspace_id;
+        if was_active {
+            candidate.active_workspace_id = destination_id.clone();
+        }
+        repair_last_active(&mut candidate);
+        let mut next_tab_id = None;
+        if was_active {
+            let remembered = candidate
+                .workspaces
+                .iter()
+                .find(|workspace| workspace.id == destination_id)
+                .and_then(|workspace| workspace.last_active_tab_id.clone())
+                .filter(|id| {
+                    candidate
+                        .tabs
+                        .iter()
+                        .any(|tab| tab.id == *id && tab_available_in(tab, &destination_id))
+                });
+            let fallback = candidate
+                .tabs
+                .iter()
+                .find(|tab| tab.workspace_id == destination_id && !tab.suspended)
+                .map(|tab| tab.id.clone());
+            let active_id = match remembered.or(fallback) {
+                Some(id) => id,
+                None => {
+                    // Destination has no open tab after migration; seed one so
+                    // the canvas never lands empty (mirrors activate_workspace).
+                    let id = format!("tab-{}", self.next_tab_id);
+                    next_tab_id = Some(
+                        self.next_tab_id
+                            .checked_add(1)
+                            .ok_or_else(|| domain_error("tab ID space exhausted"))?,
+                    );
+                    candidate.tabs.push(Tab {
+                        id: id.clone(),
+                        workspace_id: destination_id.clone(),
+                        url: "about:blank".into(),
+                        title: String::new(),
+                        custom_title: String::new(),
+                        favorite: false,
+                        pinned: false,
+                        private: false,
+                        bookmark_id: String::new(),
+                        home_url: String::new(),
+                        home_title: String::new(),
+                        suspended: false,
+                        updated_at: now_ms(),
+                    });
+                    id
+                }
+            };
+            set_last_active(&mut candidate, &destination_id, Some(&active_id));
+            candidate.active_tab_id = Some(active_id);
+        }
+        self.commit(candidate)?;
+        if let Some(next) = next_tab_id {
+            self.next_tab_id = next;
+        }
+        Ok(self.snapshot())
+    }
+
     pub fn create_tab(&mut self, workspace_id: &str, url: &str) -> Result<Snapshot> {
         self.create_tab_with_request(workspace_id, url, None, false)
     }

@@ -368,6 +368,9 @@ function fixture(seed: Snapshot = initial()) {
       return result();
     },
     workspaceCreate: unsupported,
+    workspaceRename: unsupported,
+    workspaceRemove: unsupported,
+    workspaceMove: unsupported,
     tabCreate: async ({ workspaceId, url, private: isPrivate }) => {
       const id = `created-${state.revision + 1}`;
       state = {

@@ -35,6 +35,9 @@ async function fixture(seed = initial()) {
     snapshotRestore: unsupported,
     workspaceCreate: unsupported,
     workspaceActivate: unsupported,
+    workspaceRename: unsupported,
+    workspaceRemove: unsupported,
+    workspaceMove: unsupported,
     tabCreate: unsupported,
     tabActivate: async ({ tabId }) => {
       events.push(`activate:${tabId}`);

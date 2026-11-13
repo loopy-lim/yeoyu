@@ -23,7 +23,7 @@ using namespace facebook::jsi;
 namespace jsi = facebook::jsi;
 namespace rc = rustra::codec;
 namespace rustra::generated {
-const char* compiled_contract_hash() { return "938480b835ce4b8b769f5a3027f4cfbb022b9cdc97b32156bd35d88223c99b79"; }
+const char* compiled_contract_hash() { return "bc91176c1f8247a25bb6c293ddae363ad376936850c1fcd97c4779f10fab0857"; }
 }
 
 // Each invocation owns its captured map values until canonical encoding finishes.
@@ -145,29 +145,29 @@ private:
 };
 std::shared_ptr<const BoundCodecContext> make_bound_codec_context(Runtime& rt, uint16_t commandId) {
   switch (commandId) {
-    case 20: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"title", "url", "folderId"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
-    case 24: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"title"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
-    case 26: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"folderId"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
-    case 25: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"folderId", "title"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
-    case 23: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"bookmarkId", "index"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
-    case 29: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"bookmarkId", "reuseTabId", "private"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
-    case 22: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"bookmarkId"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
-    case 27: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"bookmarkId", "folderId"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
-    case 21: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"bookmarkId", "title", "url"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 23: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"title", "url", "folderId"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 27: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"title"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 29: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"folderId"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 28: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"folderId", "title"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 26: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"bookmarkId", "index"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 32: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"bookmarkId", "reuseTabId", "private"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 25: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"bookmarkId"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 30: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"bookmarkId", "folderId"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 24: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"bookmarkId", "title", "url"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
     case 1: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
-    case 19: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {}, {"bindings", "key", "meta", "ctrl", "alt", "shift", "command"}));
-    case 18: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"bindings", "key", "meta", "ctrl", "alt", "shift", "command"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
-    case 17: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"json"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
-    case 31: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"splitGroupId"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
-    case 30: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"splitGroupId", "name", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 22: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {}, {"bindings", "key", "meta", "ctrl", "alt", "shift", "command"}));
+    case 21: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"bindings", "key", "meta", "ctrl", "alt", "shift", "command"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 20: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"json"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 34: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"splitGroupId"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 33: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"splitGroupId", "name", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
     case 9: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"tabId"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
     case 10: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"tabId"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
     case 7: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"workspaceId", "url", "private"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
     case 14: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"tabId", "index"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
     case 11: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"tabId", "url", "title"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
     case 8: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"requestId", "url"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
-    case 32: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"tabId", "title"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
-    case 28: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"tabId"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 35: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"tabId", "title"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 31: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"tabId"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
     case 12: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"tabId", "favorite"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
     case 13: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"tabId", "pinned"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
     case 15: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"tabId", "workspaceId"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
@@ -176,6 +176,9 @@ std::shared_ptr<const BoundCodecContext> make_bound_codec_context(Runtime& rt, u
     case 3: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"json"}, {"spaces", "tabs", "bookmarks", "folders", "favorites", "duplicateUrls", "hasKeyBindings", "presentation"}));
     case 16: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"workspaceId"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
     case 6: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"name"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 19: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"workspaceId", "index"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 18: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"workspaceId"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 17: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"workspaceId", "name"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
     default: throw JSError(rt, "rustra: no bound codec for cmd_id " + std::to_string(commandId));
   }
 }
@@ -374,7 +377,7 @@ static void encode_body_bookmarkCreate(jsi::Runtime& rt, const jsi::Object& args
   { auto _v = argsObj.getProperty(rt, _prop_2).getString(rt).utf8(rt); w.push_string(_v); }
 }
 static void encode_bookmarkCreate(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
-  w.push_u8(20); w.push_u8(0); // cmd_id = 20 LE
+  w.push_u8(23); w.push_u8(0); // cmd_id = 23 LE
   auto argsObj = args.asObject(rt);
   const std::array<jsi::PropNameID, 3> _properties{jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "folderId")};
   encode_body_bookmarkCreate(rt, argsObj, w, _properties.data());
@@ -383,7 +386,7 @@ static void encode_bookmarkCreate(jsi::Runtime& rt, const jsi::Value& args, rc::
 // (Tier 1 positional) 개별 인자 → 직접 인코딩. argsObj 경유 대비 JSI 프로퍼티 조회 3회 제거.
 static void encode_pos_bookmarkCreate(jsi::Runtime& rt, const jsi::Value* argv, size_t argc, rc::Writer& w) {
   if (argc != 3) throw jsi::JSError(rt, "rustra: bookmarkCreate expects 3 positional argument(s), got " + std::to_string(argc));
-  w.push_u8(20); w.push_u8(0); // cmd_id = 20 LE
+  w.push_u8(23); w.push_u8(0); // cmd_id = 23 LE
   { auto _s = argv[0].asString(rt).utf8(rt); w.push_string(_s); }
   { auto _s = argv[1].asString(rt).utf8(rt); w.push_string(_s); }
   { auto _s = argv[2].asString(rt).utf8(rt); w.push_string(_s); }
@@ -514,7 +517,7 @@ static void encode_body_bookmarkFolderCreate(jsi::Runtime& rt, const jsi::Object
   { auto _v = argsObj.getProperty(rt, _prop_0).getString(rt).utf8(rt); w.push_string(_v); }
 }
 static void encode_bookmarkFolderCreate(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
-  w.push_u8(24); w.push_u8(0); // cmd_id = 24 LE
+  w.push_u8(27); w.push_u8(0); // cmd_id = 27 LE
   auto argsObj = args.asObject(rt);
   const std::array<jsi::PropNameID, 1> _properties{jsi::PropNameID::forAscii(rt, "title")};
   encode_body_bookmarkFolderCreate(rt, argsObj, w, _properties.data());
@@ -523,7 +526,7 @@ static void encode_bookmarkFolderCreate(jsi::Runtime& rt, const jsi::Value& args
 // (Tier 1 positional) 개별 인자 → 직접 인코딩. argsObj 경유 대비 JSI 프로퍼티 조회 1회 제거.
 static void encode_pos_bookmarkFolderCreate(jsi::Runtime& rt, const jsi::Value* argv, size_t argc, rc::Writer& w) {
   if (argc != 1) throw jsi::JSError(rt, "rustra: bookmarkFolderCreate expects 1 positional argument(s), got " + std::to_string(argc));
-  w.push_u8(24); w.push_u8(0); // cmd_id = 24 LE
+  w.push_u8(27); w.push_u8(0); // cmd_id = 27 LE
   { auto _s = argv[0].asString(rt).utf8(rt); w.push_string(_s); }
 }
 
@@ -652,7 +655,7 @@ static void encode_body_bookmarkFolderRemove(jsi::Runtime& rt, const jsi::Object
   { auto _v = argsObj.getProperty(rt, _prop_0).getString(rt).utf8(rt); w.push_string(_v); }
 }
 static void encode_bookmarkFolderRemove(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
-  w.push_u8(26); w.push_u8(0); // cmd_id = 26 LE
+  w.push_u8(29); w.push_u8(0); // cmd_id = 29 LE
   auto argsObj = args.asObject(rt);
   const std::array<jsi::PropNameID, 1> _properties{jsi::PropNameID::forAscii(rt, "folderId")};
   encode_body_bookmarkFolderRemove(rt, argsObj, w, _properties.data());
@@ -661,7 +664,7 @@ static void encode_bookmarkFolderRemove(jsi::Runtime& rt, const jsi::Value& args
 // (Tier 1 positional) 개별 인자 → 직접 인코딩. argsObj 경유 대비 JSI 프로퍼티 조회 1회 제거.
 static void encode_pos_bookmarkFolderRemove(jsi::Runtime& rt, const jsi::Value* argv, size_t argc, rc::Writer& w) {
   if (argc != 1) throw jsi::JSError(rt, "rustra: bookmarkFolderRemove expects 1 positional argument(s), got " + std::to_string(argc));
-  w.push_u8(26); w.push_u8(0); // cmd_id = 26 LE
+  w.push_u8(29); w.push_u8(0); // cmd_id = 29 LE
   { auto _s = argv[0].asString(rt).utf8(rt); w.push_string(_s); }
 }
 
@@ -792,7 +795,7 @@ static void encode_body_bookmarkFolderRename(jsi::Runtime& rt, const jsi::Object
   { auto _v = argsObj.getProperty(rt, _prop_1).getString(rt).utf8(rt); w.push_string(_v); }
 }
 static void encode_bookmarkFolderRename(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
-  w.push_u8(25); w.push_u8(0); // cmd_id = 25 LE
+  w.push_u8(28); w.push_u8(0); // cmd_id = 28 LE
   auto argsObj = args.asObject(rt);
   const std::array<jsi::PropNameID, 2> _properties{jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "title")};
   encode_body_bookmarkFolderRename(rt, argsObj, w, _properties.data());
@@ -801,7 +804,7 @@ static void encode_bookmarkFolderRename(jsi::Runtime& rt, const jsi::Value& args
 // (Tier 1 positional) 개별 인자 → 직접 인코딩. argsObj 경유 대비 JSI 프로퍼티 조회 2회 제거.
 static void encode_pos_bookmarkFolderRename(jsi::Runtime& rt, const jsi::Value* argv, size_t argc, rc::Writer& w) {
   if (argc != 2) throw jsi::JSError(rt, "rustra: bookmarkFolderRename expects 2 positional argument(s), got " + std::to_string(argc));
-  w.push_u8(25); w.push_u8(0); // cmd_id = 25 LE
+  w.push_u8(28); w.push_u8(0); // cmd_id = 28 LE
   { auto _s = argv[0].asString(rt).utf8(rt); w.push_string(_s); }
   { auto _s = argv[1].asString(rt).utf8(rt); w.push_string(_s); }
 }
@@ -933,7 +936,7 @@ static void encode_body_bookmarkMove(jsi::Runtime& rt, const jsi::Object& argsOb
   w.push_uvar(rustra_u64(rt, argsObj.getProperty(rt, _prop_1), "index"));
 }
 static void encode_bookmarkMove(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
-  w.push_u8(23); w.push_u8(0); // cmd_id = 23 LE
+  w.push_u8(26); w.push_u8(0); // cmd_id = 26 LE
   auto argsObj = args.asObject(rt);
   const std::array<jsi::PropNameID, 2> _properties{jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "index")};
   encode_body_bookmarkMove(rt, argsObj, w, _properties.data());
@@ -942,7 +945,7 @@ static void encode_bookmarkMove(jsi::Runtime& rt, const jsi::Value& args, rc::Wr
 // (Tier 1 positional) 개별 인자 → 직접 인코딩. argsObj 경유 대비 JSI 프로퍼티 조회 2회 제거.
 static void encode_pos_bookmarkMove(jsi::Runtime& rt, const jsi::Value* argv, size_t argc, rc::Writer& w) {
   if (argc != 2) throw jsi::JSError(rt, "rustra: bookmarkMove expects 2 positional argument(s), got " + std::to_string(argc));
-  w.push_u8(23); w.push_u8(0); // cmd_id = 23 LE
+  w.push_u8(26); w.push_u8(0); // cmd_id = 26 LE
   { auto _s = argv[0].asString(rt).utf8(rt); w.push_string(_s); }
   w.push_uvar(rustra_u64(rt, argv[1], "index"));
 }
@@ -1076,7 +1079,7 @@ static void encode_body_bookmarkOpen(jsi::Runtime& rt, const jsi::Object& argsOb
   { auto _v = argsObj.getProperty(rt, _prop_2).getBool(); w.push_bool(_v); }
 }
 static void encode_bookmarkOpen(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
-  w.push_u8(29); w.push_u8(0); // cmd_id = 29 LE
+  w.push_u8(32); w.push_u8(0); // cmd_id = 32 LE
   auto argsObj = args.asObject(rt);
   const std::array<jsi::PropNameID, 3> _properties{jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "reuseTabId"), jsi::PropNameID::forAscii(rt, "private")};
   encode_body_bookmarkOpen(rt, argsObj, w, _properties.data());
@@ -1085,7 +1088,7 @@ static void encode_bookmarkOpen(jsi::Runtime& rt, const jsi::Value& args, rc::Wr
 // (Tier 1 positional) 개별 인자 → 직접 인코딩. argsObj 경유 대비 JSI 프로퍼티 조회 3회 제거.
 static void encode_pos_bookmarkOpen(jsi::Runtime& rt, const jsi::Value* argv, size_t argc, rc::Writer& w) {
   if (argc != 3) throw jsi::JSError(rt, "rustra: bookmarkOpen expects 3 positional argument(s), got " + std::to_string(argc));
-  w.push_u8(29); w.push_u8(0); // cmd_id = 29 LE
+  w.push_u8(32); w.push_u8(0); // cmd_id = 32 LE
   { auto _s = argv[0].asString(rt).utf8(rt); w.push_string(_s); }
   { auto _s = argv[1].asString(rt).utf8(rt); w.push_string(_s); }
   w.push_bool(argv[2].asBool());
@@ -1216,7 +1219,7 @@ static void encode_body_bookmarkRemove(jsi::Runtime& rt, const jsi::Object& args
   { auto _v = argsObj.getProperty(rt, _prop_0).getString(rt).utf8(rt); w.push_string(_v); }
 }
 static void encode_bookmarkRemove(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
-  w.push_u8(22); w.push_u8(0); // cmd_id = 22 LE
+  w.push_u8(25); w.push_u8(0); // cmd_id = 25 LE
   auto argsObj = args.asObject(rt);
   const std::array<jsi::PropNameID, 1> _properties{jsi::PropNameID::forAscii(rt, "bookmarkId")};
   encode_body_bookmarkRemove(rt, argsObj, w, _properties.data());
@@ -1225,7 +1228,7 @@ static void encode_bookmarkRemove(jsi::Runtime& rt, const jsi::Value& args, rc::
 // (Tier 1 positional) 개별 인자 → 직접 인코딩. argsObj 경유 대비 JSI 프로퍼티 조회 1회 제거.
 static void encode_pos_bookmarkRemove(jsi::Runtime& rt, const jsi::Value* argv, size_t argc, rc::Writer& w) {
   if (argc != 1) throw jsi::JSError(rt, "rustra: bookmarkRemove expects 1 positional argument(s), got " + std::to_string(argc));
-  w.push_u8(22); w.push_u8(0); // cmd_id = 22 LE
+  w.push_u8(25); w.push_u8(0); // cmd_id = 25 LE
   { auto _s = argv[0].asString(rt).utf8(rt); w.push_string(_s); }
 }
 
@@ -1356,7 +1359,7 @@ static void encode_body_bookmarkSetFolder(jsi::Runtime& rt, const jsi::Object& a
   { auto _v = argsObj.getProperty(rt, _prop_1).getString(rt).utf8(rt); w.push_string(_v); }
 }
 static void encode_bookmarkSetFolder(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
-  w.push_u8(27); w.push_u8(0); // cmd_id = 27 LE
+  w.push_u8(30); w.push_u8(0); // cmd_id = 30 LE
   auto argsObj = args.asObject(rt);
   const std::array<jsi::PropNameID, 2> _properties{jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "folderId")};
   encode_body_bookmarkSetFolder(rt, argsObj, w, _properties.data());
@@ -1365,7 +1368,7 @@ static void encode_bookmarkSetFolder(jsi::Runtime& rt, const jsi::Value& args, r
 // (Tier 1 positional) 개별 인자 → 직접 인코딩. argsObj 경유 대비 JSI 프로퍼티 조회 2회 제거.
 static void encode_pos_bookmarkSetFolder(jsi::Runtime& rt, const jsi::Value* argv, size_t argc, rc::Writer& w) {
   if (argc != 2) throw jsi::JSError(rt, "rustra: bookmarkSetFolder expects 2 positional argument(s), got " + std::to_string(argc));
-  w.push_u8(27); w.push_u8(0); // cmd_id = 27 LE
+  w.push_u8(30); w.push_u8(0); // cmd_id = 30 LE
   { auto _s = argv[0].asString(rt).utf8(rt); w.push_string(_s); }
   { auto _s = argv[1].asString(rt).utf8(rt); w.push_string(_s); }
 }
@@ -1499,7 +1502,7 @@ static void encode_body_bookmarkUpdate(jsi::Runtime& rt, const jsi::Object& args
   { auto _v = argsObj.getProperty(rt, _prop_2).getString(rt).utf8(rt); w.push_string(_v); }
 }
 static void encode_bookmarkUpdate(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
-  w.push_u8(21); w.push_u8(0); // cmd_id = 21 LE
+  w.push_u8(24); w.push_u8(0); // cmd_id = 24 LE
   auto argsObj = args.asObject(rt);
   const std::array<jsi::PropNameID, 3> _properties{jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "url")};
   encode_body_bookmarkUpdate(rt, argsObj, w, _properties.data());
@@ -1508,7 +1511,7 @@ static void encode_bookmarkUpdate(jsi::Runtime& rt, const jsi::Value& args, rc::
 // (Tier 1 positional) 개별 인자 → 직접 인코딩. argsObj 경유 대비 JSI 프로퍼티 조회 3회 제거.
 static void encode_pos_bookmarkUpdate(jsi::Runtime& rt, const jsi::Value* argv, size_t argc, rc::Writer& w) {
   if (argc != 3) throw jsi::JSError(rt, "rustra: bookmarkUpdate expects 3 positional argument(s), got " + std::to_string(argc));
-  w.push_u8(21); w.push_u8(0); // cmd_id = 21 LE
+  w.push_u8(24); w.push_u8(0); // cmd_id = 24 LE
   { auto _s = argv[0].asString(rt).utf8(rt); w.push_string(_s); }
   { auto _s = argv[1].asString(rt).utf8(rt); w.push_string(_s); }
   { auto _s = argv[2].asString(rt).utf8(rt); w.push_string(_s); }
@@ -1766,7 +1769,7 @@ static jsi::Value decode_browserSnapshot(jsi::Runtime& rt, rc::Reader& r) {
 static void encode_body_keymapDefaults(jsi::Runtime& rt, const jsi::Object& argsObj, rc::Writer& w, const jsi::PropNameID* _properties) {
 }
 static void encode_keymapDefaults(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
-  w.push_u8(19); w.push_u8(0); // cmd_id = 19 LE
+  w.push_u8(22); w.push_u8(0); // cmd_id = 22 LE
   auto argsObj = args.asObject(rt);
   const std::array<jsi::PropNameID, 0> _properties{};
   encode_body_keymapDefaults(rt, argsObj, w, _properties.data());
@@ -1817,7 +1820,7 @@ static void encode_body_keymapSet(jsi::Runtime& rt, const jsi::Object& argsObj, 
     } }
 }
 static void encode_keymapSet(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
-  w.push_u8(18); w.push_u8(0); // cmd_id = 18 LE
+  w.push_u8(21); w.push_u8(0); // cmd_id = 21 LE
   auto argsObj = args.asObject(rt);
   const std::array<jsi::PropNameID, 7> _properties{jsi::PropNameID::forAscii(rt, "bindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command")};
   encode_body_keymapSet(rt, argsObj, w, _properties.data());
@@ -1948,7 +1951,7 @@ static void encode_body_snapshotRestore(jsi::Runtime& rt, const jsi::Object& arg
   { auto _v = argsObj.getProperty(rt, _prop_0).getString(rt).utf8(rt); w.push_string(_v); }
 }
 static void encode_snapshotRestore(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
-  w.push_u8(17); w.push_u8(0); // cmd_id = 17 LE
+  w.push_u8(20); w.push_u8(0); // cmd_id = 20 LE
   auto argsObj = args.asObject(rt);
   const std::array<jsi::PropNameID, 1> _properties{jsi::PropNameID::forAscii(rt, "json")};
   encode_body_snapshotRestore(rt, argsObj, w, _properties.data());
@@ -1957,7 +1960,7 @@ static void encode_snapshotRestore(jsi::Runtime& rt, const jsi::Value& args, rc:
 // (Tier 1 positional) 개별 인자 → 직접 인코딩. argsObj 경유 대비 JSI 프로퍼티 조회 1회 제거.
 static void encode_pos_snapshotRestore(jsi::Runtime& rt, const jsi::Value* argv, size_t argc, rc::Writer& w) {
   if (argc != 1) throw jsi::JSError(rt, "rustra: snapshotRestore expects 1 positional argument(s), got " + std::to_string(argc));
-  w.push_u8(17); w.push_u8(0); // cmd_id = 17 LE
+  w.push_u8(20); w.push_u8(0); // cmd_id = 20 LE
   { auto _s = argv[0].asString(rt).utf8(rt); w.push_string(_s); }
 }
 
@@ -2086,7 +2089,7 @@ static void encode_body_splitGroupRemove(jsi::Runtime& rt, const jsi::Object& ar
   { auto _v = argsObj.getProperty(rt, _prop_0).getString(rt).utf8(rt); w.push_string(_v); }
 }
 static void encode_splitGroupRemove(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
-  w.push_u8(31); w.push_u8(0); // cmd_id = 31 LE
+  w.push_u8(34); w.push_u8(0); // cmd_id = 34 LE
   auto argsObj = args.asObject(rt);
   const std::array<jsi::PropNameID, 1> _properties{jsi::PropNameID::forAscii(rt, "splitGroupId")};
   encode_body_splitGroupRemove(rt, argsObj, w, _properties.data());
@@ -2095,7 +2098,7 @@ static void encode_splitGroupRemove(jsi::Runtime& rt, const jsi::Value& args, rc
 // (Tier 1 positional) 개별 인자 → 직접 인코딩. argsObj 경유 대비 JSI 프로퍼티 조회 1회 제거.
 static void encode_pos_splitGroupRemove(jsi::Runtime& rt, const jsi::Value* argv, size_t argc, rc::Writer& w) {
   if (argc != 1) throw jsi::JSError(rt, "rustra: splitGroupRemove expects 1 positional argument(s), got " + std::to_string(argc));
-  w.push_u8(31); w.push_u8(0); // cmd_id = 31 LE
+  w.push_u8(34); w.push_u8(0); // cmd_id = 34 LE
   { auto _s = argv[0].asString(rt).utf8(rt); w.push_string(_s); }
 }
 
@@ -2238,7 +2241,7 @@ static void encode_body_splitGroupSave(jsi::Runtime& rt, const jsi::Object& args
   { auto _v = argsObj.getProperty(rt, _prop_7).getString(rt).utf8(rt); w.push_string(_v); }
 }
 static void encode_splitGroupSave(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
-  w.push_u8(30); w.push_u8(0); // cmd_id = 30 LE
+  w.push_u8(33); w.push_u8(0); // cmd_id = 33 LE
   auto argsObj = args.asObject(rt);
   const std::array<jsi::PropNameID, 8> _properties{jsi::PropNameID::forAscii(rt, "splitGroupId"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl")};
   encode_body_splitGroupSave(rt, argsObj, w, _properties.data());
@@ -3217,7 +3220,7 @@ static void encode_body_tabRename(jsi::Runtime& rt, const jsi::Object& argsObj, 
   { auto _v = argsObj.getProperty(rt, _prop_1).getString(rt).utf8(rt); w.push_string(_v); }
 }
 static void encode_tabRename(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
-  w.push_u8(32); w.push_u8(0); // cmd_id = 32 LE
+  w.push_u8(35); w.push_u8(0); // cmd_id = 35 LE
   auto argsObj = args.asObject(rt);
   const std::array<jsi::PropNameID, 2> _properties{jsi::PropNameID::forAscii(rt, "tabId"), jsi::PropNameID::forAscii(rt, "title")};
   encode_body_tabRename(rt, argsObj, w, _properties.data());
@@ -3226,7 +3229,7 @@ static void encode_tabRename(jsi::Runtime& rt, const jsi::Value& args, rc::Write
 // (Tier 1 positional) 개별 인자 → 직접 인코딩. argsObj 경유 대비 JSI 프로퍼티 조회 2회 제거.
 static void encode_pos_tabRename(jsi::Runtime& rt, const jsi::Value* argv, size_t argc, rc::Writer& w) {
   if (argc != 2) throw jsi::JSError(rt, "rustra: tabRename expects 2 positional argument(s), got " + std::to_string(argc));
-  w.push_u8(32); w.push_u8(0); // cmd_id = 32 LE
+  w.push_u8(35); w.push_u8(0); // cmd_id = 35 LE
   { auto _s = argv[0].asString(rt).utf8(rt); w.push_string(_s); }
   { auto _s = argv[1].asString(rt).utf8(rt); w.push_string(_s); }
 }
@@ -3356,7 +3359,7 @@ static void encode_body_tabReset(jsi::Runtime& rt, const jsi::Object& argsObj, r
   { auto _v = argsObj.getProperty(rt, _prop_0).getString(rt).utf8(rt); w.push_string(_v); }
 }
 static void encode_tabReset(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
-  w.push_u8(28); w.push_u8(0); // cmd_id = 28 LE
+  w.push_u8(31); w.push_u8(0); // cmd_id = 31 LE
   auto argsObj = args.asObject(rt);
   const std::array<jsi::PropNameID, 1> _properties{jsi::PropNameID::forAscii(rt, "tabId")};
   encode_body_tabReset(rt, argsObj, w, _properties.data());
@@ -3365,7 +3368,7 @@ static void encode_tabReset(jsi::Runtime& rt, const jsi::Value& args, rc::Writer
 // (Tier 1 positional) 개별 인자 → 직접 인코딩. argsObj 경유 대비 JSI 프로퍼티 조회 1회 제거.
 static void encode_pos_tabReset(jsi::Runtime& rt, const jsi::Value* argv, size_t argc, rc::Writer& w) {
   if (argc != 1) throw jsi::JSError(rt, "rustra: tabReset expects 1 positional argument(s), got " + std::to_string(argc));
-  w.push_u8(28); w.push_u8(0); // cmd_id = 28 LE
+  w.push_u8(31); w.push_u8(0); // cmd_id = 31 LE
   { auto _s = argv[0].asString(rt).utf8(rt); w.push_string(_s); }
 }
 
@@ -4512,52 +4515,472 @@ static jsi::Value decode_workspaceCreate(jsi::Runtime& rt, rc::Reader& r) {
   return decode_body_workspaceCreate(rt, resultObj, r, _properties.data());
 }
 
+static void encode_body_workspaceMove(jsi::Runtime& rt, const jsi::Object& argsObj, rc::Writer& w, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  const auto& _prop_1 = _properties[1];
+  { auto _v = argsObj.getProperty(rt, _prop_0).getString(rt).utf8(rt); w.push_string(_v); }
+  w.push_uvar(rustra_u64(rt, argsObj.getProperty(rt, _prop_1), "index"));
+}
+static void encode_workspaceMove(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
+  w.push_u8(19); w.push_u8(0); // cmd_id = 19 LE
+  auto argsObj = args.asObject(rt);
+  const std::array<jsi::PropNameID, 2> _properties{jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "index")};
+  encode_body_workspaceMove(rt, argsObj, w, _properties.data());
+}
+
+// (Tier 1 positional) 개별 인자 → 직접 인코딩. argsObj 경유 대비 JSI 프로퍼티 조회 2회 제거.
+static void encode_pos_workspaceMove(jsi::Runtime& rt, const jsi::Value* argv, size_t argc, rc::Writer& w) {
+  if (argc != 2) throw jsi::JSError(rt, "rustra: workspaceMove expects 2 positional argument(s), got " + std::to_string(argc));
+  w.push_u8(19); w.push_u8(0); // cmd_id = 19 LE
+  { auto _s = argv[0].asString(rt).utf8(rt); w.push_string(_s); }
+  w.push_uvar(rustra_u64(rt, argv[1], "index"));
+}
+
+static jsi::Value decode_body_workspaceMove(jsi::Runtime& rt, jsi::Object& resultObj, rc::Reader& r, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  const auto& _prop_1 = _properties[1];
+  const auto& _prop_2 = _properties[2];
+  const auto& _prop_3 = _properties[3];
+  const auto& _prop_4 = _properties[4];
+  const auto& _prop_5 = _properties[5];
+  const auto& _prop_6 = _properties[6];
+  const auto& _prop_7 = _properties[7];
+  const auto& _prop_8 = _properties[8];
+  const auto& _prop_9 = _properties[9];
+  const auto& _prop_10 = _properties[10];
+  const auto& _prop_11 = _properties[11];
+  const auto& _prop_12 = _properties[12];
+  const auto& _prop_13 = _properties[13];
+  const auto& _prop_14 = _properties[14];
+  const auto& _prop_15 = _properties[15];
+  const auto& _prop_16 = _properties[16];
+  const auto& _prop_17 = _properties[17];
+  const auto& _prop_18 = _properties[18];
+  const auto& _prop_19 = _properties[19];
+  const auto& _prop_20 = _properties[20];
+  const auto& _prop_21 = _properties[21];
+  const auto& _prop_22 = _properties[22];
+  const auto& _prop_23 = _properties[23];
+  const auto& _prop_24 = _properties[24];
+  const auto& _prop_25 = _properties[25];
+  const auto& _prop_26 = _properties[26];
+  const auto& _prop_27 = _properties[27];
+  const auto& _prop_28 = _properties[28];
+  const auto& _prop_29 = _properties[29];
+  const auto& _prop_30 = _properties[30];
+  const auto& _prop_31 = _properties[31];
+  const auto& _prop_32 = _properties[32];
+  const auto& _prop_33 = _properties[33];
+  const auto& _prop_34 = _properties[34];
+  const auto& _prop_35 = _properties[35];
+  const auto& _prop_36 = _properties[36];
+  const auto& _prop_37 = _properties[37];
+  const auto& _prop_38 = _properties[38];
+  const auto& _prop_39 = _properties[39];
+  const auto& _prop_40 = _properties[40];
+  resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
+  resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
+    for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_6, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _tag = r.read_u8(); if (_tag == 0) { _obj.setProperty(rt, _prop_7, jsi::Value::null()); } else { { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_7, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+      _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
+    resultObj.setProperty(rt, _prop_3, _arr); }
+  { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
+    for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_12, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_13, r.read_bool());
+      _obj.setProperty(rt, _prop_14, r.read_bool());
+      _obj.setProperty(rt, _prop_15, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_18, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_19, r.read_bool());
+      _obj.setProperty(rt, _prop_20, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
+    resultObj.setProperty(rt, _prop_8, _arr); }
+  { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
+    for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_22, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
+    resultObj.setProperty(rt, _prop_21, _arr); }
+  { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
+    for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
+    resultObj.setProperty(rt, _prop_23, _arr); }
+  { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
+    for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_25, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_26, (double)r.read_uvar());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_27, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_28, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_29, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_30, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
+    resultObj.setProperty(rt, _prop_24, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_32, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+  { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
+    for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_34, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_35, r.read_bool());
+      _obj.setProperty(rt, _prop_36, r.read_bool());
+      _obj.setProperty(rt, _prop_37, r.read_bool());
+      _obj.setProperty(rt, _prop_38, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_39, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
+    resultObj.setProperty(rt, _prop_33, _arr); }
+  resultObj.setProperty(rt, _prop_40, (double)r.read_uvar());
+  return std::move(resultObj);
+}
+static jsi::Value decode_workspaceMove(jsi::Runtime& rt, rc::Reader& r) {
+  auto resultObj = jsi::Object(rt);
+  const std::array<jsi::PropNameID, 41> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  return decode_body_workspaceMove(rt, resultObj, r, _properties.data());
+}
+
+static void encode_body_workspaceRemove(jsi::Runtime& rt, const jsi::Object& argsObj, rc::Writer& w, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  { auto _v = argsObj.getProperty(rt, _prop_0).getString(rt).utf8(rt); w.push_string(_v); }
+}
+static void encode_workspaceRemove(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
+  w.push_u8(18); w.push_u8(0); // cmd_id = 18 LE
+  auto argsObj = args.asObject(rt);
+  const std::array<jsi::PropNameID, 1> _properties{jsi::PropNameID::forAscii(rt, "workspaceId")};
+  encode_body_workspaceRemove(rt, argsObj, w, _properties.data());
+}
+
+// (Tier 1 positional) 개별 인자 → 직접 인코딩. argsObj 경유 대비 JSI 프로퍼티 조회 1회 제거.
+static void encode_pos_workspaceRemove(jsi::Runtime& rt, const jsi::Value* argv, size_t argc, rc::Writer& w) {
+  if (argc != 1) throw jsi::JSError(rt, "rustra: workspaceRemove expects 1 positional argument(s), got " + std::to_string(argc));
+  w.push_u8(18); w.push_u8(0); // cmd_id = 18 LE
+  { auto _s = argv[0].asString(rt).utf8(rt); w.push_string(_s); }
+}
+
+static jsi::Value decode_body_workspaceRemove(jsi::Runtime& rt, jsi::Object& resultObj, rc::Reader& r, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  const auto& _prop_1 = _properties[1];
+  const auto& _prop_2 = _properties[2];
+  const auto& _prop_3 = _properties[3];
+  const auto& _prop_4 = _properties[4];
+  const auto& _prop_5 = _properties[5];
+  const auto& _prop_6 = _properties[6];
+  const auto& _prop_7 = _properties[7];
+  const auto& _prop_8 = _properties[8];
+  const auto& _prop_9 = _properties[9];
+  const auto& _prop_10 = _properties[10];
+  const auto& _prop_11 = _properties[11];
+  const auto& _prop_12 = _properties[12];
+  const auto& _prop_13 = _properties[13];
+  const auto& _prop_14 = _properties[14];
+  const auto& _prop_15 = _properties[15];
+  const auto& _prop_16 = _properties[16];
+  const auto& _prop_17 = _properties[17];
+  const auto& _prop_18 = _properties[18];
+  const auto& _prop_19 = _properties[19];
+  const auto& _prop_20 = _properties[20];
+  const auto& _prop_21 = _properties[21];
+  const auto& _prop_22 = _properties[22];
+  const auto& _prop_23 = _properties[23];
+  const auto& _prop_24 = _properties[24];
+  const auto& _prop_25 = _properties[25];
+  const auto& _prop_26 = _properties[26];
+  const auto& _prop_27 = _properties[27];
+  const auto& _prop_28 = _properties[28];
+  const auto& _prop_29 = _properties[29];
+  const auto& _prop_30 = _properties[30];
+  const auto& _prop_31 = _properties[31];
+  const auto& _prop_32 = _properties[32];
+  const auto& _prop_33 = _properties[33];
+  const auto& _prop_34 = _properties[34];
+  const auto& _prop_35 = _properties[35];
+  const auto& _prop_36 = _properties[36];
+  const auto& _prop_37 = _properties[37];
+  const auto& _prop_38 = _properties[38];
+  const auto& _prop_39 = _properties[39];
+  const auto& _prop_40 = _properties[40];
+  resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
+  resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
+    for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_6, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _tag = r.read_u8(); if (_tag == 0) { _obj.setProperty(rt, _prop_7, jsi::Value::null()); } else { { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_7, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+      _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
+    resultObj.setProperty(rt, _prop_3, _arr); }
+  { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
+    for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_12, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_13, r.read_bool());
+      _obj.setProperty(rt, _prop_14, r.read_bool());
+      _obj.setProperty(rt, _prop_15, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_18, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_19, r.read_bool());
+      _obj.setProperty(rt, _prop_20, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
+    resultObj.setProperty(rt, _prop_8, _arr); }
+  { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
+    for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_22, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
+    resultObj.setProperty(rt, _prop_21, _arr); }
+  { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
+    for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
+    resultObj.setProperty(rt, _prop_23, _arr); }
+  { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
+    for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_25, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_26, (double)r.read_uvar());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_27, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_28, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_29, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_30, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
+    resultObj.setProperty(rt, _prop_24, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_32, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+  { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
+    for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_34, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_35, r.read_bool());
+      _obj.setProperty(rt, _prop_36, r.read_bool());
+      _obj.setProperty(rt, _prop_37, r.read_bool());
+      _obj.setProperty(rt, _prop_38, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_39, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
+    resultObj.setProperty(rt, _prop_33, _arr); }
+  resultObj.setProperty(rt, _prop_40, (double)r.read_uvar());
+  return std::move(resultObj);
+}
+static jsi::Value decode_workspaceRemove(jsi::Runtime& rt, rc::Reader& r) {
+  auto resultObj = jsi::Object(rt);
+  const std::array<jsi::PropNameID, 41> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  return decode_body_workspaceRemove(rt, resultObj, r, _properties.data());
+}
+
+static void encode_body_workspaceRename(jsi::Runtime& rt, const jsi::Object& argsObj, rc::Writer& w, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  const auto& _prop_1 = _properties[1];
+  { auto _v = argsObj.getProperty(rt, _prop_0).getString(rt).utf8(rt); w.push_string(_v); }
+  { auto _v = argsObj.getProperty(rt, _prop_1).getString(rt).utf8(rt); w.push_string(_v); }
+}
+static void encode_workspaceRename(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
+  w.push_u8(17); w.push_u8(0); // cmd_id = 17 LE
+  auto argsObj = args.asObject(rt);
+  const std::array<jsi::PropNameID, 2> _properties{jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "name")};
+  encode_body_workspaceRename(rt, argsObj, w, _properties.data());
+}
+
+// (Tier 1 positional) 개별 인자 → 직접 인코딩. argsObj 경유 대비 JSI 프로퍼티 조회 2회 제거.
+static void encode_pos_workspaceRename(jsi::Runtime& rt, const jsi::Value* argv, size_t argc, rc::Writer& w) {
+  if (argc != 2) throw jsi::JSError(rt, "rustra: workspaceRename expects 2 positional argument(s), got " + std::to_string(argc));
+  w.push_u8(17); w.push_u8(0); // cmd_id = 17 LE
+  { auto _s = argv[0].asString(rt).utf8(rt); w.push_string(_s); }
+  { auto _s = argv[1].asString(rt).utf8(rt); w.push_string(_s); }
+}
+
+static jsi::Value decode_body_workspaceRename(jsi::Runtime& rt, jsi::Object& resultObj, rc::Reader& r, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  const auto& _prop_1 = _properties[1];
+  const auto& _prop_2 = _properties[2];
+  const auto& _prop_3 = _properties[3];
+  const auto& _prop_4 = _properties[4];
+  const auto& _prop_5 = _properties[5];
+  const auto& _prop_6 = _properties[6];
+  const auto& _prop_7 = _properties[7];
+  const auto& _prop_8 = _properties[8];
+  const auto& _prop_9 = _properties[9];
+  const auto& _prop_10 = _properties[10];
+  const auto& _prop_11 = _properties[11];
+  const auto& _prop_12 = _properties[12];
+  const auto& _prop_13 = _properties[13];
+  const auto& _prop_14 = _properties[14];
+  const auto& _prop_15 = _properties[15];
+  const auto& _prop_16 = _properties[16];
+  const auto& _prop_17 = _properties[17];
+  const auto& _prop_18 = _properties[18];
+  const auto& _prop_19 = _properties[19];
+  const auto& _prop_20 = _properties[20];
+  const auto& _prop_21 = _properties[21];
+  const auto& _prop_22 = _properties[22];
+  const auto& _prop_23 = _properties[23];
+  const auto& _prop_24 = _properties[24];
+  const auto& _prop_25 = _properties[25];
+  const auto& _prop_26 = _properties[26];
+  const auto& _prop_27 = _properties[27];
+  const auto& _prop_28 = _properties[28];
+  const auto& _prop_29 = _properties[29];
+  const auto& _prop_30 = _properties[30];
+  const auto& _prop_31 = _properties[31];
+  const auto& _prop_32 = _properties[32];
+  const auto& _prop_33 = _properties[33];
+  const auto& _prop_34 = _properties[34];
+  const auto& _prop_35 = _properties[35];
+  const auto& _prop_36 = _properties[36];
+  const auto& _prop_37 = _properties[37];
+  const auto& _prop_38 = _properties[38];
+  const auto& _prop_39 = _properties[39];
+  const auto& _prop_40 = _properties[40];
+  resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
+  resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
+    for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_6, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _tag = r.read_u8(); if (_tag == 0) { _obj.setProperty(rt, _prop_7, jsi::Value::null()); } else { { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_7, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+      _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
+    resultObj.setProperty(rt, _prop_3, _arr); }
+  { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
+    for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_12, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_13, r.read_bool());
+      _obj.setProperty(rt, _prop_14, r.read_bool());
+      _obj.setProperty(rt, _prop_15, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_18, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_19, r.read_bool());
+      _obj.setProperty(rt, _prop_20, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
+    resultObj.setProperty(rt, _prop_8, _arr); }
+  { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
+    for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_22, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
+    resultObj.setProperty(rt, _prop_21, _arr); }
+  { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
+    for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
+    resultObj.setProperty(rt, _prop_23, _arr); }
+  { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
+    for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_25, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_26, (double)r.read_uvar());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_27, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_28, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_29, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_30, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
+    resultObj.setProperty(rt, _prop_24, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_32, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+  { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
+    for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_34, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_35, r.read_bool());
+      _obj.setProperty(rt, _prop_36, r.read_bool());
+      _obj.setProperty(rt, _prop_37, r.read_bool());
+      _obj.setProperty(rt, _prop_38, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_39, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
+    resultObj.setProperty(rt, _prop_33, _arr); }
+  resultObj.setProperty(rt, _prop_40, (double)r.read_uvar());
+  return std::move(resultObj);
+}
+static jsi::Value decode_workspaceRename(jsi::Runtime& rt, rc::Reader& r) {
+  auto resultObj = jsi::Object(rt);
+  const std::array<jsi::PropNameID, 41> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  return decode_body_workspaceRename(rt, resultObj, r, _properties.data());
+}
+
 namespace rustra::generated {
 
 bool encode_bound(Runtime& rt, const BoundCodecContext& context, const Value& args, rc::Writer& w) {
   switch (context.commandId) {
-    case 20: {
-      w.push_u8(20); w.push_u8(0);
-      auto argsObj = args.asObject(rt);
-      encode_body_bookmarkCreate(rt, argsObj, w, context.input.data()); return true;
-    }
-    case 24: {
-      w.push_u8(24); w.push_u8(0);
-      auto argsObj = args.asObject(rt);
-      encode_body_bookmarkFolderCreate(rt, argsObj, w, context.input.data()); return true;
-    }
-    case 26: {
-      w.push_u8(26); w.push_u8(0);
-      auto argsObj = args.asObject(rt);
-      encode_body_bookmarkFolderRemove(rt, argsObj, w, context.input.data()); return true;
-    }
-    case 25: {
-      w.push_u8(25); w.push_u8(0);
-      auto argsObj = args.asObject(rt);
-      encode_body_bookmarkFolderRename(rt, argsObj, w, context.input.data()); return true;
-    }
     case 23: {
       w.push_u8(23); w.push_u8(0);
       auto argsObj = args.asObject(rt);
-      encode_body_bookmarkMove(rt, argsObj, w, context.input.data()); return true;
-    }
-    case 29: {
-      w.push_u8(29); w.push_u8(0);
-      auto argsObj = args.asObject(rt);
-      encode_body_bookmarkOpen(rt, argsObj, w, context.input.data()); return true;
-    }
-    case 22: {
-      w.push_u8(22); w.push_u8(0);
-      auto argsObj = args.asObject(rt);
-      encode_body_bookmarkRemove(rt, argsObj, w, context.input.data()); return true;
+      encode_body_bookmarkCreate(rt, argsObj, w, context.input.data()); return true;
     }
     case 27: {
       w.push_u8(27); w.push_u8(0);
       auto argsObj = args.asObject(rt);
+      encode_body_bookmarkFolderCreate(rt, argsObj, w, context.input.data()); return true;
+    }
+    case 29: {
+      w.push_u8(29); w.push_u8(0);
+      auto argsObj = args.asObject(rt);
+      encode_body_bookmarkFolderRemove(rt, argsObj, w, context.input.data()); return true;
+    }
+    case 28: {
+      w.push_u8(28); w.push_u8(0);
+      auto argsObj = args.asObject(rt);
+      encode_body_bookmarkFolderRename(rt, argsObj, w, context.input.data()); return true;
+    }
+    case 26: {
+      w.push_u8(26); w.push_u8(0);
+      auto argsObj = args.asObject(rt);
+      encode_body_bookmarkMove(rt, argsObj, w, context.input.data()); return true;
+    }
+    case 32: {
+      w.push_u8(32); w.push_u8(0);
+      auto argsObj = args.asObject(rt);
+      encode_body_bookmarkOpen(rt, argsObj, w, context.input.data()); return true;
+    }
+    case 25: {
+      w.push_u8(25); w.push_u8(0);
+      auto argsObj = args.asObject(rt);
+      encode_body_bookmarkRemove(rt, argsObj, w, context.input.data()); return true;
+    }
+    case 30: {
+      w.push_u8(30); w.push_u8(0);
+      auto argsObj = args.asObject(rt);
       encode_body_bookmarkSetFolder(rt, argsObj, w, context.input.data()); return true;
     }
-    case 21: {
-      w.push_u8(21); w.push_u8(0);
+    case 24: {
+      w.push_u8(24); w.push_u8(0);
       auto argsObj = args.asObject(rt);
       encode_body_bookmarkUpdate(rt, argsObj, w, context.input.data()); return true;
     }
@@ -4566,28 +4989,28 @@ bool encode_bound(Runtime& rt, const BoundCodecContext& context, const Value& ar
       auto argsObj = args.asObject(rt);
       encode_body_browserSnapshot(rt, argsObj, w, context.input.data()); return true;
     }
-    case 19: {
-      w.push_u8(19); w.push_u8(0);
+    case 22: {
+      w.push_u8(22); w.push_u8(0);
       auto argsObj = args.asObject(rt);
       encode_body_keymapDefaults(rt, argsObj, w, context.input.data()); return true;
     }
-    case 18: {
-      w.push_u8(18); w.push_u8(0);
+    case 21: {
+      w.push_u8(21); w.push_u8(0);
       auto argsObj = args.asObject(rt);
       encode_body_keymapSet(rt, argsObj, w, context.input.data()); return true;
     }
-    case 17: {
-      w.push_u8(17); w.push_u8(0);
+    case 20: {
+      w.push_u8(20); w.push_u8(0);
       auto argsObj = args.asObject(rt);
       encode_body_snapshotRestore(rt, argsObj, w, context.input.data()); return true;
     }
-    case 31: {
-      w.push_u8(31); w.push_u8(0);
+    case 34: {
+      w.push_u8(34); w.push_u8(0);
       auto argsObj = args.asObject(rt);
       encode_body_splitGroupRemove(rt, argsObj, w, context.input.data()); return true;
     }
-    case 30: {
-      w.push_u8(30); w.push_u8(0);
+    case 33: {
+      w.push_u8(33); w.push_u8(0);
       auto argsObj = args.asObject(rt);
       encode_body_splitGroupSave(rt, argsObj, w, context.input.data()); return true;
     }
@@ -4621,13 +5044,13 @@ bool encode_bound(Runtime& rt, const BoundCodecContext& context, const Value& ar
       auto argsObj = args.asObject(rt);
       encode_body_tabOpenExternal(rt, argsObj, w, context.input.data()); return true;
     }
-    case 32: {
-      w.push_u8(32); w.push_u8(0);
+    case 35: {
+      w.push_u8(35); w.push_u8(0);
       auto argsObj = args.asObject(rt);
       encode_body_tabRename(rt, argsObj, w, context.input.data()); return true;
     }
-    case 28: {
-      w.push_u8(28); w.push_u8(0);
+    case 31: {
+      w.push_u8(31); w.push_u8(0);
       auto argsObj = args.asObject(rt);
       encode_body_tabReset(rt, argsObj, w, context.input.data()); return true;
     }
@@ -4671,45 +5094,60 @@ bool encode_bound(Runtime& rt, const BoundCodecContext& context, const Value& ar
       auto argsObj = args.asObject(rt);
       encode_body_workspaceCreate(rt, argsObj, w, context.input.data()); return true;
     }
+    case 19: {
+      w.push_u8(19); w.push_u8(0);
+      auto argsObj = args.asObject(rt);
+      encode_body_workspaceMove(rt, argsObj, w, context.input.data()); return true;
+    }
+    case 18: {
+      w.push_u8(18); w.push_u8(0);
+      auto argsObj = args.asObject(rt);
+      encode_body_workspaceRemove(rt, argsObj, w, context.input.data()); return true;
+    }
+    case 17: {
+      w.push_u8(17); w.push_u8(0);
+      auto argsObj = args.asObject(rt);
+      encode_body_workspaceRename(rt, argsObj, w, context.input.data()); return true;
+    }
     default: return false;
   }
 }
 
 Value decode_bound(Runtime& rt, const BoundCodecContext& context, rc::Reader& r) {
   switch (context.commandId) {
-    case 20: {
+    case 23: {
       auto resultObj = jsi::Object(rt);
       return decode_body_bookmarkCreate(rt, resultObj, r, context.output.data());
     }
-    case 24: {
+    case 27: {
       auto resultObj = jsi::Object(rt);
       return decode_body_bookmarkFolderCreate(rt, resultObj, r, context.output.data());
     }
-    case 26: {
+    case 29: {
       auto resultObj = jsi::Object(rt);
       return decode_body_bookmarkFolderRemove(rt, resultObj, r, context.output.data());
     }
-    case 25: {
+    case 28: {
       auto resultObj = jsi::Object(rt);
       return decode_body_bookmarkFolderRename(rt, resultObj, r, context.output.data());
     }
-    case 23: {
+    case 26: {
       auto resultObj = jsi::Object(rt);
       return decode_body_bookmarkMove(rt, resultObj, r, context.output.data());
     }
-    case 29: {
+    case 32: {
       auto resultObj = jsi::Object(rt);
       return decode_body_bookmarkOpen(rt, resultObj, r, context.output.data());
     }
-    case 22: {
+    case 25: {
       auto resultObj = jsi::Object(rt);
       return decode_body_bookmarkRemove(rt, resultObj, r, context.output.data());
     }
-    case 27: {
+    case 30: {
       auto resultObj = jsi::Object(rt);
       return decode_body_bookmarkSetFolder(rt, resultObj, r, context.output.data());
     }
-    case 21: {
+    case 24: {
       auto resultObj = jsi::Object(rt);
       return decode_body_bookmarkUpdate(rt, resultObj, r, context.output.data());
     }
@@ -4717,23 +5155,23 @@ Value decode_bound(Runtime& rt, const BoundCodecContext& context, rc::Reader& r)
       auto resultObj = jsi::Object(rt);
       return decode_body_browserSnapshot(rt, resultObj, r, context.output.data());
     }
-    case 19: {
+    case 22: {
       auto resultObj = jsi::Object(rt);
       return decode_body_keymapDefaults(rt, resultObj, r, context.output.data());
     }
-    case 18: {
+    case 21: {
       auto resultObj = jsi::Object(rt);
       return decode_body_keymapSet(rt, resultObj, r, context.output.data());
     }
-    case 17: {
+    case 20: {
       auto resultObj = jsi::Object(rt);
       return decode_body_snapshotRestore(rt, resultObj, r, context.output.data());
     }
-    case 31: {
+    case 34: {
       auto resultObj = jsi::Object(rt);
       return decode_body_splitGroupRemove(rt, resultObj, r, context.output.data());
     }
-    case 30: {
+    case 33: {
       auto resultObj = jsi::Object(rt);
       return decode_body_splitGroupSave(rt, resultObj, r, context.output.data());
     }
@@ -4761,11 +5199,11 @@ Value decode_bound(Runtime& rt, const BoundCodecContext& context, rc::Reader& r)
       auto resultObj = jsi::Object(rt);
       return decode_body_tabOpenExternal(rt, resultObj, r, context.output.data());
     }
-    case 32: {
+    case 35: {
       auto resultObj = jsi::Object(rt);
       return decode_body_tabRename(rt, resultObj, r, context.output.data());
     }
-    case 28: {
+    case 31: {
       auto resultObj = jsi::Object(rt);
       return decode_body_tabReset(rt, resultObj, r, context.output.data());
     }
@@ -4800,6 +5238,18 @@ Value decode_bound(Runtime& rt, const BoundCodecContext& context, rc::Reader& r)
     case 6: {
       auto resultObj = jsi::Object(rt);
       return decode_body_workspaceCreate(rt, resultObj, r, context.output.data());
+    }
+    case 19: {
+      auto resultObj = jsi::Object(rt);
+      return decode_body_workspaceMove(rt, resultObj, r, context.output.data());
+    }
+    case 18: {
+      auto resultObj = jsi::Object(rt);
+      return decode_body_workspaceRemove(rt, resultObj, r, context.output.data());
+    }
+    case 17: {
+      auto resultObj = jsi::Object(rt);
+      return decode_body_workspaceRename(rt, resultObj, r, context.output.data());
     }
     default: throw JSError(rt, "rustra: no bound codec");
   }
@@ -4837,6 +5287,9 @@ bool encode_by_name(Runtime& rt, const std::string& name, const Value& args, rc:
   if (name == "workArchivePreview") { encode_workArchivePreview(rt, args, w); return true; }
   if (name == "workspaceActivate") { encode_workspaceActivate(rt, args, w); return true; }
   if (name == "workspaceCreate") { encode_workspaceCreate(rt, args, w); return true; }
+  if (name == "workspaceMove") { encode_workspaceMove(rt, args, w); return true; }
+  if (name == "workspaceRemove") { encode_workspaceRemove(rt, args, w); return true; }
+  if (name == "workspaceRename") { encode_workspaceRename(rt, args, w); return true; }
   return false; // 동적 명령 — JS 가 Tier 3 fallback 처리
 }
 
@@ -4872,34 +5325,37 @@ Value decode_by_name(Runtime& rt, const std::string& name, rc::Reader& r) {
   if (name == "workArchivePreview") return decode_workArchivePreview(rt, r);
   if (name == "workspaceActivate") return decode_workspaceActivate(rt, r);
   if (name == "workspaceCreate") return decode_workspaceCreate(rt, r);
+  if (name == "workspaceMove") return decode_workspaceMove(rt, r);
+  if (name == "workspaceRemove") return decode_workspaceRemove(rt, r);
+  if (name == "workspaceRename") return decode_workspaceRename(rt, r);
   throw JSError(rt, "rustra: no C++ codec for '" + name + "'");
 }
 
 bool encode_by_id(Runtime& rt, uint16_t cmd_id, const Value& args, rc::Writer& w) {
   switch (cmd_id) {
-    case 20: encode_bookmarkCreate(rt, args, w); return true;
-    case 24: encode_bookmarkFolderCreate(rt, args, w); return true;
-    case 26: encode_bookmarkFolderRemove(rt, args, w); return true;
-    case 25: encode_bookmarkFolderRename(rt, args, w); return true;
-    case 23: encode_bookmarkMove(rt, args, w); return true;
-    case 29: encode_bookmarkOpen(rt, args, w); return true;
-    case 22: encode_bookmarkRemove(rt, args, w); return true;
-    case 27: encode_bookmarkSetFolder(rt, args, w); return true;
-    case 21: encode_bookmarkUpdate(rt, args, w); return true;
+    case 23: encode_bookmarkCreate(rt, args, w); return true;
+    case 27: encode_bookmarkFolderCreate(rt, args, w); return true;
+    case 29: encode_bookmarkFolderRemove(rt, args, w); return true;
+    case 28: encode_bookmarkFolderRename(rt, args, w); return true;
+    case 26: encode_bookmarkMove(rt, args, w); return true;
+    case 32: encode_bookmarkOpen(rt, args, w); return true;
+    case 25: encode_bookmarkRemove(rt, args, w); return true;
+    case 30: encode_bookmarkSetFolder(rt, args, w); return true;
+    case 24: encode_bookmarkUpdate(rt, args, w); return true;
     case 1: encode_browserSnapshot(rt, args, w); return true;
-    case 19: encode_keymapDefaults(rt, args, w); return true;
-    case 18: encode_keymapSet(rt, args, w); return true;
-    case 17: encode_snapshotRestore(rt, args, w); return true;
-    case 31: encode_splitGroupRemove(rt, args, w); return true;
-    case 30: encode_splitGroupSave(rt, args, w); return true;
+    case 22: encode_keymapDefaults(rt, args, w); return true;
+    case 21: encode_keymapSet(rt, args, w); return true;
+    case 20: encode_snapshotRestore(rt, args, w); return true;
+    case 34: encode_splitGroupRemove(rt, args, w); return true;
+    case 33: encode_splitGroupSave(rt, args, w); return true;
     case 9: encode_tabActivate(rt, args, w); return true;
     case 10: encode_tabClose(rt, args, w); return true;
     case 7: encode_tabCreate(rt, args, w); return true;
     case 14: encode_tabMove(rt, args, w); return true;
     case 11: encode_tabNavigated(rt, args, w); return true;
     case 8: encode_tabOpenExternal(rt, args, w); return true;
-    case 32: encode_tabRename(rt, args, w); return true;
-    case 28: encode_tabReset(rt, args, w); return true;
+    case 35: encode_tabRename(rt, args, w); return true;
+    case 31: encode_tabReset(rt, args, w); return true;
     case 12: encode_tabSetFavorite(rt, args, w); return true;
     case 13: encode_tabSetPinned(rt, args, w); return true;
     case 15: encode_tabSetWorkspace(rt, args, w); return true;
@@ -4908,35 +5364,38 @@ bool encode_by_id(Runtime& rt, uint16_t cmd_id, const Value& args, rc::Writer& w
     case 3: encode_workArchivePreview(rt, args, w); return true;
     case 16: encode_workspaceActivate(rt, args, w); return true;
     case 6: encode_workspaceCreate(rt, args, w); return true;
+    case 19: encode_workspaceMove(rt, args, w); return true;
+    case 18: encode_workspaceRemove(rt, args, w); return true;
+    case 17: encode_workspaceRename(rt, args, w); return true;
     default: return false; // 동적/알 수 없는 cmd_id — JS 가 Tier 3 fallback 처리
   }
 }
 
 Value decode_by_id(Runtime& rt, uint16_t cmd_id, rc::Reader& r) {
   switch (cmd_id) {
-    case 20: return decode_bookmarkCreate(rt, r);
-    case 24: return decode_bookmarkFolderCreate(rt, r);
-    case 26: return decode_bookmarkFolderRemove(rt, r);
-    case 25: return decode_bookmarkFolderRename(rt, r);
-    case 23: return decode_bookmarkMove(rt, r);
-    case 29: return decode_bookmarkOpen(rt, r);
-    case 22: return decode_bookmarkRemove(rt, r);
-    case 27: return decode_bookmarkSetFolder(rt, r);
-    case 21: return decode_bookmarkUpdate(rt, r);
+    case 23: return decode_bookmarkCreate(rt, r);
+    case 27: return decode_bookmarkFolderCreate(rt, r);
+    case 29: return decode_bookmarkFolderRemove(rt, r);
+    case 28: return decode_bookmarkFolderRename(rt, r);
+    case 26: return decode_bookmarkMove(rt, r);
+    case 32: return decode_bookmarkOpen(rt, r);
+    case 25: return decode_bookmarkRemove(rt, r);
+    case 30: return decode_bookmarkSetFolder(rt, r);
+    case 24: return decode_bookmarkUpdate(rt, r);
     case 1: return decode_browserSnapshot(rt, r);
-    case 19: return decode_keymapDefaults(rt, r);
-    case 18: return decode_keymapSet(rt, r);
-    case 17: return decode_snapshotRestore(rt, r);
-    case 31: return decode_splitGroupRemove(rt, r);
-    case 30: return decode_splitGroupSave(rt, r);
+    case 22: return decode_keymapDefaults(rt, r);
+    case 21: return decode_keymapSet(rt, r);
+    case 20: return decode_snapshotRestore(rt, r);
+    case 34: return decode_splitGroupRemove(rt, r);
+    case 33: return decode_splitGroupSave(rt, r);
     case 9: return decode_tabActivate(rt, r);
     case 10: return decode_tabClose(rt, r);
     case 7: return decode_tabCreate(rt, r);
     case 14: return decode_tabMove(rt, r);
     case 11: return decode_tabNavigated(rt, r);
     case 8: return decode_tabOpenExternal(rt, r);
-    case 32: return decode_tabRename(rt, r);
-    case 28: return decode_tabReset(rt, r);
+    case 35: return decode_tabRename(rt, r);
+    case 31: return decode_tabReset(rt, r);
     case 12: return decode_tabSetFavorite(rt, r);
     case 13: return decode_tabSetPinned(rt, r);
     case 15: return decode_tabSetWorkspace(rt, r);
@@ -4945,6 +5404,9 @@ Value decode_by_id(Runtime& rt, uint16_t cmd_id, rc::Reader& r) {
     case 3: return decode_workArchivePreview(rt, r);
     case 16: return decode_workspaceActivate(rt, r);
     case 6: return decode_workspaceCreate(rt, r);
+    case 19: return decode_workspaceMove(rt, r);
+    case 18: return decode_workspaceRemove(rt, r);
+    case 17: return decode_workspaceRename(rt, r);
     default: throw JSError(rt, "rustra: no C++ codec for cmd_id " + std::to_string(cmd_id));
   }
 }
@@ -4981,34 +5443,37 @@ bool has_static_codec(const std::string& name) {
   if (name == "workArchivePreview") return true;
   if (name == "workspaceActivate") return true;
   if (name == "workspaceCreate") return true;
+  if (name == "workspaceMove") return true;
+  if (name == "workspaceRemove") return true;
+  if (name == "workspaceRename") return true;
   return false;
 }
 
 bool has_static_codec_id(uint16_t cmd_id) {
   switch (cmd_id) {
-    case 20: return true;
-    case 24: return true;
-    case 26: return true;
-    case 25: return true;
     case 23: return true;
-    case 29: return true;
-    case 22: return true;
     case 27: return true;
-    case 21: return true;
-    case 1: return true;
-    case 19: return true;
-    case 18: return true;
-    case 17: return true;
-    case 31: return true;
+    case 29: return true;
+    case 28: return true;
+    case 26: return true;
+    case 32: return true;
+    case 25: return true;
     case 30: return true;
+    case 24: return true;
+    case 1: return true;
+    case 22: return true;
+    case 21: return true;
+    case 20: return true;
+    case 34: return true;
+    case 33: return true;
     case 9: return true;
     case 10: return true;
     case 7: return true;
     case 14: return true;
     case 11: return true;
     case 8: return true;
-    case 32: return true;
-    case 28: return true;
+    case 35: return true;
+    case 31: return true;
     case 12: return true;
     case 13: return true;
     case 15: return true;
@@ -5017,31 +5482,34 @@ bool has_static_codec_id(uint16_t cmd_id) {
     case 3: return true;
     case 16: return true;
     case 6: return true;
+    case 19: return true;
+    case 18: return true;
+    case 17: return true;
     default: return false;
   }
 }
 
 /// (Tier 1) positional 인자를 직접 인코딩 가능한 cmd_id 집합 — JS 폴백 판별용.
 bool has_pos_codec(uint16_t cmd_id) {
-  if (cmd_id == 20) return true;
-  if (cmd_id == 24) return true;
-  if (cmd_id == 26) return true;
-  if (cmd_id == 25) return true;
   if (cmd_id == 23) return true;
-  if (cmd_id == 29) return true;
-  if (cmd_id == 22) return true;
   if (cmd_id == 27) return true;
-  if (cmd_id == 21) return true;
-  if (cmd_id == 17) return true;
-  if (cmd_id == 31) return true;
+  if (cmd_id == 29) return true;
+  if (cmd_id == 28) return true;
+  if (cmd_id == 26) return true;
+  if (cmd_id == 32) return true;
+  if (cmd_id == 25) return true;
+  if (cmd_id == 30) return true;
+  if (cmd_id == 24) return true;
+  if (cmd_id == 20) return true;
+  if (cmd_id == 34) return true;
   if (cmd_id == 9) return true;
   if (cmd_id == 10) return true;
   if (cmd_id == 7) return true;
   if (cmd_id == 14) return true;
   if (cmd_id == 11) return true;
   if (cmd_id == 8) return true;
-  if (cmd_id == 32) return true;
-  if (cmd_id == 28) return true;
+  if (cmd_id == 35) return true;
+  if (cmd_id == 31) return true;
   if (cmd_id == 12) return true;
   if (cmd_id == 13) return true;
   if (cmd_id == 15) return true;
@@ -5049,31 +5517,34 @@ bool has_pos_codec(uint16_t cmd_id) {
   if (cmd_id == 3) return true;
   if (cmd_id == 16) return true;
   if (cmd_id == 6) return true;
+  if (cmd_id == 19) return true;
+  if (cmd_id == 18) return true;
+  if (cmd_id == 17) return true;
   return false;
 }
 
 /// (Tier 1) 개별 Value 인자 → postcard 바이트. 명령별 코덱이 argc를 정확히 검증한다.
 void encode_pos_by_id(jsi::Runtime& rt, uint16_t cmd_id, const jsi::Value* argv, size_t argc, rc::Writer& w) {
   switch (cmd_id) {
-    case 20: encode_pos_bookmarkCreate(rt, argv, argc, w); return;
-    case 24: encode_pos_bookmarkFolderCreate(rt, argv, argc, w); return;
-    case 26: encode_pos_bookmarkFolderRemove(rt, argv, argc, w); return;
-    case 25: encode_pos_bookmarkFolderRename(rt, argv, argc, w); return;
-    case 23: encode_pos_bookmarkMove(rt, argv, argc, w); return;
-    case 29: encode_pos_bookmarkOpen(rt, argv, argc, w); return;
-    case 22: encode_pos_bookmarkRemove(rt, argv, argc, w); return;
-    case 27: encode_pos_bookmarkSetFolder(rt, argv, argc, w); return;
-    case 21: encode_pos_bookmarkUpdate(rt, argv, argc, w); return;
-    case 17: encode_pos_snapshotRestore(rt, argv, argc, w); return;
-    case 31: encode_pos_splitGroupRemove(rt, argv, argc, w); return;
+    case 23: encode_pos_bookmarkCreate(rt, argv, argc, w); return;
+    case 27: encode_pos_bookmarkFolderCreate(rt, argv, argc, w); return;
+    case 29: encode_pos_bookmarkFolderRemove(rt, argv, argc, w); return;
+    case 28: encode_pos_bookmarkFolderRename(rt, argv, argc, w); return;
+    case 26: encode_pos_bookmarkMove(rt, argv, argc, w); return;
+    case 32: encode_pos_bookmarkOpen(rt, argv, argc, w); return;
+    case 25: encode_pos_bookmarkRemove(rt, argv, argc, w); return;
+    case 30: encode_pos_bookmarkSetFolder(rt, argv, argc, w); return;
+    case 24: encode_pos_bookmarkUpdate(rt, argv, argc, w); return;
+    case 20: encode_pos_snapshotRestore(rt, argv, argc, w); return;
+    case 34: encode_pos_splitGroupRemove(rt, argv, argc, w); return;
     case 9: encode_pos_tabActivate(rt, argv, argc, w); return;
     case 10: encode_pos_tabClose(rt, argv, argc, w); return;
     case 7: encode_pos_tabCreate(rt, argv, argc, w); return;
     case 14: encode_pos_tabMove(rt, argv, argc, w); return;
     case 11: encode_pos_tabNavigated(rt, argv, argc, w); return;
     case 8: encode_pos_tabOpenExternal(rt, argv, argc, w); return;
-    case 32: encode_pos_tabRename(rt, argv, argc, w); return;
-    case 28: encode_pos_tabReset(rt, argv, argc, w); return;
+    case 35: encode_pos_tabRename(rt, argv, argc, w); return;
+    case 31: encode_pos_tabReset(rt, argv, argc, w); return;
     case 12: encode_pos_tabSetFavorite(rt, argv, argc, w); return;
     case 13: encode_pos_tabSetPinned(rt, argv, argc, w); return;
     case 15: encode_pos_tabSetWorkspace(rt, argv, argc, w); return;
@@ -5081,6 +5552,9 @@ void encode_pos_by_id(jsi::Runtime& rt, uint16_t cmd_id, const jsi::Value* argv,
     case 3: encode_pos_workArchivePreview(rt, argv, argc, w); return;
     case 16: encode_pos_workspaceActivate(rt, argv, argc, w); return;
     case 6: encode_pos_workspaceCreate(rt, argv, argc, w); return;
+    case 19: encode_pos_workspaceMove(rt, argv, argc, w); return;
+    case 18: encode_pos_workspaceRemove(rt, argv, argc, w); return;
+    case 17: encode_pos_workspaceRename(rt, argv, argc, w); return;
     default: throw JSError(rt, "rustra: no positional codec for cmd_id " + std::to_string(cmd_id));
   }
 }

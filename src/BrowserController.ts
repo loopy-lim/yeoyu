@@ -20,6 +20,9 @@ type GeneratedCommands = Pick<
   | "tabMove"
   | "tabSetWorkspace"
   | "workspaceActivate"
+  | "workspaceRename"
+  | "workspaceRemove"
+  | "workspaceMove"
   | "keymapSet"
   | "bookmarkOpen"
   | "bookmarkCreate"
@@ -721,6 +724,22 @@ export class BrowserController {
   }
   workspace(name: string) {
     return this.mutate(() => this.commands.workspaceCreate({ name }));
+  }
+  renameWorkspace(workspaceId: string, name: string) {
+    return this.mutate(() =>
+      this.commands.workspaceRename({ workspaceId, name })
+    );
+  }
+  removeWorkspace(workspaceId: string) {
+    return this.mutate(
+      () => this.commands.workspaceRemove({ workspaceId }),
+      singleVisibleTab
+    );
+  }
+  moveWorkspace(workspaceId: string, index: number) {
+    return this.mutate(() =>
+      this.commands.workspaceMove({ workspaceId, index })
+    );
   }
   async defaultKeymap() {
     if (!this.commands.keymapDefaults)

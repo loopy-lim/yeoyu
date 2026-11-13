@@ -264,3 +264,13 @@ export type WorkspaceIdInput = {
 export type WorkspaceCreateInput = {
   name: string;
 };
+
+export type WorkspaceMoveInput = {
+  workspaceId: string;
+  index: number;
+};
+
+export type WorkspaceRenameInput = {
+  workspaceId: string;
+  name: string;
+};

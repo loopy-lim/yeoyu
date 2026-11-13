@@ -5,7 +5,7 @@
   "commands": [
     {
       "name": "bookmarkCreate",
-      "commandId": 20,
+      "commandId": 23,
       "inputType": "BookmarkCreateInput",
       "outputType": "Snapshot",
       "inputSchema": {
@@ -363,7 +363,7 @@
     },
     {
       "name": "bookmarkFolderCreate",
-      "commandId": 24,
+      "commandId": 27,
       "inputType": "BookmarkFolderCreateInput",
       "outputType": "Snapshot",
       "inputSchema": {
@@ -713,7 +713,7 @@
     },
     {
       "name": "bookmarkFolderRemove",
-      "commandId": 26,
+      "commandId": 29,
       "inputType": "BookmarkFolderIdInput",
       "outputType": "Snapshot",
       "inputSchema": {
@@ -1063,7 +1063,7 @@
     },
     {
       "name": "bookmarkFolderRename",
-      "commandId": 25,
+      "commandId": 28,
       "inputType": "BookmarkFolderRenameInput",
       "outputType": "Snapshot",
       "inputSchema": {
@@ -1417,7 +1417,7 @@
     },
     {
       "name": "bookmarkMove",
-      "commandId": 23,
+      "commandId": 26,
       "inputType": "BookmarkMoveInput",
       "outputType": "Snapshot",
       "inputSchema": {
@@ -1773,7 +1773,7 @@
     },
     {
       "name": "bookmarkOpen",
-      "commandId": 29,
+      "commandId": 32,
       "inputType": "BookmarkOpenInput",
       "outputType": "Snapshot",
       "inputSchema": {
@@ -2132,7 +2132,7 @@
     },
     {
       "name": "bookmarkRemove",
-      "commandId": 22,
+      "commandId": 25,
       "inputType": "BookmarkIdInput",
       "outputType": "Snapshot",
       "inputSchema": {
@@ -2482,7 +2482,7 @@
     },
     {
       "name": "bookmarkSetFolder",
-      "commandId": 27,
+      "commandId": 30,
       "inputType": "BookmarkSetFolderInput",
       "outputType": "Snapshot",
       "inputSchema": {
@@ -2836,7 +2836,7 @@
     },
     {
       "name": "bookmarkUpdate",
-      "commandId": 21,
+      "commandId": 24,
       "inputType": "BookmarkUpdateInput",
       "outputType": "Snapshot",
       "inputSchema": {
@@ -3536,7 +3536,7 @@
     },
     {
       "name": "keymapDefaults",
-      "commandId": 19,
+      "commandId": 22,
       "inputType": "BrowserSnapshotInput",
       "outputType": "KeymapSetInput",
       "inputSchema": {
@@ -3595,7 +3595,7 @@
     },
     {
       "name": "keymapSet",
-      "commandId": 18,
+      "commandId": 21,
       "inputType": "KeymapSetInput",
       "outputType": "Snapshot",
       "inputSchema": {
@@ -3948,7 +3948,7 @@
     },
     {
       "name": "snapshotRestore",
-      "commandId": 17,
+      "commandId": 20,
       "inputType": "SnapshotRestoreInput",
       "outputType": "Snapshot",
       "inputSchema": {
@@ -4298,7 +4298,7 @@
     },
     {
       "name": "splitGroupRemove",
-      "commandId": 31,
+      "commandId": 34,
       "inputType": "SplitGroupIdInput",
       "outputType": "Snapshot",
       "inputSchema": {
@@ -4648,7 +4648,7 @@
     },
     {
       "name": "splitGroupSave",
-      "commandId": 30,
+      "commandId": 33,
       "inputType": "SplitGroupSaveInput",
       "outputType": "Snapshot",
       "inputSchema": {
@@ -7157,7 +7157,7 @@
     },
     {
       "name": "tabRename",
-      "commandId": 32,
+      "commandId": 35,
       "inputType": "TabRenameInput",
       "outputType": "Snapshot",
       "inputSchema": {
@@ -7511,7 +7511,7 @@
     },
     {
       "name": "tabReset",
-      "commandId": 28,
+      "commandId": 31,
       "inputType": "TabIdInput",
       "outputType": "Snapshot",
       "inputSchema": {
@@ -10101,6 +10101,1066 @@
           "name"
         ],
         "properties": {
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "outputSchema": {
+        "title": "Snapshot",
+        "type": "object",
+        "required": [
+          "activeWorkspaceId",
+          "keyBindings",
+          "revision",
+          "tabs",
+          "version",
+          "workspaces"
+        ],
+        "properties": {
+          "version": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0.0
+          },
+          "revision": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0.0
+          },
+          "lastExternalRequestId": {
+            "description": "The native incoming-link queue acknowledges FIFO deliveries only after this snapshot is durable. Its head may replay across a bridge restart.",
+            "default": "",
+            "type": "string"
+          },
+          "workspaces": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/Workspace"
+            }
+          },
+          "tabs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/Tab"
+            }
+          },
+          "bookmarks": {
+            "default": [
+              {
+                "id": "bookmark-1",
+                "workspaceId": "",
+                "title": "News",
+                "url": "https://news.ycombinator.com",
+                "folderId": ""
+              },
+              {
+                "id": "bookmark-2",
+                "workspaceId": "",
+                "title": "GitHub",
+                "url": "https://github.com",
+                "folderId": ""
+              },
+              {
+                "id": "bookmark-3",
+                "workspaceId": "",
+                "title": "Docs",
+                "url": "https://developer.mozilla.org",
+                "folderId": ""
+              }
+            ],
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/Bookmark"
+            }
+          },
+          "bookmarkFolders": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/BookmarkFolder"
+            }
+          },
+          "splitGroups": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/SplitGroup"
+            }
+          },
+          "activeWorkspaceId": {
+            "type": "string"
+          },
+          "activeTabId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "keyBindings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/KeyBinding"
+            }
+          },
+          "keymapVersion": {
+            "description": "Once migrated, explicitly customized shortcuts are never remapped.",
+            "default": 0,
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0.0
+          }
+        }
+      },
+      "execution": "sync",
+      "definitions": {
+        "Workspace": {
+          "type": "object",
+          "required": [
+            "id",
+            "name"
+          ],
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "color": {
+              "description": "Space tint as #rrggbb. Empty means \"follow the appearance hue\" — the default space stays appearance-colored so existing snapshots keep their look; created spaces pick from the palette round-robin.",
+              "default": "",
+              "type": "string"
+            },
+            "lastActiveTabId": {
+              "description": "The space's most recently used tab; activate_workspace reopens the space where the user left off (Arc's working-set behavior). Dangling values are rejected on restore like the other active pointers.",
+              "default": null,
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "Tab": {
+          "type": "object",
+          "required": [
+            "id",
+            "title",
+            "url",
+            "workspaceId"
+          ],
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "workspaceId": {
+              "type": "string"
+            },
+            "url": {
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            },
+            "customTitle": {
+              "description": "User-assigned label that survives navigation; display prefers it over the page title. Navigating to a different URL releases it, reloads and title churn on the same URL keep it.",
+              "default": "",
+              "type": "string"
+            },
+            "favorite": {
+              "description": "Favorites appear in every space without changing the selected space. Older snapshots restore without the field as non-favorites.",
+              "default": false,
+              "type": "boolean"
+            },
+            "pinned": {
+              "description": "Pinned tabs keep their own section under favorites, per space.",
+              "default": false,
+              "type": "boolean"
+            },
+            "private": {
+              "description": "Private tabs run engine-private sessions and never persist: the controller strips them from saved copies and restore drops them.",
+              "default": false,
+              "type": "boolean"
+            },
+            "bookmarkId": {
+              "description": "The persistent sidebar item owning this tab, independent of its live URL.",
+              "default": "",
+              "type": "string"
+            },
+            "homeUrl": {
+              "description": "Saved destination, independent of navigation in the live session.",
+              "default": "",
+              "type": "string"
+            },
+            "homeTitle": {
+              "default": "",
+              "type": "string"
+            },
+            "suspended": {
+              "description": "The saved row remains while its browser session is closed.",
+              "default": false,
+              "type": "boolean"
+            },
+            "updatedAt": {
+              "description": "Last touch in epoch ms; drives the Today/Earlier split (12h archive).",
+              "default": 0,
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            }
+          }
+        },
+        "Bookmark": {
+          "type": "object",
+          "required": [
+            "id",
+            "title",
+            "url"
+          ],
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "workspaceId": {
+              "description": "Empty only in legacy snapshots, assigned to a Space during restore.",
+              "default": "",
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            },
+            "url": {
+              "type": "string"
+            },
+            "folderId": {
+              "default": "",
+              "type": "string"
+            }
+          }
+        },
+        "BookmarkFolder": {
+          "type": "object",
+          "required": [
+            "id",
+            "title"
+          ],
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "workspaceId": {
+              "default": "",
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            }
+          }
+        },
+        "SplitGroup": {
+          "description": "A saved two-pane arrangement. Panes are stored as home URLs, never tab IDs — tabs churn across restarts and private tabs are stripped from snapshots. Restoring creates fresh tabs and re-applies the layout.",
+          "type": "object",
+          "required": [
+            "firstTitle",
+            "firstUrl",
+            "id",
+            "name",
+            "orientation",
+            "ratioMilli",
+            "secondTitle",
+            "secondUrl"
+          ],
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "workspaceId": {
+              "default": "",
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "orientation": {
+              "description": "\"horizontal\" (side by side) or \"vertical\" (stacked).",
+              "type": "string"
+            },
+            "ratioMilli": {
+              "description": "Share of the first pane in thousandths, always 250..=750 so the value matches the runtime clamp in the address bar UI.",
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            },
+            "firstTitle": {
+              "type": "string"
+            },
+            "firstUrl": {
+              "type": "string"
+            },
+            "secondTitle": {
+              "type": "string"
+            },
+            "secondUrl": {
+              "type": "string"
+            }
+          }
+        },
+        "KeyBinding": {
+          "type": "object",
+          "required": [
+            "alt",
+            "command",
+            "ctrl",
+            "key",
+            "meta",
+            "shift"
+          ],
+          "properties": {
+            "key": {
+              "type": "string"
+            },
+            "meta": {
+              "type": "boolean"
+            },
+            "ctrl": {
+              "type": "boolean"
+            },
+            "alt": {
+              "type": "boolean"
+            },
+            "shift": {
+              "type": "boolean"
+            },
+            "command": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "workspaceMove",
+      "commandId": 19,
+      "inputType": "WorkspaceMoveInput",
+      "outputType": "Snapshot",
+      "inputSchema": {
+        "title": "WorkspaceMoveInput",
+        "type": "object",
+        "required": [
+          "index",
+          "workspaceId"
+        ],
+        "properties": {
+          "workspaceId": {
+            "type": "string"
+          },
+          "index": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0.0
+          }
+        }
+      },
+      "outputSchema": {
+        "title": "Snapshot",
+        "type": "object",
+        "required": [
+          "activeWorkspaceId",
+          "keyBindings",
+          "revision",
+          "tabs",
+          "version",
+          "workspaces"
+        ],
+        "properties": {
+          "version": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0.0
+          },
+          "revision": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0.0
+          },
+          "lastExternalRequestId": {
+            "description": "The native incoming-link queue acknowledges FIFO deliveries only after this snapshot is durable. Its head may replay across a bridge restart.",
+            "default": "",
+            "type": "string"
+          },
+          "workspaces": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/Workspace"
+            }
+          },
+          "tabs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/Tab"
+            }
+          },
+          "bookmarks": {
+            "default": [
+              {
+                "id": "bookmark-1",
+                "workspaceId": "",
+                "title": "News",
+                "url": "https://news.ycombinator.com",
+                "folderId": ""
+              },
+              {
+                "id": "bookmark-2",
+                "workspaceId": "",
+                "title": "GitHub",
+                "url": "https://github.com",
+                "folderId": ""
+              },
+              {
+                "id": "bookmark-3",
+                "workspaceId": "",
+                "title": "Docs",
+                "url": "https://developer.mozilla.org",
+                "folderId": ""
+              }
+            ],
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/Bookmark"
+            }
+          },
+          "bookmarkFolders": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/BookmarkFolder"
+            }
+          },
+          "splitGroups": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/SplitGroup"
+            }
+          },
+          "activeWorkspaceId": {
+            "type": "string"
+          },
+          "activeTabId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "keyBindings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/KeyBinding"
+            }
+          },
+          "keymapVersion": {
+            "description": "Once migrated, explicitly customized shortcuts are never remapped.",
+            "default": 0,
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0.0
+          }
+        }
+      },
+      "execution": "sync",
+      "definitions": {
+        "Workspace": {
+          "type": "object",
+          "required": [
+            "id",
+            "name"
+          ],
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "color": {
+              "description": "Space tint as #rrggbb. Empty means \"follow the appearance hue\" — the default space stays appearance-colored so existing snapshots keep their look; created spaces pick from the palette round-robin.",
+              "default": "",
+              "type": "string"
+            },
+            "lastActiveTabId": {
+              "description": "The space's most recently used tab; activate_workspace reopens the space where the user left off (Arc's working-set behavior). Dangling values are rejected on restore like the other active pointers.",
+              "default": null,
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "Tab": {
+          "type": "object",
+          "required": [
+            "id",
+            "title",
+            "url",
+            "workspaceId"
+          ],
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "workspaceId": {
+              "type": "string"
+            },
+            "url": {
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            },
+            "customTitle": {
+              "description": "User-assigned label that survives navigation; display prefers it over the page title. Navigating to a different URL releases it, reloads and title churn on the same URL keep it.",
+              "default": "",
+              "type": "string"
+            },
+            "favorite": {
+              "description": "Favorites appear in every space without changing the selected space. Older snapshots restore without the field as non-favorites.",
+              "default": false,
+              "type": "boolean"
+            },
+            "pinned": {
+              "description": "Pinned tabs keep their own section under favorites, per space.",
+              "default": false,
+              "type": "boolean"
+            },
+            "private": {
+              "description": "Private tabs run engine-private sessions and never persist: the controller strips them from saved copies and restore drops them.",
+              "default": false,
+              "type": "boolean"
+            },
+            "bookmarkId": {
+              "description": "The persistent sidebar item owning this tab, independent of its live URL.",
+              "default": "",
+              "type": "string"
+            },
+            "homeUrl": {
+              "description": "Saved destination, independent of navigation in the live session.",
+              "default": "",
+              "type": "string"
+            },
+            "homeTitle": {
+              "default": "",
+              "type": "string"
+            },
+            "suspended": {
+              "description": "The saved row remains while its browser session is closed.",
+              "default": false,
+              "type": "boolean"
+            },
+            "updatedAt": {
+              "description": "Last touch in epoch ms; drives the Today/Earlier split (12h archive).",
+              "default": 0,
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            }
+          }
+        },
+        "Bookmark": {
+          "type": "object",
+          "required": [
+            "id",
+            "title",
+            "url"
+          ],
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "workspaceId": {
+              "description": "Empty only in legacy snapshots, assigned to a Space during restore.",
+              "default": "",
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            },
+            "url": {
+              "type": "string"
+            },
+            "folderId": {
+              "default": "",
+              "type": "string"
+            }
+          }
+        },
+        "BookmarkFolder": {
+          "type": "object",
+          "required": [
+            "id",
+            "title"
+          ],
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "workspaceId": {
+              "default": "",
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            }
+          }
+        },
+        "SplitGroup": {
+          "description": "A saved two-pane arrangement. Panes are stored as home URLs, never tab IDs — tabs churn across restarts and private tabs are stripped from snapshots. Restoring creates fresh tabs and re-applies the layout.",
+          "type": "object",
+          "required": [
+            "firstTitle",
+            "firstUrl",
+            "id",
+            "name",
+            "orientation",
+            "ratioMilli",
+            "secondTitle",
+            "secondUrl"
+          ],
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "workspaceId": {
+              "default": "",
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "orientation": {
+              "description": "\"horizontal\" (side by side) or \"vertical\" (stacked).",
+              "type": "string"
+            },
+            "ratioMilli": {
+              "description": "Share of the first pane in thousandths, always 250..=750 so the value matches the runtime clamp in the address bar UI.",
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            },
+            "firstTitle": {
+              "type": "string"
+            },
+            "firstUrl": {
+              "type": "string"
+            },
+            "secondTitle": {
+              "type": "string"
+            },
+            "secondUrl": {
+              "type": "string"
+            }
+          }
+        },
+        "KeyBinding": {
+          "type": "object",
+          "required": [
+            "alt",
+            "command",
+            "ctrl",
+            "key",
+            "meta",
+            "shift"
+          ],
+          "properties": {
+            "key": {
+              "type": "string"
+            },
+            "meta": {
+              "type": "boolean"
+            },
+            "ctrl": {
+              "type": "boolean"
+            },
+            "alt": {
+              "type": "boolean"
+            },
+            "shift": {
+              "type": "boolean"
+            },
+            "command": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "workspaceRemove",
+      "commandId": 18,
+      "inputType": "WorkspaceIdInput",
+      "outputType": "Snapshot",
+      "inputSchema": {
+        "title": "WorkspaceIdInput",
+        "type": "object",
+        "required": [
+          "workspaceId"
+        ],
+        "properties": {
+          "workspaceId": {
+            "type": "string"
+          }
+        }
+      },
+      "outputSchema": {
+        "title": "Snapshot",
+        "type": "object",
+        "required": [
+          "activeWorkspaceId",
+          "keyBindings",
+          "revision",
+          "tabs",
+          "version",
+          "workspaces"
+        ],
+        "properties": {
+          "version": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0.0
+          },
+          "revision": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0.0
+          },
+          "lastExternalRequestId": {
+            "description": "The native incoming-link queue acknowledges FIFO deliveries only after this snapshot is durable. Its head may replay across a bridge restart.",
+            "default": "",
+            "type": "string"
+          },
+          "workspaces": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/Workspace"
+            }
+          },
+          "tabs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/Tab"
+            }
+          },
+          "bookmarks": {
+            "default": [
+              {
+                "id": "bookmark-1",
+                "workspaceId": "",
+                "title": "News",
+                "url": "https://news.ycombinator.com",
+                "folderId": ""
+              },
+              {
+                "id": "bookmark-2",
+                "workspaceId": "",
+                "title": "GitHub",
+                "url": "https://github.com",
+                "folderId": ""
+              },
+              {
+                "id": "bookmark-3",
+                "workspaceId": "",
+                "title": "Docs",
+                "url": "https://developer.mozilla.org",
+                "folderId": ""
+              }
+            ],
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/Bookmark"
+            }
+          },
+          "bookmarkFolders": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/BookmarkFolder"
+            }
+          },
+          "splitGroups": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/SplitGroup"
+            }
+          },
+          "activeWorkspaceId": {
+            "type": "string"
+          },
+          "activeTabId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "keyBindings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/KeyBinding"
+            }
+          },
+          "keymapVersion": {
+            "description": "Once migrated, explicitly customized shortcuts are never remapped.",
+            "default": 0,
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0.0
+          }
+        }
+      },
+      "execution": "sync",
+      "definitions": {
+        "Workspace": {
+          "type": "object",
+          "required": [
+            "id",
+            "name"
+          ],
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "color": {
+              "description": "Space tint as #rrggbb. Empty means \"follow the appearance hue\" — the default space stays appearance-colored so existing snapshots keep their look; created spaces pick from the palette round-robin.",
+              "default": "",
+              "type": "string"
+            },
+            "lastActiveTabId": {
+              "description": "The space's most recently used tab; activate_workspace reopens the space where the user left off (Arc's working-set behavior). Dangling values are rejected on restore like the other active pointers.",
+              "default": null,
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "Tab": {
+          "type": "object",
+          "required": [
+            "id",
+            "title",
+            "url",
+            "workspaceId"
+          ],
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "workspaceId": {
+              "type": "string"
+            },
+            "url": {
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            },
+            "customTitle": {
+              "description": "User-assigned label that survives navigation; display prefers it over the page title. Navigating to a different URL releases it, reloads and title churn on the same URL keep it.",
+              "default": "",
+              "type": "string"
+            },
+            "favorite": {
+              "description": "Favorites appear in every space without changing the selected space. Older snapshots restore without the field as non-favorites.",
+              "default": false,
+              "type": "boolean"
+            },
+            "pinned": {
+              "description": "Pinned tabs keep their own section under favorites, per space.",
+              "default": false,
+              "type": "boolean"
+            },
+            "private": {
+              "description": "Private tabs run engine-private sessions and never persist: the controller strips them from saved copies and restore drops them.",
+              "default": false,
+              "type": "boolean"
+            },
+            "bookmarkId": {
+              "description": "The persistent sidebar item owning this tab, independent of its live URL.",
+              "default": "",
+              "type": "string"
+            },
+            "homeUrl": {
+              "description": "Saved destination, independent of navigation in the live session.",
+              "default": "",
+              "type": "string"
+            },
+            "homeTitle": {
+              "default": "",
+              "type": "string"
+            },
+            "suspended": {
+              "description": "The saved row remains while its browser session is closed.",
+              "default": false,
+              "type": "boolean"
+            },
+            "updatedAt": {
+              "description": "Last touch in epoch ms; drives the Today/Earlier split (12h archive).",
+              "default": 0,
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            }
+          }
+        },
+        "Bookmark": {
+          "type": "object",
+          "required": [
+            "id",
+            "title",
+            "url"
+          ],
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "workspaceId": {
+              "description": "Empty only in legacy snapshots, assigned to a Space during restore.",
+              "default": "",
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            },
+            "url": {
+              "type": "string"
+            },
+            "folderId": {
+              "default": "",
+              "type": "string"
+            }
+          }
+        },
+        "BookmarkFolder": {
+          "type": "object",
+          "required": [
+            "id",
+            "title"
+          ],
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "workspaceId": {
+              "default": "",
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            }
+          }
+        },
+        "SplitGroup": {
+          "description": "A saved two-pane arrangement. Panes are stored as home URLs, never tab IDs — tabs churn across restarts and private tabs are stripped from snapshots. Restoring creates fresh tabs and re-applies the layout.",
+          "type": "object",
+          "required": [
+            "firstTitle",
+            "firstUrl",
+            "id",
+            "name",
+            "orientation",
+            "ratioMilli",
+            "secondTitle",
+            "secondUrl"
+          ],
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "workspaceId": {
+              "default": "",
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "orientation": {
+              "description": "\"horizontal\" (side by side) or \"vertical\" (stacked).",
+              "type": "string"
+            },
+            "ratioMilli": {
+              "description": "Share of the first pane in thousandths, always 250..=750 so the value matches the runtime clamp in the address bar UI.",
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            },
+            "firstTitle": {
+              "type": "string"
+            },
+            "firstUrl": {
+              "type": "string"
+            },
+            "secondTitle": {
+              "type": "string"
+            },
+            "secondUrl": {
+              "type": "string"
+            }
+          }
+        },
+        "KeyBinding": {
+          "type": "object",
+          "required": [
+            "alt",
+            "command",
+            "ctrl",
+            "key",
+            "meta",
+            "shift"
+          ],
+          "properties": {
+            "key": {
+              "type": "string"
+            },
+            "meta": {
+              "type": "boolean"
+            },
+            "ctrl": {
+              "type": "boolean"
+            },
+            "alt": {
+              "type": "boolean"
+            },
+            "shift": {
+              "type": "boolean"
+            },
+            "command": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "workspaceRename",
+      "commandId": 17,
+      "inputType": "WorkspaceRenameInput",
+      "outputType": "Snapshot",
+      "inputSchema": {
+        "title": "WorkspaceRenameInput",
+        "type": "object",
+        "required": [
+          "name",
+          "workspaceId"
+        ],
+        "properties": {
+          "workspaceId": {
+            "type": "string"
+          },
           "name": {
             "type": "string"
           }

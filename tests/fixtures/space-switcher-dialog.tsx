@@ -28,6 +28,9 @@ function Scene() {
     counts={{ "space-24": 12 }}
     onSwitch={(id) => switched.push(id)}
     onCreate={() => created++}
+    onRename={() => {}}
+    onDelete={() => {}}
+    onReorder={() => {}}
     onClose={() => closed++}
   />;
 }

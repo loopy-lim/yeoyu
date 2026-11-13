@@ -960,6 +960,82 @@ fn bookmark_fields_and_restored_ids_are_validated() {
 }
 
 #[test]
+fn renaming_a_space_keeps_ids_and_rejects_empty_or_duplicate_names() {
+    let mut state = BrowserState::default();
+    let side = state.create_workspace("Side").unwrap().active_workspace_id;
+    let renamed = state.rename_workspace(&side, "  Focus  ").unwrap();
+    assert_eq!(
+        renamed
+            .workspaces
+            .iter()
+            .find(|workspace| workspace.id == side)
+            .unwrap()
+            .name,
+        "Focus"
+    );
+    assert!(state.rename_workspace(&side, "   ").is_err());
+    assert!(state.rename_workspace(&side, "Default").is_err());
+    assert!(state.rename_workspace("missing", "Other").is_err());
+}
+
+#[test]
+fn reordering_spaces_moves_only_the_named_entry() {
+    let mut state = BrowserState::default();
+    let default = state.snapshot().active_workspace_id.clone();
+    let work = state.create_workspace("Work").unwrap().active_workspace_id;
+    let life = state.create_workspace("Life").unwrap().active_workspace_id;
+    let ordered = state.reorder_workspace(&life, 0).unwrap();
+    assert_eq!(
+        ordered
+            .workspaces
+            .iter()
+            .map(|workspace| workspace.id.as_str())
+            .collect::<Vec<_>>(),
+        vec![life.as_str(), default.as_str(), work.as_str()]
+    );
+    assert!(state.reorder_workspace(&life, 9).is_err());
+}
+
+#[test]
+fn deleting_a_space_migrates_tabs_bookmarks_and_activates_a_neighbor() {
+    let mut state = BrowserState::default();
+    let default = state.snapshot().active_workspace_id.clone();
+    state.create_tab(&default, "https://keep.example").unwrap();
+    let side = state.create_workspace("Side").unwrap().active_workspace_id;
+    let side_tab = state
+        .create_tab(&side, "https://move.example")
+        .unwrap()
+        .active_tab_id
+        .unwrap();
+    state
+        .create_bookmark("Pinned page", "https://bookmark.example", "")
+        .unwrap();
+    // Bookmark lands on the active (Side) space; migrate with the delete.
+    let removed = state.remove_workspace(&side).unwrap();
+    assert!(
+        removed
+            .workspaces
+            .iter()
+            .all(|workspace| workspace.id != side)
+    );
+    assert_eq!(removed.active_workspace_id, default);
+    assert!(
+        removed
+            .tabs
+            .iter()
+            .any(|tab| tab.id == side_tab && tab.workspace_id == default)
+    );
+    assert!(
+        removed
+            .bookmarks
+            .iter()
+            .any(|bookmark| bookmark.url == "https://bookmark.example"
+                && bookmark.workspace_id == default)
+    );
+    assert!(state.remove_workspace(&default).is_err());
+}
+
+#[test]
 fn created_spaces_take_palette_tints_while_default_stays_appearance_hued() {
     let mut state = BrowserState::default();
     let default = state.snapshot();

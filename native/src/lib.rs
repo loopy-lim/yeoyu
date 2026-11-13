@@ -89,6 +89,20 @@ pub struct WorkspaceIdInput {
 }
 
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct WorkspaceRenameInput {
+    pub workspace_id: String,
+    pub name: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct WorkspaceMoveInput {
+    pub workspace_id: String,
+    pub index: u32,
+}
+
+#[derive(Debug, Serialize, Deserialize, JsonSchema)]
 pub struct SnapshotRestoreInput {
     pub json: String,
 }
@@ -315,6 +329,18 @@ pub fn workspace_activate(input: WorkspaceIdInput) -> Result<Snapshot> {
     lock_state()?.activate_workspace(&input.workspace_id)
 }
 #[command]
+pub fn workspace_rename(input: WorkspaceRenameInput) -> Result<Snapshot> {
+    lock_state()?.rename_workspace(&input.workspace_id, &input.name)
+}
+#[command]
+pub fn workspace_remove(input: WorkspaceIdInput) -> Result<Snapshot> {
+    lock_state()?.remove_workspace(&input.workspace_id)
+}
+#[command]
+pub fn workspace_move(input: WorkspaceMoveInput) -> Result<Snapshot> {
+    lock_state()?.reorder_workspace(&input.workspace_id, input.index)
+}
+#[command]
 pub fn snapshot_restore(input: SnapshotRestoreInput) -> Result<Snapshot> {
     lock_state()?.restore(&input.json)
 }
@@ -400,6 +426,9 @@ pub fn browser_package() -> Package {
                 tab_move,
                 tab_set_workspace,
                 workspace_activate,
+                workspace_rename,
+                workspace_remove,
+                workspace_move,
                 snapshot_restore,
                 keymap_set,
                 keymap_defaults,
