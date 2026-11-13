@@ -100,6 +100,12 @@ export const appClasses = {
   // 48dp rail stays for tab/favorites/settings access.
   phoneBottomBar:
     "h-toolbar px-md gap-sm flex-row items-center border-t-hairline-width border-t-hairline bg-surface-elevated",
+  phoneHybridTabs: "flex-1",
+  phoneHybridTabsContent: "flex-row items-center gap-xs pr-xs",
+  phoneHybridTab:
+    "h-[34px] min-w-[36px] max-w-[128px] px-sm rounded-control flex-row items-center gap-xs border border-transparent active:opacity-pressed",
+  phoneHybridTabActive: "bg-pill border-hairline-on-chrome",
+  phoneHybridTabLabel: "text-ink text-small font-semibold",
   panes: "flex-1 flex-row bg-canvas",
   panesVertical: "flex-col",
   pane: "flex-1 basis-0 bg-white border border-transparent overflow-hidden",

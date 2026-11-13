@@ -139,8 +139,9 @@ const en = {
   "appearance.increaseFrame": "Increase {{side}} frame padding",
   "appearance.chromeLayout": "Toolbar position",
   "appearance.chromeLayoutDetail":
-    "Narrow (phone) windows only. The bottom bar keeps navigation within thumb reach; the side rail stays.",
+    "Narrow (phone) windows only. Bottom bar places navigation at the bottom, Hybrid pairs a top address bar with a bottom tab and Space bar, and Top keeps the classic bar.",
   "appearance.chromeLayoutBottom": "Bottom bar",
+  "appearance.chromeLayoutHybrid": "Hybrid",
   "appearance.chromeLayoutTop": "Top toolbar",
   "color.mode": "Color mode",
   "color.system": "System",
@@ -1055,8 +1056,9 @@ const ko: { [K in keyof typeof en]: string } = {
   "appearance.increaseFrame": "{{side}} 화면 여백 늘리기",
   "appearance.chromeLayout": "툴바 위치",
   "appearance.chromeLayoutDetail":
-    "좁은 창(폰)에서만 적용됩니다. 하단 바는 탐색을 엄지 닿는 곳에 두고 측면 레일은 유지합니다.",
+    "좁은 창(폰)에서만 적용됩니다. 하단 바는 탐색을 아래에, 하이브리드는 상단 주소·하단 탭/Space 바를 배치합니다.",
   "appearance.chromeLayoutBottom": "하단 바",
+  "appearance.chromeLayoutHybrid": "하이브리드",
   "appearance.chromeLayoutTop": "상단 툴바",
   "color.mode": "색상 모드",
   "color.system": "기기 설정",

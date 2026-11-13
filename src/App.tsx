@@ -184,7 +184,11 @@ import { sidebarPresentation, type SidebarFolder } from "@/sidebarPresentation";
 import { AddressBox } from "@/components/AddressBox";
 import { SettingsGroup } from "@/components/settings/kit";
 import { AddressTrigger } from "@/components/AddressTrigger";
-import { PhoneBottomBar } from "@/components/PhoneBottomBar";
+import {
+  PhoneBottomBar,
+  PhoneHybridBar,
+  type HybridBarTab,
+} from "@/components/PhoneBottomBar";
 import { FindBar } from "@/components/FindBar";
 import {
   BoostsDialog,
@@ -2775,8 +2779,34 @@ function BrowserApp() {
   // Issue #19: only the compact tier re-layouts — wider windows resolve to
   // "top" no matter what the stored phone preference says, so the tablet
   // path keeps today's structure.
-  const bottomChrome =
-    resolvePhoneChromeLayout(ui.phoneChromeLayout, compactWindow) === "bottom";
+  const phoneChromeLayout = resolvePhoneChromeLayout(
+    ui.phoneChromeLayout,
+    compactWindow
+  );
+  const bottomChrome = phoneChromeLayout === "bottom";
+  const hybridChrome = phoneChromeLayout === "hybrid";
+  const spaceBottomSheet = phoneChromeLayout !== "top";
+  const hybridBarTabs: HybridBarTab[] = hybridChrome
+    ? Array.from(
+        new Map(
+          [
+            ...(sidebar.split?.pages ?? []),
+            ...sidebar.favorites,
+            ...sidebar.railTabs,
+            ...(activePrivate ? sidebar.privateTabs : []),
+          ].map((tab) => [
+            tab.id,
+            {
+              id: tab.id,
+              title: tabLabel(tab),
+              url: tab.url,
+              active: splitPaneIds.includes(tab.id) && !tab.suspended,
+              playing: playing.includes(tab.id),
+            },
+          ])
+        ).values()
+      )
+    : [];
   const littleArcCardStyle = useMemo(() => {
     if (!isLittleArc) return undefined;
     const bodyWidth = windowWidth - safeInsets.left - safeInsets.right;
@@ -5624,7 +5654,19 @@ function BrowserApp() {
                 }
                 url={addressValue}
                 security={target ? browser.security[target] : undefined}
+                extensionActions={extensionActions}
+                onOpenExtensionAction={openExtensionAction}
                 onAddressPress={() => openLocationEditor("touch")}
+                onOpenSpaces={() => setSpaceSwitcher(true)}
+              />
+            )}
+            {hybridChrome && !contentFullscreen && !isLittleArc && (
+              <PhoneHybridBar
+                tabs={hybridBarTabs}
+                onSelectTab={revealTab}
+                onLongPressTab={openTabMenu}
+                onNewTab={() => openQuickOpen("touch")}
+                onOpenSettings={() => setSettings(true)}
                 onOpenSpaces={() => setSpaceSwitcher(true)}
               />
             )}
@@ -6145,14 +6187,14 @@ function BrowserApp() {
                   </View>
                 )
             )}
-            {/* One open state, two presentations (issue #19): the phone
-                bottom mode docks the Space picker at the bottom edge; every
-                other layout keeps the centered dialog. */}
-            {(bottomChrome ? bottomSheet : sheet)(
+            {/* One open state, two presentations (issue #19): phone bottom
+                and hybrid modes dock the Space picker at the bottom edge;
+                top/tablet layouts keep the centered dialog. */}
+            {(spaceBottomSheet ? bottomSheet : sheet)(
               !!spaceSwitcher,
               () => setSpaceSwitcher(false),
               spaceSwitcherProps &&
-                (bottomChrome ? (
+                (spaceBottomSheet ? (
                   <SpaceSheet {...spaceSwitcherProps} />
                 ) : (
                   <SpaceSwitcherDialog {...spaceSwitcherProps} />
@@ -6833,7 +6875,7 @@ function BrowserApp() {
                       title: tr("category.appearance"),
                       description: tr("category.appearanceDetail"),
                       keywords:
-                        "custom hex colour color theme palette space lavender warm padding px dp size layout display fullscreen toolbar bottom top 하단 상단 툴바 색 컬러 테마 여백 사이드바 크기 화면",
+                        "custom hex colour color theme palette space lavender warm padding px dp size layout display fullscreen toolbar bottom hybrid top 하단 하이브리드 상단 툴바 색 컬러 테마 여백 사이드바 크기 화면",
                       content: (
                         <>
                           <AppearanceSettings

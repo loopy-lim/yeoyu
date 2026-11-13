@@ -187,25 +187,26 @@ export function AppearanceSettings({
           <Text className={c.detail}>{tr("color.resetHelp")}</Text>
         </View>
       </SettingsGroup>
-      {/* Issue #19 first slice: bottom/top only — "hybrid" joins with its
-          own slice, so it stays out of the choices until it exists. An
-          unset preference reads as the compact default (bottom). */}
       <SettingsGroup className={c.group} heading={tr("appearance.chromeLayout")}>
         <View className={c.groupBody}>
           <View className={c.choices}>
-            {(["bottom", "top"] as const).map((layout: PhoneChromeLayout) => (
-              <React.Fragment key={layout}>
-                {choice(
-                  tr(
-                    layout === "bottom"
-                      ? "appearance.chromeLayoutBottom"
-                      : "appearance.chromeLayoutTop"
-                  ),
-                  (ui.phoneChromeLayout ?? "bottom") === layout,
-                  () => onChange({ type: "setPhoneChromeLayout", layout })
-                )}
-              </React.Fragment>
-            ))}
+            {(["bottom", "hybrid", "top"] as const).map(
+              (layout: PhoneChromeLayout) => (
+                <React.Fragment key={layout}>
+                  {choice(
+                    tr(
+                      layout === "bottom"
+                        ? "appearance.chromeLayoutBottom"
+                        : layout === "hybrid"
+                        ? "appearance.chromeLayoutHybrid"
+                        : "appearance.chromeLayoutTop"
+                    ),
+                    (ui.phoneChromeLayout ?? "bottom") === layout,
+                    () => onChange({ type: "setPhoneChromeLayout", layout })
+                  )}
+                </React.Fragment>
+              )
+            )}
           </View>
           <Text className={c.detail}>{tr("appearance.chromeLayoutDetail")}</Text>
         </View>

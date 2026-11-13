@@ -33,11 +33,9 @@ export function normalizePhoneChromeLayout(
 export function resolvePhoneChromeLayout(
   layout: PhoneChromeLayout | undefined,
   compactWindow: boolean
-): "bottom" | "top" {
+): PhoneChromeLayout {
   if (!compactWindow) return "top";
-  // Unset follows the compact default (bottom); "hybrid" reads as the
-  // current top structure until its slice ships.
-  return layout === "top" || layout === "hybrid" ? "top" : "bottom";
+  return layout ?? "bottom";
 }
 
 export function resolveColorMode(

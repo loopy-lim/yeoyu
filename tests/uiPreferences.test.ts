@@ -525,6 +525,6 @@ test("resolvePhoneChromeLayout defaults compact windows to the bottom bar and ne
   expect(resolvePhoneChromeLayout(undefined, true)).toBe("bottom");
   expect(resolvePhoneChromeLayout("top", true)).toBe("top");
   expect(resolvePhoneChromeLayout("bottom", false)).toBe("top");
-  // "hybrid" ships in a later slice and reads as today's structure until then.
-  expect(resolvePhoneChromeLayout("hybrid", true)).toBe("top");
+  expect(resolvePhoneChromeLayout("hybrid", true)).toBe("hybrid");
+  expect(resolvePhoneChromeLayout("hybrid", false)).toBe("top");
 });
