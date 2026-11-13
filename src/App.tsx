@@ -3778,6 +3778,17 @@ function BrowserApp() {
       tabId={id}
       initialUrl={url}
       active={id === target}
+      pullToRefreshDisabled={
+        overlayOpen ||
+        bodyBlocking ||
+        !!permissionRequest ||
+        quickOpenEdit ||
+        selectionMode ||
+        fullscreenTabId === id ||
+        url === NEW_TAB_URL
+      }
+      refreshAccentColor={theme.accentStrong}
+      refreshSurfaceColor={theme.surfaceElevated}
       onNavigation={(e) => onNavigation(e.nativeEvent)}
       onFocused={(e) => {
         setFocused(e.nativeEvent.tabId);

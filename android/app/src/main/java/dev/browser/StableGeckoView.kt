@@ -4,15 +4,23 @@ import android.content.Context
 import android.os.SystemClock
 import android.util.Log
 import android.graphics.SurfaceTexture
+import android.view.MotionEvent
 import android.view.TextureView
 import android.view.View
 import android.view.ViewGroup
+import org.mozilla.geckoview.GeckoResult
 import org.mozilla.geckoview.GeckoSession
 import org.mozilla.geckoview.GeckoView
+import org.mozilla.geckoview.PanZoomController
 
 internal interface GeckoTextureObserver {
     fun onTextureUpdated()
     fun onTextureInvalidated()
+}
+
+internal interface GeckoTouchDetailObserver {
+    fun shouldRequestDetailResult(event: MotionEvent): Boolean
+    fun onDetailResult(actionMasked: Int, result: GeckoResult<PanZoomController.InputResultDetail>)
 }
 
 /**
@@ -23,6 +31,7 @@ internal interface GeckoTextureObserver {
 class StableGeckoView(context: Context) : GeckoView(context) {
     internal var textureObserver: GeckoTextureObserver? = null
     internal var pipTextureObserver: GeckoTextureObserver? = null
+    internal var touchDetailObserver: GeckoTouchDetailObserver? = null
 
     private class ReturnTrace(val ticket: Long, val tab: String, val document: Long,
         val session: Int, val started: Long) {
@@ -117,6 +126,16 @@ class StableGeckoView(context: Context) : GeckoView(context) {
         textureObserver?.onTextureInvalidated()
         pipTextureObserver?.onTextureInvalidated()
         return super.releaseSession()
+    }
+
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+        val observer = touchDetailObserver
+        if (observer != null && session != null && observer.shouldRequestDetailResult(event)) {
+            val result = super.onTouchEventForDetailResult(event)
+            observer.onDetailResult(event.actionMasked, result)
+            return true
+        }
+        return super.onTouchEvent(event)
     }
 
     internal fun textureForCapture(): TextureView? = findTextureView(this)

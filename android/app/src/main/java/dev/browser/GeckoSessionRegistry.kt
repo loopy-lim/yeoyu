@@ -579,7 +579,7 @@ object GeckoSessionRegistry {
         var activityVersion: Long = 0, var stateDocumentGeneration: Long = -1,
         var recording: Boolean = false, var blockedCount: Int = 0, var security: JSONObject? = null,
         var fullscreen: Boolean = false, var mediaTitle: String? = null,
-        var fullscreenVideoSize: Pair<Int, Int>? = null) {
+        var fullscreenVideoSize: Pair<Int, Int>? = null, var scrollY: Int = 0) {
         internal var lastContentfulPaintDocument: Long = -1
         internal val permissionPrompts = DocumentPermissionPrompts()
         /** Fixed for the session lifetime at creation; private sessions never
@@ -999,6 +999,9 @@ object GeckoSessionRegistry {
                 val extensionPage = BrowserExtensionHost.isExtensionPage(url)
                 e.url = if (extensionPage) requestedWebUrl else navigationTargetUrl(url, e.url)
                 if (!extensionPage && canonicalBrowserOrigin(e.url) != null) requestedWebUrl = e.url
+                e.scrollY = 0
+                e.owner?.updateUrl(e.url)
+                e.owner?.updateScrollY(0)
                 e.activityVersion++
                 if (extensionPage || e.security?.optString("origin") != canonicalBrowserOrigin(e.url)) e.security = null
                 if (!wasReady && e.initialNavigationLocationAccepted) SpaceTransitionCover.initialNavigationReady(id, e)
@@ -1083,6 +1086,8 @@ object GeckoSessionRegistry {
                 if (!current()) return
                 val deltaY = scrollY - lastY
                 lastY = scrollY
+                e.scrollY = scrollY
+                e.owner?.updateScrollY(scrollY)
                 emit?.invoke("BrowserScroll", Arguments.createMap().apply {
                     putString("tabId", id)
                     putInt("scrollX", scrollX)
@@ -1193,7 +1198,9 @@ object GeckoSessionRegistry {
                 e.blockedCount = 0
                 cancelPermissions(s, "navigation")
                 (s.promptDelegate as? BrowserPromptDelegate)?.cancelPending()
-                e.loading = true; e.progress = 8; changed(id); reportProgress(id, e)
+                e.scrollY = 0
+                e.owner?.updateScrollY(0)
+                e.loading = true; e.progress = 8; e.owner?.updateLoading(true); changed(id); reportProgress(id, e)
                 securityChanged(id, e)
             }
             override fun onProgressChange(s: GeckoSession, progress: Int) {
@@ -1206,7 +1213,7 @@ object GeckoSessionRegistry {
                 if (!e.initialNavigation.acceptPageStop(success)) { traceBootstrap("suppressed-page-stop"); return }
                 // changed() is what tells JS loading=false; without it the reload
                 // button stays a stop ✕ until some incidental delegate fires.
-                e.loading = false; e.progress = 100; changed(id); reportProgress(id, e)
+                e.loading = false; e.progress = 100; e.owner?.updateLoading(false); changed(id); reportProgress(id, e)
                 injectBoost(id, e)
                 BrowserReaderMode.pageStopped(s, e.url)
                 s.flushSessionState()
@@ -1343,6 +1350,9 @@ object GeckoSessionRegistry {
         }
         else view.gecko.setSession(e.session)
         e.owner=view
+        view.updateUrl(e.url)
+        view.updateScrollY(e.scrollY)
+        view.updateLoading(e.loading)
         SpaceTransitionCover.attached(id, e, view)
         e.activityVersion++
         updateActive(e)

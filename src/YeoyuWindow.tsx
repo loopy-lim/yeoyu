@@ -505,6 +505,14 @@ function WindowBody({
               tabId={tabId}
               initialUrl={nav.url || boundUrl || NEW_TAB_URL}
               active
+              pullToRefreshDisabled={
+                editing ||
+                !!permissionRequest ||
+                nav.fullscreen === true ||
+                (nav.url || boundUrl || NEW_TAB_URL) === NEW_TAB_URL
+              }
+              refreshAccentColor={theme.accentStrong}
+              refreshSurfaceColor={theme.surfaceElevated}
               onNavigation={(e) => applyNavigation(e.nativeEvent)}
             />
           ) : (

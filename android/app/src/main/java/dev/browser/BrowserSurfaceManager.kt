@@ -13,6 +13,9 @@ class BrowserSurfaceManager:SimpleViewManager<BrowserSurfaceView>(),BrowserSurfa
  @ReactProp(name="tabId") override fun setTabId(view:BrowserSurfaceView,value:String?) {view.tabId=value.orEmpty()}
  @ReactProp(name="initialUrl") override fun setInitialUrl(view:BrowserSurfaceView,value:String?) {view.initialUrl=value?:"about:blank"}
  @ReactProp(name="active") override fun setActive(view:BrowserSurfaceView,value:Boolean) {if(value)view.gecko.requestFocus()}
+ @ReactProp(name="pullToRefreshDisabled") override fun setPullToRefreshDisabled(view:BrowserSurfaceView,value:Boolean) {view.setPullToRefreshDisabled(value)}
+ @ReactProp(name="refreshAccentColor") override fun setRefreshAccentColor(view:BrowserSurfaceView,value:String?) {view.setRefreshColors(value, null)}
+ @ReactProp(name="refreshSurfaceColor") override fun setRefreshSurfaceColor(view:BrowserSurfaceView,value:String?) {view.setRefreshColors(null, value)}
  override fun onAfterUpdateTransaction(view:BrowserSurfaceView) {super.onAfterUpdateTransaction(view);view.bind()}
  override fun onDropViewInstance(view:BrowserSurfaceView) {view.release();super.onDropViewInstance(view)}
  override fun loadUrl(view:BrowserSurfaceView,url:String?) {url?.let{GeckoSessionRegistry.load(view.context,view.tabId,it)}}
@@ -23,5 +26,6 @@ class BrowserSurfaceManager:SimpleViewManager<BrowserSurfaceView>(),BrowserSurfa
  override fun focusContent(view:BrowserSurfaceView) {view.gecko.requestFocus()}
  override fun getExportedCustomDirectEventTypeConstants():Map<String,Any> = mapOf(
   "topNavigation" to mapOf("registrationName" to "onNavigation"),
-  "topFocused" to mapOf("registrationName" to "onFocused"))
+  "topFocused" to mapOf("registrationName" to "onFocused"),
+  "topRefresh" to mapOf("registrationName" to "onRefresh"))
 }

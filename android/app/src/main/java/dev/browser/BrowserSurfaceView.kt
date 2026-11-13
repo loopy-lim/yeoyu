@@ -1,6 +1,8 @@
 package dev.browser
+import android.graphics.Canvas
 import android.graphics.Matrix
 import android.graphics.Region
+import android.graphics.drawable.Drawable
 import android.os.SystemClock
 import android.os.Trace
 import android.view.MotionEvent
@@ -12,8 +14,10 @@ import com.facebook.react.bridge.WritableMap
 import com.facebook.react.uimanager.ThemedReactContext
 import com.facebook.react.uimanager.UIManagerHelper
 import com.facebook.react.uimanager.events.Event
+import org.mozilla.geckoview.GeckoResult
 import org.mozilla.geckoview.GeckoView
 import org.mozilla.geckoview.GeckoSession
+import org.mozilla.geckoview.PanZoomController
 
 class BrowserSurfaceView(val reactContext:ThemedReactContext):FrameLayout(reactContext) {
  var gecko:GeckoView=StableGeckoView(reactContext)
@@ -21,16 +25,33 @@ class BrowserSurfaceView(val reactContext:ThemedReactContext):FrameLayout(reactC
  private val coverGesture=ResizeCoverGestureGate()
  @Suppress("UNNECESSARY_LATEINIT") // Guard callbacks from Android's View constructor.
  private lateinit var resizeCover:GeckoResizeCover
+ @Suppress("UNNECESSARY_LATEINIT")
+ private lateinit var pullToRefresh:PullToRefreshHelper
+ private val touchDetailObserver = object : GeckoTouchDetailObserver {
+  override fun shouldRequestDetailResult(event:MotionEvent) =
+   ::pullToRefresh.isInitialized && pullToRefresh.shouldRequestDetailResult(event)
+  override fun onDetailResult(actionMasked:Int, result:GeckoResult<PanZoomController.InputResultDetail>) {
+   if(::pullToRefresh.isInitialized) pullToRefresh.onDetailResult(actionMasked, result)
+  }
+ }
  private val childLayout=ResizeLayoutCoalescer(::layoutGecko)
  private var childLayoutTask:Runnable?=null
  private var hostLayoutDepth=0
  internal val isGeckoLayoutPending:Boolean get()=childLayout.hasPending || childLayout.isApplying
+ internal val isResizeCoverDisplayed:Boolean get()=::resizeCover.isInitialized && resizeCover.isDisplayed
  var tabId=""
   set(value) {
-   if(field!=value) { resizeCover.clear(); coverGesture.invalidate() }
+   if(field!=value) {
+    resizeCover.clear(); coverGesture.invalidate()
+    if(::pullToRefresh.isInitialized) pullToRefresh.reset()
+   }
    field=value
   }
  var initialUrl="about:blank"
+  set(value) {
+   field=value
+   if(::pullToRefresh.isInitialized) pullToRefresh.updateUrl(value)
+  }
  private val layoutRegion=Region()
  private val screenPosition=IntArray(2)
  private val screenMatrix=Matrix()
@@ -70,10 +91,36 @@ class BrowserSurfaceView(val reactContext:ThemedReactContext):FrameLayout(reactC
  }
  init {
   resizeCover=GeckoResizeCover(this,gecko as StableGeckoView)
+  pullToRefresh=PullToRefreshHelper(this) {
+   if(tabId.isNotEmpty()) {
+    send("topRefresh",Arguments.createMap().apply{putString("tabId",tabId)})
+    GeckoSessionRegistry.navigate(reactContext,tabId,"reload")
+   }
+  }
+  (gecko as? StableGeckoView)?.touchDetailObserver=touchDetailObserver
   addView(gecko,LayoutParams(LayoutParams.MATCH_PARENT,LayoutParams.MATCH_PARENT))
  }
+ fun setPullToRefreshDisabled(disabled:Boolean) {
+  if(::pullToRefresh.isInitialized) pullToRefresh.setDisabled(disabled)
+ }
+ fun setRefreshColors(accent:String?, surface:String?) {
+  if(::pullToRefresh.isInitialized) pullToRefresh.setColors(accent, surface)
+ }
+ internal fun updateUrl(url:String) {
+  if(::pullToRefresh.isInitialized) pullToRefresh.updateUrl(url)
+ }
+ internal fun updateScrollY(scrollY:Int) {
+  if(::pullToRefresh.isInitialized) pullToRefresh.updateScrollY(scrollY)
+ }
+ internal fun updateLoading(loading:Boolean) {
+  if(::pullToRefresh.isInitialized) pullToRefresh.updateLoading(loading)
+ }
  fun bind() { if(tabId.isNotEmpty()) GeckoSessionRegistry.attach(this,tabId,initialUrl) }
- fun release() { resizeCover.clear(); coverGesture.invalidate(); GeckoSessionRegistry.detach(this) }
+ fun release() {
+  resizeCover.clear(); coverGesture.invalidate()
+  if(::pullToRefresh.isInitialized) pullToRefresh.reset()
+  GeckoSessionRegistry.detach(this)
+ }
  internal fun mediaPlaybackChanged(session:GeckoSession,playing:Boolean) {
   // Media may start after a resize captured its old picture. Retire that still
   // immediately and apply the latest child bounds, keeping gesture ownership.
@@ -144,9 +191,12 @@ class BrowserSurfaceView(val reactContext:ThemedReactContext):FrameLayout(reactC
   require(replacement.parent==null)
   resizeCover.clear()
   coverGesture.invalidate()
+  if(::pullToRefresh.isInitialized) pullToRefresh.reset()
   val previous=gecko
+  (previous as? StableGeckoView)?.touchDetailObserver=null
   if(previous.parent===this) removeView(previous)
   gecko=replacement
+  (replacement as? StableGeckoView)?.touchDetailObserver=touchDetailObserver
   resizeCover=GeckoResizeCover(this,replacement as StableGeckoView)
   positionedSession=null
   addView(replacement,LayoutParams(LayoutParams.MATCH_PARENT,LayoutParams.MATCH_PARENT))
@@ -157,6 +207,7 @@ class BrowserSurfaceView(val reactContext:ThemedReactContext):FrameLayout(reactC
   super.onVisibilityChanged(changedView,visibility)
   // Android can call this while the View constructor is still running.
   if(::resizeCover.isInitialized && !isShown) resizeCover.clear()
+  if(::pullToRefresh.isInitialized && !isShown) pullToRefresh.reset()
  }
  override fun onViewRemoved(child:View) {
   if(child===gecko) { resizeCover.clear(); coverGesture.invalidate() }
@@ -174,6 +225,16 @@ class BrowserSurfaceView(val reactContext:ThemedReactContext):FrameLayout(reactC
   release()
   super.onDetachedFromWindow()
  }
+ override fun verifyDrawable(who:Drawable):Boolean =
+  super.verifyDrawable(who) || (::pullToRefresh.isInitialized && pullToRefresh.ownsDrawable(who))
+ override fun invalidateDrawable(drawable:Drawable) {
+  if(::pullToRefresh.isInitialized && pullToRefresh.ownsDrawable(drawable)) invalidate()
+  else super.invalidateDrawable(drawable)
+ }
+ override fun dispatchDraw(canvas:Canvas) {
+  super.dispatchDraw(canvas)
+  if(::pullToRefresh.isInitialized) pullToRefresh.draw(canvas)
+ }
  override fun dispatchTouchEvent(event:MotionEvent):Boolean {
   val action=event.actionMasked
   if(coverGesture.consume(
@@ -181,7 +242,10 @@ class BrowserSurfaceView(val reactContext:ThemedReactContext):FrameLayout(reactC
    action==MotionEvent.ACTION_UP || action==MotionEvent.ACTION_CANCEL,
    resizeCover.isDisplayed,
    gecko.session,
-  )) return true
+  )) {
+   if(::pullToRefresh.isInitialized) pullToRefresh.reset()
+   return true
+  }
   return super.dispatchTouchEvent(event)
  }
  override fun onInterceptTouchEvent(event:MotionEvent):Boolean {
@@ -189,7 +253,12 @@ class BrowserSurfaceView(val reactContext:ThemedReactContext):FrameLayout(reactC
    send("topFocused",Arguments.createMap().apply{putString("tabId",tabId)})
    gecko.requestFocus()
   }
+  if(::pullToRefresh.isInitialized && pullToRefresh.onInterceptTouchEvent(event)) return true
   return super.onInterceptTouchEvent(event)
+ }
+ override fun onTouchEvent(event:MotionEvent):Boolean {
+  if(::pullToRefresh.isInitialized && pullToRefresh.onTouchEvent(event)) return true
+  return super.onTouchEvent(event)
  }
  fun navigation(payload:WritableMap) { send("topNavigation",payload) }
  private fun send(name:String,payload:WritableMap) {
