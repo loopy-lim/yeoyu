@@ -6,6 +6,7 @@ import React, {
   useState,
 } from "react";
 import { Image, Text } from "react-native";
+import { ChromeIcon } from "@/chrome/ChromeIcon";
 import { favicons } from "@/favicons";
 
 export function Favicon({
@@ -59,7 +60,16 @@ export function Favicon({
       mounted = false;
     };
   }, [url, request, persist]);
-  if (!source)
+  if (!source) {
+    if (fallback === "globe") {
+      return (
+        <ChromeIcon
+          name="space"
+          size={Math.max(12, Math.round(size * 0.92))}
+          className="text-ink-muted"
+        />
+      );
+    }
     return (
       <Text
         className="text-ink-muted font-semibold"
@@ -68,6 +78,7 @@ export function Favicon({
         {fallback}
       </Text>
     );
+  }
   return (
     <Image
       key={url}

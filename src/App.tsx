@@ -539,7 +539,6 @@ function BrowserApp() {
   } | null>(null);
   const [splitPickerTabId, setSplitPickerTabId] = useState<string | null>(null);
   const [newFolderOpen, setNewFolderOpen] = useState(false);
-  const [tabsCollapsed, setTabsCollapsed] = useState(false);
   const [splitGroupDialog, setSplitGroupDialog] = useState<
     "save" | "manage" | null
   >(null);
@@ -1998,7 +1997,7 @@ function BrowserApp() {
             ) : (
               <Favicon
                 url={tab?.url || bookmark.url}
-                fallback={title.slice(0, 1).toUpperCase() || "•"}
+                fallback="globe"
                 size={14}
                 radius={4}
               />
@@ -2037,8 +2036,8 @@ function BrowserApp() {
           >
             <ChromeIcon
               className={cn(
-                "size-[13px]",
-                isActive ? "text-ink-muted" : "text-ink-faint"
+                "size-[12px]",
+                isActive ? "text-ink-muted" : "text-ink-faint opacity-55"
               )}
               name="close"
             />
@@ -3901,7 +3900,7 @@ function BrowserApp() {
               // visit may reach the shared disk cache.
               <Favicon
                 url={tab.url}
-                fallback={tabLabel(tab).slice(0, 1).toUpperCase() || "•"}
+                fallback="globe"
                 size={14}
                 radius={4}
                 persist={!tab.private}
@@ -3949,8 +3948,8 @@ function BrowserApp() {
           >
             <ChromeIcon
               className={cn(
-                "size-[13px]",
-                selected ? "text-ink-muted" : "text-ink-faint"
+                "size-[12px]",
+                selected ? "text-ink-muted" : "text-ink-faint opacity-55"
               )}
               name="close"
             />
@@ -4026,6 +4025,13 @@ function BrowserApp() {
           onPress: () => {
             if (target) run(controller.setFavorite(target, true));
           },
+        },
+        {
+          id: "clear-unpinned",
+          label: tr("command.clearUnpinned"),
+          icon: "trash",
+          disabled: sidebar.ordinaryTabs.length === 0,
+          onPress: () => registry.execute("tabs.clearUnpinned"),
         },
         {
           id: "history",
@@ -4133,7 +4139,7 @@ function BrowserApp() {
         {
           id: "extensions",
           label: tr("chrome.extensions"),
-          icon: "settings",
+          icon: "puzzle",
           dividerBefore: true,
           onPress: () => {
             setSettingsQuery("");
@@ -4649,7 +4655,7 @@ function BrowserApp() {
                   >
                     <FlatList
                       key={state?.activeWorkspaceId}
-                      data={tabsCollapsed ? [] : sidebar.ordinaryTabs}
+                      data={sidebar.ordinaryTabs}
                       keyExtractor={(tab) => tab.id}
                       renderItem={({ item }) => renderSidebarTab(item)}
                       initialNumToRender={initialSidebarRows}
@@ -4684,25 +4690,27 @@ function BrowserApp() {
                               )}
                               onPress={() => setSpaceSwitcher(true)}
                             >
-                              <View
-                                className={cn(
-                                  "size-[8px] rounded-full",
-                                  !activeWorkspace?.color && "bg-accent"
-                                )}
-                                style={
-                                  activeWorkspace?.color
-                                    ? { backgroundColor: activeWorkspace.color }
-                                    : undefined
-                                }
-                              />
+                              {activeWorkspace?.color ? (
+                                <View
+                                  className="size-[8px] rounded-full"
+                                  style={{
+                                    backgroundColor: activeWorkspace.color,
+                                  }}
+                                />
+                              ) : (
+                                <ChromeIcon
+                                  className={cn("size-[14px]", "text-ink-muted")}
+                                  name="space"
+                                />
+                              )}
                               <Text
                                 numberOfLines={1}
-                                className="flex-1 text-ink text-[13px] font-semibold"
+                                className="flex-1 text-ink-muted text-[13px] font-medium"
                               >
                                 {activeWorkspace?.name ?? "Space"}
                               </Text>
                               <ChromeIcon
-                                className={cn("size-[13px]", "text-ink-muted")}
+                                className={cn("size-[12px]", "text-ink-faint")}
                                 name="chevronDown"
                               />
                             </SidebarPressable>
@@ -4847,44 +4855,6 @@ function BrowserApp() {
                                 {tr("chrome.newTab")}
                               </Text>
                             </SidebarPressable>
-                            {sidebar.ordinaryTabs.length > 0 && (
-                              <SidebarPressable
-                                accessibilityRole="button"
-                                accessibilityLabel={tr("chrome.tabsSection")}
-                                accessibilityState={{ expanded: !tabsCollapsed }}
-                                className={cn(
-                                  c.spaceHeader,
-                                  "active:opacity-pressed"
-                                )}
-                                onPress={() => setTabsCollapsed((v) => !v)}
-                              >
-                                <ChromeIcon
-                                  className={cn(
-                                    "size-[11px]",
-                                    "text-ink-faint"
-                                  )}
-                                  name={
-                                    tabsCollapsed ? "chevronRight" : "chevronDown"
-                                  }
-                                />
-                                <Text
-                                  numberOfLines={1}
-                                  className={c.spaceHeaderTitle}
-                                >
-                                  {tr("chrome.tabsSection")}
-                                </Text>
-                                <View className="h-[18px] px-[6px] rounded-full bg-field-on-chrome items-center justify-center">
-                                  <Text
-                                    className={cn(
-                                      c.workspaceCount,
-                                      "tabular-nums"
-                                    )}
-                                  >
-                                    {sidebar.ordinaryTabs.length}
-                                  </Text>
-                                </View>
-                              </SidebarPressable>
-                            )}
                           </View>
                         </View>
                       }
@@ -4967,7 +4937,8 @@ function BrowserApp() {
                                       active
                                         ? "size-[8px]"
                                         : "size-[7px] opacity-60",
-                                      !workspace.color && "bg-accent"
+                                      !workspace.color &&
+                                        (active ? "bg-ink" : "bg-ink-faint")
                                     )}
                                     style={
                                       workspace.color
@@ -5091,7 +5062,7 @@ function BrowserApp() {
                               ) : (
                                 <Favicon
                                   url={tab?.url || bookmark.url}
-                                  fallback={title.slice(0, 1).toUpperCase()}
+                                  fallback="globe"
                                   size={16}
                                   radius={4}
                                 />
@@ -5144,7 +5115,7 @@ function BrowserApp() {
                             ) : (
                               <Favicon
                                 url={t.url}
-                                fallback={tabLabel(t).slice(0, 1).toUpperCase()}
+                                fallback="globe"
                                 size={16}
                                 radius={4}
                               />
@@ -5200,9 +5171,7 @@ function BrowserApp() {
                                 ) : (
                                   <Favicon
                                     url={tab.url}
-                                    fallback={tabLabel(tab)
-                                      .slice(0, 1)
-                                      .toUpperCase()}
+                                    fallback="globe"
                                     size={16}
                                     radius={4}
                                   />
@@ -5237,7 +5206,7 @@ function BrowserApp() {
                       <View
                         className={cn(
                           "size-[8px] rounded-full",
-                          !activeWorkspace?.color && "bg-accent"
+                          !activeWorkspace?.color && "bg-ink"
                         )}
                         style={
                           activeWorkspace?.color
@@ -5252,15 +5221,32 @@ function BrowserApp() {
                       onPress={goHome}
                     />
                     <IconButton
-                      label={tr("chrome.newTab")}
-                      icon="plus"
-                      onPress={() => openQuickOpen("touch")}
-                    />
-                    <IconButton
                       label={tr("chrome.settings")}
                       icon="settings"
                       onPress={() => setSettings(true)}
                     />
+                    <SidebarPressable
+                      accessibilityRole="button"
+                      accessibilityLabel={tr("chrome.newTab")}
+                      hitSlop={8}
+                      className={cn(
+                        controlVariants({ size: "icon" }),
+                        c.iconButton,
+                        "active:opacity-pressed"
+                      )}
+                      onPress={() => openQuickOpen("touch")}
+                      onLongPress={(event) =>
+                        setSidebarMenu({
+                          kind: "create",
+                          anchor: {
+                            x: event.nativeEvent.pageX,
+                            y: event.nativeEvent.pageY,
+                          },
+                        })
+                      }
+                    >
+                      <ChromeIcon className="size-[16px]" name="plus" />
+                    </SidebarPressable>
                   </View>
                 </SidebarLayer>
                 {!ui.sidebarCollapsed && (

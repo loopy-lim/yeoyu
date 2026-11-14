@@ -511,7 +511,7 @@ const HistoryRow = memo(function HistoryRow({
     >
       <Favicon
         url={entry.url}
-        fallback={(entry.title || entry.url).slice(0, 1).toUpperCase()}
+        fallback="globe"
         size={16}
         radius={4}
       />

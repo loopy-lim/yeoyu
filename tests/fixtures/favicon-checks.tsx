@@ -16,6 +16,7 @@ mock.module("react-native", () => ({
   Text: "Text",
   Animated: { View: "View" },
 }));
+mock.module("react-native-svg", () => ({ default: "Svg", Path: "Path" }));
 const repo = resolve(fileURLToPath(new URL("../..", import.meta.url)));
 const product = repo;
 const native = await import("react-native");

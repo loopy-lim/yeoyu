@@ -100,7 +100,7 @@ function SyncNodeRow({
   if (node.type === "separator") {
     // Hairline row — the separator glyph in the tree, no interaction.
     return <View className={cn(c.tab, "justify-center")} style={{ paddingLeft: 10 + depth * 12 }}>
-      <View className="h-hairline-width flex-1 bg-hairline-on-chrome" />
+      <View className="h-hairline flex-1 bg-hairline-on-chrome" />
     </View>;
   }
   if (node.type === "folder" || node.type === "livemark") {
@@ -146,7 +146,7 @@ function SyncNodeRow({
       <View className={c.tabFavicon}>
         <Favicon
           url={node.url ?? ""}
-          fallback={(title.slice(0, 1) || "•").toUpperCase()}
+          fallback="globe"
           size={14}
           radius={4}
         />

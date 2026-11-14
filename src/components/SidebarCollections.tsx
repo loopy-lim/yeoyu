@@ -373,7 +373,7 @@ function SidebarPageRow({
         <View className={collectionClasses.choiceIcon}>
           <Favicon
             url={page.url}
-            fallback={pageTitle(page).slice(0, 1).toUpperCase()}
+            fallback="globe"
             size={20}
             radius={4}
             persist={!page.private}
