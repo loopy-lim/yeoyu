@@ -69,27 +69,27 @@ export function AddressTrigger({
       hitSlop={8}
       onPress={onPress}
       className={cn(
-        "justify-center rounded-control px-xl active:opacity-pressed",
+        "justify-center rounded-[9px] px-lg active:opacity-pressed",
         compact
           ? "flex-1 h-address-compact ml-sm bg-sunken border border-hairline"
           : "self-stretch h-address bg-field-on-chrome border border-transparent"
       )}
     >
-      <View className="flex-row items-center gap-lg">
+      <View className="flex-row items-center gap-md">
         {shieldGlyph && (
           <ChromeIcon
             name={shieldGlyph}
-            size={15}
-            color={shieldGlyph === "warning" ? t.errorInk : t.inkMuted}
+            size={13}
+            color={shieldGlyph === "warning" ? t.errorInk : t.inkFaint}
           />
         )}
-        {empty && <ChromeIcon name="search" size={15} color={t.inkMuted} />}
+        {empty && <ChromeIcon name="search" size={13} color={t.inkFaint} />}
         <Text
           numberOfLines={1}
           maxFontSizeMultiplier={1.35}
           className={cn(
-            "flex-1",
-            textVariants({ size: "input", tone: empty ? "faint" : "ink" })
+            "flex-1 font-medium",
+            textVariants({ size: "body", tone: empty ? "faint" : "ink" })
           )}
         >
           {empty ? tr("address.placeholder") : label}

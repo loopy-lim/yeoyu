@@ -9,6 +9,7 @@ import {
   View,
   type ListRenderItemInfo,
 } from "react-native";
+import { Separator } from "@unikit-bridge/ui";
 import { Favicon } from "@/components/Favicon";
 import { josaRo } from "@/i18n";
 import { ActionMenu, type MenuAnchor, type MenuItem } from "@/components/ActionMenu";
@@ -266,7 +267,7 @@ function SpaceSwitcherContent({
               />
             ))}
           </ScrollView>
-          <View className="h-hairline-width bg-hairline my-xs" />
+          <Separator className="my-xs bg-hairline" />
           <NewSpaceRow onPress={onCreate} />
         </>
       )}

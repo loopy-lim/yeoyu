@@ -137,8 +137,8 @@ test("compiled semantic utilities retain existing control geometry and text size
       "size-icon-button rounded-chip text-icon-size text-icon opacity-pressed"
     )
   ).toMatchObject({
-    width: 40,
-    height: 40,
+    width: size.iconButton,
+    height: size.iconButton,
     borderRadius: 5,
     fontSize: 18,
     color: "#363640",

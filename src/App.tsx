@@ -228,7 +228,11 @@ type SuggestionSources = {
   tabs: { id?: string; url: string; title: string }[];
   history: HistoryEntry[];
 };
-import { Button as UnikitButton, Badge as UnikitBadge } from "@unikit-bridge/ui";
+import {
+  Button as UnikitButton,
+  Badge as UnikitBadge,
+  Separator as UnikitSeparator,
+} from "@unikit-bridge/ui";
 
 const favoriteClasses = cva(c.favorite, {
   variants: { selected: { true: c.favoriteActive } },
@@ -327,12 +331,12 @@ const IconButton = ({
         className={cn(
           controlVariants({ size: "icon", disabled }),
           c.iconButton,
-          active && "bg-sunken-strong border border-accent-strong"
+          active && "bg-pill border-transparent"
         )}
         style={[{ transform: [{ scale }] }]}
       >
         <ChromeIcon
-          className={cn("size-[18px]", active && "text-accent-strong")}
+          className={cn("size-[16px]", active && "text-ink")}
           name={icon}
         />
       </AnimatedView>
@@ -1968,7 +1972,6 @@ function BrowserApp() {
         className={cn(
           rowVariants({ density: "tab", selected: isActive }),
           c.tab,
-          isActive && "border border-hairline-on-chrome shadow-favorite-active",
           indented && c.bookmarkTreeIndent
         )}
       >
@@ -1991,32 +1994,35 @@ function BrowserApp() {
         >
           <View className={c.tabFavicon}>
             {tab && playing.includes(tab.id) ? (
-              <ChromeIcon className={cn("size-[14px]")} name="play" />
+              <ChromeIcon className={cn("size-[13px]")} name="play" />
             ) : (
               <Favicon
                 url={tab?.url || bookmark.url}
                 fallback={title.slice(0, 1).toUpperCase() || "•"}
-                size={16}
-                radius={3}
+                size={14}
+                radius={4}
               />
             )}
           </View>
           <Text
             numberOfLines={1}
             maxFontSizeMultiplier={1.35}
-            className={c.tabTitle}
+            className={cn(
+              c.tabTitle,
+              isActive ? "text-ink font-medium" : "text-ink-muted font-normal"
+            )}
           >
             {title}
           </Text>
           {!!validSplit && isActive && (
             <ChromeIcon
-              className={cn("size-[14px]", "text-ink-muted")}
+              className={cn("size-[13px]", "text-ink-muted")}
               name="split"
             />
           )}
           {windowedTabs.includes(tab?.id ?? bookmark.id) && (
             <ChromeIcon
-              className={cn("size-[14px]", "text-ink-muted")}
+              className={cn("size-[13px]", "text-ink-muted")}
               name="window"
             />
           )}
@@ -2030,7 +2036,10 @@ function BrowserApp() {
             onPress={() => closeTab(tab.id)}
           >
             <ChromeIcon
-              className={cn("size-[15px]", "text-ink-muted")}
+              className={cn(
+                "size-[13px]",
+                isActive ? "text-ink-muted" : "text-ink-faint"
+              )}
               name="close"
             />
           </SidebarPressable>
@@ -3836,111 +3845,120 @@ function BrowserApp() {
     );
     return () => clearTimeout(id);
   }, [overlayOpen, reducedMotion]);
-  const renderSidebarTab = (tab: NonNullable<typeof state>["tabs"][number]) => (
-    <View
-      key={tab.id}
-      ref={(view) => {
-        if (view) sidebarRowRefs.current.set(tab.id, view);
-        else sidebarRowRefs.current.delete(tab.id);
-      }}
-      className={cn(
-        rowVariants({
-          density: "tab",
-          selected: selectionMode
-            ? selectedTabIds.has(tab.id)
-            : splitPaneIds.includes(tab.id) && !tab.suspended,
-        }),
-        c.tab
-      )}
-    >
-      <DragSource
-        reducedMotion={reducedMotion}
-        accessibilityLabel={`${tr(
-          tab.private
-            ? "chrome.privateTab"
-            : tab.pinned
-            ? "chrome.pinnedTab"
-            : "chrome.tab"
-        )} ${tabLabel(tab)}${
-          selectionMode && selectedTabIds.has(tab.id)
-            ? `, ${tr("chrome.tabSelected")}`
-            : ""
-        }`}
-        className={c.tabDrag}
-        onPress={() =>
-          selectionMode ? toggleTabSelection(tab.id) : revealTab(tab.id)
-        }
-        onDragStart={(x, y) => beginDrag(tab.id, tabLabel(tab), x, y)}
-        onDragMove={moveDrag}
-        onDragRelease={finishDrag}
-        onDragCancel={cancelDrag}
-        onLongPress={(x, y) => openTabMenu(tab.id, x, y)}
+  const renderSidebarTab = (tab: NonNullable<typeof state>["tabs"][number]) => {
+    const selected = selectionMode
+      ? selectedTabIds.has(tab.id)
+      : splitPaneIds.includes(tab.id) && !tab.suspended;
+    return (
+      <View
+        key={tab.id}
+        ref={(view) => {
+          if (view) sidebarRowRefs.current.set(tab.id, view);
+          else sidebarRowRefs.current.delete(tab.id);
+        }}
+        className={cn(
+          rowVariants({
+            density: "tab",
+            selected,
+          }),
+          c.tab
+        )}
       >
-        <View className={c.tabFavicon}>
-          {selectionMode ? (
-            selectedTabIds.has(tab.id) ? (
-              <ChromeIcon className={cn("size-[16px]", "text-ink")} name="check" />
+        <DragSource
+          reducedMotion={reducedMotion}
+          accessibilityLabel={`${tr(
+            tab.private
+              ? "chrome.privateTab"
+              : tab.pinned
+              ? "chrome.pinnedTab"
+              : "chrome.tab"
+          )} ${tabLabel(tab)}${
+            selectionMode && selectedTabIds.has(tab.id)
+              ? `, ${tr("chrome.tabSelected")}`
+              : ""
+          }`}
+          className={c.tabDrag}
+          onPress={() =>
+            selectionMode ? toggleTabSelection(tab.id) : revealTab(tab.id)
+          }
+          onDragStart={(x, y) => beginDrag(tab.id, tabLabel(tab), x, y)}
+          onDragMove={moveDrag}
+          onDragRelease={finishDrag}
+          onDragCancel={cancelDrag}
+          onLongPress={(x, y) => openTabMenu(tab.id, x, y)}
+        >
+          <View className={c.tabFavicon}>
+            {selectionMode ? (
+              selectedTabIds.has(tab.id) ? (
+                <ChromeIcon className={cn("size-[15px]", "text-ink")} name="check" />
+              ) : (
+                <View className="size-[14px] rounded-[4px] border-2 border-ink-muted" />
+              )
+            ) : playing.includes(tab.id) ? (
+              <ChromeIcon className={cn("size-[13px]")} name="play" />
             ) : (
-              <View className="size-[14px] rounded-[4px] border-2 border-ink-muted" />
-            )
-          ) : playing.includes(tab.id) ? (
-            <ChromeIcon className={cn("size-[14px]")} name="play" />
-          ) : (
-            // Private tabs use a local fallback: nothing about the
-            // visit may reach the shared disk cache.
-            <Favicon
-              url={tab.url}
-              fallback={tabLabel(tab).slice(0, 1).toUpperCase() || "•"}
-              size={16}
-              radius={3}
-              persist={!tab.private}
+              // Private tabs use a local fallback: nothing about the
+              // visit may reach the shared disk cache.
+              <Favicon
+                url={tab.url}
+                fallback={tabLabel(tab).slice(0, 1).toUpperCase() || "•"}
+                size={14}
+                radius={4}
+                persist={!tab.private}
+              />
+            )}
+          </View>
+          <Text
+            numberOfLines={1}
+            maxFontSizeMultiplier={1.35}
+            className={cn(
+              c.tabTitle,
+              selected ? "text-ink font-medium" : "text-ink-muted font-normal"
+            )}
+          >
+            {tabLabel(tab)}
+          </Text>
+          {!!validSplit && splitPaneIds.includes(tab.id) && (
+            <ChromeIcon
+              className={cn("size-[13px]", "text-ink-muted")}
+              name="split"
             />
           )}
-        </View>
-        <Text
-          numberOfLines={1}
-          maxFontSizeMultiplier={1.35}
-          className={c.tabTitle}
-        >
-          {tabLabel(tab)}
-        </Text>
-        {!!validSplit && splitPaneIds.includes(tab.id) && (
-          <ChromeIcon
-            className={cn("size-[14px]", "text-ink-muted")}
-            name="split"
-          />
-        )}
-        {windowedTabs.includes(tab.id) && (
-          <ChromeIcon
-            className={cn("size-[14px]", "text-ink-muted")}
-            name="window"
-          />
-        )}
-      </DragSource>
-      {!selectionMode && (
-        <SidebarPressable
-          accessibilityRole="button"
-          accessibilityLabel={tr("chrome.closeNamedTab", {
-            name: tabLabel(tab),
-          })}
-          accessibilityState={{ disabled: !!tab.suspended }}
-          disabled={!!tab.suspended}
-          hitSlop={8}
-          className={cn(
-            c.tabClose,
-            tab.suspended && c.disabled,
-            "active:bg-field-on-chrome"
+          {windowedTabs.includes(tab.id) && (
+            <ChromeIcon
+              className={cn("size-[13px]", "text-ink-muted")}
+              name="window"
+            />
           )}
-          onPress={() => closeTab(tab.id)}
-        >
-          <ChromeIcon
-            className={cn("size-[15px]", "text-ink-muted")}
-            name="close"
-          />
-        </SidebarPressable>
-      )}
-    </View>
-  );
+        </DragSource>
+        {!selectionMode && (
+          <SidebarPressable
+            accessibilityRole="button"
+            accessibilityLabel={tr("chrome.closeNamedTab", {
+              name: tabLabel(tab),
+            })}
+            accessibilityState={{ disabled: !!tab.suspended }}
+            disabled={!!tab.suspended}
+            hitSlop={8}
+            className={cn(
+              c.tabClose,
+              tab.suspended && c.disabled,
+              "active:bg-field-on-chrome"
+            )}
+            onPress={() => closeTab(tab.id)}
+          >
+            <ChromeIcon
+              className={cn(
+                "size-[13px]",
+                selected ? "text-ink-muted" : "text-ink-faint"
+              )}
+              name="close"
+            />
+          </SidebarPressable>
+        )}
+      </View>
+    );
+  };
   const renderRailFolder = (item: SidebarFolder) => (
     <SidebarFolderItem
       key={item.folder.id}
@@ -4454,8 +4472,7 @@ function BrowserApp() {
                       />
                     </View>
                     {activePrivate && (
-                      <UnikitBadge
-                        variant="secondary"
+                      <View
                         className={c.privateBadge}
                         accessibilityLabel={tr("chrome.privateActive")}
                         accessibilityRole="text"
@@ -4467,7 +4484,7 @@ function BrowserApp() {
                         <Text className={c.privateBadgeText}>
                           {tr("chrome.private")}
                         </Text>
-                      </UnikitBadge>
+                      </View>
                     )}
                     <View className="flex-row items-center gap-sm">
                       <View className="flex-1">
@@ -4513,8 +4530,8 @@ function BrowserApp() {
                             style={{
                               width:
                                 (sidebarLimits.width -
-                                  space.lg * 2 -
-                                  space.md * (favoriteColumns - 1)) /
+                                  space.xl * 2 -
+                                  6 * (favoriteColumns - 1)) /
                                 favoriteColumns,
                             }}
                             onLayout={(event) => {
@@ -4545,7 +4562,7 @@ function BrowserApp() {
                             >
                               {playing.includes(tab.id) ? (
                                 <ChromeIcon
-                                  className={cn("size-[20px]")}
+                                  className={cn("size-[18px]")}
                                   name="play"
                                 />
                               ) : (
@@ -4554,7 +4571,7 @@ function BrowserApp() {
                                   fallback={tabLabel(tab)
                                     .slice(0, 1)
                                     .toUpperCase()}
-                                  size={22}
+                                  size={20}
                                   radius={5}
                                 />
                               )}
@@ -4576,8 +4593,8 @@ function BrowserApp() {
                               style={{
                                 width:
                                   (sidebarLimits.width -
-                                    space.lg * 2 -
-                                    space.md * (favoriteColumns - 1)) /
+                                    space.xl * 2 -
+                                    6 * (favoriteColumns - 1)) /
                                   favoriteColumns,
                               }}
                             >
@@ -4607,14 +4624,14 @@ function BrowserApp() {
                               >
                                 {tab && playing.includes(tab.id) ? (
                                   <ChromeIcon
-                                    className={cn("size-[20px]")}
+                                    className={cn("size-[18px]")}
                                     name="play"
                                   />
                                 ) : (
                                   <Favicon
                                     url={tab?.url || bookmark.url}
                                     fallback={title.slice(0, 1).toUpperCase()}
-                                    size={22}
+                                    size={20}
                                     radius={5}
                                   />
                                 )}
@@ -4669,7 +4686,7 @@ function BrowserApp() {
                             >
                               <View
                                 className={cn(
-                                  "size-[10px] rounded-full",
+                                  "size-[8px] rounded-full",
                                   !activeWorkspace?.color && "bg-accent"
                                 )}
                                 style={
@@ -4680,12 +4697,12 @@ function BrowserApp() {
                               />
                               <Text
                                 numberOfLines={1}
-                                className="flex-1 text-ink text-body font-semibold"
+                                className="flex-1 text-ink text-[13px] font-semibold"
                               >
                                 {activeWorkspace?.name ?? "Space"}
                               </Text>
                               <ChromeIcon
-                                className={cn("size-[12px]", "text-ink-muted")}
+                                className={cn("size-[13px]", "text-ink-muted")}
                                 name="chevronDown"
                               />
                             </SidebarPressable>
@@ -4823,7 +4840,7 @@ function BrowserApp() {
                               onPress={() => openQuickOpen("touch")}
                             >
                               <ChromeIcon
-                                className={cn("size-[18px]", "text-ink-muted")}
+                                className={cn("size-[15px]", "text-ink-muted")}
                                 name="plus"
                               />
                               <Text className={c.newTabText}>
@@ -4843,8 +4860,8 @@ function BrowserApp() {
                               >
                                 <ChromeIcon
                                   className={cn(
-                                    "size-[10px]",
-                                    "text-ink-muted"
+                                    "size-[11px]",
+                                    "text-ink-faint"
                                   )}
                                   name={
                                     tabsCollapsed ? "chevronRight" : "chevronDown"
@@ -4856,14 +4873,16 @@ function BrowserApp() {
                                 >
                                   {tr("chrome.tabsSection")}
                                 </Text>
-                                <Text
-                                  className={cn(
-                                    c.workspaceCount,
-                                    "px-xs py-[1px] rounded-chip bg-field-on-chrome tabular-nums"
-                                  )}
-                                >
-                                  {sidebar.ordinaryTabs.length}
-                                </Text>
+                                <View className="h-[18px] px-[6px] rounded-full bg-field-on-chrome items-center justify-center">
+                                  <Text
+                                    className={cn(
+                                      c.workspaceCount,
+                                      "tabular-nums"
+                                    )}
+                                  >
+                                    {sidebar.ordinaryTabs.length}
+                                  </Text>
+                                </View>
                               </SidebarPressable>
                             )}
                           </View>
@@ -4871,6 +4890,7 @@ function BrowserApp() {
                       }
                     />
                   </AnimatedView>
+                  <UnikitSeparator className="bg-hairline-on-chrome mb-[4px]" />
                   <View className={c.sidebarBottom}>
                     {selectionMode ? (
                       <>
@@ -4918,45 +4938,47 @@ function BrowserApp() {
                           className={c.spaceRailScroll}
                           contentContainerClassName={c.spaceRail}
                         >
-                          {(state?.workspaces ?? []).map((workspace) => {
-                            const active =
-                              workspace.id === state?.activeWorkspaceId;
-                            return (
-                              <SidebarPressable
-                                key={workspace.id}
-                                accessibilityRole="button"
-                                accessibilityLabel={tr("chrome.switchSpace", {
-                                  space: workspace.name,
-                                })}
-                                accessibilityState={{
-                                  selected: active,
-                                }}
-                                hitSlop={8}
-                                className={cn(
-                                  c.spaceChip,
-                                  active && c.spaceChipActive,
-                                  "active:opacity-pressed"
-                                )}
-                                onPress={() => switchSpace(workspace.id)}
-                                onLongPress={() => setSpaceSwitcher(true)}
-                              >
-                                <View
+                          <View className="flex-row items-center rounded-full bg-field-on-chrome px-[3px] py-[2px] gap-[2px]">
+                            {(state?.workspaces ?? []).map((workspace) => {
+                              const active =
+                                workspace.id === state?.activeWorkspaceId;
+                              return (
+                                <SidebarPressable
+                                  key={workspace.id}
+                                  accessibilityRole="button"
+                                  accessibilityLabel={tr("chrome.switchSpace", {
+                                    space: workspace.name,
+                                  })}
+                                  accessibilityState={{
+                                    selected: active,
+                                  }}
+                                  hitSlop={8}
                                   className={cn(
-                                    "rounded-full",
-                                    active
-                                      ? "size-[10px]"
-                                      : "size-[8px] opacity-55",
-                                    !workspace.color && "bg-accent"
+                                    c.spaceChip,
+                                    active && c.spaceChipActive,
+                                    "active:opacity-pressed"
                                   )}
-                                  style={
-                                    workspace.color
-                                      ? { backgroundColor: workspace.color }
-                                      : undefined
-                                  }
-                                />
-                              </SidebarPressable>
-                            );
-                          })}
+                                  onPress={() => switchSpace(workspace.id)}
+                                  onLongPress={() => setSpaceSwitcher(true)}
+                                >
+                                  <View
+                                    className={cn(
+                                      "rounded-full",
+                                      active
+                                        ? "size-[8px]"
+                                        : "size-[7px] opacity-60",
+                                      !workspace.color && "bg-accent"
+                                    )}
+                                    style={
+                                      workspace.color
+                                        ? { backgroundColor: workspace.color }
+                                        : undefined
+                                    }
+                                  />
+                                </SidebarPressable>
+                              );
+                            })}
+                          </View>
                         </ScrollView>
                         <IconButton
                           label={tr("chrome.settings")}
@@ -4982,7 +5004,7 @@ function BrowserApp() {
                             })
                           }
                         >
-                          <ChromeIcon className="size-[18px]" name="plus" />
+                          <ChromeIcon className="size-[16px]" name="plus" />
                         </SidebarPressable>
                       </>
                     )}
@@ -5024,6 +5046,68 @@ function BrowserApp() {
                       disabled={!uiHydrated}
                     />
                   </View>
+                  {sidebar.looseBookmarks.length > 0 && (
+                    <View className="items-center gap-[3px] pt-xs">
+                      {sidebar.looseBookmarks.map((bookmark) => {
+                        const tab = bookmarkTabs.get(bookmark.id);
+                        if (tab && (tab.favorite || !tab.pinned)) return null;
+                        const isActive =
+                          !!tab && !tab.suspended && splitPaneIds.includes(tab.id);
+                        const title = bookmark.title || bookmark.url;
+                        return (
+                          <ContextPressable
+                            key={bookmark.id}
+                            accessibilityRole="button"
+                            accessibilityLabel={tr("chrome.pinnedTabLabel", {
+                              name: title,
+                            })}
+                            accessibilityState={{ selected: isActive }}
+                            className={cn(
+                              c.railItem,
+                              isActive && c.railTabActive,
+                              "active:bg-field-on-chrome"
+                            )}
+                            onPress={() =>
+                              tab ? revealTab(tab.id) : openBookmark(bookmark)
+                            }
+                            contextOpen={
+                              sidebarMenu?.kind === "bookmark" &&
+                              sidebarMenu.id === bookmark.id
+                            }
+                            onContextMenu={(x, y) =>
+                              setSidebarMenu({
+                                kind: "bookmark",
+                                id: bookmark.id,
+                                anchor: { x, y },
+                              })
+                            }
+                          >
+                            <View className={c.railIcon}>
+                              {tab && playing.includes(tab.id) ? (
+                                <ChromeIcon
+                                  className={cn("size-[14px]")}
+                                  name="play"
+                                />
+                              ) : (
+                                <Favicon
+                                  url={tab?.url || bookmark.url}
+                                  fallback={title.slice(0, 1).toUpperCase()}
+                                  size={16}
+                                  radius={4}
+                                />
+                              )}
+                            </View>
+                          </ContextPressable>
+                        );
+                      })}
+                      {(!!sidebar.split ||
+                        sidebar.favorites.length > 0 ||
+                        sidebar.folders.length > 0 ||
+                        sidebar.railTabs.length > 0) && (
+                        <UnikitSeparator className="w-[24px] self-center bg-hairline-on-chrome my-xs" />
+                      )}
+                    </View>
+                  )}
                   <View className={c.tabScrollWrap}>
                     <FlatList
                       key={state?.activeWorkspaceId}
@@ -5054,15 +5138,15 @@ function BrowserApp() {
                           <View className={c.railIcon}>
                             {playing.includes(t.id) ? (
                               <ChromeIcon
-                                className={cn("size-[16px]")}
+                                className={cn("size-[14px]")}
                                 name="play"
                               />
                             ) : (
                               <Favicon
                                 url={t.url}
                                 fallback={tabLabel(t).slice(0, 1).toUpperCase()}
-                                size={18}
-                                radius={5}
+                                size={16}
+                                radius={4}
                               />
                             )}
                           </View>
@@ -5110,7 +5194,7 @@ function BrowserApp() {
                               <View className={c.railIcon}>
                                 {playing.includes(tab.id) ? (
                                   <ChromeIcon
-                                    className={cn("size-[16px]")}
+                                    className={cn("size-[14px]")}
                                     name="play"
                                   />
                                 ) : (
@@ -5119,20 +5203,49 @@ function BrowserApp() {
                                     fallback={tabLabel(tab)
                                       .slice(0, 1)
                                       .toUpperCase()}
-                                    size={18}
-                                    radius={5}
+                                    size={16}
+                                    radius={4}
                                   />
                                 )}
                               </View>
                             </DragSource>
                           ))}
-                          <View className={c.railSeparator} />
+                          {(!!sidebar.split ||
+                            sidebar.favorites.length > 0 ||
+                            sidebar.folders.length > 0) &&
+                            sidebar.railTabs.length > 0 && (
+                              <View className={c.railSeparator} />
+                            )}
                           {sidebar.folders.map(renderRailFolder)}
                         </View>
                       }
                     />
                   </View>
+                  <UnikitSeparator className="w-[24px] self-center bg-hairline-on-chrome my-xs" />
                   <View className={c.sidebarBottomCollapsed}>
+                    <SidebarPressable
+                      accessibilityRole="button"
+                      accessibilityLabel={tr("chrome.openSpaces")}
+                      hitSlop={8}
+                      className={cn(
+                        c.spaceChip,
+                        c.spaceChipActive,
+                        "active:opacity-pressed"
+                      )}
+                      onPress={() => setSpaceSwitcher(true)}
+                    >
+                      <View
+                        className={cn(
+                          "size-[8px] rounded-full",
+                          !activeWorkspace?.color && "bg-accent"
+                        )}
+                        style={
+                          activeWorkspace?.color
+                            ? { backgroundColor: activeWorkspace.color }
+                            : undefined
+                        }
+                      />
+                    </SidebarPressable>
                     <IconButton
                       label={tr("chrome.androidHome")}
                       icon="home"
@@ -6343,7 +6456,7 @@ function BrowserApp() {
               className={!spaceBottomSheet ? "bg-transparent" : undefined}
               contentClassName={
                 !spaceBottomSheet
-                  ? "justify-start items-start pt-[178px] pl-[16px]"
+                  ? "justify-start items-start pt-[186px] pl-[12px]"
                   : undefined
               }
               bottomInset={keyboardInset}

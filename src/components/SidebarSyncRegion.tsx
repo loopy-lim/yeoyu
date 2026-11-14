@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Pressable, Text, View } from "react-native";
+import { Badge } from "@unikit-bridge/ui";
 import { cn } from "@/ui/cn";
 import { appClasses as c } from "@/chrome/appStyles";
 import { ChromeIcon } from "@/chrome/ChromeIcon";
@@ -41,7 +42,7 @@ export function SidebarSyncRegion({
           ? tr("sync.empty")
           : null;
   return (
-    <View className="mt-md">
+    <View className="mt-sm">
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={tr("sync.sidebarHeader")}
@@ -50,7 +51,7 @@ export function SidebarSyncRegion({
         onPress={() => setOpen((value) => !value)}
       >
         <ChromeIcon
-          className={cn("size-[10px]", "text-ink-muted")}
+          className={cn("size-[11px]", "text-ink-faint")}
           name={open ? "chevronDown" : "chevronRight"}
         />
         <Text numberOfLines={1} className={c.spaceHeaderTitle}>
@@ -63,9 +64,14 @@ export function SidebarSyncRegion({
             })}
           </Text>
         )}
-        <Text className="px-xs py-[1px] rounded-chip bg-field-on-chrome text-ink-faint text-small font-semibold tabular-nums">
-          {count}
-        </Text>
+        <Badge
+          variant="secondary"
+          className="h-[18px] px-[6px] py-0 rounded-full bg-field-on-chrome border-transparent"
+        >
+          <Text className="text-ink-faint text-micro font-semibold tabular-nums">
+            {count}
+          </Text>
+        </Badge>
       </Pressable>
       {status !== null && (
         <Text className="px-md pb-xs text-ink-faint text-small">{status}</Text>
@@ -93,7 +99,7 @@ function SyncNodeRow({
   const { tr } = useI18n();
   if (node.type === "separator") {
     // Hairline row — the separator glyph in the tree, no interaction.
-    return <View className={cn(c.tab, "justify-center")} style={{ paddingLeft: 10 + depth * 14 }}>
+    return <View className={cn(c.tab, "justify-center")} style={{ paddingLeft: 10 + depth * 12 }}>
       <View className="h-hairline-width flex-1 bg-hairline-on-chrome" />
     </View>;
   }
@@ -105,13 +111,15 @@ function SyncNodeRow({
             name: node.title || tr("sync.untitledFolder"),
           })}
           className={cn(c.tab, "justify-center")}
-          style={{ paddingLeft: 10 + depth * 14 }}
+          style={{ paddingLeft: 10 + depth * 12 }}
         >
-          <ChromeIcon
-            className={cn("size-[14px]", "text-icon")}
-            name="folder"
-          />
-          <Text numberOfLines={1} maxFontSizeMultiplier={1.35} className={c.tabTitle}>
+          <View className="size-[20px] items-center justify-center">
+            <ChromeIcon
+              className={cn("size-[15px]", "text-icon")}
+              name="folder"
+            />
+          </View>
+          <Text numberOfLines={1} maxFontSizeMultiplier={1.35} className={cn(c.tabTitle, "text-ink-muted")}>
             {node.title || tr("sync.untitledFolder")}
           </Text>
         </View>
@@ -132,18 +140,18 @@ function SyncNodeRow({
       accessibilityRole="button"
       accessibilityLabel={tr("sync.bookmarkLabel", { name: title })}
       className={cn(c.tab, "active:bg-field-on-chrome")}
-      style={{ paddingLeft: 10 + depth * 14 }}
+      style={{ paddingLeft: 10 + depth * 12 }}
       onPress={() => node.url && onOpenUrl(node.url)}
     >
       <View className={c.tabFavicon}>
         <Favicon
           url={node.url ?? ""}
           fallback={(title.slice(0, 1) || "•").toUpperCase()}
-          size={16}
-          radius={3}
+          size={14}
+          radius={4}
         />
       </View>
-      <Text numberOfLines={1} maxFontSizeMultiplier={1.35} className={c.tabTitle}>
+      <Text numberOfLines={1} maxFontSizeMultiplier={1.35} className={cn(c.tabTitle, "text-ink-muted")}>
         {title}
       </Text>
     </Pressable>

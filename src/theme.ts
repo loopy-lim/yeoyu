@@ -44,17 +44,17 @@ export const size = {
   frame: 10, // default outer frame in dp when no user px preference exists
   sidebar: 240, // Arc's expanded sidebar width, 1:1
   rail: 48, // Arc's collapsed rail width, 1:1
-  row: 36, // pane/divider row height
-  tabRow: 40, // tablet rows keep a clear touch lane without overlapping hit targets
-  workspaceRow: 34,
-  railItem: 40,
-  tile: 44,
-  favorite: 44, // rounded favorite tiles, up to three columns
-  iconButton: 40,
+  row: 34, // pane/divider row height
+  tabRow: 36, // sleek Zen sidebar tab row height
+  workspaceRow: 32,
+  railItem: 38,
+  tile: 40,
+  favorite: 38, // rounded favorite tiles, up to three columns
+  iconButton: 34,
   avatar: 32,
-  toolbar: 48,
-  address: 40,
-  addressCompact: 36,
+  toolbar: 46,
+  address: 34,
+  addressCompact: 34,
   input: 48,
   actionRow: 48,
   bookmarkRow: 48,

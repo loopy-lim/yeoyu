@@ -1,4 +1,5 @@
 import { cva } from "class-variance-authority";
+import { Badge, Separator } from "@unikit-bridge/ui";
 import { cn } from "@/ui/cn";
 import React from "react";
 import {
@@ -20,9 +21,10 @@ const sectionIcons: Record<string, IconName> = {
   appearance: "window",
   website: "space",
   permissions: "lock",
-  extensions: "plus",
-  privacy: "private",
+  extensions: "puzzle",
+  privacy: "shield",
   data: "folder",
+  sync: "sync",
   media: "play",
   advanced: "settings",
 };
@@ -52,23 +54,22 @@ const c = {
   search:
     "flex-1 min-w-0 min-h-[38px] bg-sunken text-ink px-xl rounded-control text-input-plus border border-hairline",
   searchWide:
-    "w-[210px] min-h-[36px] bg-sunken text-ink px-xl rounded-control text-input-plus border border-hairline",
+    "w-[216px] min-h-[36px] bg-sunken text-ink px-xl rounded-control text-body-plus border border-hairline",
   clearButton:
     "min-h-[36px] px-lg rounded-control bg-sunken border border-hairline justify-center active:bg-sunken-strong",
   close:
     "size-[38px] items-center justify-center rounded-control bg-sunken active:bg-sunken-strong",
-  navContent: "p-lg gap-xs",
+  navContent: "p-md gap-[2px]",
   content: "flex-1 min-w-0 bg-surface-elevated",
-  sectionHeader:
-    "pb-lg mb-xl border-b-hairline-width border-b-hairline gap-xs",
+  sectionHeader: "gap-xs",
   sectionTitle: "text-[22px] font-bold text-ink",
   text: "text-input-plus text-ink leading-[21px]",
   textRow: "flex-row items-center gap-md",
   navCopy: "flex-1 min-w-0",
-  navIcon: "size-[22px] items-center justify-center",
+  navIcon: "size-[20px] items-center justify-center",
   detail: "text-body text-ink-muted leading-[20px]",
   action:
-    "min-h-[42px] px-lg py-md rounded-control border justify-center active:bg-sunken-strong",
+    "min-h-[40px] px-lg py-sm rounded-[9px] border justify-center active:bg-sunken-strong",
 } as const;
 const bodyClasses = cva("flex-1 min-h-0", {
   variants: { wide: { true: "flex-row", false: "flex-col" } },
@@ -76,7 +77,7 @@ const bodyClasses = cva("flex-1 min-h-0", {
 const navClasses = cva("shrink bg-sidebar", {
   variants: {
     split: {
-      true: "w-[216px] grow-0 border-r-hairline-width border-r-hairline",
+      true: "w-[228px] grow-0 border-r-hairline-width border-r-hairline",
       false: "w-full grow",
     },
   },
@@ -94,7 +95,7 @@ const categoryClasses = cva(c.action, {
     },
   },
 });
-const categoryLabelClasses = cva("text-input-plus leading-[21px]", {
+const categoryLabelClasses = cva("text-[13px] leading-[19px]", {
   variants: {
     selected: { true: "text-ink font-semibold", false: "text-ink-muted font-medium" },
   },
@@ -165,11 +166,11 @@ export function SettingsDialog({
   );
   const statusControl = (
     <View className={c.searchRow}>
-      <View className={c.statusPill}>
+      <Badge variant="secondary" className={c.statusPill}>
         <Text accessibilityLiveRegion="polite" className={c.statusText}>
           {tr(`settings.${saveStatus}`)}
         </Text>
-      </View>
+      </Badge>
       {saveStatus === "failed" && (
         <Pressable
           accessibilityRole="button"
@@ -250,12 +251,13 @@ export function SettingsDialog({
                     <View className={c.navIcon}>
                       <ChromeIcon
                         name={sectionIcons[section.id] ?? "settings"}
-                        size={18}
-                        color={isSelected ? t.accentStrong : t.inkMuted}
+                        size={16}
+                        color={isSelected ? t.ink : t.inkMuted}
                       />
                     </View>
                     <View className={c.navCopy}>
                       <Text
+                        numberOfLines={split ? 1 : undefined}
                         className={cn(
                           categoryLabelClasses({ selected: isSelected })
                         )}
@@ -293,6 +295,7 @@ export function SettingsDialog({
                 </Text>
                 <Text className={c.detail}>{page.description}</Text>
               </View>
+              <Separator className="mt-lg mb-xl bg-hairline" />
               {page.content}
             </View>
           </ScrollView>
