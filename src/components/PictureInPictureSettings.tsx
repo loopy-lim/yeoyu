@@ -7,7 +7,11 @@ import { ChromeIcon } from "@/chrome/ChromeIcon";
 import type { PictureInPictureState } from "@/hooks/usePictureInPicture";
 import { useTheme } from "@/themeContext";
 import { useI18n } from "@/i18nContext";
-import { SettingsGroup } from "@/components/settings/kit";
+import {
+  SettingsGroup,
+  SettingsGroupRow,
+  settingsClasses,
+} from "@/components/settings/kit";
 
 const actionState = cva("active:opacity-pressed", {
   variants: { disabled: { true: "opacity-disabled", false: "" } },
@@ -42,76 +46,76 @@ export function PictureInPictureSettings({
 
   return (
     <SettingsGroup>
-      <View className="px-xxl py-xxl">
-        <Pressable
-          accessibilityRole="switch"
-          accessibilityLabel={tr("pip.automatic")}
-          accessibilityState={{ checked: enabled, disabled: toggleDisabled }}
-          disabled={toggleDisabled}
-          className={cn(
-            c.settingsToggle,
-            actionState({ disabled: toggleDisabled })
-          )}
-          onPress={onToggle}
+      <Pressable
+        accessibilityRole="switch"
+        accessibilityLabel={tr("pip.automatic")}
+        accessibilityState={{ checked: enabled, disabled: toggleDisabled }}
+        disabled={toggleDisabled}
+        className={cn(
+          settingsClasses.row,
+          actionState({ disabled: toggleDisabled })
+        )}
+        onPress={onToggle}
+      >
+        <View className="flex-1 min-w-0">
+          <Text className={c.optionTitle}>{tr("pip.automatic")}</Text>
+          <Text className={c.optionDescription}>
+            {tr("pip.automaticHelp")}
+          </Text>
+        </View>
+        <View
+          pointerEvents="none"
+          importantForAccessibility="no-hide-descendants"
         >
-          <View className={c.settingsToggleCopy}>
-            <Text className={c.optionTitle}>{tr("pip.automatic")}</Text>
-            <Text className={c.optionDescription}>
-              {tr("pip.automaticHelp")}
-            </Text>
-          </View>
-          <View
-            pointerEvents="none"
-            importantForAccessibility="no-hide-descendants"
-          >
-            <Switch
-              accessible={false}
-              disabled={toggleDisabled}
-              value={enabled}
-              trackColor={{ false: theme.switchOff, true: theme.accent }}
-              thumbColor={theme.surfaceElevated}
-            />
-          </View>
-        </Pressable>
-        {!state.supported && (
+          <Switch
+            accessible={false}
+            disabled={toggleDisabled}
+            value={enabled}
+            trackColor={{ false: theme.switchOff, true: theme.accent }}
+            thumbColor={theme.surfaceElevated}
+          />
+        </View>
+      </Pressable>
+      {!state.supported && (
+        <SettingsGroupRow>
           <Text className={c.optionDescription}>{tr("pip.unsupported")}</Text>
-        )}
-        {state.supported && !state.allowed && (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={tr("pip.androidSettings")}
-            className={cn(c.settingsAction, actionState())}
-            onPress={onOpenSettings}
-          >
-            <View className={c.settingsToggleCopy}>
-              <Text className={c.optionTitle}>{tr("pip.androidSettings")}</Text>
-              <Text className={c.optionDescription}>
-                {tr("pip.androidHelp")}
-              </Text>
-            </View>
-            <ChromeIcon name="external" />
-          </Pressable>
-        )}
+        </SettingsGroupRow>
+      )}
+      {state.supported && !state.allowed && (
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={tr("pip.open")}
-          accessibilityState={{ disabled: enterDisabled }}
-          disabled={enterDisabled}
-          className={cn(
-            c.settingsAction,
-            actionState({ disabled: enterDisabled })
-          )}
-          onPress={onEnter}
+          accessibilityLabel={tr("pip.androidSettings")}
+          className={cn(settingsClasses.row, actionState())}
+          onPress={onOpenSettings}
         >
-          <View className={c.settingsToggleCopy}>
-            <Text className={c.optionTitle}>{tr("pip.open")}</Text>
+          <View className="flex-1 min-w-0">
+            <Text className={c.optionTitle}>{tr("pip.androidSettings")}</Text>
             <Text className={c.optionDescription}>
-              {hasTab ? tr("pip.openNow") : tr("pip.openTab")}
+              {tr("pip.androidHelp")}
             </Text>
           </View>
           <ChromeIcon name="external" />
         </Pressable>
-      </View>
+      )}
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={tr("pip.open")}
+        accessibilityState={{ disabled: enterDisabled }}
+        disabled={enterDisabled}
+        className={cn(
+          settingsClasses.rowLast,
+          actionState({ disabled: enterDisabled })
+        )}
+        onPress={onEnter}
+      >
+        <View className="flex-1 min-w-0">
+          <Text className={c.optionTitle}>{tr("pip.open")}</Text>
+          <Text className={c.optionDescription}>
+            {hasTab ? tr("pip.openNow") : tr("pip.openTab")}
+          </Text>
+        </View>
+        <ChromeIcon name="external" />
+      </Pressable>
     </SettingsGroup>
   );
 }

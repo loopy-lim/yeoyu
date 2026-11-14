@@ -160,7 +160,7 @@ export function KeyboardSettings({
       )}
       <ScrollView
         keyboardShouldPersistTaps="handled"
-        contentContainerClassName="gap-lg"
+        contentContainerClassName="gap-lg pb-lg"
       >
         {advanced ? (
           <TextInput

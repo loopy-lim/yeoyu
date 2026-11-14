@@ -71,7 +71,7 @@ export function AnchoredMenuSurface({
       accessibilityLabel={title}
       onLayout={({ nativeEvent }) => setHeight(nativeEvent.layout.height)}
       className={cn(
-        "absolute p-md rounded-control bg-surface-elevated border border-hairline shadow-action-menu",
+        "absolute p-lg rounded-control bg-surface-elevated border border-hairline shadow-action-menu",
         className
       )}
       // Anchored placement tracks the measured menu and native window bounds.
@@ -79,7 +79,7 @@ export function AnchoredMenuSurface({
     >
       <View
         className={cn(
-          "flex-row items-center min-h-rail-item pl-lg",
+          "flex-row items-center min-h-rail-item px-xl",
           headerClassName
         )}
       >

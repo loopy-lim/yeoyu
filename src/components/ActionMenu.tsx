@@ -44,6 +44,7 @@ export function ActionMenu({
       <ScrollView
         keyboardShouldPersistTaps="handled"
         className="grow-0 shrink"
+        contentContainerClassName="pb-md"
       >
         {items.map((item) => (
           <Pressable

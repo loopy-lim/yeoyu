@@ -8,14 +8,16 @@ import { resolveColorMode, type ResolvedColorMode, type UiPreferences } from "@/
 export type Appearance = "lavender" | "warm";
 
 // 4dp-leaning spacing scale (dp). Odd gaps snap to the nearest step.
+// Tablet comfort pass (2026-11): steps from md up gained breathing room;
+// xs/sm stay hairline-adjacent for label-to-content pairs.
 export const space = {
   xs: 2,
   sm: 4,
-  md: 6,
-  lg: 8,
-  xl: 10,
-  xxl: 12,
-  xxxl: 16,
+  md: 8,
+  lg: 10,
+  xl: 12,
+  xxl: 16,
+  xxxl: 20,
 } as const;
 
 export const radius = {
@@ -28,34 +30,34 @@ export const radius = {
 } as const;
 
 export const font = {
-  micro: 9,
-  small: 10,
-  body: 11,
-  bodyPlus: 12,
-  input: 13,
-  inputPlus: 14,
-  icon: 16,
-  title: 18,
+  micro: 10,
+  small: 11,
+  body: 13,
+  bodyPlus: 14,
+  input: 14,
+  inputPlus: 15,
+  icon: 18,
+  title: 20,
 } as const;
 
 export const size = {
-  frame: 8, // default outer frame in dp when no user px preference exists
+  frame: 10, // default outer frame in dp when no user px preference exists
   sidebar: 240, // Arc's expanded sidebar width, 1:1
   rail: 48, // Arc's collapsed rail width, 1:1
-  row: 30, // pane/divider row height
-  tabRow: 34, // tablet rows keep a clear touch lane without overlapping hit targets
-  workspaceRow: 28,
-  railItem: 36,
-  tile: 38,
-  favorite: 40, // rounded favorite tiles, up to three columns
-  iconButton: 32,
-  avatar: 28,
-  toolbar: 44,
-  address: 34,
-  addressCompact: 34,
-  input: 44,
+  row: 36, // pane/divider row height
+  tabRow: 40, // tablet rows keep a clear touch lane without overlapping hit targets
+  workspaceRow: 34,
+  railItem: 40,
+  tile: 44,
+  favorite: 44, // rounded favorite tiles, up to three columns
+  iconButton: 40,
+  avatar: 32,
+  toolbar: 48,
+  address: 40,
+  addressCompact: 36,
+  input: 48,
   actionRow: 48,
-  bookmarkRow: 44,
+  bookmarkRow: 48,
 } as const;
 
 // Durations in ms. `pill` uses physical spring params (tension/friction):

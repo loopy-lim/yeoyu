@@ -57,7 +57,7 @@ const stackedIconVariants = cva(
 );
 const collectionClasses = {
   stack: "size-address shrink-0",
-  splitTitles: "flex-1 min-w-0 gap-xs",
+  splitTitles: "flex-1 min-w-0 gap-sm",
   titleLine: "flex-row items-center gap-[5px]",
   focusDot: "size-sm rounded-[2px] bg-accent-strong",
   title: "flex-1 text-ink text-input font-normal",
@@ -75,10 +75,10 @@ const collectionClasses = {
   choice:
     "flex-1 min-h-[56px] flex-row items-center gap-[9px] px-lg py-[7px] rounded-[8px] active:bg-field-on-chrome",
   choiceIcon: "w-[24px] items-center",
-  choiceCopy: "flex-1 min-w-0 gap-[3px]",
+  choiceCopy: "flex-1 min-w-0 gap-sm",
   detail: "text-ink-muted text-body",
   empty: "p-xxl text-ink-muted text-input",
-  menuActions: "border-t-hairline-width border-hairline mt-sm pt-sm",
+  menuActions: "border-t-hairline-width border-hairline mt-md pt-md",
   action:
     "min-h-input flex-row items-center gap-[9px] px-[9px] rounded-[8px] active:bg-field-on-chrome",
 };

@@ -97,7 +97,7 @@ test("sibling roots and nested Spaces resolve their own theme without changing g
   expect(styleFor("outer")).toMatchObject({
     backgroundColor: "#d6d2da",
     color: "#3d3642",
-    fontSize: 11,
+    fontSize: 13,
     borderColor: "#c3bcc8",
   });
   expect(styleFor("after-space")).toEqual(styleFor("outer"));
@@ -124,11 +124,11 @@ test("compiled semantic utilities retain existing control geometry and text size
   ).toMatchObject({
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 12,
+    gap: 8,
+    paddingHorizontal: 16,
     height: 48,
     borderRadius: 9,
-    fontSize: 14,
+    fontSize: 15,
     color: "#564e5c",
     opacity: 0.38,
   });
@@ -137,10 +137,10 @@ test("compiled semantic utilities retain existing control geometry and text size
       "size-icon-button rounded-chip text-icon-size text-icon opacity-pressed"
     )
   ).toMatchObject({
-    width: 32,
-    height: 32,
+    width: 40,
+    height: 40,
     borderRadius: 5,
-    fontSize: 16,
+    fontSize: 18,
     color: "#4d4554",
     opacity: 0.58,
   });

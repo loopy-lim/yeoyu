@@ -23,8 +23,8 @@ export const appClasses = {
   pressed: "opacity-pressed",
   disabled: "opacity-disabled",
   favoritesDropTarget: "min-h-[12px]",
-  favoritesScroll: "grow-0 max-h-[132px]",
-  favorites: "flex-row flex-wrap gap-md py-xs",
+  favoritesScroll: "grow-0 max-h-[160px]",
+  favorites: "flex-row flex-wrap gap-lg py-sm",
   favorite:
     "h-favorite rounded-control items-center justify-center bg-field-on-chrome",
   favoriteActive: "bg-pill",
@@ -36,22 +36,22 @@ export const appClasses = {
   tabScrollContent: "pb-lg",
   workspaceCount: "text-ink-muted text-small",
   persistentSection: "min-h-[48px] pb-md",
-  ordinarySection: "min-h-[44px]",
-  spaceHeader: "min-h-[28px] px-lg gap-sm flex-row items-center mb-xs",
+  ordinarySection: "min-h-[48px]",
+  spaceHeader: "min-h-[36px] px-lg gap-md flex-row items-center mb-sm",
   spaceHeaderTitle: "flex-1 text-ink-muted text-small font-medium",
   rowPressed: "bg-field-on-chrome",
   tabSelected: "bg-pill border border-hairline-on-chrome",
   tabClose: "w-[32px] h-tab-row justify-center items-center rounded-control",
   sectionRule: "h-hairline bg-hairline-on-chrome my-md",
   privateSection: "mt-md",
-  privateHeader: "min-h-[28px] pl-xl pr-xs gap-sm flex-row items-center mb-xs",
+  privateHeader: "min-h-[32px] pl-xl pr-sm gap-md flex-row items-center mb-sm",
   privateHeaderText: "flex-1 text-ink-muted text-small font-medium",
   privateNewTab:
-    "w-[32px] h-[28px] justify-center items-center rounded-control",
+    "w-[32px] h-[32px] justify-center items-center rounded-control",
   privateBadge:
     "flex-row items-center gap-xs px-sm h-[28px] rounded-control bg-field-on-chrome",
   privateBadgeText: "text-ink text-small font-semibold",
-  tab: "h-tab-row pl-xl pr-xs rounded-control overflow-hidden flex-row items-center gap-sm",
+  tab: "h-tab-row pl-xl pr-sm rounded-control overflow-hidden flex-row items-center gap-md",
   tabDrag: "flex-1 h-tab-row flex-row items-center gap-lg",
   tabFavicon:
     "w-[16px] h-[16px] rounded-[4px] items-center justify-center bg-fav-chip",
@@ -62,10 +62,10 @@ export const appClasses = {
   button: "py-lg px-xl rounded-control bg-sunken",
   buttonText: "text-ink-muted text-body font-semibold",
   sidebarBottom: "flex-row items-center gap-sm pt-lg",
-  sidebarBottomCollapsed: "flex-col items-center gap-xs",
+  sidebarBottomCollapsed: "flex-col items-center gap-sm",
   spaceRailScroll: "flex-1",
-  spaceRail: "flex-row items-center justify-center grow gap-xs",
-  spaceChip: "w-[32px] h-[34px] rounded-control items-center justify-center",
+  spaceRail: "flex-row items-center justify-center grow gap-sm",
+  spaceChip: "w-[40px] h-[40px] rounded-control items-center justify-center",
   spaceChipActive: "bg-field-on-chrome border border-hairline-on-chrome",
   spaceIndicator: "absolute bottom-xs w-[4px] h-[4px] rounded-[2px] bg-accent",
   bookmarkTreeRow:
@@ -99,7 +99,7 @@ export const appClasses = {
   // bottom, mirroring canvasToolbar with the hairline on its top edge. The
   // 48dp rail stays for tab/favorites/settings access.
   phoneBottomBar:
-    "h-toolbar px-md gap-sm flex-row items-center border-t-hairline-width border-t-hairline bg-surface-elevated",
+    "h-toolbar px-lg gap-sm flex-row items-center border-t-hairline-width border-t-hairline bg-surface-elevated",
   tabSwipeOverlay:
     "absolute inset-0 items-center justify-center z-[5]",
   tabSwipeBadge:
@@ -107,9 +107,9 @@ export const appClasses = {
   tabSwipeBadgeReady: "bg-sunken-strong border-accent-strong",
   tabSwipeBadgeLabel: "text-ink text-small font-semibold",
   phoneHybridTabs: "flex-1",
-  phoneHybridTabsContent: "flex-row items-center gap-xs pr-xs",
+  phoneHybridTabsContent: "flex-row items-center gap-sm pl-sm pr-md",
   phoneHybridTab:
-    "h-[34px] min-w-[36px] max-w-[128px] px-sm rounded-control flex-row items-center gap-xs border border-transparent active:opacity-pressed",
+    "h-[40px] min-w-[44px] max-w-[128px] px-md rounded-control flex-row items-center gap-sm border border-transparent active:opacity-pressed",
   phoneHybridTabActive: "bg-pill border-hairline-on-chrome",
   phoneHybridTabLabel: "text-ink text-small font-semibold",
   panes: "flex-1 flex-row bg-canvas",
@@ -132,7 +132,7 @@ export const appClasses = {
   dropTop: "left-lg right-lg top-lg h-[47%]",
   dropBottom: "left-lg right-lg bottom-lg h-[47%]",
   dragGhost:
-    "absolute z-[50] w-[144px] h-[36px] px-xxl justify-center rounded-field bg-ghost shadow-drag-ghost",
+    "absolute z-[50] w-[144px] h-[40px] px-xxl justify-center rounded-field bg-ghost shadow-drag-ghost",
   dragGhostText: "text-ink-muted text-small font-bold",
   surface: "flex-1",
   paneContent: "flex-1",
@@ -148,15 +148,15 @@ export const appClasses = {
   newTabTileLabel: "text-ink-muted text-small font-semibold",
   newTabHint: "text-ink-faint text-body text-center",
   quickOpenDialog: "w-[90%] max-w-[560px] gap-xl",
-  quickOpenRow: "flex-row gap-xl py-xs",
+  quickOpenRow: "flex-row gap-xl py-sm",
   quickOpenTile: "w-[86px] items-center gap-sm",
   quickOpenTileIcon:
-    "w-[36px] h-[36px] rounded-field items-center justify-center bg-sunken border border-hairline",
+    "w-[40px] h-[40px] rounded-field items-center justify-center bg-sunken border border-hairline",
   quickOpenTileLabel: "text-ink-muted text-small font-semibold",
   quickOpenHint: "text-ink-faint text-body",
-  railContent: "items-center gap-xs pb-lg",
-  railHeader: "items-center gap-xs",
-  railItem: "w-[44px] h-[44px] rounded-control items-center justify-center",
+  railContent: "items-center gap-sm pb-lg",
+  railHeader: "items-center gap-sm",
+  railItem: "w-[40px] h-[40px] rounded-control items-center justify-center",
   railIcon:
     "w-[26px] h-[26px] rounded-control items-center justify-center bg-rail-icon-tile",
   railInitial: "text-ink-muted text-small font-extrabold",
@@ -189,9 +189,9 @@ export const appClasses = {
   optionTitle: "text-ink text-[15px] leading-[22px] font-semibold",
   optionDescription: "text-ink-muted text-input-plus leading-[20px] mt-xs",
   settingsAction:
-    "min-h-action-row px-sm py-xxl border-b-hairline-width border-b-hairline flex-row items-center justify-between flex-wrap gap-lg mb-sm",
+    "min-h-action-row px-xxl py-xxl border-b-hairline-width border-b-hairline flex-row items-center justify-between flex-wrap gap-lg mb-sm",
   settingsToggle:
-    "min-h-action-row px-sm py-xxl border-b-hairline-width border-b-hairline flex-row items-center justify-between flex-wrap gap-lg mb-sm",
+    "min-h-action-row px-xxl py-xxl border-b-hairline-width border-b-hairline flex-row items-center justify-between flex-wrap gap-lg mb-sm",
   settingsToggleCopy: "flex-1 min-w-[120px] mr-xxl",
   consentPage: "gap-[20px]",
   consentChoices: "flex-row flex-wrap gap-lg mt-xxl",
@@ -219,7 +219,7 @@ export const appClasses = {
   commandInput: "h-input px-xxl rounded-field text-ink bg-sunken text-input",
   keymapInput:
     "h-[170px] p-xxl rounded-field text-ink bg-sunken text-body [text-align-vertical:top]",
-  error: "p-lg text-error-ink bg-error-bg",
+  error: "px-xxl py-lg text-error-ink bg-error-bg",
   noticeBanner:
     "absolute top-xxxl self-center z-[60] px-xxl py-lg rounded-tile bg-notice-bg",
   noticeText: "text-notice-ink text-body font-semibold",

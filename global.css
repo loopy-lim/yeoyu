@@ -44,28 +44,28 @@
   --spacing-hairline: hairlineWidth();
   --spacing-xs: 2px;
   --spacing-sm: 4px;
-  --spacing-md: 6px;
-  --spacing-lg: 8px;
-  --spacing-xl: 10px;
-  --spacing-xxl: 12px;
-  --spacing-xxxl: 16px;
-  --spacing-frame: 8px;
+  --spacing-md: 8px;
+  --spacing-lg: 10px;
+  --spacing-xl: 12px;
+  --spacing-xxl: 16px;
+  --spacing-xxxl: 20px;
+  --spacing-frame: 10px;
   --spacing-sidebar: 240px;
   --spacing-rail: 48px;
-  --spacing-row: 30px;
-  --spacing-tab-row: 34px;
-  --spacing-workspace-row: 28px;
-  --spacing-rail-item: 36px;
-  --spacing-tile: 38px;
-  --spacing-favorite: 40px;
-  --spacing-icon-button: 32px;
-  --spacing-avatar: 28px;
-  --spacing-toolbar: 44px;
-  --spacing-address: 34px;
-  --spacing-address-compact: 34px;
-  --spacing-input: 44px;
+  --spacing-row: 36px;
+  --spacing-tab-row: 40px;
+  --spacing-workspace-row: 34px;
+  --spacing-rail-item: 40px;
+  --spacing-tile: 44px;
+  --spacing-favorite: 44px;
+  --spacing-icon-button: 40px;
+  --spacing-avatar: 32px;
+  --spacing-toolbar: 48px;
+  --spacing-address: 40px;
+  --spacing-address-compact: 36px;
+  --spacing-input: 48px;
   --spacing-action-row: 48px;
-  --spacing-bookmark-row: 44px;
+  --spacing-bookmark-row: 48px;
 
   --radius-chip: 5px;
   --radius-control: 9px;
@@ -74,14 +74,14 @@
   --radius-card: 16px;
   --radius-dialog: 18px;
 
-  --text-micro: 9px;
-  --text-small: 10px;
-  --text-body: 11px;
-  --text-body-plus: 12px;
-  --text-input: 13px;
-  --text-input-plus: 14px;
-  --text-icon-size: 16px;
-  --text-title: 18px;
+  --text-micro: 10px;
+  --text-small: 11px;
+  --text-body: 13px;
+  --text-body-plus: 14px;
+  --text-input: 14px;
+  --text-input-plus: 15px;
+  --text-icon-size: 18px;
+  --text-title: 20px;
 }
 
 /* UniKit bridge (issue #26): @unikit-bridge/ui variants speak shadcn

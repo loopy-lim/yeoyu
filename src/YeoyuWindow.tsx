@@ -423,7 +423,7 @@ function WindowBody({
           permissionRequest ? "no-hide-descendants" : "auto"
         }
       >
-        <View className="flex-row items-center gap-sm px-md h-input border-b-hairline-width border-hairline-on-chrome bg-chrome">
+        <View className="flex-row items-center gap-md px-lg h-input border-b-hairline-width border-hairline-on-chrome bg-chrome">
           {iconButton("back", tr("chrome.back"), !nav.canGoBack, () => {
             const ref = surfaceRef.current;
             if (ref) Commands.goBack(ref);
@@ -450,7 +450,7 @@ function WindowBody({
             <View
               accessibilityRole="text"
               accessibilityLabel={tr("chrome.private")}
-              className="flex-row items-center px-xs h-address-compact rounded-control bg-sunken"
+              className="flex-row items-center px-sm h-address-compact rounded-control bg-sunken"
             >
               <ChromeIcon name="private" size={15} color={theme.inkMuted} />
             </View>

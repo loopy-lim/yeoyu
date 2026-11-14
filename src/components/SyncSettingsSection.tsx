@@ -54,7 +54,7 @@ export function SyncSettingsSection({
     return (
       <SettingsGroup heading={tr("sync.title")}>
         <SettingsGroupRow last>
-          <View className="flex-1 min-w-0 gap-sm py-xs">
+          <View className="flex-1 min-w-0 gap-sm">
             <Text className={settingsClasses.rowTitle}>{tr("sync.title")}</Text>
             <Text className={settingsClasses.rowDetail}>
               {tr("sync.unavailable")}
@@ -69,7 +69,7 @@ export function SyncSettingsSection({
     return (
       <SettingsGroup heading={tr("sync.title")}>
         <SettingsGroupRow last>
-          <View className="flex-1 min-w-0 gap-sm py-xs">
+          <View className="flex-1 min-w-0 gap-sm">
             <Text className={settingsClasses.rowTitle}>{tr("sync.title")}</Text>
             <Text className={settingsClasses.rowDetail}>
               {tr("sync.connectDetail")}
@@ -96,7 +96,7 @@ export function SyncSettingsSection({
     return (
       <SettingsGroup heading={tr("sync.title")}>
         <SettingsGroupRow last>
-          <View className="flex-1 min-w-0 gap-sm py-xs">
+          <View className="flex-1 min-w-0 gap-sm">
             <Text className={settingsClasses.rowTitle}>
               {tr("sync.connectingTitle")}
             </Text>
@@ -157,7 +157,7 @@ export function SyncSettingsSection({
   return (
     <SettingsGroup heading={tr("sync.title")}>
       <SettingsGroupRow>
-        <View className="flex-1 min-w-0 gap-sm py-xs">
+        <View className="flex-1 min-w-0 gap-sm">
           <Text className={settingsClasses.rowTitle} numberOfLines={1}>
             {state.email ?? tr("sync.accountFallback")}
           </Text>

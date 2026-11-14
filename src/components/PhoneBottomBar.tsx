@@ -233,7 +233,7 @@ export function PhoneHybridBar({
             accessibilityRole="button"
             accessibilityLabel={tr("chrome.tabNamed", { name: tab.title })}
             accessibilityState={{ selected: tab.active }}
-            hitSlop={{ top: 5, bottom: 5, left: 2, right: 2 }}
+            hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
             onPress={() => onSelectTab(tab.id)}
             onLongPress={
               onLongPressTab

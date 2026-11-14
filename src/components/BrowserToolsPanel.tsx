@@ -60,9 +60,13 @@ const DOWNLOAD_STATES = {
   interrupted: "tools.state.interrupted",
   cancelled: "tools.state.cancelled",
 } as const;
+// Rows share one base; `row` keeps the divider, `rowLast` drops it so the
+// final row of a group or list never paints a dangling border.
+const rowBase = "min-h-action-row py-[9px] gap-md border-ink-faint";
 const c = {
-  groupBody: "px-xxl py-xxl gap-lg",
-  row: "min-h-action-row py-[9px] gap-md border-ink-faint border-b-hairline-width",
+  groupBody: "px-xxl py-xxl gap-xl",
+  row: `${rowBase} border-b-hairline-width`,
+  rowLast: rowBase,
   horizontal: "flex-row items-center gap-xxl",
   text: "text-[15px] text-ink leading-[21px]",
   detail: "text-input-plus text-ink-muted leading-[21px]",
@@ -445,7 +449,13 @@ export function BrowserToolsPanel({
               )}
               {!!origin && (
                 <>
-                  <View className={c.row}>
+                  <View
+                    className={cn(
+                      // The desktop row follows only outside private tabs;
+                      // there the security row is the group's last line.
+                      privateTab ? c.rowLast : c.row
+                    )}
+                  >
                     <Text className={c.text}>
                       {tr(
                         origin.startsWith("http:")
@@ -817,6 +827,7 @@ export function BrowserToolsPanel({
             initialNumToRender={10}
             windowSize={5}
             keyboardShouldPersistTaps="handled"
+            contentContainerClassName="pb-md"
             ListEmptyComponent={
               <Text className={cn(c.detail, "mt-xxxl")}>
                 {tr(
@@ -826,8 +837,12 @@ export function BrowserToolsPanel({
                 )}
               </Text>
             }
-            renderItem={({ item }) => (
-              <View className={c.row}>
+            renderItem={({ item, index }) => (
+              <View
+                className={
+                  index === filteredSites.length - 1 ? c.rowLast : c.row
+                }
+              >
                 <Text selectable className={c.text}>
                   {item.origin}
                 </Text>
@@ -899,6 +914,7 @@ export function BrowserToolsPanel({
             keyExtractor={(item) => item.id}
             initialNumToRender={10}
             windowSize={5}
+            contentContainerClassName="pb-md"
             ListEmptyComponent={
               <Text className={c.detail}>
                 {tr(
@@ -911,8 +927,10 @@ export function BrowserToolsPanel({
                 )}
               </Text>
             }
-            renderItem={({ item }) => (
-              <View className={c.row}>
+            renderItem={({ item, index }) => (
+              <View
+                className={index === downloads.length - 1 ? c.rowLast : c.row}
+              >
                 <Text numberOfLines={2} className={c.text}>
                   {item.filename}
                 </Text>

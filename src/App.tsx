@@ -2814,7 +2814,10 @@ function BrowserApp() {
   );
   const favoriteColumns = Math.min(
     3,
-    Math.max(1, Math.floor((sidebarLimits.width - 24) / 60))
+    Math.max(
+      1,
+      Math.floor((sidebarLimits.width - space.xxl * 2) / 60)
+    )
   );
   // Render one screen first so a large Space cannot delay the incoming page.
   const initialSidebarRows = Math.max(1, Math.ceil(windowHeight / size.tabRow));
@@ -4512,8 +4515,8 @@ function BrowserApp() {
                             style={{
                               width:
                                 (sidebarLimits.width -
-                                  24 -
-                                  6 * (favoriteColumns - 1)) /
+                                  space.xxl * 2 -
+                                  space.lg * (favoriteColumns - 1)) /
                                 favoriteColumns,
                             }}
                             onLayout={(event) => {
@@ -4575,8 +4578,8 @@ function BrowserApp() {
                               style={{
                                 width:
                                   (sidebarLimits.width -
-                                    24 -
-                                    6 * (favoriteColumns - 1)) /
+                                    space.xxl * 2 -
+                                    space.lg * (favoriteColumns - 1)) /
                                   favoriteColumns,
                               }}
                             >
@@ -4672,7 +4675,7 @@ function BrowserApp() {
                               />
                               {/* Arc-style space pills: one tap switches Space,
                               the row keeps the header as the manage entry. */}
-                              <View className="flex-row items-center gap-xs">
+                              <View className="flex-row items-center gap-sm">
                                 {(state?.workspaces ?? []).map((workspace) => {
                                   const active =
                                     workspace.id === state?.activeWorkspaceId;
@@ -4690,9 +4693,9 @@ function BrowserApp() {
                                       accessibilityState={{
                                         selected: active,
                                       }}
-                                      hitSlop={4}
+                                      hitSlop={8}
                                       className={cn(
-                                        "size-[20px] items-center justify-center rounded-control border",
+                                        "size-[28px] items-center justify-center rounded-control border",
                                         active
                                           ? "border-ink"
                                           : "border-transparent"
@@ -4704,7 +4707,7 @@ function BrowserApp() {
                                     >
                                       <View
                                         className={cn(
-                                          "size-[13px] rounded-full",
+                                          "size-[18px] rounded-full",
                                           !workspace.color && "bg-accent"
                                         )}
                                         style={
@@ -5349,7 +5352,7 @@ function BrowserApp() {
                           hitSlop={8}
                           className={cn(
                             c.littleArcPromoteButton,
-                            compactWindow && "px-sm min-w-0"
+                            compactWindow && "px-md min-w-0"
                           )}
                           onPress={promoteLittleArc}
                         >
@@ -6293,26 +6296,20 @@ function BrowserApp() {
                               {group.name}
                             </Text>
                           </Pressable>
-                          <Pressable
-                            accessibilityRole="button"
-                            accessibilityLabel={tr("splitGroup.rename", {
+                          <IconButton
+                            label={tr("splitGroup.rename", {
                               name: group.name,
                             })}
-                            className="size-[28px] items-center justify-center rounded-[8px] active:bg-sunken"
+                            icon="edit"
                             onPress={() => openSplitGroupRename(group)}
-                          >
-                            <ChromeIcon name="edit" size={14} className="text-ink-muted" />
-                          </Pressable>
-                          <Pressable
-                            accessibilityRole="button"
-                            accessibilityLabel={tr("splitGroup.remove", {
+                          />
+                          <IconButton
+                            label={tr("splitGroup.remove", {
                               name: group.name,
                             })}
-                            className="size-[28px] items-center justify-center rounded-[8px] active:bg-sunken"
+                            icon="close"
                             onPress={() => run(controller.splitGroupRemove(group.id))}
-                          >
-                            <ChromeIcon name="close" size={14} className="text-ink-muted" />
-                          </Pressable>
+                          />
                         </View>
                       ))}
                     {(state.splitGroups ?? []).filter(
@@ -6516,7 +6513,7 @@ function BrowserApp() {
                     className={c.commandInput}
                     disableFullscreenUI
                   />
-                  <ScrollView>
+                  <ScrollView contentContainerClassName="gap-sm pb-lg">
                     {registry
                       .entries(language)
                       .filter((command) => {
@@ -6531,6 +6528,7 @@ function BrowserApp() {
                         <Button
                           key={id}
                           label={title}
+                          className="min-h-[48px]"
                           onPress={() => {
                             setPalette(false);
                             registry.execute(id);
@@ -6971,10 +6969,11 @@ function BrowserApp() {
                             onNotice={flashNotice}
                           />
                           <SettingsGroup heading={tr("browsing.searchEngine")}>
-                            <View className="px-xxl pb-xxl pt-sm gap-lg">
-                            <Text className={c.dialogHelp}>
-                              {tr("browsing.searchEngineHelp")}
-                            </Text>
+                            <View className="px-xxl pt-sm pb-lg">
+                              <Text className={c.dialogHelp}>
+                                {tr("browsing.searchEngineHelp")}
+                              </Text>
+                            </View>
                             {(["google", "naver", "duckduckgo"] as const).map(
                               (searchEngine) => (
                                 <Pressable
@@ -7021,7 +7020,6 @@ function BrowserApp() {
                                 </Pressable>
                               )
                             )}
-                            </View>
                           </SettingsGroup>
                           <SiteSearchSettings
                             entries={ui.siteSearches}

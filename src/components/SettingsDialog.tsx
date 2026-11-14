@@ -41,7 +41,7 @@ const c = {
   header: "px-[20px] py-xxl gap-lg border-hairline border-b-hairline-width",
   row: "flex-row items-center gap-xxl",
   title: "text-[22px] font-semibold text-ink flex-1",
-  navContent: "p-xxl gap-sm",
+  navContent: "p-xxl gap-md",
   content: "flex-1 min-w-0",
   sectionTitle: "text-[24px] font-semibold text-ink mb-lg",
   text: "text-input-plus text-ink leading-[21px]",

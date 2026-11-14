@@ -35,14 +35,14 @@ const dialogClasses = {
   closeButton: "size-action-row rounded-control items-center justify-center",
   row: spaceRowVariants(),
   rowTitle: "text-ink text-input-plus font-semibold",
-  rowMeta: "text-ink-muted text-input leading-[19px] mt-xs",
+  rowMeta: "text-ink-muted text-input leading-[19px] mt-sm",
   spaceDot: "size-[14px] rounded-[7px]",
   input: "min-h-input px-xxl rounded-field text-ink bg-sunken text-input",
   inputMultiline: "min-h-[84px] p-xl rounded-field text-ink bg-sunken text-body [text-align-vertical:top]",
   boostForm: "gap-md",
   emptyState: "text-ink-faint text-body p-lg",
   historyList: "max-h-[420px]",
-  historyRow: "min-h-bookmark-row flex-row items-center gap-xl pl-xl pr-sm border-b border-hairline",
+  historyRow: "min-h-bookmark-row flex-row items-center gap-xl pl-xl pr-md border-b border-hairline",
   grow: "flex-1",
   permissionScroll: "grow-0",
   permissionContent: "gap-xxxl",
@@ -534,7 +534,7 @@ export function HistoryDialog({
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={tr("dialog.clearHistory")}
-          className={cn(dialogClasses.row, "min-h-address")}
+          className={cn(dialogClasses.row, "min-h-action-row")}
           onPress={onClear}
         >
           <Text className={dialogClasses.rowTitle}>{tr("common.clear")}</Text>

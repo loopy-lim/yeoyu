@@ -11,7 +11,7 @@ import {
 } from "@/uiPreferences";
 
 const c = {
-  body: "px-xxl pb-xxl pt-sm gap-lg",
+  body: "px-xxl pb-xxl pt-md gap-lg",
   help: "text-input text-ink-muted leading-[20px]",
   input: "min-h-action-row text-ink text-icon-size border border-ink-muted rounded-[8px] p-xxl",
   fieldLabel: "text-input text-ink-muted",
@@ -112,7 +112,7 @@ export const SiteSearchSettings = ({
         ))}
         <View className="gap-sm">
           <View className="flex-row gap-lg">
-            <View className="flex-1 gap-xs">
+            <View className="flex-1 gap-sm">
               <Text className={c.fieldLabel}>{tr("browsing.siteSearchKeyword")}</Text>
               <TextInput
                 accessibilityLabel={tr("browsing.siteSearchKeyword")}
@@ -126,7 +126,7 @@ export const SiteSearchSettings = ({
                 }}
               />
             </View>
-            <View className="flex-1 gap-xs">
+            <View className="flex-1 gap-sm">
               <Text className={c.fieldLabel}>{tr("browsing.siteSearchLabel")}</Text>
               <TextInput
                 accessibilityLabel={tr("browsing.siteSearchLabel")}
@@ -139,7 +139,7 @@ export const SiteSearchSettings = ({
               />
             </View>
           </View>
-          <View className="gap-xs">
+          <View className="gap-sm">
             <Text className={c.fieldLabel}>{tr("browsing.siteSearchTemplate")}</Text>
             <TextInput
               accessibilityLabel={tr("browsing.siteSearchTemplate")}

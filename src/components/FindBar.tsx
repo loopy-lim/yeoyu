@@ -34,7 +34,7 @@ export function FindBar({
     return () => clearTimeout(timer);
   }, [query]);
   return (
-    <View className="absolute top-md self-center w-[94%] max-w-[400px] z-30 flex-row items-center gap-md px-lg h-input rounded-control bg-surface-elevated border border-hairline shadow-find-bar">
+    <View className="absolute top-md self-center w-[94%] max-w-[400px] z-30 flex-row items-center gap-lg px-lg h-input rounded-control bg-surface-elevated border border-hairline shadow-find-bar">
       <TextInput
         ref={input}
         accessibilityLabel={tr("find.inPage")}
