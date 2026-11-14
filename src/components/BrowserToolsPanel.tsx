@@ -62,25 +62,27 @@ const DOWNLOAD_STATES = {
 } as const;
 // Rows share one base; `row` keeps the divider, `rowLast` drops it so the
 // final row of a group or list never paints a dangling border.
-const rowBase = "min-h-action-row py-[9px] gap-md border-ink-faint";
+const rowBase = "min-h-action-row py-lg gap-md border-hairline";
 const c = {
-  groupBody: "px-xxl py-xxl gap-xl",
+  groupBody: "px-xxl py-lg gap-lg",
   row: `${rowBase} border-b-hairline-width`,
   rowLast: rowBase,
-  horizontal: "flex-row items-center gap-xxl",
-  text: "text-[15px] text-ink leading-[21px]",
-  detail: "text-input-plus text-ink-muted leading-[21px]",
+  horizontal: "flex-row items-center gap-lg",
+  text: "text-input-plus font-medium text-ink leading-[21px]",
+  detail: "text-body text-ink-muted leading-[19px]",
   grow: "flex-1 min-w-0",
   action: settingsClasses.actionSecondary,
   choices: "flex-row flex-wrap gap-md",
   title: "text-title font-bold text-ink",
   search:
-    "min-h-action-row my-xl px-xxl rounded-control bg-sunken text-ink text-icon-size",
+    "min-h-[42px] my-lg px-xxl rounded-control bg-surface-elevated border border-hairline text-ink text-input-plus",
+  stepperRow: settingsClasses.stepperRow,
+  stepperValue: settingsClasses.stepperValue,
 } as const;
 const actionClasses = cva(c.action, {
   variants: {
     disabled: { true: "opacity-50", false: "" },
-    selected: { true: "border border-accent", false: "" },
+    selected: { true: settingsClasses.chipSelected, false: "" },
   },
 });
 
@@ -347,11 +349,13 @@ export function BrowserToolsPanel({
       {show("browsing") && (
         <SettingsGroup heading={tr("tools.browsing")}>
           <View className={c.groupBody}>
-            {action(
-              tr(defaultBrowser ? "tools.defaultHeld" : "tools.setDefault"),
-              chooseDefaultBrowser,
-              defaultBrowser === true
-            )}
+            <View className={c.row}>
+              {action(
+                tr(defaultBrowser ? "tools.defaultHeld" : "tools.setDefault"),
+                chooseDefaultBrowser,
+                defaultBrowser === true
+              )}
+            </View>
             <View className={c.row}>
               <View className={c.horizontal}>
                 <View className={c.grow}>
@@ -386,60 +390,67 @@ export function BrowserToolsPanel({
                 />
               </View>
             </View>
-            <View className={cn(c.row, c.horizontal)}>
-              <View className={c.grow}>
-                <Text className={c.text}>{tr("tools.textSize")}</Text>
-                <Text className={c.detail}>
-                  {tr("tools.textSizeHelp", {
-                    percent: Math.round((config?.textScale ?? 1) * 100),
-                  })}
-                </Text>
+            <View className={c.rowLast}>
+              <View className={c.horizontal}>
+                <View className={c.grow}>
+                  <Text className={c.text}>{tr("tools.textSize")}</Text>
+                  <Text className={c.detail}>
+                    {tr("tools.textSizeHelp", {
+                      percent: Math.round((config?.textScale ?? 1) * 100),
+                    })}
+                  </Text>
+                </View>
+                <View className={c.stepperRow}>
+                  {action(
+                    "−",
+                    () =>
+                      config &&
+                      perform(() =>
+                        onSave((current) => ({
+                          ...current,
+                          textScale: Math.max(
+                            0.5,
+                            Math.round((current.textScale - 0.1) * 10) / 10
+                          ),
+                        }))
+                      ),
+                    !config || config.textScale <= 0.5
+                  )}
+                  <Text className={c.stepperValue}>
+                    {Math.round((config?.textScale ?? 1) * 100)}%
+                  </Text>
+                  {action(
+                    "＋",
+                    () =>
+                      config &&
+                      perform(() =>
+                        onSave((current) => ({
+                          ...current,
+                          textScale: Math.min(
+                            2,
+                            Math.round((current.textScale + 0.1) * 10) / 10
+                          ),
+                        }))
+                      ),
+                    !config || config.textScale >= 2
+                  )}
+                </View>
               </View>
               {action(
-                "−",
+                tr("tools.resetText"),
                 () =>
-                  config &&
                   perform(() =>
-                    onSave((current) => ({
-                      ...current,
-                      textScale: Math.max(
-                        0.5,
-                        Math.round((current.textScale - 0.1) * 10) / 10
-                      ),
-                    }))
+                    onSave((current) => ({ ...current, textScale: 1 }))
                   ),
-                !config || config.textScale <= 0.5
-              )}
-              {action(
-                "＋",
-                () =>
-                  config &&
-                  perform(() =>
-                    onSave((current) => ({
-                      ...current,
-                      textScale: Math.min(
-                        2,
-                        Math.round((current.textScale + 0.1) * 10) / 10
-                      ),
-                    }))
-                  ),
-                !config || config.textScale >= 2
+                !config || config.textScale === 1
               )}
             </View>
-            {action(
-              tr("tools.resetText"),
-              () =>
-                perform(() =>
-                  onSave((current) => ({ ...current, textScale: 1 }))
-                ),
-              !config || config.textScale === 1
-            )}
           </View>
         </SettingsGroup>
       )}
       {show("website") && (
         <>
-          <SettingsGroup heading={tr("tools.website")}>
+          <SettingsGroup first={section === "website"} heading={tr("tools.website")}>
             <View className={c.groupBody}>
               <Text selectable className={c.detail}>
                 {origin ?? tr("tools.openSite")}
@@ -494,25 +505,29 @@ export function BrowserToolsPanel({
                     />
                   </View>
                   <Text className={c.detail}>{tr("tools.originHelp")}</Text>
-                  {action(
-                    tr("tools.resetSite"),
-                    () => resetSites(currentOrigin ?? undefined),
-                    !site
-                  )}
-                  {action(
-                    tr("tools.reload"),
-                    () => tabId && perform(() => platform.retryTab(tabId)),
-                    !tabId
-                  )}
-                  {action(tr("tools.clearSite"), () => clear(host), !host)}
+                  <View className={c.choices}>
+                    {action(
+                      tr("tools.resetSite"),
+                      () => resetSites(currentOrigin ?? undefined),
+                      !site
+                    )}
+                    {action(
+                      tr("tools.reload"),
+                      () => tabId && perform(() => platform.retryTab(tabId)),
+                      !tabId
+                    )}
+                    {action(tr("tools.clearSite"), () => clear(host), !host)}
+                  </View>
                 </>
               )}
             </View>
           </SettingsGroup>
           {!privateTab && (
             <SettingsGroup heading={tr("tools.allSites")}>
-              <View className={c.groupBody}>
-                <Text className={c.detail}>{tr("tools.allSitesHelp")}</Text>
+              <View className={cn(c.groupBody, c.horizontal)}>
+                <Text className={cn(c.detail, c.grow)}>
+                  {tr("tools.allSitesHelp")}
+                </Text>
                 {action(
                   tr("tools.manageSites", { count: config?.sites.length ?? 0 }),
                   () => {
@@ -528,7 +543,7 @@ export function BrowserToolsPanel({
       )}
       {show("privacy") && (
         <>
-        <SettingsGroup heading={tr("tools.privacy")}>
+        <SettingsGroup first={section === "privacy"} heading={tr("tools.privacy")}>
           <View className={c.groupBody}>
             <Text className={c.detail}>{tr("tools.privacyHelp")}</Text>
             <View className={c.choices}>
@@ -572,7 +587,7 @@ export function BrowserToolsPanel({
               ))}
             </View>
             {!!origin && !privateTab && (
-              <View className={c.row}>
+              <View className={c.rowLast}>
                 <Text className={c.text}>{tr("tools.siteProtection")}</Text>
                 <View className={c.choices}>
                   {([null, true, false] as const).map((value) => (
@@ -691,7 +706,7 @@ export function BrowserToolsPanel({
         </>
       )}
       {show("memory") && (
-        <SettingsGroup heading={tr("tools.memory")}>
+        <SettingsGroup first={section === "memory"} heading={tr("tools.memory")}>
           <View className={c.groupBody}>
             <View className={cn(c.row, c.horizontal)}>
               <Text className={cn(c.text, c.grow)}>
@@ -746,44 +761,46 @@ export function BrowserToolsPanel({
                   </View>
                 )
               )}
-            {action(tr("tools.inspectMemory"), inspectMemoryProtection)}
+            <Text className={c.detail}>{tr("tools.memoryWarning")}</Text>
+            <View className={c.choices}>
+              {action(tr("tools.inspectMemory"), inspectMemoryProtection)}
+              {action(tr("tools.release"), () =>
+                Alert.alert(
+                  tr("tools.releaseTitle"),
+                  tr("tools.releaseWarning"),
+                  [
+                    { text: tr("common.cancel"), style: "cancel" },
+                    {
+                      text: tr("tools.releaseConfirm"),
+                      onPress: () =>
+                        perform(async () => {
+                          const result = JSON.parse(
+                            await platform.releaseInactiveTabs()
+                          );
+                          onNotice(
+                            tr("tools.releaseResult", {
+                              released: result.released,
+                              protected: result.protected,
+                              failed: result.failed,
+                              reasons: Object.entries(result.reasons ?? {})
+                                .map(([reason, count]) => `${reason}: ${count}`)
+                                .join("; "),
+                            })
+                          );
+                        }),
+                    },
+                  ]
+                )
+              )}
+            </View>
             {!!resourceSummary && (
               <Text className={c.detail}>{resourceSummary}</Text>
-            )}
-            <Text className={c.detail}>{tr("tools.memoryWarning")}</Text>
-            {action(tr("tools.release"), () =>
-              Alert.alert(
-                tr("tools.releaseTitle"),
-                tr("tools.releaseWarning"),
-                [
-                  { text: tr("common.cancel"), style: "cancel" },
-                  {
-                    text: tr("tools.releaseConfirm"),
-                    onPress: () =>
-                      perform(async () => {
-                        const result = JSON.parse(
-                          await platform.releaseInactiveTabs()
-                        );
-                        onNotice(
-                          tr("tools.releaseResult", {
-                            released: result.released,
-                            protected: result.protected,
-                            failed: result.failed,
-                            reasons: Object.entries(result.reasons ?? {})
-                              .map(([reason, count]) => `${reason}: ${count}`)
-                              .join("; "),
-                          })
-                        );
-                      }),
-                  },
-                ]
-              )
             )}
           </View>
         </SettingsGroup>
       )}
       {show("downloads") && (
-        <SettingsGroup>
+        <SettingsGroup first={section === "downloads"}>
           <View className={c.groupBody}>
             {action(tr("tools.downloads"), () => setDownloadsOpen(true))}
           </View>

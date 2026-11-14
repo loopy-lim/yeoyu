@@ -4,8 +4,9 @@ import React, { useRef, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { appClasses as c } from "@/chrome/appStyles";
 import { ChromeIcon } from "@/chrome/ChromeIcon";
+import { useTheme } from "@/themeContext";
 import { useI18n } from "@/i18nContext";
-import { SettingsGroupRow, settingsClasses } from "@/components/settings/kit";
+import { SettingsGroup, SettingsGroupRow, settingsClasses } from "@/components/settings/kit";
 import {
   ANDROID_PERMISSION_KINDS,
   type AndroidPermissionKind,
@@ -38,7 +39,7 @@ interface ActionFeedback {
 const actionState = cva("active:opacity-pressed", {
   variants: {
     disabled: { true: "opacity-disabled", false: "" },
-    selected: { true: "bg-sunken-strong border-accent", false: "" },
+    selected: { true: "bg-sunken-strong border-accent-strong", false: "" },
   },
 });
 
@@ -51,6 +52,7 @@ export function ConsentSettings({
   privateSite,
   onAutoplayChange,
 }: Props) {
+  const t = useTheme();
   const { tr } = useI18n();
   const android = useConsentPermissions(runtime);
   const [feedback, setFeedback] = useState<ActionFeedback | null>(null);
@@ -116,7 +118,7 @@ export function ConsentSettings({
   return (
     <View className={c.consentPage}>
       <View className={c.consentIntro}>
-        <ChromeIcon name="check" size={20} />
+        <ChromeIcon name="check" size={18} color={t.accentStrong} />
         <View className={c.consentCopy}>
           <Text className={c.optionTitle}>{tr("consent.basic")}</Text>
           <Text className={c.optionDescription}>{tr("consent.basicHelp")}</Text>
@@ -131,7 +133,7 @@ export function ConsentSettings({
           {tr("consent.deviceTitle")}
         </Text>
         <Text className={c.optionDescription}>{tr("consent.deviceHelp")}</Text>
-        <View className={cn(settingsClasses.group, "mt-xxl")}>
+        <View className={cn(settingsClasses.group, "mt-lg")}>
           {ANDROID_PERMISSION_KINDS.map((kind, index) => {
             const status = android.status[kind];
             const granted = status === "allowed" || status === "approximate";
@@ -161,7 +163,7 @@ export function ConsentSettings({
                   </Text>
                 </View>
                 {granted ? (
-                  <ChromeIcon name="check" size={20} />
+                  <ChromeIcon name="check" size={18} color={t.accentStrong} />
                 ) : (
                   <Pressable
                     accessibilityRole="button"
@@ -198,38 +200,42 @@ export function ConsentSettings({
             );
           })}
         </View>
-        <ConsentAction
-          title={tr("consent.android")}
-          description={tr("consent.androidDetail")}
-          disabled={busy || !runtime.openAndroidPermissionSettings}
-          onPress={() => {
-            const open = runtime.openAndroidPermissionSettings;
-            if (open)
-              void perform(() => open.call(runtime), undefined, "android");
-          }}
-        />
+        <View className={cn(settingsClasses.group, "mt-lg")}>
+          <ConsentAction
+            title={tr("consent.android")}
+            description={tr("consent.androidDetail")}
+            disabled={busy || !runtime.openAndroidPermissionSettings}
+            last={!android.error}
+            onPress={() => {
+              const open = runtime.openAndroidPermissionSettings;
+              if (open)
+                void perform(() => open.call(runtime), undefined, "android");
+            }}
+          />
+          {android.error && (
+            <ConsentAction
+              title={tr("consent.checkAgain")}
+              disabled={android.loading}
+              last
+              onPress={() => void android.refresh()}
+            />
+          )}
+        </View>
         {!runtime.openAndroidPermissionSettings && (
-          <Text className={c.optionDescription}>
+          <Text className={cn(c.optionDescription, "mt-sm")}>
             {tr("consent.androidManual")}
           </Text>
         )}
         {android.error && (
-          <>
-            <Text accessibilityRole="alert" className={c.optionDescription}>
-              {tr("consent.androidError", { detail: android.error })}
-            </Text>
-            <ConsentAction
-              title={tr("consent.checkAgain")}
-              disabled={android.loading}
-              onPress={() => void android.refresh()}
-            />
-          </>
+          <Text accessibilityRole="alert" className={cn(c.consentError, "mt-sm")}>
+            {tr("consent.androidError", { detail: android.error })}
+          </Text>
         )}
         <ConsentFeedback feedback={feedback} target="android" />
       </View>
 
       <View className={c.consentIntro}>
-        <ChromeIcon name="play" size={20} />
+        <ChromeIcon name="play" size={18} color={t.inkMuted} />
         <View className={c.consentCopy}>
           <Text className={c.optionTitle}>{tr("consent.defaults")}</Text>
           <Text className={c.optionDescription}>
@@ -238,50 +244,53 @@ export function ConsentSettings({
         </View>
       </View>
       {currentOrigin && onAutoplayChange && (
-        <View>
-          <Text className={c.optionTitle}>{tr("consent.siteAutoplay")}</Text>
-          <Text selectable className={c.optionDescription}>
-            {currentOrigin}
-          </Text>
-          <View className={c.consentChoices}>
-            {(["default", "allow", "block"] as const).map((choice) => (
-              <Pressable
-                key={choice}
-                accessibilityRole="radio"
-                accessibilityLabel={tr(`consent.autoplay.${choice}`)}
-                accessibilityState={{
-                  checked: autoplay === choice,
-                  disabled: busy,
-                }}
-                disabled={busy}
-                className={cn(
-                  c.consentChoice,
-                  autoplay === choice && c.consentChoiceSelected,
-                  actionState({ disabled: busy })
-                )}
-                onPress={() => {
-                  const origin = currentOrigin;
-                  if (origin)
-                    void perform(
-                      () =>
-                        onAutoplayChange(
-                          origin,
-                          choice === "default" ? null : choice
-                        ),
-                      tr("consent.autoplaySaved"),
-                      "autoplay"
-                    );
-                }}
-              >
-                {autoplay === choice && <ChromeIcon name="check" size={16} />}
-                <Text className={c.optionTitle}>
-                  {tr(`consent.autoplay.${choice}`)}
-                </Text>
-              </Pressable>
-            ))}
+        <SettingsGroup heading={tr("consent.siteAutoplay")}>
+          <View className="px-xxl py-lg gap-md">
+            <Text selectable className={c.optionDescription}>
+              {currentOrigin}
+            </Text>
+            <View className={c.consentChoices}>
+              {(["default", "allow", "block"] as const).map((choice) => (
+                <Pressable
+                  key={choice}
+                  accessibilityRole="radio"
+                  accessibilityLabel={tr(`consent.autoplay.${choice}`)}
+                  accessibilityState={{
+                    checked: autoplay === choice,
+                    disabled: busy,
+                  }}
+                  disabled={busy}
+                  className={cn(
+                    c.consentChoice,
+                    autoplay === choice && c.consentChoiceSelected,
+                    actionState({ disabled: busy })
+                  )}
+                  onPress={() => {
+                    const origin = currentOrigin;
+                    if (origin)
+                      void perform(
+                        () =>
+                          onAutoplayChange(
+                            origin,
+                            choice === "default" ? null : choice
+                          ),
+                        tr("consent.autoplaySaved"),
+                        "autoplay"
+                      );
+                  }}
+                >
+                  {autoplay === choice && (
+                    <ChromeIcon name="check" size={14} color={t.accentStrong} />
+                  )}
+                  <Text className={c.optionTitle}>
+                    {tr(`consent.autoplay.${choice}`)}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+            <ConsentFeedback feedback={feedback} target="autoplay" />
           </View>
-          <ConsentFeedback feedback={feedback} target="autoplay" />
-        </View>
+        </SettingsGroup>
       )}
 
       <View>
@@ -297,7 +306,7 @@ export function ConsentSettings({
             : tr("consent.empty")}
         </Text>
         {[...groups].map(([origin, siteRules]) => (
-          <View key={origin} className={cn(settingsClasses.group, "mt-xxl")}>
+          <View key={origin} className={cn(settingsClasses.group, "mt-lg")}>
             <Text selectable className={c.consentOrigin}>
               {origin}
             </Text>
@@ -349,29 +358,39 @@ export function ConsentSettings({
             ))}
           </View>
         ))}
-        <ConsentAction
-          title={tr("consent.forgetAll")}
-          description={tr("consent.forgetAllDetail")}
-          disabled={busy}
-          onPress={() => void perform(onClearAll, tr("consent.cleared"))}
-        />
-        <Text className={c.optionDescription}>
+        <View className={cn(settingsClasses.group, "mt-lg")}>
+          <ConsentAction
+            title={tr("consent.forgetAll")}
+            description={tr("consent.forgetAllDetail")}
+            disabled={busy}
+            last
+            onPress={() => void perform(onClearAll, tr("consent.cleared"))}
+          />
+        </View>
+        <Text className={cn(c.optionDescription, "mt-sm")}>
           {tr("consent.resetWarning")}
         </Text>
         <ConsentFeedback feedback={feedback} target="saved" />
       </View>
 
-      <View>
+      <View className={settingsClasses.group}>
         <Pressable
           accessibilityRole="button"
           accessibilityState={{ expanded: details }}
-          className={c.consentRow}
+          className={cn(
+            c.consentRow,
+            !details && "border-b-0"
+          )}
           onPress={() => setDetails(!details)}
         >
           <Text className={cn(c.optionTitle, c.consentCopy)}>
             {tr("consent.details")}
           </Text>
-          <ChromeIcon name={details ? "chevronUp" : "chevronDown"} size={18} />
+          <ChromeIcon
+            name={details ? "chevronUp" : "chevronDown"}
+            size={16}
+            color={t.inkMuted}
+          />
         </Pressable>
         {details && (
           <View className={c.consentDetails}>
@@ -408,7 +427,7 @@ function ConsentFeedback({
       accessibilityRole={feedback.error ? "alert" : undefined}
       className={cn(
         feedback.error ? c.consentError : c.consentNotice,
-        "w-full"
+        "w-full mt-sm"
       )}
     >
       {feedback.message}
@@ -420,13 +439,16 @@ function ConsentAction({
   title,
   description,
   disabled = false,
+  last = false,
   onPress,
 }: {
   title: string;
   description?: string;
   disabled?: boolean;
+  last?: boolean;
   onPress: () => void;
 }) {
+  const t = useTheme();
   return (
     <Pressable
       accessibilityRole="button"
@@ -434,7 +456,11 @@ function ConsentAction({
       accessibilityState={{ disabled }}
       disabled={disabled}
       onPress={onPress}
-      className={cn(c.consentRow, actionState({ disabled }))}
+      className={cn(
+        c.consentRow,
+        last && "border-b-0",
+        actionState({ disabled })
+      )}
     >
       <View className={c.consentCopy}>
         <Text className={c.optionTitle}>{title}</Text>
@@ -442,7 +468,7 @@ function ConsentAction({
           <Text className={c.optionDescription}>{description}</Text>
         )}
       </View>
-      <ChromeIcon name="chevronRight" size={18} />
+      <ChromeIcon name="chevronRight" size={16} color={t.inkFaint} />
     </Pressable>
   );
 }

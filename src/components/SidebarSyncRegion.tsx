@@ -63,10 +63,12 @@ export function SidebarSyncRegion({
             })}
           </Text>
         )}
-        <Text className="text-ink-muted text-small">{count}</Text>
+        <Text className="px-xs py-[1px] rounded-chip bg-field-on-chrome text-ink-faint text-small font-semibold tabular-nums">
+          {count}
+        </Text>
       </Pressable>
       {status !== null && (
-        <Text className="px-xxl pb-xs text-ink-muted text-small">{status}</Text>
+        <Text className="px-md pb-xs text-ink-faint text-small">{status}</Text>
       )}
       <FolderDisclosure open={open}>
         <View className={c.folderChildren}>
@@ -91,8 +93,8 @@ function SyncNodeRow({
   const { tr } = useI18n();
   if (node.type === "separator") {
     // Hairline row — the separator glyph in the tree, no interaction.
-    return <View className={cn(c.tab, "justify-center")} style={{ paddingLeft: 12 + depth * 16 }}>
-      <View className="h-hairline flex-1 bg-hairline-on-chrome" />
+    return <View className={cn(c.tab, "justify-center")} style={{ paddingLeft: 10 + depth * 14 }}>
+      <View className="h-hairline-width flex-1 bg-hairline-on-chrome" />
     </View>;
   }
   if (node.type === "folder" || node.type === "livemark") {
@@ -103,11 +105,11 @@ function SyncNodeRow({
             name: node.title || tr("sync.untitledFolder"),
           })}
           className={cn(c.tab, "justify-center")}
-          style={{ paddingLeft: 12 + depth * 16 }}
+          style={{ paddingLeft: 10 + depth * 14 }}
         >
           <ChromeIcon
-            className={cn("size-[12px]", "text-ink-muted")}
-            name="space"
+            className={cn("size-[14px]", "text-icon")}
+            name="folder"
           />
           <Text numberOfLines={1} maxFontSizeMultiplier={1.35} className={c.tabTitle}>
             {node.title || tr("sync.untitledFolder")}
@@ -130,11 +132,16 @@ function SyncNodeRow({
       accessibilityRole="button"
       accessibilityLabel={tr("sync.bookmarkLabel", { name: title })}
       className={cn(c.tab, "active:bg-field-on-chrome")}
-      style={{ paddingLeft: 12 + depth * 16 }}
+      style={{ paddingLeft: 10 + depth * 14 }}
       onPress={() => node.url && onOpenUrl(node.url)}
     >
       <View className={c.tabFavicon}>
-        <Favicon url={node.url ?? ""} fallback="◌" size={16} radius={3} />
+        <Favicon
+          url={node.url ?? ""}
+          fallback={(title.slice(0, 1) || "•").toUpperCase()}
+          size={16}
+          radius={3}
+        />
       </View>
       <Text numberOfLines={1} maxFontSizeMultiplier={1.35} className={c.tabTitle}>
         {title}

@@ -22,30 +22,30 @@ const pageTitle = (page: { title: string; url: string }) =>
   page.title || sidebarAddressLabel(page.url) || "New tab";
 const compactCount = (count: number) => (count > 99 ? "99+" : String(count));
 const splitItemVariants = cva(
-  "flex-row items-center bg-field-on-chrome rounded-control active:bg-pill",
+  "flex-row items-center bg-field-on-chrome border border-hairline-on-chrome rounded-control active:bg-pill",
   {
     variants: {
       collapsed: {
         true: "size-input justify-center",
-        false: "min-h-[52px] px-lg py-md gap-lg my-sm",
+        false: "min-h-[50px] px-md py-sm gap-md my-xs",
       },
     },
   }
 );
 const folderItemVariants = cva(
-  "flex-row items-center rounded-[8px] gap-md active:bg-field-on-chrome",
+  "flex-row items-center rounded-control gap-sm active:bg-field-on-chrome border border-transparent",
   {
     variants: {
       collapsed: {
         true: "size-input justify-center",
-        false: "min-h-tile px-lg",
+        false: "min-h-tab-row px-md",
       },
-      selected: { true: "bg-field-on-chrome", false: "" },
+      selected: { true: "bg-field-on-chrome border-hairline-on-chrome", false: "" },
     },
   }
 );
 const stackedIconVariants = cva(
-  "absolute size-[24px] rounded-[6px] items-center justify-center border",
+  "absolute size-[23px] rounded-[6px] items-center justify-center border",
   {
     variants: {
       front: {
@@ -56,31 +56,30 @@ const stackedIconVariants = cva(
   }
 );
 const collectionClasses = {
-  stack: "size-address shrink-0",
-  splitTitles: "flex-1 min-w-0 gap-sm",
+  stack: "size-[36px] shrink-0",
+  splitTitles: "flex-1 min-w-0 gap-xs",
   titleLine: "flex-row items-center gap-[5px]",
   focusDot: "size-sm rounded-[2px] bg-accent-strong",
   title: "flex-1 text-ink text-input font-normal",
   secondaryTitle: "text-ink-muted",
-  folderGlyph: "size-[26px] items-center justify-center",
-  folderDot:
-    "absolute left-0 bottom-0 size-[5px] rounded-[3px] bg-accent-strong",
-  count: "text-ink-muted text-body tabular-nums",
+  folderGlyph: "size-[24px] items-center justify-center",
+  folderDot: "size-[5px] rounded-full bg-accent-strong",
+  count: "text-ink-faint text-small font-semibold tabular-nums",
   railCount:
-    "absolute right-[1px] bottom-[1px] bg-sidebar rounded-[4px] px-[3px]",
-  menuIcon: "size-input items-center justify-center",
+    "absolute right-[1px] bottom-[1px] bg-surface-elevated border border-hairline-on-chrome rounded-[4px] px-[3px]",
+  menuIcon: "size-[34px] rounded-control items-center justify-center active:bg-sunken",
   menuScroll: "grow-0 shrink",
-  choiceRow: "flex-row items-center rounded-[8px]",
+  choiceRow: "flex-row items-center rounded-control",
   choiceSelected: "bg-sunken",
   choice:
-    "flex-1 min-h-[56px] flex-row items-center gap-[9px] px-lg py-[7px] rounded-[8px] active:bg-field-on-chrome",
-  choiceIcon: "w-[24px] items-center",
-  choiceCopy: "flex-1 min-w-0 gap-sm",
-  detail: "text-ink-muted text-body",
-  empty: "p-xxl text-ink-muted text-input",
-  menuActions: "border-t-hairline-width border-hairline mt-md pt-md",
+    "flex-1 min-h-[52px] flex-row items-center gap-lg px-lg py-sm rounded-control active:bg-field-on-chrome",
+  choiceIcon: "w-[22px] items-center",
+  choiceCopy: "flex-1 min-w-0 gap-xs",
+  detail: "text-ink-muted text-small",
+  empty: "p-xxl text-ink-faint text-body",
+  menuActions: "border-t-hairline-width border-hairline mt-xs pt-xs gap-[2px]",
   action:
-    "min-h-input flex-row items-center gap-[9px] px-[9px] rounded-[8px] active:bg-field-on-chrome",
+    "min-h-[40px] flex-row items-center gap-lg px-xl rounded-control active:bg-sunken",
 };
 
 export function SplitSidebarItem({
@@ -129,7 +128,7 @@ export function SplitSidebarItem({
             <Favicon
               url={page.url}
               fallback={pageTitle(page).slice(0, 1).toUpperCase()}
-              size={17}
+              size={16}
               radius={4}
               persist={!page.private}
             />
@@ -209,16 +208,18 @@ export function SidebarFolderItem({
         <ChromeIcon
           name={open ? "folderOpen" : "folder"}
           className={cn(
-            collapsed ? "size-[25px]" : "size-[22px]",
+            collapsed ? "size-[22px]" : "size-[18px]",
             containsFocused ? "text-accent-strong" : "text-icon"
           )}
         />
-        {containsFocused && <View className={collectionClasses.folderDot} />}
       </View>
       {!collapsed && (
         <Text numberOfLines={1} className={collectionClasses.title}>
           {title}
         </Text>
+      )}
+      {!collapsed && containsFocused && (
+        <View className={collectionClasses.folderDot} />
       )}
       <Text
         className={cn(
@@ -279,13 +280,10 @@ export function SidebarPageMenu({
       title={title}
       anchor={anchor}
       preferredWidth={300}
-      estimatedHeight={50 + pages.length * 56 + actions.length * 44}
+      estimatedHeight={52 + pages.length * 52 + actions.length * 40}
       onClose={onClose}
-      className="rounded-tile shadow-none"
-      headerClassName="min-h-0"
-      titleClassName="font-medium"
       closeClassName={collectionClasses.menuIcon}
-      closeIconSize={16}
+      closeIconSize={15}
     >
       <FlatList
         data={pages}

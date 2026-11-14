@@ -11,20 +11,30 @@ import { DialogCard } from "@/components/DialogCard";
 import { useI18n } from "@/i18nContext";
 
 const c = {
-  title: "text-[20px] font-semibold text-ink",
-  text: "text-input-plus text-ink leading-[21px]",
-  muted: "text-input text-ink-muted leading-[20px]",
-  actions: "flex-row flex-wrap gap-lg",
+  title: "text-title font-bold text-ink",
+  text: "text-input-plus font-medium text-ink leading-[21px]",
+  muted: "text-body text-ink-muted leading-[19px]",
+  sectionLabel:
+    "text-small font-bold text-ink-faint tracking-[0.6px] uppercase mt-md",
+  actions: "flex-row flex-wrap gap-sm",
+  footer:
+    "flex-row flex-wrap gap-sm pt-lg border-t-hairline-width border-t-hairline",
   button:
-    "min-h-action-row px-xxl py-xxl rounded-[8px] border border-ink-muted justify-center active:opacity-pressed",
+    "min-h-[40px] px-xl py-sm rounded-control bg-surface-elevated border border-hairline justify-center active:opacity-pressed",
+  saveButton:
+    "min-h-[40px] px-xl py-sm rounded-control bg-ink border border-ink justify-center active:opacity-pressed",
+  saveText: "text-input-plus font-semibold text-surface-elevated",
   input:
-    "min-h-action-row text-ink text-icon-size border border-ink-muted rounded-[8px] p-xxl",
-  row: "gap-lg py-[14px] border-b border-hairline",
+    "min-h-[42px] text-ink text-input-plus bg-surface-elevated border border-hairline rounded-control px-xxl",
+  row: "gap-md p-lg rounded-tile bg-sunken border border-hairline",
+  rowHeader: "flex-row items-center justify-between gap-md",
+  shortcutBadge:
+    "px-sm py-[2px] rounded-chip bg-surface-elevated border border-hairline text-small font-semibold text-ink-muted",
 } as const;
 const actionClasses = cva(c.button, {
   variants: {
     disabled: { true: "opacity-50", false: "" },
-    selected: { true: "bg-sunken-strong border-ink", false: "" },
+    selected: { true: "bg-sunken-strong border-accent-strong", false: "" },
   },
 });
 
@@ -144,7 +154,10 @@ export function KeyboardSettings({
       <Text className={c.title}>{tr("keyboard.title")}</Text>
       <Text className={c.muted}>{tr("keyboard.help")}</Text>
       {error ? (
-        <Text accessibilityRole="alert" className={c.text}>
+        <Text
+          accessibilityRole="alert"
+          className="text-body text-error-ink bg-error-bg px-lg py-md rounded-control"
+        >
           {error}
         </Text>
       ) : null}
@@ -160,7 +173,7 @@ export function KeyboardSettings({
       )}
       <ScrollView
         keyboardShouldPersistTaps="handled"
-        contentContainerClassName="gap-lg pb-lg"
+        contentContainerClassName="gap-md pb-lg"
       >
         {advanced ? (
           <TextInput
@@ -172,7 +185,7 @@ export function KeyboardSettings({
             autoCorrect={false}
             autoCapitalize="none"
             disableFullscreenUI
-            className={cn(c.input, "min-h-[250px] align-top")}
+            className={cn(c.input, "min-h-[250px] py-lg align-top")}
           />
         ) : (
           rows
@@ -183,8 +196,12 @@ export function KeyboardSettings({
             )
             .map((row) => (
               <View key={row.id} className={c.row}>
-                <Text className={c.text}>{titleFor(row.command)}</Text>
-                <Text className={c.muted}>{shortcutLabel(row)}</Text>
+                <View className={c.rowHeader}>
+                  <Text className={c.text}>{titleFor(row.command)}</Text>
+                  <Text className={c.shortcutBadge}>
+                    {shortcutLabel(row)}
+                  </Text>
+                </View>
                 <TextInput
                   editable={!busy}
                   accessibilityLabel={tr("keyboard.keyFor", {
@@ -234,7 +251,7 @@ export function KeyboardSettings({
         )}
         {!advanced && (
           <>
-            <Text className={c.text}>{tr("keyboard.add")}</Text>
+            <Text className={c.sectionLabel}>{tr("keyboard.add")}</Text>
             <View className={c.actions}>
               {commands
                 .filter((c) =>
@@ -251,7 +268,7 @@ export function KeyboardSettings({
           </>
         )}
       </ScrollView>
-      <View className={c.actions}>
+      <View className={c.footer}>
         {button(
           tr(advanced ? "keyboard.visual" : "keyboard.advanced"),
           () => void runAction("toggleEditor")
@@ -261,8 +278,18 @@ export function KeyboardSettings({
           tr("keyboard.alternatives"),
           () => void runAction("alternatives")
         )}
-        {button(tr("keyboard.save"), () => void runAction("save"))}
+        <View className="flex-1" />
         {button(tr("keyboard.cancel"), onClose)}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={tr("keyboard.save")}
+          accessibilityState={{ disabled: busy }}
+          disabled={busy}
+          className={cn(c.saveButton, busy && "opacity-50")}
+          onPress={() => void runAction("save")}
+        >
+          <Text className={c.saveText}>{tr("keyboard.save")}</Text>
+        </Pressable>
       </View>
     </DialogCard>
   );

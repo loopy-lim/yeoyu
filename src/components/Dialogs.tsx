@@ -26,33 +26,46 @@ import { cn } from "@/ui/cn";
 import { permissionSupportsOnce } from "@/permissionRequests";
 import { useI18n } from "@/i18nContext";
 
-const spaceRowVariants = cva("min-h-bookmark-row px-xxl rounded-field flex-row items-center gap-xl", {
-  variants: { selected: { true: "bg-sunken-strong", false: "bg-sunken" } },
-  defaultVariants: { selected: false },
-});
+const spaceRowVariants = cva(
+  "min-h-[40px] px-lg rounded-control flex-row items-center gap-md border border-transparent",
+  {
+    variants: {
+      selected: {
+        true: "bg-sunken-strong",
+        false: "bg-transparent active:bg-sunken",
+      },
+    },
+    defaultVariants: { selected: false },
+  }
+);
 const dialogClasses = {
   title: "text-ink text-title font-bold",
   closeButton: "size-action-row rounded-control items-center justify-center",
   row: spaceRowVariants(),
-  rowTitle: "text-ink text-input-plus font-semibold",
-  rowMeta: "text-ink-muted text-input leading-[19px] mt-sm",
-  spaceDot: "size-[14px] rounded-[7px]",
-  input: "min-h-input px-xxl rounded-field text-ink bg-sunken text-input",
-  inputMultiline: "min-h-[84px] p-xl rounded-field text-ink bg-sunken text-body [text-align-vertical:top]",
-  boostForm: "gap-md",
+  rowTitle: "text-ink text-input-plus font-medium",
+  rowMeta: "text-ink-muted text-input leading-[19px] mt-xs",
+  spaceDot: "size-[10px] rounded-full",
+  input:
+    "min-h-input px-xxl rounded-field text-ink bg-surface-elevated border border-hairline text-input-plus",
+  inputMultiline:
+    "min-h-[84px] p-xl rounded-field text-ink bg-surface-elevated border border-hairline text-body [text-align-vertical:top]",
+  boostForm: "p-lg rounded-tile bg-sunken border border-hairline gap-md mb-md",
   emptyState: "text-ink-faint text-body p-lg",
   historyList: "max-h-[420px]",
-  historyRow: "min-h-bookmark-row flex-row items-center gap-xl pl-xl pr-md border-b border-hairline",
+  historyRow:
+    "min-h-bookmark-row flex-row items-center gap-lg px-lg py-sm border-b-hairline-width border-b-hairline active:bg-sunken",
   grow: "flex-1",
   permissionScroll: "grow-0",
   permissionContent: "gap-xxxl",
   permissionOrigin: "text-ink text-icon-size leading-[24px] font-semibold",
-  permissionSite: "p-xxxl rounded-card bg-sunken gap-lg",
+  permissionSite: "p-xxxl rounded-card bg-sunken border border-hairline gap-lg",
   permissionDescription: "text-ink-muted text-input-plus leading-[21px]",
   permissionActions: "gap-lg",
-  permissionButton: "min-h-action-row p-[14px] rounded-field justify-center items-center border border-hairline active:opacity-[0.65]",
+  permissionButton:
+    "min-h-action-row px-xl py-md rounded-field justify-center items-center bg-surface-elevated border border-hairline active:opacity-[0.65]",
   permissionPrimary: "bg-ink border-ink",
-  permissionPrimaryText: "text-surface-elevated text-[15px] leading-[22px] font-semibold",
+  permissionPrimaryText:
+    "text-surface-elevated text-[15px] leading-[22px] font-semibold",
   permissionButtonText: "text-ink text-[15px] leading-[22px] font-semibold",
 };
 
@@ -120,10 +133,13 @@ function NewSpaceRow({ onPress }: { onPress: () => void }) {
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={tr("dialog.newSpace")}
-      className={dialogClasses.row}
+      className={cn(
+        "min-h-[38px] px-lg rounded-control flex-row items-center gap-md bg-transparent active:bg-sunken"
+      )}
       onPress={onPress}
     >
-      <Text className={dialogClasses.rowTitle}>＋ {tr("dialog.newSpace")}</Text>
+      <ChromeIcon name="plus" className="size-[15px] text-icon" />
+      <Text className={dialogClasses.rowTitle}>{tr("dialog.newSpace")}</Text>
     </Pressable>
   );
 }
@@ -167,7 +183,14 @@ function SpaceSwitcherContent({
     ? workspaces.findIndex((workspace) => workspace.id === menu.id)
     : -1;
   return (
-    <DialogCard variant={variant}>
+    <DialogCard
+      variant={variant}
+      className={
+        variant === "dialog"
+          ? "w-[268px] p-lg rounded-tile gap-xs"
+          : undefined
+      }
+    >
       <DialogHeader
         title={
           <Text className={cn(dialogClasses.title, "flex-1")}>
@@ -191,42 +214,45 @@ function SpaceSwitcherContent({
             className={dialogClasses.input}
             disableFullscreenUI
           />
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={tr("common.save")}
-            disabled={!renaming.value.trim()}
-            className={cn(
-              dialogClasses.permissionButton,
-              dialogClasses.permissionPrimary,
-              !renaming.value.trim() && "opacity-disabled"
-            )}
-            onPress={() => {
-              const value = renaming.value.trim();
-              if (!value) return;
-              onRename(renaming.id, value);
-              setRenaming(null);
-            }}
-          >
-            <Text className={dialogClasses.permissionPrimaryText}>
-              {tr("common.save")}
-            </Text>
-          </Pressable>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={tr("common.cancel")}
-            className={dialogClasses.permissionButton}
-            onPress={() => setRenaming(null)}
-          >
-            <Text className={dialogClasses.permissionButtonText}>
-              {tr("common.cancel")}
-            </Text>
-          </Pressable>
+          <View className="flex-row gap-md">
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={tr("common.cancel")}
+              className={cn(dialogClasses.permissionButton, "flex-1")}
+              onPress={() => setRenaming(null)}
+            >
+              <Text className={dialogClasses.permissionButtonText}>
+                {tr("common.cancel")}
+              </Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={tr("common.save")}
+              disabled={!renaming.value.trim()}
+              className={cn(
+                dialogClasses.permissionButton,
+                dialogClasses.permissionPrimary,
+                "flex-1",
+                !renaming.value.trim() && "opacity-disabled"
+              )}
+              onPress={() => {
+                const value = renaming.value.trim();
+                if (!value) return;
+                onRename(renaming.id, value);
+                setRenaming(null);
+              }}
+            >
+              <Text className={dialogClasses.permissionPrimaryText}>
+                {tr("common.save")}
+              </Text>
+            </Pressable>
+          </View>
         </View>
       ) : (
         <>
           <ScrollView
             className="grow-0 shrink"
-            contentContainerClassName="gap-lg"
+            contentContainerClassName="gap-[2px]"
             keyboardShouldPersistTaps="handled"
           >
             {workspaces.map((workspace) => (
@@ -240,6 +266,7 @@ function SpaceSwitcherContent({
               />
             ))}
           </ScrollView>
+          <View className="h-hairline-width bg-hairline my-xs" />
           <NewSpaceRow onPress={onCreate} />
         </>
       )}
@@ -413,6 +440,7 @@ export function TabContextMenuDialog({
       label: tr(tab.favorite ? "dialog.removeFavorite" : "dialog.moveFavorite"),
       icon: "star",
       onPress: onToggleFavorite,
+      dividerBefore: true,
     });
   if (onTogglePin)
     items.push({
@@ -421,7 +449,9 @@ export function TabContextMenuDialog({
       icon: "pin",
       onPress: onTogglePin,
       shortcut: "⌘D",
+      dividerBefore: !onToggleFavorite,
     });
+  let firstMove = true;
   for (const workspace of workspaces) {
     if (workspace.id === tab.workspaceId) continue;
     items.push({
@@ -432,13 +462,16 @@ export function TabContextMenuDialog({
       }),
       icon: "space",
       onPress: () => onMoveToWorkspace(workspace.id),
+      dividerBefore: firstMove,
     });
+    firstMove = false;
   }
   items.push({
     id: "close-others",
     label: tr("dialog.closeOtherTabs"),
     icon: "closeOthers",
     onPress: onCloseOthers,
+    dividerBefore: true,
   });
   if (onCloseTab)
     items.push({
@@ -534,10 +567,10 @@ export function HistoryDialog({
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={tr("dialog.clearHistory")}
-          className={cn(dialogClasses.row, "min-h-action-row")}
+          className="min-h-[36px] px-xl rounded-control bg-sunken border border-hairline items-center justify-center active:opacity-pressed"
           onPress={onClear}
         >
-          <Text className={dialogClasses.rowTitle}>{tr("common.clear")}</Text>
+          <Text className="text-ink text-body font-semibold">{tr("common.clear")}</Text>
         </Pressable>
       </DialogHeader>
       <FlatList
@@ -598,7 +631,7 @@ export function BoostsDialog({
       <ScrollView className="max-h-[420px]">
         {draft.map((boost, index) => (
           <View key={index} className={dialogClasses.boostForm}>
-            <View className="flex-row gap-md">
+            <View className="flex-row items-center gap-md">
               <TextInput
                 accessibilityLabel={tr("dialog.boostHost", { number: index + 1 })}
                 value={boost.host}
@@ -655,29 +688,37 @@ export function BoostsDialog({
           </Text>
         )}
       </ScrollView>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={tr("dialog.addBoost")}
-        className={dialogClasses.row}
-        onPress={() =>
-          setDraft((current) => [
-            ...current,
-            { host: "", css: "", enabled: true },
-          ])
-        }
-      >
-        <Text className={dialogClasses.rowTitle}>＋ {tr("dialog.addBoost")}</Text>
-      </Pressable>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={tr("dialog.saveBoosts")}
-        accessibilityState={{ disabled: !validation.valid }}
-        disabled={!validation.valid}
-        className={cn(dialogClasses.row, !validation.valid && "opacity-50")}
-        onPress={() => { if (validation.valid) onSave(validation.boosts); }}
-      >
-        <Text className={dialogClasses.rowTitle}>{tr("dialog.saveBoosts")}</Text>
-      </Pressable>
+      <View className="flex-row gap-md">
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={tr("dialog.addBoost")}
+          className={cn(dialogClasses.permissionButton, "flex-1 flex-row gap-sm")}
+          onPress={() =>
+            setDraft((current) => [
+              ...current,
+              { host: "", css: "", enabled: true },
+            ])
+          }
+        >
+          <ChromeIcon name="plus" className="size-[16px] text-icon" />
+          <Text className={dialogClasses.permissionButtonText}>{tr("dialog.addBoost")}</Text>
+        </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={tr("dialog.saveBoosts")}
+          accessibilityState={{ disabled: !validation.valid }}
+          disabled={!validation.valid}
+          className={cn(
+            dialogClasses.permissionButton,
+            dialogClasses.permissionPrimary,
+            "flex-1",
+            !validation.valid && "opacity-disabled"
+          )}
+          onPress={() => { if (validation.valid) onSave(validation.boosts); }}
+        >
+          <Text className={dialogClasses.permissionPrimaryText}>{tr("dialog.saveBoosts")}</Text>
+        </Pressable>
+      </View>
     </DialogCard>
   );
 }

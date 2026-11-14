@@ -27,13 +27,14 @@ type Preview = {
   spaces: string[];
 };
 const c = {
-  groupBody: "px-xxl py-xxl gap-lg",
-  detail: "text-input-plus text-ink-muted leading-[21px]",
-  text: "text-[15px] text-ink leading-[21px]",
+  groupBody: "px-xxl py-lg gap-lg",
+  detail: "text-body text-ink-muted leading-[19px]",
+  text: "text-input-plus font-medium text-ink leading-[21px]",
   action: settingsClasses.actionSecondary,
-  actions: "gap-lg my-lg",
-  preview: "border border-ink-faint rounded-control p-xxl gap-lg",
-  row: "flex-row flex-wrap gap-xxl items-center min-h-action-row",
+  actions: "flex-row flex-wrap gap-md my-xs",
+  preview:
+    "bg-surface-elevated border border-hairline rounded-tile p-xxl gap-md",
+  row: "flex-row flex-wrap gap-lg items-center min-h-[48px] border-b-hairline-width border-b-hairline py-xs",
   grow: "flex-1 min-w-0",
 } as const;
 const actionClasses = cva(c.action, {

@@ -35,23 +35,27 @@ import { settingsClasses } from "@/components/settings/kit";
 
 const c = {
   section: settingsClasses.groupHeader,
-  card: `${settingsClasses.group} my-lg p-[14px] gap-xl`,
-  title: "text-icon-size font-semibold text-ink",
-  text: "text-input-plus leading-[21px] text-ink",
-  detail: "text-input-plus leading-[21px] text-ink-muted",
-  error: "text-input-plus leading-[21px] text-error-ink",
-  row: "min-h-action-row flex-row items-center gap-xxl",
+  card: `${settingsClasses.group} my-md p-xxl gap-lg`,
+  title: "text-body-plus font-bold text-ink",
+  text: "text-input-plus font-medium leading-[21px] text-ink",
+  detail: "text-body leading-[19px] text-ink-muted",
+  error: "text-body leading-[19px] text-error-ink",
+  row: "min-h-[50px] flex-row items-center gap-lg py-sm border-b-hairline-width border-b-hairline",
+  rowLast: "min-h-[50px] flex-row items-center gap-lg py-sm",
   grow: "flex-1 min-w-0",
-  actions: "flex-row flex-wrap gap-lg",
-  action: `${settingsClasses.action} shrink py-xl`,
-  linkInput: `${settingsClasses.field} py-xl`,
-  permissionGroup: "gap-md mt-lg",
-  resultRow: "flex-row gap-xxl mt-xl",
-  resultIcon: "size-[40px] rounded-control bg-sunken",
-  resultGrow: "flex-1 min-w-0 gap-sm",
-  resultName: "text-[15px] font-semibold text-ink",
-  headlineRow: "flex-row gap-xxl items-center",
-  headlineIcon: "size-[36px] rounded-control bg-sunken",
+  actions: "flex-row flex-wrap gap-md",
+  action: `${settingsClasses.action} shrink`,
+  linkInput: `${settingsClasses.field} py-md`,
+  permissionGroup: "gap-xs mt-md",
+  resultRow:
+    "flex-row gap-lg pt-lg border-t-hairline-width border-t-hairline items-start",
+  resultIcon:
+    "size-[38px] rounded-control bg-surface-elevated border border-hairline",
+  resultGrow: "flex-1 min-w-0 gap-xs",
+  resultName: "text-body-plus font-semibold text-ink",
+  headlineRow: "flex-row gap-lg items-center",
+  headlineIcon:
+    "size-[36px] rounded-control bg-surface-elevated border border-hairline",
 } as const;
 const actionClasses = cva(c.action, {
   variants: {
@@ -654,7 +658,7 @@ export function ExtensionsSettings({
                     }
                   />
                 </View>
-                <View className={c.row}>
+                <View className={c.rowLast}>
                   <View className={c.grow}>
                     <Text className={c.text}>{tr("extension.private")}</Text>
                     <Text className={c.detail}>

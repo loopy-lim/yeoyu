@@ -21,26 +21,30 @@ import {
 const PRESETS = [...WORKSPACE_PALETTE, "#808080", "#202020"];
 
 const c = {
-  group: "gap-xl mb-[24px]",
-  groupBody: "px-xxl py-xxl gap-xl",
-  title: "text-icon-size font-semibold text-ink",
-  text: "text-input-plus text-ink leading-[21px]",
+  group: "",
+  groupUnheaded: "mt-xxl",
+  groupBody: "px-xxl py-lg gap-lg",
+  title: "text-body-plus font-bold text-ink",
+  text: "text-input-plus text-ink leading-[21px] font-medium",
   textRow: "flex-row items-center gap-md",
-  detail: "text-input-plus text-ink-muted leading-[21px]",
-  choices: "flex-row flex-wrap gap-lg",
+  detail: "text-body text-ink-muted leading-[19px]",
+  choices: "flex-row flex-wrap gap-md",
   choice: `${settingsClasses.chip} max-w-full`,
   input:
-    "min-h-action-row border border-ink-muted rounded-control px-xxl text-ink bg-surface-elevated text-icon-size",
+    "min-h-[44px] border border-hairline rounded-control px-xxl text-ink bg-surface-elevated text-input-plus",
   swatch:
-    "size-[48px] p-lg rounded-control border border-hairline items-center justify-center active:opacity-pressed",
-  swatchFill: "size-[30px] rounded-chip border border-ink-muted bg-accent",
-  preview: "p-xxxl rounded-tile gap-xxl bg-sidebar",
+    "size-[34px] rounded-full border-2 border-transparent items-center justify-center active:opacity-pressed",
+  swatchSelected: "border-accent-strong",
+  swatchFill: "size-[24px] rounded-full bg-accent",
+  preview:
+    "p-lg rounded-tile bg-sidebar border border-hairline gap-sm",
+  previewSidebar: "w-[96px] p-sm rounded-control gap-xs justify-between",
   previewCard:
-    "p-xxxl rounded-control gap-lg border border-pane-focus bg-surface",
+    "flex-1 p-lg rounded-control bg-surface gap-xs shadow-mini",
 } as const;
 const choiceClasses = cva("", {
   variants: {
-    selected: { true: "border-ink bg-sunken-strong", false: "" },
+    selected: { true: settingsClasses.chipSelected, false: "" },
     disabled: { true: "opacity-50", false: "" },
   },
 });
@@ -101,7 +105,7 @@ export function AppearanceSettings({
   );
   return (
     <>
-      <SettingsGroup className={c.group} heading={tr("color.mode")}>
+      <SettingsGroup first className={c.group} heading={tr("color.mode")}>
         <View className={c.groupBody}>
           <View className={c.choices}>
             {(["system", "light", "dark"] as const).map((colorMode) => (
@@ -170,8 +174,11 @@ export function AppearanceSettings({
         onChange={onChange}
         resolvedMode={resolvedMode}
       />
-      <SettingsGroup className={c.group}>
-        <View className={c.groupBody}>
+      <SettingsGroup className={cn(c.group, c.groupUnheaded)}>
+        <View className={cn(c.groupBody, "flex-row flex-wrap items-center justify-between gap-lg")}>
+          <Text className={cn(c.detail, "flex-1 min-w-[180px]")}>
+            {tr("color.resetHelp")}
+          </Text>
           <Pressable
             accessibilityRole="button"
             disabled={!hydrated}
@@ -180,11 +187,13 @@ export function AppearanceSettings({
               onChange({ type: "resetColors" });
               setEditorVersion((version) => version + 1);
             }}
-            className={cn(c.choice, choiceClasses({ disabled: !hydrated }))}
+            className={cn(
+              settingsClasses.action,
+              choiceClasses({ disabled: !hydrated })
+            )}
           >
             <Text className={c.text}>{tr("color.reset")}</Text>
           </Pressable>
-          <Text className={c.detail}>{tr("color.resetHelp")}</Text>
         </View>
       </SettingsGroup>
       <SettingsGroup className={c.group} heading={tr("appearance.chromeLayout")}>
@@ -259,7 +268,8 @@ function CustomColorEditor({
               onPress={() => setDraft(preset)}
               className={cn(
                 c.swatch,
-                choiceClasses({ selected: color === preset, disabled: !hydrated })
+                color === preset && c.swatchSelected,
+                !hydrated && "opacity-50"
               )}
             >
               <ThemeScope theme={{ ...preview, accent: preset }}>
@@ -289,7 +299,7 @@ function CustomColorEditor({
           }}
         />
         {!color && (
-          <Text accessibilityRole="alert" className={c.detail}>
+          <Text accessibilityRole="alert" className="text-body text-error-ink">
             {tr("color.invalid")}
           </Text>
         )}
@@ -298,11 +308,30 @@ function CustomColorEditor({
             <Text className={c.title}>
               {tr("color.preview", { color: color ?? initial })}
             </Text>
-            <Text className={c.detail}>{tr("color.sidebar")}</Text>
-            <View className={c.previewCard}>
-              <Text className={c.text}>{tr("color.tabs")}</Text>
-              <Text className={c.detail}>{tr("color.tones")}</Text>
-              <View className="h-sm rounded-[2px] bg-accent" />
+            <View className="flex-row gap-sm">
+              <View className={c.previewSidebar}>
+                <View className="gap-xs">
+                  <View className="flex-row gap-[4px] mb-xs">
+                    <View className="size-[8px] rounded-full bg-accent" />
+                    <View className="size-[8px] rounded-full bg-hairline-on-chrome" />
+                  </View>
+                  <View className="h-[22px] px-sm rounded-control bg-pill justify-center">
+                    <Text
+                      numberOfLines={1}
+                      className="text-ink text-micro font-semibold"
+                    >
+                      {tr("color.sidebar")}
+                    </Text>
+                  </View>
+                  <View className="h-[16px] rounded-control bg-field-on-chrome" />
+                </View>
+                <View className="h-[6px] w-[28px] rounded-full bg-accent" />
+              </View>
+              <View className={c.previewCard}>
+                <Text className={c.text}>{tr("color.tabs")}</Text>
+                <Text className={c.detail}>{tr("color.tones")}</Text>
+                <View className="h-[4px] rounded-full bg-accent mt-xs" />
+              </View>
             </View>
           </View>
         </ThemeScope>
@@ -321,7 +350,7 @@ function CustomColorEditor({
               })
             )}
           >
-            <Text className={c.text}>
+            <Text className={cn(c.text, "font-semibold")}>
               {tr(applied ? "color.applied" : "color.apply")}
             </Text>
           </Pressable>

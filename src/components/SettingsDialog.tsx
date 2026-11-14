@@ -37,45 +37,66 @@ export interface SettingsSection {
 export type SettingsSaveStatus = "loading" | "saving" | "saved" | "failed";
 
 const c = {
-  headerScroll: "max-h-[34%] grow-0 shrink",
-  header: "px-[20px] py-xxl gap-lg border-hairline border-b-hairline-width",
-  row: "flex-row items-center gap-xxl",
-  title: "text-[22px] font-semibold text-ink flex-1",
-  navContent: "p-xxl gap-md",
-  content: "flex-1 min-w-0",
-  sectionTitle: "text-[24px] font-semibold text-ink mb-lg",
-  text: "text-input-plus text-ink leading-[21px]",
-  textRow: "flex-row items-center gap-xxl",
-  navCopy: "flex-1 min-w-0",
-  navIcon: "size-[24px] items-center justify-center rounded-control",
-  close:
-    "size-[48px] items-center justify-center rounded-dialog bg-sunken active:bg-sunken-strong",
-  footer:
-    "min-h-input flex-row items-center gap-lg px-[20px] py-lg border-hairline border-t-hairline-width",
-  detail: "text-input-plus text-ink-muted leading-[21px]",
-  action:
-    "min-h-action-row p-xxl rounded-control justify-center active:bg-sunken-strong",
+  header:
+    "px-[20px] py-lg gap-md border-b-hairline-width border-b-hairline bg-surface-elevated",
+  headerTop: "flex-row items-center gap-md",
+  headerTitleRow: "flex-row items-center gap-md flex-1 min-w-0",
+  title: "text-[20px] font-bold text-ink",
+  statusPill:
+    "px-md py-xs rounded-chip bg-sunken border border-hairline flex-row items-center gap-sm",
+  statusText: "text-small font-semibold text-ink-muted",
+  retryButton:
+    "min-h-[32px] px-lg rounded-control bg-sunken border border-hairline justify-center active:bg-sunken-strong",
+  retryText: "text-small font-semibold text-ink",
+  searchRow: "flex-row items-center gap-sm",
   search:
-    "flex-1 min-w-0 min-h-action-row bg-sunken text-ink px-xxl rounded-control text-icon-size border border-hairline",
-  status: "flex-1 min-w-0 text-input-plus leading-[21px] text-ink-muted",
+    "flex-1 min-w-0 min-h-[38px] bg-sunken text-ink px-xl rounded-control text-input-plus border border-hairline",
+  searchWide:
+    "w-[210px] min-h-[36px] bg-sunken text-ink px-xl rounded-control text-input-plus border border-hairline",
+  clearButton:
+    "min-h-[36px] px-lg rounded-control bg-sunken border border-hairline justify-center active:bg-sunken-strong",
+  close:
+    "size-[38px] items-center justify-center rounded-control bg-sunken active:bg-sunken-strong",
+  navContent: "p-lg gap-xs",
+  content: "flex-1 min-w-0 bg-surface-elevated",
+  sectionHeader:
+    "pb-lg mb-xl border-b-hairline-width border-b-hairline gap-xs",
+  sectionTitle: "text-[22px] font-bold text-ink",
+  text: "text-input-plus text-ink leading-[21px]",
+  textRow: "flex-row items-center gap-md",
+  navCopy: "flex-1 min-w-0",
+  navIcon: "size-[22px] items-center justify-center",
+  detail: "text-body text-ink-muted leading-[20px]",
+  action:
+    "min-h-[42px] px-lg py-md rounded-control border justify-center active:bg-sunken-strong",
 } as const;
 const bodyClasses = cva("flex-1 min-h-0", {
   variants: { wide: { true: "flex-row", false: "flex-col" } },
 });
-const navClasses = cva("shrink bg-sunken", {
-  variants: { split: { true: "w-[232px] grow-0", false: "w-full grow" } },
+const navClasses = cva("shrink bg-sidebar", {
+  variants: {
+    split: {
+      true: "w-[216px] grow-0 border-r-hairline-width border-r-hairline",
+      false: "w-full grow",
+    },
+  },
 });
 const contentClasses = cva("pb-[36px]", {
   variants: {
-    wide: { true: "p-[28px] pb-[36px]", false: "p-[20px] pb-[36px]" },
+    wide: { true: "p-[24px] pb-[36px]", false: "p-[18px] pb-[36px]" },
   },
 });
 const categoryClasses = cva(c.action, {
-  variants: { selected: { true: "bg-surface-elevated", false: "" } },
-});
-const categoryLabelClasses = cva("text-[15px] leading-[22px]", {
   variants: {
-    selected: { true: "text-ink font-semibold", false: "text-ink-muted" },
+    selected: {
+      true: "bg-sunken-strong border-transparent",
+      false: "border-transparent",
+    },
+  },
+});
+const categoryLabelClasses = cva("text-input-plus leading-[21px]", {
+  variants: {
+    selected: { true: "text-ink font-semibold", false: "text-ink-muted font-medium" },
   },
 });
 
@@ -117,64 +138,87 @@ export function SettingsDialog({
     ? undefined
     : selected ?? (wide ? sections[0] : undefined);
   const split = wide && !!page;
+  const searchInput = (
+    <View className={c.searchRow}>
+      <TextInput
+        accessibilityLabel={tr("settings.searchHint")}
+        placeholder={tr("settings.search")}
+        placeholderTextColor={t.inkMuted}
+        value={query}
+        onChangeText={onQueryChange}
+        autoCapitalize="none"
+        autoCorrect={false}
+        className={wide ? c.searchWide : c.search}
+        returnKeyType="search"
+      />
+      {!!query && (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={tr("settings.clearSearch")}
+          className={c.clearButton}
+          onPress={() => onQueryChange("")}
+        >
+          <Text className={c.retryText}>{tr("common.clear")}</Text>
+        </Pressable>
+      )}
+    </View>
+  );
+  const statusControl = (
+    <View className={c.searchRow}>
+      <View className={c.statusPill}>
+        <Text accessibilityLiveRegion="polite" className={c.statusText}>
+          {tr(`settings.${saveStatus}`)}
+        </Text>
+      </View>
+      {saveStatus === "failed" && (
+        <Pressable
+          accessibilityRole="button"
+          className={c.retryButton}
+          onPress={onRetrySave}
+        >
+          <Text className={c.retryText}>{tr("settings.retrySave")}</Text>
+        </Pressable>
+      )}
+    </View>
+  );
   return (
     <DialogCard
       variant="wide"
       style={{ height: Math.max(160, height - 48) }}
     >
-      <ScrollView
-        className={c.headerScroll}
-        contentContainerClassName={c.header}
-        keyboardShouldPersistTaps="handled"
-      >
+      <View className={c.header}>
         <DialogHeader
-          className="gap-xxl"
+          className="gap-md"
           leading={
             !wide && page ? (
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel={tr("settings.back")}
-                className={c.action}
+                className={c.close}
                 onPress={() => onSelect(null)}
               >
-                <ChromeIcon name="back" size={20} />
+                <ChromeIcon name="back" size={18} />
               </Pressable>
             ) : undefined
           }
           title={
-            <Text accessibilityRole="header" className={c.title}>
-              {tr("settings.title")}
-            </Text>
+            <View className={c.headerTitleRow}>
+              <Text accessibilityRole="header" className={c.title}>
+                {tr("settings.title")}
+              </Text>
+              {(saveStatus === "saving" || saveStatus === "failed") &&
+                statusControl}
+            </View>
           }
           closeLabel={tr("settings.close")}
           closeClassName={c.close}
-          closeIconSize={20}
+          closeIconSize={18}
           onClose={onClose}
-        />
-        <View className={c.row}>
-          <TextInput
-            accessibilityLabel={tr("settings.searchHint")}
-            placeholder={tr("settings.search")}
-            placeholderTextColor={t.inkMuted}
-            value={query}
-            onChangeText={onQueryChange}
-            autoCapitalize="none"
-            autoCorrect={false}
-            className={c.search}
-            returnKeyType="search"
-          />
-          {!!query && (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={tr("settings.clearSearch")}
-              className={c.action}
-              onPress={() => onQueryChange("")}
-            >
-              <Text className={c.text}>{tr("common.clear")}</Text>
-            </Pressable>
-          )}
-        </View>
-      </ScrollView>
+        >
+          {wide && searchInput}
+        </DialogHeader>
+        {!wide && searchInput}
+      </View>
       <View className={cn(bodyClasses({ wide }))}>
         {(wide || !page) && (
           <ScrollView
@@ -183,50 +227,56 @@ export function SettingsDialog({
             keyboardShouldPersistTaps="handled"
           >
             {!!words.length && (
-              <Text accessibilityLiveRegion="polite" className={c.detail}>
+              <Text accessibilityLiveRegion="polite" className={cn(c.detail, "px-md py-xs")}>
                 {filtered.length
                   ? tr("settings.matchCount", { count: filtered.length })
                   : tr("settings.noMatch")}
               </Text>
             )}
-            {filtered.map((section) => (
-              <Pressable
-                key={section.id}
-                accessibilityRole="button"
-                accessibilityState={{ selected: page?.id === section.id }}
-                onPress={() => {
-                  onSelect(section.id);
-                  onQueryChange("");
-                }}
-                className={cn(
-                  categoryClasses({ selected: page?.id === section.id })
-                )}
-              >
-                <View className={c.textRow}>
-                  <View className={c.navIcon}>
-                    <ChromeIcon
-                      name={sectionIcons[section.id] ?? "settings"}
-                      size={20}
-                    />
-                  </View>
-                  <View className={c.navCopy}>
-                    <Text
-                      className={cn(
-                        categoryLabelClasses({
-                          selected: page?.id === section.id,
-                        })
+            {filtered.map((section) => {
+              const isSelected = page?.id === section.id;
+              return (
+                <Pressable
+                  key={section.id}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: isSelected }}
+                  onPress={() => {
+                    onSelect(section.id);
+                    onQueryChange("");
+                  }}
+                  className={cn(categoryClasses({ selected: isSelected }))}
+                >
+                  <View className={c.textRow}>
+                    <View className={c.navIcon}>
+                      <ChromeIcon
+                        name={sectionIcons[section.id] ?? "settings"}
+                        size={18}
+                        color={isSelected ? t.accentStrong : t.inkMuted}
+                      />
+                    </View>
+                    <View className={c.navCopy}>
+                      <Text
+                        className={cn(
+                          categoryLabelClasses({ selected: isSelected })
+                        )}
+                      >
+                        {section.title}
+                      </Text>
+                      {!split && (
+                        <Text className={c.detail}>{section.description}</Text>
                       )}
-                    >
-                      {section.title}
-                    </Text>
+                    </View>
                     {!split && (
-                      <Text className={c.detail}>{section.description}</Text>
+                      <ChromeIcon
+                        name="chevronRight"
+                        size={16}
+                        color={t.inkFaint}
+                      />
                     )}
                   </View>
-                  {!split && <ChromeIcon name="chevronRight" size={16} />}
-                </View>
-              </Pressable>
-            ))}
+                </Pressable>
+              );
+            })}
           </ScrollView>
         )}
         {page && (
@@ -236,28 +286,16 @@ export function SettingsDialog({
             contentContainerClassName={cn(contentClasses({ wide }))}
             keyboardShouldPersistTaps="handled"
           >
-            <Text accessibilityRole="header" className={c.sectionTitle}>
-              {page.title}
-            </Text>
-            <Text className={cn(c.detail, "mb-[20px]")}>
-              {page.description}
-            </Text>
-            {page.content}
+            <View className="w-full max-w-[680px]">
+              <View className={c.sectionHeader}>
+                <Text accessibilityRole="header" className={c.sectionTitle}>
+                  {page.title}
+                </Text>
+                <Text className={c.detail}>{page.description}</Text>
+              </View>
+              {page.content}
+            </View>
           </ScrollView>
-        )}
-      </View>
-      <View className={c.footer}>
-        <Text accessibilityLiveRegion="polite" className={c.status}>
-          {tr(`settings.${saveStatus}`)}
-        </Text>
-        {saveStatus === "failed" && (
-          <Pressable
-            accessibilityRole="button"
-            className={c.action}
-            onPress={onRetrySave}
-          >
-            <Text className={c.text}>{tr("settings.retrySave")}</Text>
-          </Pressable>
         )}
       </View>
     </DialogCard>

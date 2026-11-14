@@ -52,9 +52,9 @@ export function SyncSettingsSection({
 
   if (!platformAvailable) {
     return (
-      <SettingsGroup heading={tr("sync.title")}>
+      <SettingsGroup first heading={tr("sync.title")}>
         <SettingsGroupRow last>
-          <View className="flex-1 min-w-0 gap-sm">
+          <View className="flex-1 min-w-0 gap-xs">
             <Text className={settingsClasses.rowTitle}>{tr("sync.title")}</Text>
             <Text className={settingsClasses.rowDetail}>
               {tr("sync.unavailable")}
@@ -67,9 +67,9 @@ export function SyncSettingsSection({
 
   if (state.connection === "disconnected") {
     return (
-      <SettingsGroup heading={tr("sync.title")}>
+      <SettingsGroup first heading={tr("sync.title")}>
         <SettingsGroupRow last>
-          <View className="flex-1 min-w-0 gap-sm">
+          <View className="flex-1 min-w-0 gap-xs">
             <Text className={settingsClasses.rowTitle}>{tr("sync.title")}</Text>
             <Text className={settingsClasses.rowDetail}>
               {tr("sync.connectDetail")}
@@ -80,10 +80,10 @@ export function SyncSettingsSection({
             accessibilityLabel={tr("sync.connect")}
             accessibilityState={{ disabled }}
             disabled={disabled}
-            className={cn(settingsClasses.chip, "px-xxxl")}
+            className={cn(settingsClasses.action, settingsClasses.chipSelected, "px-xxxl")}
             onPress={onConnect}
           >
-            <Text className="text-ink text-input-plus font-semibold">
+            <Text className="text-ink text-input-plus font-semibold text-center">
               {tr("sync.connect")}
             </Text>
           </Pressable>
@@ -94,9 +94,9 @@ export function SyncSettingsSection({
 
   if (state.connection === "connecting") {
     return (
-      <SettingsGroup heading={tr("sync.title")}>
+      <SettingsGroup first heading={tr("sync.title")}>
         <SettingsGroupRow last>
-          <View className="flex-1 min-w-0 gap-sm">
+          <View className="flex-1 min-w-0 gap-xs">
             <Text className={settingsClasses.rowTitle}>
               {tr("sync.connectingTitle")}
             </Text>
@@ -110,7 +110,9 @@ export function SyncSettingsSection({
             className={settingsClasses.chip}
             onPress={onCancelConnect}
           >
-            <Text className="text-ink text-input-plus">{tr("common.cancel")}</Text>
+            <Text className="text-ink text-input-plus font-medium text-center">
+              {tr("common.cancel")}
+            </Text>
           </Pressable>
         </SettingsGroupRow>
       </SettingsGroup>
@@ -155,9 +157,9 @@ export function SyncSettingsSection({
       : tr("sync.syncing");
 
   return (
-    <SettingsGroup heading={tr("sync.title")}>
+    <SettingsGroup first heading={tr("sync.title")}>
       <SettingsGroupRow>
-        <View className="flex-1 min-w-0 gap-sm">
+        <View className="flex-1 min-w-0 gap-xs">
           <Text className={settingsClasses.rowTitle} numberOfLines={1}>
             {state.email ?? tr("sync.accountFallback")}
           </Text>
@@ -165,8 +167,8 @@ export function SyncSettingsSection({
         </View>
       </SettingsGroupRow>
       {!!errorText && (
-        <SettingsGroupRow>
-          <Text className="flex-1 text-input-plus text-ink leading-[21px]">
+        <SettingsGroupRow className="bg-error-bg">
+          <Text className="flex-1 text-input-plus text-error-ink leading-[21px]">
             {backoffText ? `${errorText} ${backoffText}` : errorText}
           </Text>
         </SettingsGroupRow>
@@ -177,10 +179,14 @@ export function SyncSettingsSection({
           accessibilityLabel={tr("sync.syncNow")}
           accessibilityState={{ disabled: state.syncing }}
           disabled={state.syncing}
-          className={cn(settingsClasses.action, "flex-1")}
+          className={cn(
+            settingsClasses.action,
+            settingsClasses.chipSelected,
+            "flex-1 items-center"
+          )}
           onPress={onSyncNow}
         >
-          <Text className="text-ink text-input-plus font-semibold">
+          <Text className="text-ink text-input-plus font-semibold text-center">
             {state.syncing ? syncingText : tr("sync.syncNow")}
           </Text>
         </Pressable>
@@ -189,10 +195,10 @@ export function SyncSettingsSection({
           accessibilityLabel={tr("sync.disconnectAction")}
           accessibilityState={{ disabled: state.syncing }}
           disabled={state.syncing}
-          className={cn(settingsClasses.actionSecondary, "flex-1")}
+          className={cn(settingsClasses.actionSecondary, "flex-1 items-center")}
           onPress={disconnectWithConfirm}
         >
-          <Text className="text-ink text-input-plus">
+          <Text className="text-ink text-input-plus font-medium text-center">
             {tr("sync.disconnectAction")}
           </Text>
         </Pressable>

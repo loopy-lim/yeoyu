@@ -45,7 +45,7 @@ export function PictureInPictureSettings({
     !state.supported || !state.allowed || !hasTab || externalBusy;
 
   return (
-    <SettingsGroup>
+    <SettingsGroup first>
       <Pressable
         accessibilityRole="switch"
         accessibilityLabel={tr("pip.automatic")}
@@ -94,7 +94,7 @@ export function PictureInPictureSettings({
               {tr("pip.androidHelp")}
             </Text>
           </View>
-          <ChromeIcon name="external" />
+          <ChromeIcon name="external" size={16} color={theme.inkFaint} />
         </Pressable>
       )}
       <Pressable
@@ -114,7 +114,7 @@ export function PictureInPictureSettings({
             {hasTab ? tr("pip.openNow") : tr("pip.openTab")}
           </Text>
         </View>
-        <ChromeIcon name="external" />
+        <ChromeIcon name="external" size={16} color={theme.inkFaint} />
       </Pressable>
     </SettingsGroup>
   );

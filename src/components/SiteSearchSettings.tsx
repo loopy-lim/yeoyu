@@ -1,6 +1,6 @@
 import { Pressable, Text, TextInput, View } from "react-native";
 import { useState } from "react";
-import { SettingsGroup } from "@/components/settings/kit";
+import { SettingsGroup, settingsClasses } from "@/components/settings/kit";
 import { ChromeIcon } from "@/chrome/ChromeIcon";
 import { cn } from "@/ui/cn";
 import { useI18n } from "@/i18nContext";
@@ -11,16 +11,18 @@ import {
 } from "@/uiPreferences";
 
 const c = {
-  body: "px-xxl pb-xxl pt-md gap-lg",
-  help: "text-input text-ink-muted leading-[20px]",
-  input: "min-h-action-row text-ink text-icon-size border border-ink-muted rounded-[8px] p-xxl",
-  fieldLabel: "text-input text-ink-muted",
-  row: "flex-row items-center gap-lg py-md border-b border-hairline last:border-b-0",
-  keyword: "text-input-plus text-accent-strong leading-[21px]",
-  label: "text-input text-ink leading-[20px] flex-1",
-  remove: "size-action-row items-center justify-center rounded-[8px] active:bg-sunken",
-  error: "text-input text-error-ink leading-[20px]",
-  add: "min-h-action-row self-start px-xxl flex-row items-center gap-sm rounded-[8px] border border-ink-muted active:opacity-pressed",
+  body: "px-xxl py-lg gap-lg",
+  help: "text-body text-ink-muted leading-[19px]",
+  input: `${settingsClasses.field} min-h-[42px]`,
+  fieldLabel: "text-small font-semibold text-ink-muted",
+  row: "flex-row items-center gap-md py-md border-b-hairline-width border-b-hairline",
+  keyword:
+    "px-sm py-[2px] rounded-chip bg-surface-elevated border border-hairline text-small font-bold text-accent-strong",
+  label: "text-input-plus font-medium text-ink leading-[20px] flex-1",
+  remove:
+    "size-[36px] items-center justify-center rounded-control active:bg-sunken-strong",
+  error: "text-body text-error-ink leading-[19px]",
+  add: `${settingsClasses.action} self-start flex-row items-center gap-sm`,
 };
 
 type ErrorKind = "keyword" | "duplicate" | "template" | "limit";

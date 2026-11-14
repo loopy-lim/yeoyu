@@ -63,8 +63,9 @@ import {
 } from "@/browserExtensionActions";
 import { SettingsDialog } from "@/components/SettingsDialog";
 import { SettingsRow } from "@/components/SettingsRow";
+import { SafeInsetsContext } from "@/safeInsetsContext";
 import { I18nContext, useI18n } from "@/i18nContext";
-import { josaRo, resolveLanguage, translate, type TranslationKey } from "@/i18n";
+import { resolveLanguage, translate, type TranslationKey } from "@/i18n";
 import { useUiPreferencePersistence } from "@/hooks/useUiPreferencePersistence";
 import { useWindowTabs } from "@/hooks/useWindowTabs";
 import { useInputViewport } from "@/hooks/useInputViewport";
@@ -238,9 +239,6 @@ const paneClasses = cva(c.pane, {
     fullscreen: { true: c.paneFullscreen },
     hidden: { true: c.hidden },
   },
-});
-const settingsChoiceClasses = cva(c.settingsAction, {
-  variants: { selected: { true: "bg-sunken-strong" } },
 });
 
 const Button = ({
@@ -1997,7 +1995,7 @@ function BrowserApp() {
             ) : (
               <Favicon
                 url={tab?.url || bookmark.url}
-                fallback="◌"
+                fallback={title.slice(0, 1).toUpperCase() || "•"}
                 size={16}
                 radius={3}
               />
@@ -2816,7 +2814,7 @@ function BrowserApp() {
     3,
     Math.max(
       1,
-      Math.floor((sidebarLimits.width - space.xxl * 2) / 60)
+      Math.floor((sidebarLimits.width - space.lg * 2) / 48)
     )
   );
   // Render one screen first so a large Space cannot delay the incoming page.
@@ -3852,11 +3850,7 @@ function BrowserApp() {
             ? selectedTabIds.has(tab.id)
             : splitPaneIds.includes(tab.id) && !tab.suspended,
         }),
-        c.tab,
-        (selectionMode
-          ? selectedTabIds.has(tab.id)
-          : splitPaneIds.includes(tab.id) && !tab.suspended) &&
-          "border border-hairline-on-chrome shadow-favorite-active"
+        c.tab
       )}
     >
       <DragSource
@@ -3896,7 +3890,7 @@ function BrowserApp() {
             // visit may reach the shared disk cache.
             <Favicon
               url={tab.url}
-              fallback="◌"
+              fallback={tabLabel(tab).slice(0, 1).toUpperCase() || "•"}
               size={16}
               radius={3}
               persist={!tab.private}
@@ -4006,6 +4000,7 @@ function BrowserApp() {
           id: "favorite",
           label: tr("chrome.addFavorite"),
           icon: "star",
+          dividerBefore: true,
           disabled:
             !target ||
             targetUrl === NEW_TAB_URL ||
@@ -4018,6 +4013,7 @@ function BrowserApp() {
           id: "history",
           label: tr("chrome.history"),
           icon: "history",
+          dividerBefore: true,
           onPress: () => setHistoryOpen(true),
         },
         {
@@ -4120,6 +4116,7 @@ function BrowserApp() {
           id: "extensions",
           label: tr("chrome.extensions"),
           icon: "settings",
+          dividerBefore: true,
           onPress: () => {
             setSettingsQuery("");
             setSettingsSection("extensions");
@@ -4298,6 +4295,7 @@ function BrowserApp() {
     <I18nContext.Provider value={language}>
       <ThemeContext.Provider value={theme}>
         <ThemeScope theme={theme}>
+          <SafeInsetsContext.Provider value={safeInsets}>
           <SafeAreaView
             className={c.app}
             style={[isLittleArc && { backgroundColor: "transparent" }]}
@@ -4515,8 +4513,8 @@ function BrowserApp() {
                             style={{
                               width:
                                 (sidebarLimits.width -
-                                  space.xxl * 2 -
-                                  space.lg * (favoriteColumns - 1)) /
+                                  space.lg * 2 -
+                                  space.md * (favoriteColumns - 1)) /
                                 favoriteColumns,
                             }}
                             onLayout={(event) => {
@@ -4578,8 +4576,8 @@ function BrowserApp() {
                               style={{
                                 width:
                                   (sidebarLimits.width -
-                                    space.xxl * 2 -
-                                    space.lg * (favoriteColumns - 1)) /
+                                    space.lg * 2 -
+                                    space.md * (favoriteColumns - 1)) /
                                   favoriteColumns,
                               }}
                             >
@@ -4669,65 +4667,25 @@ function BrowserApp() {
                               )}
                               onPress={() => setSpaceSwitcher(true)}
                             >
-                              <ChromeIcon
-                                className={cn("size-[12px]", "text-ink-muted")}
-                                name="space"
+                              <View
+                                className={cn(
+                                  "size-[10px] rounded-full",
+                                  !activeWorkspace?.color && "bg-accent"
+                                )}
+                                style={
+                                  activeWorkspace?.color
+                                    ? { backgroundColor: activeWorkspace.color }
+                                    : undefined
+                                }
                               />
-                              {/* Arc-style space pills: one tap switches Space,
-                              the row keeps the header as the manage entry. */}
-                              <View className="flex-row items-center gap-sm">
-                                {(state?.workspaces ?? []).map((workspace) => {
-                                  const active =
-                                    workspace.id === state?.activeWorkspaceId;
-                                  return (
-                                    <Pressable
-                                      key={workspace.id}
-                                      accessibilityRole="button"
-                                      accessibilityLabel={tr(
-                                        "dialog.switchSpace",
-                                        {
-                                          name: workspace.name,
-                                          ro: josaRo(workspace.name),
-                                        }
-                                      )}
-                                      accessibilityState={{
-                                        selected: active,
-                                      }}
-                                      hitSlop={8}
-                                      className={cn(
-                                        "size-[28px] items-center justify-center rounded-control border",
-                                        active
-                                          ? "border-ink"
-                                          : "border-transparent"
-                                      )}
-                                      onPress={() => switchSpace(workspace.id)}
-                                      onLongPress={() =>
-                                        setSpaceSwitcher(true)
-                                      }
-                                    >
-                                      <View
-                                        className={cn(
-                                          "size-[18px] rounded-full",
-                                          !workspace.color && "bg-accent"
-                                        )}
-                                        style={
-                                          workspace.color
-                                            ? { backgroundColor: workspace.color }
-                                            : undefined
-                                        }
-                                      />
-                                    </Pressable>
-                                  );
-                                })}
-                              </View>
                               <Text
                                 numberOfLines={1}
-                                className={c.spaceHeaderTitle}
+                                className="flex-1 text-ink text-body font-semibold"
                               >
                                 {activeWorkspace?.name ?? "Space"}
                               </Text>
                               <ChromeIcon
-                                className={cn("size-[10px]", "text-ink-muted")}
+                                className={cn("size-[12px]", "text-ink-muted")}
                                 name="chevronDown"
                               />
                             </SidebarPressable>
@@ -4898,7 +4856,12 @@ function BrowserApp() {
                                 >
                                   {tr("chrome.tabsSection")}
                                 </Text>
-                                <Text className={c.spaceHeaderTitle}>
+                                <Text
+                                  className={cn(
+                                    c.workspaceCount,
+                                    "px-xs py-[1px] rounded-chip bg-field-on-chrome tabular-nums"
+                                  )}
+                                >
                                   {sidebar.ordinaryTabs.length}
                                 </Text>
                               </SidebarPressable>
@@ -4955,69 +4918,72 @@ function BrowserApp() {
                           className={c.spaceRailScroll}
                           contentContainerClassName={c.spaceRail}
                         >
-                          {(state?.workspaces ?? []).map((workspace) => (
-                            <SidebarPressable
-                              key={workspace.id}
-                              accessibilityRole="button"
-                              accessibilityLabel={tr("chrome.switchSpace", {
-                                space: workspace.name,
-                              })}
-                              accessibilityState={{
-                                selected:
-                                  workspace.id === state?.activeWorkspaceId,
-                              }}
-                              hitSlop={8}
-                              className={cn(
-                                c.spaceChip,
-                                workspace.id === state?.activeWorkspaceId &&
-                                  c.spaceChipActive,
-                                "active:opacity-pressed"
-                              )}
-                              onPress={() => switchSpace(workspace.id)}
-                              onLongPress={() => setSpaceSwitcher(true)}
-                            >
-                              <ChromeIcon
+                          {(state?.workspaces ?? []).map((workspace) => {
+                            const active =
+                              workspace.id === state?.activeWorkspaceId;
+                            return (
+                              <SidebarPressable
+                                key={workspace.id}
+                                accessibilityRole="button"
+                                accessibilityLabel={tr("chrome.switchSpace", {
+                                  space: workspace.name,
+                                })}
+                                accessibilityState={{
+                                  selected: active,
+                                }}
+                                hitSlop={8}
                                 className={cn(
-                                  "size-[17px]",
-                                  workspace.id === state?.activeWorkspaceId
-                                    ? "text-ink"
-                                    : "text-ink-muted"
+                                  c.spaceChip,
+                                  active && c.spaceChipActive,
+                                  "active:opacity-pressed"
                                 )}
-                                name="space"
-                              />
-                              {workspace.id === state?.activeWorkspaceId && (
-                                <View className={c.spaceIndicator} />
-                              )}
-                            </SidebarPressable>
-                          ))}
+                                onPress={() => switchSpace(workspace.id)}
+                                onLongPress={() => setSpaceSwitcher(true)}
+                              >
+                                <View
+                                  className={cn(
+                                    "rounded-full",
+                                    active
+                                      ? "size-[10px]"
+                                      : "size-[8px] opacity-55",
+                                    !workspace.color && "bg-accent"
+                                  )}
+                                  style={
+                                    workspace.color
+                                      ? { backgroundColor: workspace.color }
+                                      : undefined
+                                  }
+                                />
+                              </SidebarPressable>
+                            );
+                          })}
                         </ScrollView>
+                        <IconButton
+                          label={tr("chrome.settings")}
+                          icon="settings"
+                          onPress={() => setSettings(true)}
+                        />
                         <SidebarPressable
-                      accessibilityRole="button"
-                      accessibilityLabel={tr("chrome.settings")}
-                      className={c.iconButton}
-                      onPress={() => setSettings(true)}
-                    >
-                      <ChromeIcon
-                        className={cn("size-[20px]")}
-                        name="settings"
-                      />
-                    </SidebarPressable>
-                    <SidebarPressable
-                      accessibilityRole="button"
-                      accessibilityLabel={tr("chrome.addSidebar")}
-                      className={c.iconButton}
-                      onPress={(event) =>
-                        setSidebarMenu({
-                          kind: "create",
-                          anchor: {
-                            x: event.nativeEvent.pageX,
-                            y: event.nativeEvent.pageY,
-                          },
-                        })
-                      }
-                    >
-                      <ChromeIcon className={cn("size-[20px]")} name="plus" />
-                    </SidebarPressable>
+                          accessibilityRole="button"
+                          accessibilityLabel={tr("chrome.addSidebar")}
+                          hitSlop={8}
+                          className={cn(
+                            controlVariants({ size: "icon" }),
+                            c.iconButton,
+                            "active:opacity-pressed"
+                          )}
+                          onPress={(event) =>
+                            setSidebarMenu({
+                              kind: "create",
+                              anchor: {
+                                x: event.nativeEvent.pageX,
+                                y: event.nativeEvent.pageY,
+                              },
+                            })
+                          }
+                        >
+                          <ChromeIcon className="size-[18px]" name="plus" />
+                        </SidebarPressable>
                       </>
                     )}
                   </View>
@@ -5172,17 +5138,11 @@ function BrowserApp() {
                       icon="home"
                       onPress={goHome}
                     />
-                    <SidebarPressable
-                      accessibilityRole="button"
-                      accessibilityLabel={tr("chrome.newTab")}
-                      hitSlop={8}
-                      className={cn(c.railItem, "active:opacity-pressed")}
+                    <IconButton
+                      label={tr("chrome.newTab")}
+                      icon="plus"
                       onPress={() => openQuickOpen("touch")}
-                    >
-                      <View className={c.railIcon}>
-                        <ChromeIcon className={cn("size-[18px]")} name="plus" />
-                      </View>
-                    </SidebarPressable>
+                    />
                     <IconButton
                       label={tr("chrome.settings")}
                       icon="settings"
@@ -6168,9 +6128,15 @@ function BrowserApp() {
             >
               {newFolderOpen && (
                 <DialogCard variant="compact">
-                  <Text className={c.dialogTitle}>
-                    {tr("chrome.newFolder")}
-                  </Text>
+                  <DialogHeader
+                    title={
+                      <Text className={cn(c.dialogTitle, "flex-1")}>
+                        {tr("chrome.newFolder")}
+                      </Text>
+                    }
+                    closeLabel={tr("common.cancel")}
+                    onClose={() => setNewFolderOpen(false)}
+                  />
                   <TextInput
                     accessibilityLabel={tr("chrome.folderName")}
                     autoFocus
@@ -6180,21 +6146,30 @@ function BrowserApp() {
                     placeholder={tr("chrome.folderName")}
                     placeholderTextColorClassName="accent-ink-faint"
                   />
-                  <Button
-                    label={tr("chrome.createFolder")}
-                    disabled={!folderName.trim()}
-                    onPress={() => {
-                      if (!folderName.trim()) return;
-                      run(
-                        controller
-                          .bookmarkFolderCreate(folderName.trim())
-                          .then(() => {
-                            setNewFolderOpen(false);
-                            setFolderName("");
-                          })
-                      );
-                    }}
-                  />
+                  <View className="flex-row gap-md">
+                    <Button
+                      label={tr("common.cancel")}
+                      className="flex-1"
+                      onPress={() => setNewFolderOpen(false)}
+                    />
+                    <Button
+                      label={tr("chrome.createFolder")}
+                      variant="default"
+                      className="flex-1"
+                      disabled={!folderName.trim()}
+                      onPress={() => {
+                        if (!folderName.trim()) return;
+                        run(
+                          controller
+                            .bookmarkFolderCreate(folderName.trim())
+                            .then(() => {
+                              setNewFolderOpen(false);
+                              setFolderName("");
+                            })
+                        );
+                      }}
+                    />
+                  </View>
                 </DialogCard>
               )}
             </OverlaySheet>
@@ -6206,13 +6181,19 @@ function BrowserApp() {
             >
               {splitGroupDialog === "save" && (
                 <DialogCard variant="compact">
-                  <Text className={c.dialogTitle}>
-                    {tr(
-                      pendingSplitSave.current?.splitGroupId
-                        ? "splitGroup.renameTitle"
-                        : "splitGroup.saveTitle"
-                    )}
-                  </Text>
+                  <DialogHeader
+                    title={
+                      <Text className={cn(c.dialogTitle, "flex-1")}>
+                        {tr(
+                          pendingSplitSave.current?.splitGroupId
+                            ? "splitGroup.renameTitle"
+                            : "splitGroup.saveTitle"
+                        )}
+                      </Text>
+                    }
+                    closeLabel={tr("common.cancel")}
+                    onClose={() => setSplitGroupDialog(null)}
+                  />
                   <Text className={c.dialogHelp}>
                     {tr("splitGroup.nameLabel")}
                   </Text>
@@ -6223,11 +6204,20 @@ function BrowserApp() {
                     onChangeText={setSplitGroupName}
                     autoFocus
                   />
-                  <Button
-                    label={tr("splitGroup.save")}
-                    disabled={!splitGroupName.trim()}
-                    onPress={confirmSplitGroupSave}
-                  />
+                  <View className="flex-row gap-md">
+                    <Button
+                      label={tr("common.cancel")}
+                      className="flex-1"
+                      onPress={() => setSplitGroupDialog(null)}
+                    />
+                    <Button
+                      label={tr("splitGroup.save")}
+                      variant="default"
+                      className="flex-1"
+                      disabled={!splitGroupName.trim()}
+                      onPress={confirmSplitGroupSave}
+                    />
+                  </View>
                 </DialogCard>
               )}
             </OverlaySheet>
@@ -6239,9 +6229,15 @@ function BrowserApp() {
             >
               {renameTab && (
                 <DialogCard variant="compact">
-                  <Text className={c.dialogTitle}>
-                    {tr("chrome.renameTab")}
-                  </Text>
+                  <DialogHeader
+                    title={
+                      <Text className={cn(c.dialogTitle, "flex-1")}>
+                        {tr("chrome.renameTab")}
+                      </Text>
+                    }
+                    closeLabel={tr("common.cancel")}
+                    onClose={() => setRenameTab(null)}
+                  />
                   <TextInput
                     accessibilityLabel={tr("chrome.renameTab")}
                     className={c.commandInput}
@@ -6253,11 +6249,20 @@ function BrowserApp() {
                     }
                     autoFocus
                   />
-                  <Button
-                    label={tr("common.save")}
-                    disabled={!renameTab.value.trim()}
-                    onPress={confirmTabRename}
-                  />
+                  <View className="flex-row gap-md">
+                    <Button
+                      label={tr("common.cancel")}
+                      className="flex-1"
+                      onPress={() => setRenameTab(null)}
+                    />
+                    <Button
+                      label={tr("common.save")}
+                      variant="default"
+                      className="flex-1"
+                      disabled={!renameTab.value.trim()}
+                      onPress={confirmTabRename}
+                    />
+                  </View>
                 </DialogCard>
               )}
             </OverlaySheet>
@@ -6270,9 +6275,15 @@ function BrowserApp() {
               {splitGroupDialog === "manage" &&
                 state && (
                   <DialogCard variant="compact">
-                    <Text className={c.dialogTitle}>
-                      {tr("splitGroup.manageTitle")}
-                    </Text>
+                    <DialogHeader
+                      title={
+                        <Text className={cn(c.dialogTitle, "flex-1")}>
+                          {tr("splitGroup.manageTitle")}
+                        </Text>
+                      }
+                      closeLabel={tr("common.cancel")}
+                      onClose={() => setSplitGroupDialog(null)}
+                    />
                     {(state.splitGroups ?? [])
                       .filter(
                         (group) =>
@@ -6281,14 +6292,14 @@ function BrowserApp() {
                       .map((group) => (
                         <View
                           key={group.id}
-                          className="flex-row items-center gap-lg"
+                          className="flex-row items-center gap-sm px-lg py-xs rounded-field bg-sunken border border-hairline"
                         >
                           <Pressable
                             accessibilityRole="button"
                             accessibilityLabel={tr("splitGroup.restore", {
                               name: group.name,
                             })}
-                            className="flex-1 flex-row items-center gap-lg py-md active:opacity-pressed"
+                            className="flex-1 flex-row items-center gap-lg py-sm active:opacity-pressed"
                             onPress={() => openSplitGroup(group)}
                           >
                             <ChromeIcon name="split" size={16} className="text-ink-muted" />
@@ -6329,6 +6340,12 @@ function BrowserApp() {
               open={!!spaceSwitcher}
               onClose={() => setSpaceSwitcher(false)}
               position={spaceBottomSheet ? "bottom" : "center"}
+              className={!spaceBottomSheet ? "bg-transparent" : undefined}
+              contentClassName={
+                !spaceBottomSheet
+                  ? "justify-start items-start pt-[178px] pl-[16px]"
+                  : undefined
+              }
               bottomInset={keyboardInset}
               reducedMotion={reducedMotion}
             >
@@ -6906,8 +6923,9 @@ function BrowserApp() {
                         "language 언어 한국어 English search engine google naver duckduckgo restore pages text scale default browser 검색 엔진 기본 브라우저 글자 크기",
                       content: (
                         <>
-                          <SettingsGroup>
+                          <SettingsGroup first>
                           <SettingsRow
+                            last
                             title={tr("language.title")}
                             summary={tr("language.detail")}
                             value={tr("language.current", {
@@ -6915,39 +6933,39 @@ function BrowserApp() {
                             })}
                           >
                             <View
-                              className={cn("flex-row", "flex-wrap", "gap-lg")}
+                              className={cn("flex-row", "flex-wrap", "gap-md")}
                             >
                               {(["system", "ko", "en"] as const).map(
-                                (choice) => (
-                                  <Pressable
-                                    key={choice}
-                                    accessibilityRole="radio"
-                                    accessibilityState={{
-                                      checked:
-                                        (ui.language ?? "system") === choice,
-                                      disabled: !uiHydrated,
-                                    }}
-                                    disabled={!uiHydrated}
-                                    onPress={() =>
-                                      updateUi({
-                                        type: "setLanguage",
-                                        language: choice,
-                                      })
-                                    }
-                                    className={cn(
-                                      c.settingsAction,
-                                      "min-h-[48px]",
-                                      "border",
-                                      "border-hairline",
-                                      (ui.language ?? "system") === choice &&
-                                        "bg-sunken-strong"
-                                    )}
-                                  >
-                                    <Text className={c.optionTitle}>
-                                      {tr(`language.${choice}`)}
-                                    </Text>
-                                  </Pressable>
-                                )
+                                (choice) => {
+                                  const active = (ui.language ?? "system") === choice;
+                                  return (
+                                    <Pressable
+                                      key={choice}
+                                      accessibilityRole="radio"
+                                      accessibilityState={{
+                                        checked: active,
+                                        disabled: !uiHydrated,
+                                      }}
+                                      disabled={!uiHydrated}
+                                      onPress={() =>
+                                        updateUi({
+                                          type: "setLanguage",
+                                          language: choice,
+                                        })
+                                      }
+                                      className={cn(
+                                        "min-h-[36px] px-xl py-xs rounded-control border justify-center active:opacity-pressed",
+                                        active
+                                          ? "border-accent-strong bg-sunken-strong"
+                                          : "border-hairline bg-surface-elevated"
+                                      )}
+                                    >
+                                      <Text className={c.optionTitle}>
+                                        {tr(`language.${choice}`)}
+                                      </Text>
+                                    </Pressable>
+                                  );
+                                }
                               )}
                             </View>
                           </SettingsRow>
@@ -6969,56 +6987,53 @@ function BrowserApp() {
                             onNotice={flashNotice}
                           />
                           <SettingsGroup heading={tr("browsing.searchEngine")}>
-                            <View className="px-xxl pt-sm pb-lg">
+                            <View className="px-xxl pt-lg pb-sm">
                               <Text className={c.dialogHelp}>
                                 {tr("browsing.searchEngineHelp")}
                               </Text>
                             </View>
                             {(["google", "naver", "duckduckgo"] as const).map(
-                              (searchEngine) => (
-                                <Pressable
-                                  key={searchEngine}
-                                  accessibilityRole="radio"
-                                  accessibilityState={{
-                                    checked: ui.searchEngine === searchEngine,
-                                    disabled: !uiHydrated,
-                                  }}
-                                  disabled={!uiHydrated}
-                                  className={settingsChoiceClasses({
-                                    selected: ui.searchEngine === searchEngine,
-                                  })}
-                                  onPress={() =>
-                                    updateUi({
-                                      type: "setSearchEngine",
-                                      searchEngine,
-                                    })
-                                  }
-                                >
-                                  <Text className={c.optionTitle}>
-                                    {SEARCH_ENGINES[searchEngine].label}
-                                  </Text>
-                                  {ui.searchEngine === searchEngine && (
+                              (searchEngine, index) => {
+                                const selected = ui.searchEngine === searchEngine;
+                                return (
+                                  <Pressable
+                                    key={searchEngine}
+                                    accessibilityRole="radio"
+                                    accessibilityState={{
+                                      checked: selected,
+                                      disabled: !uiHydrated,
+                                    }}
+                                    disabled={!uiHydrated}
+                                    className={cn(
+                                      "min-h-[46px] px-xxl py-md flex-row items-center gap-lg active:opacity-pressed",
+                                      index < 2 &&
+                                        "border-b-hairline-width border-b-hairline"
+                                    )}
+                                    onPress={() =>
+                                      updateUi({
+                                        type: "setSearchEngine",
+                                        searchEngine,
+                                      })
+                                    }
+                                  >
                                     <View
                                       className={cn(
-                                        "flex-row",
-                                        "items-center",
-                                        "gap-md"
+                                        "size-[18px] rounded-full border-2 items-center justify-center",
+                                        selected
+                                          ? "border-accent-strong"
+                                          : "border-hairline"
                                       )}
                                     >
-                                      <ChromeIcon
-                                        className={cn(
-                                          "size-[14px]",
-                                          "text-accent-strong"
-                                        )}
-                                        name="check"
-                                      />
-                                      <Text className={c.optionTitle}>
-                                        {tr("common.selected")}
-                                      </Text>
+                                      {selected && (
+                                        <View className="size-[8px] rounded-full bg-accent-strong" />
+                                      )}
                                     </View>
-                                  )}
-                                </Pressable>
-                              )
+                                    <Text className={cn(c.optionTitle, "flex-1")}>
+                                      {SEARCH_ENGINES[searchEngine].label}
+                                    </Text>
+                                  </Pressable>
+                                );
+                              }
                             )}
                           </SettingsGroup>
                           <SiteSearchSettings
@@ -7056,7 +7071,10 @@ function BrowserApp() {
                                 ? "appearance.expandSidebar"
                                 : "appearance.collapseSidebar"
                             )}
-                            className={c.settingsAction}
+                            className={cn(
+                              c.settingsAction,
+                              "border-b-hairline-width border-b-hairline"
+                            )}
                             accessibilityState={{ disabled: !uiHydrated }}
                             disabled={!uiHydrated}
                             onPress={toggleSidebar}
@@ -7077,7 +7095,11 @@ function BrowserApp() {
                                 )}
                               </Text>
                             </View>
-                            <Text className={c.chevron}>›</Text>
+                            <ChromeIcon
+                              name="chevronRight"
+                              size={16}
+                              color={theme.inkFaint}
+                            />
                           </Pressable>
                           <View className={c.settingsAction}>
                             <View className={c.settingsToggleCopy}>
@@ -7126,8 +7148,15 @@ function BrowserApp() {
                           </View>
                           </SettingsGroup>
                           <SettingsGroup heading={tr("appearance.layout")}>
-                          {FRAME_SIDES.map((side) => (
-                            <View key={side} className={c.settingsAction}>
+                          {FRAME_SIDES.map((side, index) => (
+                            <View
+                              key={side}
+                              className={cn(
+                                c.settingsAction,
+                                index < FRAME_SIDES.length - 1 &&
+                                  "border-b-hairline-width border-b-hairline"
+                              )}
+                            >
                               <View className={c.settingsToggleCopy}>
                                 <Text className={c.optionTitle}>
                                   {tr("appearance.framePadding", {
@@ -7191,7 +7220,7 @@ function BrowserApp() {
                             disabled={!uiHydrated}
                             className={cn(
                               c.settingsToggle,
-                              "active:opacity-pressed"
+                              "border-b-hairline-width border-b-hairline active:opacity-pressed"
                             )}
                             onPress={() =>
                               updateUi({
@@ -7432,7 +7461,11 @@ function BrowserApp() {
                                 {tr("data.historyDetail")}
                               </Text>
                             </View>
-                            <Text className={c.chevron}>›</Text>
+                            <ChromeIcon
+                              name="chevronRight"
+                              size={16}
+                              color={theme.inkFaint}
+                            />
                           </Pressable>
                           </SettingsGroup>
                           <SettingsGroup heading={tr("data.bookmarksTitle")}>
@@ -7453,7 +7486,11 @@ function BrowserApp() {
                                 {tr("data.bookmarksDetail")}
                               </Text>
                             </View>
-                            <Text className={c.chevron}>›</Text>
+                            <ChromeIcon
+                              name="chevronRight"
+                              size={16}
+                              color={theme.inkFaint}
+                            />
                           </Pressable>
                           </SettingsGroup>
                         </>
@@ -7550,18 +7587,28 @@ function BrowserApp() {
                                 {tr("advanced.boostsDetail")}
                               </Text>
                             </View>
-                            <Text className={c.chevron}>
-                              {ui.boosts.length > 0
-                                ? `${ui.boosts.length} ›`
-                                : "›"}
-                            </Text>
+                            <View className="flex-row items-center gap-sm">
+                              {ui.boosts.length > 0 && (
+                                <Text className="px-sm py-[2px] rounded-chip bg-surface-elevated border border-hairline text-small font-semibold text-ink-muted">
+                                  {ui.boosts.length}
+                                </Text>
+                              )}
+                              <ChromeIcon
+                                name="chevronRight"
+                                size={16}
+                                color={theme.inkFaint}
+                              />
+                            </View>
                           </Pressable>
                           </SettingsGroup>
                           <SettingsGroup heading={tr("advanced.commandsTitle")}>
                           <Pressable
                             accessibilityRole="button"
                             accessibilityLabel={tr("advanced.commands")}
-                            className={c.settingsAction}
+                            className={cn(
+                              c.settingsAction,
+                              "border-b-hairline-width border-b-hairline"
+                            )}
                             onPress={() => {
                               setSettings(false);
                               setPalette(true);
@@ -7575,7 +7622,11 @@ function BrowserApp() {
                                 {tr("advanced.commandsDetail")}
                               </Text>
                             </View>
-                            <Text className={c.chevron}>›</Text>
+                            <ChromeIcon
+                              name="chevronRight"
+                              size={16}
+                              color={theme.inkFaint}
+                            />
                           </Pressable>
                           <Pressable
                             accessibilityRole="button"
@@ -7591,7 +7642,11 @@ function BrowserApp() {
                                 {tr("advanced.keyboardDetail")}
                               </Text>
                             </View>
-                            <Text className={c.chevron}>›</Text>
+                            <ChromeIcon
+                              name="chevronRight"
+                              size={16}
+                              color={theme.inkFaint}
+                            />
                           </Pressable>
                           </SettingsGroup>
                         </>
@@ -7651,6 +7706,7 @@ function BrowserApp() {
             onClose={browser.closeContext}
             onChoose={browser.selectContext}
           />
+          </SafeInsetsContext.Provider>
         </ThemeScope>
       </ThemeContext.Provider>
     </I18nContext.Provider>

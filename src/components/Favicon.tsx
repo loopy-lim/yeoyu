@@ -63,7 +63,7 @@ export function Favicon({
     return (
       <Text
         className="text-ink-muted font-bold"
-        style={{ fontSize: Math.round(size * 0.5) }}
+        style={{ fontSize: Math.round(size * 0.65) }}
       >
         {fallback}
       </Text>
