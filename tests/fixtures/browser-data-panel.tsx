@@ -48,10 +48,38 @@ assert.deepEqual((imports[0] as unknown[]).slice(1,3),[true,false]);
 assert.ok((imports[0] as unknown[]).at(-1) instanceof AbortSignal);
 assert.equal(errors.length,1);
 assert.match(errors[0],/data was imported/i);
+// A late abort after commit must not mask a post-commit appearance failure.
+errors.length = 0;
+notices.length = 0;
+controller.importArchive = (async (...options: unknown[]) => {
+  imports.push(options);
+  return {version:1,revision:0,workspaces:[],tabs:[],activeWorkspaceId:"w",activeTabId:null,keyBindings:[]};
+}) as BrowserController["importArchive"];
+await act(async()=>{
+  renderer!.update(
+    <BrowserDataPanel controller={controller} ui={defaultUiPreferences} hydrated
+      onPresentation={async()=>{await new Promise((r)=>setTimeout(r,200)); throw Error("disk failed");}}
+      onError={(error)=>errors.push(error)} onNotice={(notice)=>notices.push(notice)} />);
+});
+file = JSON.stringify({format:"yeoyu-work",version:1,spaces:[{name:"한글"}],keyBindings:[{key:"N",ctrl:true,command:"tab.new"}]});
+await press("Import bookmarks or work archive");
+await act(async()=>{renderer!.root.findByProps({accessibilityLabel:"Apply imported appearance"}).props.onValueChange(true);});
+await press("Add imported data");
+await act(async()=>{alertButtons.find(b=>b.text==="Import")!.onPress!();});
+await act(async()=>{
+  await new Promise((r)=>setTimeout(r,10));
+  const cancel = renderer!.root.findAllByProps({accessibilityLabel:"Cancel data operation"});
+  assert.ok(cancel.length,"cancel should stay visible through post-commit presentation");
+  cancel[0]!.props.onPress();
+  await new Promise((r)=>setTimeout(r,220));
+});
+assert.equal(errors.length,1,"post-commit failures stay errors after abort");
+assert.match(errors[0],/data was imported/i);
+assert.equal(notices.some((notice)=>/cancelled/i.test(notice)),false);
 assert.equal(renderer!.root.findAllByProps({accessibilityLabel:"Add imported data"}).length,0,"appearance failure cannot leave an import retry button");
 file = '{"format":"wrong"}';
 await press("Import bookmarks or work archive");
-assert.equal(imports.length,1);
+assert.equal(imports.length,2);
 assert.equal(renderer!.root.findAllByProps({accessibilityLabel:"Add imported data"}).length,0);
 // Cancelling an in-flight archive invoke frees the panel without an error dialog.
 const errorsBeforeCancel = errors.length;

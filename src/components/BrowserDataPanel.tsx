@@ -19,6 +19,8 @@ import { useI18n } from "@/i18nContext";
 import { HapticSwitch } from "@/chrome/HapticSwitch";
 import { SettingsGroup, settingsClasses } from "@/components/settings/kit";
 
+type PostCommitError = Error & { postCommit?: true };
+
 type Preview = {
   json: string;
   counts: WorkArchivePreview;
@@ -118,7 +120,10 @@ export function BrowserDataPanel({
       .catch((error) => {
         // This panel is the only abort source: a rejection after the user
         // cancelled reports the cancellation, not the abandoned outcome.
-        if (operation.signal.aborted) onNotice(tr("archive.cancelledNotice"));
+        const postCommit =
+          error instanceof Error && (error as PostCommitError).postCommit;
+        if (operation.signal.aborted && !postCommit)
+          onNotice(tr("archive.cancelledNotice"));
         else
           onError(
             tr("archive.error", {
@@ -165,6 +170,11 @@ export function BrowserDataPanel({
                 html ? bookmarksToHtml(archive) : archive,
                 html
               );
+              // The native save picker cannot observe AbortSignal while open.
+              if (signal.aborted) {
+                onNotice(tr("archive.cancelledNotice"));
+                return;
+              }
               if (result)
                 onNotice(
                   tr(
@@ -178,6 +188,11 @@ export function BrowserDataPanel({
   const readImportPreview = async (signal: AbortSignal) => {
     if (!portableFiles) throw new Error(tr("archive.unavailable"));
     const contents = await portableFiles.chooseImport();
+    // The native open picker cannot observe AbortSignal while open.
+    if (signal.aborted) {
+      onNotice(tr("archive.cancelledNotice"));
+      return;
+    }
     if (contents === null) return;
     setPreview(null);
     const raw = contents.replace(/^\uFEFF/, "").trim();
@@ -235,7 +250,9 @@ export function BrowserDataPanel({
       try {
         await onPresentation(selected.presentation);
       } catch {
-        throw new Error(tr("archive.appearanceFailed"));
+        throw Object.assign(new Error(tr("archive.appearanceFailed")), {
+          postCommit: true as const,
+        });
       }
     }
     onNotice(tr("archive.imported"));

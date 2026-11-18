@@ -83,6 +83,75 @@ test("ambiguous archive commit recovers committed state without erasing the dura
   expect(ports.writes.at(-1)?.revision).toBe(candidate.revision);
 });
 
+test("ambiguous import consults browserSnapshot with the archive hang timeout", async () => {
+  const { BrowserController, ARCHIVE_TIMEOUT_MS } = await import("../src/BrowserController");
+  const ports = fixture();
+  const controller = new BrowserController(ports.commands, ports.storage);
+  await controller.initialize();
+  await controller.flush();
+  const before = controller.snapshot!;
+  const candidate = { ...before, revision: before.revision + 1 };
+  const timeouts: number[] = [];
+  ports.commands.workArchivePrepare = async () => candidate;
+  ports.commands.workArchiveImport = async () => {
+    throw Error("bridge reply lost");
+  };
+  ports.commands.browserSnapshot = async (_input, options) => {
+    timeouts.push(options?.timeoutMs ?? -1);
+    return before;
+  };
+  await expect(controller.importArchive("{}", false, false)).rejects.toThrow(
+    "bridge reply lost"
+  );
+  expect(timeouts).toEqual([ARCHIVE_TIMEOUT_MS]);
+  expect(controller.snapshot).toBe(before);
+});
+
+test("ambiguous import commits when browserSnapshot matches the prepared candidate", async () => {
+  const { BrowserController } = await import("../src/BrowserController");
+  const ports = fixture();
+  const controller = new BrowserController(ports.commands, ports.storage);
+  await controller.initialize();
+  await controller.flush();
+  const before = controller.snapshot!;
+  const candidate = { ...before, revision: before.revision + 1 };
+  ports.commands.workArchivePrepare = async () => candidate;
+  ports.commands.workArchiveImport = async () => {
+    throw Error("bridge reply lost");
+  };
+  ports.commands.browserSnapshot = async () => candidate;
+  await controller.importArchive("{}", false, false);
+  expect(controller.snapshot?.revision).toBe(candidate.revision);
+});
+
+test("a cancelled archive export releases the controller queue for later mutations", async () => {
+  const { BrowserController } = await import("../src/BrowserController");
+  const ports = fixture();
+  const controller = new BrowserController(ports.commands, ports.storage);
+  await controller.initialize();
+  await controller.flush();
+  const abort = new AbortController();
+  ports.commands.workArchiveExport = async (_input, options) => {
+    if (options?.signal?.aborted) throw Object.assign(new Error("aborted"), { code: "cancelled" });
+    await new Promise<void>((_, reject) => {
+      options?.signal?.addEventListener("abort", () =>
+        reject(Object.assign(new Error("aborted"), { code: "cancelled" }))
+      );
+    });
+    return "{}";
+  };
+  const pending = controller.exportArchive(null, abort.signal);
+  abort.abort();
+  await expect(pending).rejects.toThrow();
+  await controller.createTab("https://after-cancel.example/");
+  await controller.flush();
+  expect(
+    controller.snapshot?.tabs.some((tab) =>
+      tab.url.includes("after-cancel")
+    )
+  ).toBe(true);
+});
+
 test("archive invocations carry the hang timeout and a caller-supplied cancellation signal", async () => {
   const { BrowserController, ARCHIVE_TIMEOUT_MS } = await import("../src/BrowserController");
   const ports = fixture();

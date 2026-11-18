@@ -111,8 +111,10 @@ export const NEW_TAB_URL = "about:blank";
  * Hang escape for archive commands. The payloads are bounded (8 MB import
  * limit), so a reply that takes longer than this is a lost bridge reply or a
  * stuck native worker — the invoke must reject so the queue and the data
- * panel recover instead of waiting forever. Expiry never interrupts Rust
- * (shallow cancellation); the import recovery path reconciles durable state.
+ * panel recover instead of waiting forever. Archive invocations use the async
+ * JSI path (controllerRuntime) so this timer and AbortSignal handlers can run
+ * while Rust may still finish (shallow cancellation). The import recovery path
+ * reconciles durable state.
  */
 export const ARCHIVE_TIMEOUT_MS = 30_000;
 const archiveInvokeOptions = (signal?: AbortSignal) => ({
@@ -511,7 +513,10 @@ export class BrowserController {
           // commit must resolve durable truth, not freeze mutations.
           let actual: Snapshot;
           try {
-            actual = await this.commands.browserSnapshot({});
+            actual = await this.commands.browserSnapshot(
+              {},
+              { timeoutMs: ARCHIVE_TIMEOUT_MS }
+            );
           } catch {
             this.importRecoveryRequired = new Error(
               "Import recovery needs an app restart. Saved data has been kept; further changes are paused."
