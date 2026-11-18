@@ -5421,9 +5421,8 @@ function BrowserApp() {
                         <UnikitButton
                           variant="default"
                           size="sm"
-                          // Group icon+label into one focus target; without it
-                          // the inner Text announces separately from the button.
-                          accessible
+                          // UniKit Pressable defaults to a single focus target;
+                          // accessibilityLabel keeps icon+label announced together.
                           accessibilityLabel={tr("littleArc.promote")}
                           // hitSlop widens the touch target past the 32dp
                           // visual (issue #24 helper); vertically the
