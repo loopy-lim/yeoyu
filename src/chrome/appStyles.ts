@@ -90,9 +90,9 @@ export const appClasses = {
     "h-toolbar px-lg gap-lg flex-row items-center border-b-hairline-width border-b-hairline bg-surface-elevated",
   // h-[32px] is explicit: the h-control token does not exist in size (only
   // radius), so the class silently no-ops and the button hugs its content
-  // (~20dp). 32dp matches IconButton height inside the 44dp toolbar;
-  // hitSlop in App.tsx widens the target horizontally — vertically the
-  // toolbar row caps it at 44dp.
+  // (~20dp). Little Arc windows render outside the main app root, so they
+  // keep their own density; hitSlop in App.tsx widens the target past the
+  // 32dp visual — vertically the toolbar row bounds the effective target.
   littleArcPromoteButton:
     "h-[32px] px-lg rounded-control bg-accent-strong flex-row items-center gap-xs border border-accent-strong active:opacity-90",
   compactNavigation: "flex-1 flex-row items-center gap-md",
@@ -109,8 +109,10 @@ export const appClasses = {
   tabSwipeBadgeLabel: "text-ink text-small font-semibold",
   phoneHybridTabs: "flex-1",
   phoneHybridTabsContent: "flex-row items-center gap-sm pl-sm pr-md",
+  // Hybrid chips only render in the compact window, so h-tab-row resolves
+  // at the phone tier (44dp, issue #24); the tablet default never applies.
   phoneHybridTab:
-    "h-[40px] min-w-[44px] max-w-[128px] px-md rounded-control flex-row items-center gap-sm border border-transparent active:opacity-pressed",
+    "h-tab-row min-w-[44px] max-w-[128px] px-md rounded-control flex-row items-center gap-sm border border-transparent active:opacity-pressed",
   phoneHybridTabActive: "bg-pill border-hairline-on-chrome",
   phoneHybridTabLabel: "text-ink text-small font-semibold",
   panes: "flex-1 flex-row bg-canvas",
@@ -157,7 +159,11 @@ export const appClasses = {
   quickOpenHint: "text-ink-faint text-body",
   railContent: "items-center gap-[3px] pb-lg",
   railHeader: "items-center gap-[3px]",
-  railItem: "size-[36px] rounded-[9px] items-center justify-center border border-transparent",
+  // Height rides the rail-item token so the phone tier (issue #24) can lift
+  // the stacked tiles to the 44dp touch floor; width stays a 36dp visual
+  // centered in the 48dp rail (40dp inner column after px-sm).
+  railItem:
+    "w-[36px] h-rail-item rounded-[9px] items-center justify-center border border-transparent",
   railIcon:
     "size-[20px] items-center justify-center",
   railInitial: "text-ink-muted text-small font-extrabold",

@@ -47,7 +47,7 @@ export const size = {
   row: 34, // pane/divider row height
   tabRow: 36, // sleek Zen sidebar tab row height
   workspaceRow: 32,
-  railItem: 38,
+  railItem: 36, // rail tile height; width stays a 36dp visual (see appStyles)
   tile: 40,
   favorite: 38, // rounded favorite tiles, up to three columns
   iconButton: 34,
@@ -59,6 +59,34 @@ export const size = {
   actionRow: 48,
   bookmarkRow: 48,
 } as const;
+
+// Touch-target baseline (issue #24): `target` is the Android-recommended
+// 48dp minimum; `floor` is the visual floor a primary control may not dip
+// below when its row already bounds the effective area. src/touchTargets.ts
+// turns these into hitSlop compensation and acceptance gates.
+export const TOUCH_TARGET = { target: 48, floor: 44 } as const;
+
+// Form-factor scale policy for `size` (issue #24): the default tokens carry
+// the tablet reading density. The phone tier (compact window, <840dp) scales
+// ONLY the interactive tokens — every control a thumb operates gets at least
+// the 44dp visual floor, and the toolbar row reaches the full 48dp target.
+// Layout and display tokens (frame, sidebar, rail, row, tile, avatar) never
+// scale: the phone tier re-densifies targets, not the chrome geometry.
+// ThemeScope applies this as scoped --spacing-* overrides at the app root,
+// so tablet rendering is byte-identical to the default tokens.
+export type SizeTokens = { [K in keyof typeof size]: number };
+
+export const phoneSize: SizeTokens = {
+  ...size,
+  tabRow: Math.max(size.tabRow, TOUCH_TARGET.floor),
+  workspaceRow: Math.max(size.workspaceRow, TOUCH_TARGET.floor),
+  railItem: Math.max(size.railItem, TOUCH_TARGET.floor),
+  favorite: Math.max(size.favorite, TOUCH_TARGET.floor),
+  iconButton: Math.max(size.iconButton, TOUCH_TARGET.floor),
+  toolbar: Math.max(size.toolbar, TOUCH_TARGET.target),
+  address: Math.max(size.address, TOUCH_TARGET.floor),
+  addressCompact: Math.max(size.addressCompact, TOUCH_TARGET.floor),
+};
 
 // Durations in ms. `pill` uses physical spring params (tension/friction):
 // ~200ms settle with a soft, single overshoot. Curves live in

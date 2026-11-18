@@ -123,9 +123,10 @@ const emptyContext: Context = { scopedTheme: null, rtl: null, variables: null };
 /** Uses the actual installed native store against the actual compiled CSS. */
 export function resolveTestClassNames(
   className: string | undefined,
-  theme?: Theme
+  theme?: Theme,
+  extraVariables?: Variables
 ): Record<string, unknown> {
-  const variables =
+  const themeVariables =
     theme &&
     Object.fromEntries(
       Object.entries(theme).map(([key, value]) => [
@@ -136,7 +137,8 @@ export function resolveTestClassNames(
         value,
       ])
     );
-  const context = variables
+  const variables = { ...themeVariables, ...extraVariables };
+  const context = Object.keys(variables).length
     ? engine.buildScopedVariablesContext(emptyContext, variables)
     : emptyContext;
   return engine.UniwindStore.getStyles(

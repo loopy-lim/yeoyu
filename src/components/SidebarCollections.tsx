@@ -17,17 +17,20 @@ import type { SidebarSplit } from "@/sidebarPresentation";
 import { cva } from "class-variance-authority";
 import { cn } from "@/ui/cn";
 import { useI18n } from "@/i18nContext";
+import { hitSlopForTarget } from "@/touchTargets";
 import { Favicon } from "@/components/Favicon";
 
 const pageTitle = (page: { title: string; url: string }) =>
   page.title || sidebarAddressLabel(page.url) || "New tab";
 const compactCount = (count: number) => (count > 99 ? "99+" : String(count));
+// Collapsed (rail) tiles ride the rail-item token so the phone tier lifts
+// them to the touch floor (issue #24); width keeps the 36dp rail visual.
 const splitItemVariants = cva(
   "flex-row items-center bg-field-on-chrome border border-transparent rounded-[9px] active:bg-pill",
   {
     variants: {
       collapsed: {
-        true: "size-[36px] justify-center",
+        true: "w-[36px] h-rail-item justify-center",
         false: "min-h-[46px] px-md py-sm gap-md my-xs",
       },
     },
@@ -38,7 +41,7 @@ const folderItemVariants = cva(
   {
     variants: {
       collapsed: {
-        true: "size-[36px] justify-center",
+        true: "w-[36px] h-rail-item justify-center",
         false: "min-h-tab-row px-md",
       },
       selected: { true: "bg-field-on-chrome border-transparent", false: "" },
@@ -110,6 +113,7 @@ export function SplitSidebarItem({
       })}
       accessibilityHint={tr("collections.splitHint")}
       accessibilityState={{ selected: true, expanded: open }}
+      hitSlop={hitSlopForTarget(36)}
       onPress={({ nativeEvent }) =>
         onOpen({ x: nativeEvent.pageX, y: nativeEvent.pageY })
       }
@@ -200,6 +204,7 @@ export function SidebarFolderItem({
         containsFocused ? ", contains selected page" : ""
       }`}
       accessibilityState={{ expanded: open, selected: containsFocused }}
+      hitSlop={hitSlopForTarget(36)}
       className={cn(
         folderItemVariants({ collapsed, selected: containsFocused })
       )}

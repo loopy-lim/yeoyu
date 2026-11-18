@@ -8,14 +8,18 @@ import { appClasses } from "@/chrome/appStyles";
 import { useI18n } from "@/i18nContext";
 import { cn } from "@/ui/cn";
 import { controlVariants } from "@/ui/variants";
+import { hitSlopForTarget } from "@/touchTargets";
+import { size } from "@/theme";
 import type { ExtensionToolbarAction } from "@/browserExtensionActions";
 import type { BrowserSecurity } from "@/hooks/useBrowserWorkflows";
 import type { ToolbarTabSwipeBinding } from "@/hooks/useToolbarTabSwipe";
 import type { TabSwipePreview } from "@/tabSwipe";
 
-// Same target math as the compact toolbar's IconButton: a 32dp visual with
-// hitSlop 8 reaches 48dp inside the 44dp h-toolbar row (issue #24 pattern).
-// The press stays a plain Pressable like the rail items — no scale spring.
+// Same target math as the compact toolbar's IconButton (issue #24): the
+// icon-button token is 34dp at tablet density and 44dp on the phone tier,
+// and hitSlopForTarget(size.iconButton) carries the smaller visual to the
+// 48dp target; the h-toolbar row (46/48dp) caps the effective area. The
+// press stays a plain Pressable like the rail items — no scale spring.
 function BarButton({
   label,
   icon,
@@ -35,7 +39,7 @@ function BarButton({
       accessibilityLabel={label}
       accessibilityState={{ disabled, selected: active }}
       disabled={disabled}
-      hitSlop={8}
+      hitSlop={hitSlopForTarget(size.iconButton)}
       onPress={onPress}
       className={cn(
         controlVariants({ size: "icon", disabled }),

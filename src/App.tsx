@@ -175,7 +175,8 @@ import { cva } from "class-variance-authority";
 import { controlVariants, rowVariants } from "@/ui/variants";
 import { ThemeScope } from "@/ui/ThemeScope";
 import { withUniwind } from "uniwind";
-import { motion as motionTokens, resolveTheme, size, space } from "@/theme";
+import { motion as motionTokens, phoneSize, resolveTheme, size, space } from "@/theme";
+import { hitSlopForTarget } from "@/touchTargets";
 import { ThemeContext } from "@/themeContext";
 import { Favicon } from "@/components/Favicon";
 import {
@@ -322,7 +323,7 @@ const IconButton = ({
       accessibilityLabel={label}
       accessibilityState={{ disabled, selected: active }}
       disabled={disabled}
-      hitSlop={8}
+      hitSlop={hitSlopForTarget(size.iconButton)}
       onPress={onPress}
       onPressIn={pressIn}
       onPressOut={pressOut}
@@ -2030,7 +2031,7 @@ function BrowserApp() {
           <SidebarPressable
             accessibilityRole="button"
             accessibilityLabel={tr("chrome.closeNamedTab", { name: title })}
-            hitSlop={8}
+            hitSlop={hitSlopForTarget(26)}
             className={cn(c.tabClose, "active:bg-field-on-chrome")}
             onPress={() => closeTab(tab.id)}
           >
@@ -3938,7 +3939,7 @@ function BrowserApp() {
             })}
             accessibilityState={{ disabled: !!tab.suspended }}
             disabled={!!tab.suspended}
-            hitSlop={8}
+            hitSlop={hitSlopForTarget(26)}
             className={cn(
               c.tabClose,
               tab.suspended && c.disabled,
@@ -4318,7 +4319,11 @@ function BrowserApp() {
   return (
     <I18nContext.Provider value={language}>
       <ThemeContext.Provider value={theme}>
-        <ThemeScope theme={theme}>
+        {/* Phone tier (issue #24): a compact window scales the interactive
+            size tokens to the touch-target floor; tablet windows keep the
+            default density. Little Arc renders in YeoyuWindow roots and
+            never enters this scope. */}
+        <ThemeScope theme={theme} sizes={compactWindow ? phoneSize : undefined}>
           <SafeInsetsContext.Provider value={safeInsets}>
           <SafeAreaView
             className={c.app}
@@ -4802,7 +4807,7 @@ function BrowserApp() {
                                     accessibilityLabel={tr(
                                       "chrome.privateNewTab"
                                     )}
-                                    hitSlop={8}
+                                    hitSlop={hitSlopForTarget(28)}
                                     className={cn(
                                       c.privateNewTab,
                                       "active:bg-field-on-chrome"
@@ -4922,7 +4927,9 @@ function BrowserApp() {
                                   accessibilityState={{
                                     selected: active,
                                   }}
-                                  hitSlop={8}
+                                  // Dense strip: nominal target only
+                                  // (issue #24 dense-strip exception).
+                                  hitSlop={hitSlopForTarget(24)}
                                   className={cn(
                                     c.spaceChip,
                                     active && c.spaceChipActive,
@@ -4959,7 +4966,7 @@ function BrowserApp() {
                         <SidebarPressable
                           accessibilityRole="button"
                           accessibilityLabel={tr("chrome.addSidebar")}
-                          hitSlop={8}
+                          hitSlop={hitSlopForTarget(size.iconButton)}
                           className={cn(
                             controlVariants({ size: "icon" }),
                             c.iconButton,
@@ -5033,6 +5040,7 @@ function BrowserApp() {
                               name: title,
                             })}
                             accessibilityState={{ selected: isActive }}
+                            hitSlop={hitSlopForTarget(36)}
                             className={cn(
                               c.railItem,
                               isActive && c.railTabActive,
@@ -5091,6 +5099,7 @@ function BrowserApp() {
                           accessibilityLabel={tr("chrome.tabNamed", {
                             name: tabLabel(t),
                           })}
+                          hitSlop={hitSlopForTarget(36)}
                           className={cn(
                             c.railItem,
                             splitPaneIds.includes(t.id) &&
@@ -5147,6 +5156,7 @@ function BrowserApp() {
                               accessibilityLabel={tr("chrome.favoriteLabel", {
                                 name: tabLabel(tab),
                               })}
+                              hitSlop={hitSlopForTarget(36)}
                               className={cn(
                                 c.railItem,
                                 splitPaneIds.includes(tab.id) &&
@@ -5192,12 +5202,16 @@ function BrowserApp() {
                   </View>
                   <UnikitSeparator className="w-[24px] self-center bg-hairline-on-chrome my-xs" />
                   <View className={c.sidebarBottomCollapsed}>
+                    {/* Rail-bottom Spaces button rides the icon-button token
+                        (issue #24): a 24dp chip missed the target floor in
+                        the rail's primary phone-tier control cluster. */}
                     <SidebarPressable
                       accessibilityRole="button"
                       accessibilityLabel={tr("chrome.openSpaces")}
-                      hitSlop={8}
+                      hitSlop={hitSlopForTarget(size.iconButton)}
                       className={cn(
-                        c.spaceChip,
+                        controlVariants({ size: "icon" }),
+                        c.iconButton,
                         c.spaceChipActive,
                         "active:opacity-pressed"
                       )}
@@ -5228,7 +5242,7 @@ function BrowserApp() {
                     <SidebarPressable
                       accessibilityRole="button"
                       accessibilityLabel={tr("chrome.newTab")}
-                      hitSlop={8}
+                      hitSlop={hitSlopForTarget(size.iconButton)}
                       className={cn(
                         controlVariants({ size: "icon" }),
                         c.iconButton,
@@ -5403,12 +5417,12 @@ function BrowserApp() {
                           // the inner Text announces separately from the button.
                           accessible
                           accessibilityLabel={tr("littleArc.promote")}
-                          // hitSlop 8 per side widens the touch target past
-                          // the 32dp visual; vertically the h-toolbar row
-                          // bounds the effective target at 44dp (the slop
-                          // cannot cross into the drag handle above or the
-                          // webview below).
-                          hitSlop={8}
+                          // hitSlop widens the touch target past the 32dp
+                          // visual (issue #24 helper); vertically the
+                          // h-toolbar row bounds the effective target (the
+                          // slop cannot cross into the drag handle above or
+                          // the webview below).
+                          hitSlop={hitSlopForTarget(32)}
                           className={cn(
                             c.littleArcPromoteButton,
                             compactWindow && "px-md min-w-0"

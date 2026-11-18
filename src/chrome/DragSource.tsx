@@ -34,6 +34,8 @@ interface Props {
   children: React.ReactNode;
   style?: StyleProp<ViewStyle>;
   className?: string;
+  /** Per-side touch slop in dp; extends the responder area (issue #24). */
+  hitSlop?: number;
   onPress: () => void;
   onDragStart: (x: number, y: number) => void;
   onDragMove: (x: number, y: number) => void;
@@ -437,6 +439,7 @@ export function DragSource(props: Props) {
       accessible
       accessibilityRole="button"
       accessibilityLabel={props.accessibilityLabel}
+      hitSlop={props.hitSlop}
       onPointerDown={pointerDown}
       onPointerMove={pointerMove}
       onPointerUp={pointerUp}
