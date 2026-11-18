@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "schemaHash": "bc91176c1f8247a25bb6c293ddae363ad376936850c1fcd97c4779f10fab0857",
+  "schemaHash": "3a6ea44ecca88006ec2c653ba18bbd78895efa7b3d93915425d439d44a7bd049",
   "generatorVersion": "0.12.0",
   "files": [
     {
@@ -29,7 +29,7 @@
     },
     {
       "path": "../modules/rustra-jsi/generated/rustra-generated-codecs.cpp",
-      "sha256": "ebc32f65a02e9755f0256fcc1080fda0b5841e32fe0d3f8740638dead8938746"
+      "sha256": "d0dc9b991efbade1c94765c72d78fb9d8469aecffc20de084ce1a1aaed268f24"
     },
     {
       "path": "../modules/rustra-jsi/generated/rustra-generated-codecs.hpp",
@@ -69,15 +69,15 @@
     },
     {
       "path": "commands.ts",
-      "sha256": "67f3aa6795ff55bee0006ceb2e84441d7fe13f569790e46afacac63441354d09"
+      "sha256": "dd1d76e843fcff9abc0a2bb32d1796ed25dfb4a28333c750dedda779d4d6f4b4"
     },
     {
       "path": "contract.ts",
-      "sha256": "4f8ed515c3998fbe72b05a317aa8afd0073474f3ac10aace5bf0a38cdafc2aa1"
+      "sha256": "79f7ac711d7c44589c843d422aaaf93aa133093baa5ebd5e343c75c487e5f538"
     },
     {
       "path": "frame-codecs.ts",
-      "sha256": "b054809457d3d8a21624e0c29bf9d6682adc453ac97599dfb4f7c32c3047acbb"
+      "sha256": "fea7f7de70b5aec84061d7cb80e55fb533cb56fe55ebc9f89afae95605218cdc"
     },
     {
       "path": "frame-registry.ts",
@@ -89,7 +89,7 @@
     },
     {
       "path": "types.ts",
-      "sha256": "b5e4ba0e1570c539c421d4d681e6a7d193aa67e9a2c0aa669fba19fe2bbdb324"
+      "sha256": "28b9016e920d80bd5eff30ea83b471bfd2af4b8fb9b67d883d6c8779dcd8aaca"
     }
   ]
 }

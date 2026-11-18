@@ -1,5 +1,5 @@
 import * as commands from "@generated/react-native";
-import { bindArchiveCommand } from "@/archiveAsyncInvoke";
+import { bindAsyncFrameCommand } from "@/archiveAsyncInvoke";
 import { BrowserController } from "@/BrowserController";
 import { platform } from "@/platform";
 
@@ -7,18 +7,11 @@ import { platform } from "@/platform";
 export const controller = new BrowserController(
   {
     ...commands,
-    workArchiveExport: bindArchiveCommand(
-      "workArchiveExport",
-    ) as typeof commands.workArchiveExport,
-    workArchivePreview: bindArchiveCommand(
-      "workArchivePreview",
-    ) as typeof commands.workArchivePreview,
-    workArchivePrepare: bindArchiveCommand(
-      "workArchivePrepare",
-    ) as typeof commands.workArchivePrepare,
-    workArchiveImport: bindArchiveCommand(
-      "workArchiveImport",
-    ) as typeof commands.workArchiveImport,
+    browserSnapshot: bindAsyncFrameCommand("browserSnapshot"),
+    workArchiveExport: bindAsyncFrameCommand("workArchiveExport"),
+    workArchivePreview: bindAsyncFrameCommand("workArchivePreview"),
+    workArchivePrepare: bindAsyncFrameCommand("workArchivePrepare"),
+    workArchiveImport: bindAsyncFrameCommand("workArchiveImport"),
     ready: () => commands.rustra.ready(),
   },
   platform,

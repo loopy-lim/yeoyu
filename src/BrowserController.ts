@@ -452,10 +452,11 @@ export class BrowserController {
       this.queue.run(async () => {
         if (!this.commands.workArchiveExport)
           throw new Error("Rebuild the browser to export data");
-        return this.commands.workArchiveExport(
+        const exported = await this.commands.workArchiveExport(
           { presentation },
           archiveInvokeOptions(signal)
         );
+        return exported.json;
       })
     );
   }

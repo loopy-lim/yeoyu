@@ -138,7 +138,7 @@ test("a cancelled archive export releases the controller queue for later mutatio
         reject(Object.assign(new Error("aborted"), { code: "cancelled" }))
       );
     });
-    return "{}";
+    return { json: "{}" };
   };
   const pending = controller.exportArchive(null, abort.signal);
   abort.abort();
@@ -159,7 +159,10 @@ test("archive invocations carry the hang timeout and a caller-supplied cancellat
   await controller.initialize(); await controller.flush();
   const before = controller.snapshot!;
   const seen: { signal?: AbortSignal; timeoutMs?: number }[] = [];
-  ports.commands.workArchiveExport = async (_input, options) => { seen.push(options ?? {}); return "{}"; };
+  ports.commands.workArchiveExport = async (_input, options) => {
+    seen.push(options ?? {});
+    return { json: "{}" };
+  };
   ports.commands.workArchivePreview = async (_input, options) => {
     seen.push(options ?? {});
     return { spaces: 0, tabs: 0, bookmarks: 0, folders: 0, favorites: 0, duplicateUrls: 0, hasKeyBindings: false, presentation: null };
