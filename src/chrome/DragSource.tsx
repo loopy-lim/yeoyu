@@ -15,6 +15,7 @@ import {
   type ViewStyle,
 } from "react-native";
 import { motion } from "@/theme";
+import type { HitSlopInsets } from "@/touchTargets";
 import { easing } from "@/chrome/motion";
 import { useReducedMotion } from "@/chrome/useReducedMotion";
 import { useSidebarActive } from "@/chrome/SidebarInteraction";
@@ -34,6 +35,9 @@ interface Props {
   children: React.ReactNode;
   style?: StyleProp<ViewStyle>;
   className?: string;
+  /** Per-side slop, or per-edge insets when a dense stack forbids a
+   *  symmetric slop that would cover the neighbor (issue #24). */
+  hitSlop?: number | HitSlopInsets;
   onPress: () => void;
   onDragStart: (x: number, y: number) => void;
   onDragMove: (x: number, y: number) => void;
@@ -437,6 +441,7 @@ export function DragSource(props: Props) {
       accessible
       accessibilityRole="button"
       accessibilityLabel={props.accessibilityLabel}
+      hitSlop={props.hitSlop}
       onPointerDown={pointerDown}
       onPointerMove={pointerMove}
       onPointerUp={pointerUp}
