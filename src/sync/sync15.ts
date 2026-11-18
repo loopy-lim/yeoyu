@@ -93,8 +93,7 @@ export interface StorageContext {
 function authorization(
   context: StorageContext,
   method: string,
-  pathAndQuery: string,
-  payload?: { contentType: string; body: string }
+  pathAndQuery: string
 ): string {
   const url = new URL(context.token.apiEndpoint);
   // The MAC covers the URI the server actually receives, which includes the
@@ -110,7 +109,6 @@ function authorization(
       pathAndQuery: endpointPath + pathAndQuery,
       host: url.host,
       port: url.protocol === "https:" ? 443 : 80,
-      payload,
     },
     ts,
     context.nonce
@@ -429,10 +427,7 @@ export async function storagePost(
     `/storage/${collection}${query.length > 0 ? `?${query.join("&")}` : ""}`;
   const body = JSON.stringify(bsos);
   const headers: Record<string, string> = {
-    Authorization: authorization(context, "POST", pathAndQuery, {
-      contentType: "application/json",
-      body,
-    }),
+    Authorization: authorization(context, "POST", pathAndQuery),
     "Content-Type": "application/json",
     Accept: "application/json",
   };

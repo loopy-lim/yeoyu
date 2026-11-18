@@ -186,4 +186,29 @@ describe("buildSyncTree", () => {
     // leaves comfortable headroom for the interpreter on-device.
     expect(elapsed).toBeLessThan(1000);
   });
+
+  test("supports Sync 1.5 wire short root IDs and skips places meta-root without orphans", () => {
+    const tree = buildSyncTree(
+      [
+        envelope(folder("places", "", ["menu", "toolbar", "unfiled", "mobile"])),
+        envelope(folder("mobile", "mobile", ["m1"])),
+        envelope(folder("unfiled", "unfiled", ["u1"])),
+        envelope(folder("toolbar", "toolbar", ["t1"])),
+        envelope(folder("menu", "menu", ["b1"])),
+        envelope(bookmark("b1", "menu", "Menu One", "https://menu.example")),
+        envelope(bookmark("t1", "toolbar", "Toolbar One", "https://toolbar.example")),
+        envelope(bookmark("u1", "unfiled", "Unfiled One", "https://unfiled.example")),
+        envelope(bookmark("m1", "mobile", "Mobile One", "https://mobile.example")),
+      ],
+      42
+    );
+    expect(tree.roots.map((n) => n.guid)).toEqual([
+      "menu",
+      "toolbar",
+      "unfiled",
+      "mobile",
+    ]);
+    expect(tree.roots.find((n) => n.guid === UNRESOLVED_PARENT_GUID)).toBeUndefined();
+    expect(countBookmarkNodes(tree)).toBe(4);
+  });
 });

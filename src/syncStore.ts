@@ -38,7 +38,7 @@ import {
   buildSyncTree,
   DecryptedRecord,
 } from "./sync/bookmarkTree";
-import { SyncErrorKind, SyncNode, SyncTree, TokenserverInfo } from "./sync/model";
+import { META_ROOT_GUIDS, SyncErrorKind, SyncNode, SyncTree, TokenserverInfo } from "./sync/model";
 import {
   LocalAdapter,
   LocalApplyOp,
@@ -107,10 +107,8 @@ export interface SyncStoreOptions {
   timeoutMs?: number;
   /** When set, runSync merges into local bookmarks and uploads dirty. */
   localAdapter?: LocalAdapter;
-  /** GUID issuance entropy (defaults to noble randomBytes → base64url). */
+  /** GUID issuance and envelope IV entropy (defaults to noble randomBytes → base64url). */
   randomSource?: RandomSource;
-  /** Envelope IV source (defaults to noble randomBytes). */
-  envelopeRandom?: (n: number) => Uint8Array;
 }
 
 interface PersistedCredentials {
@@ -158,7 +156,7 @@ export function classifySyncFailure(failure: unknown): SyncErrorKind {
       ? String((failure as { message: unknown }).message)
       : "";
   if (
-    /hmac|envelope|cbc|gcm|aes-|base64|json|kSync|jwe|kid|scope|token endpoint/i.test(
+    /hmac|envelope|cbc|gcm|aes-|base64|json|kSync|jwe|kid|scope|token endpoint|getRandomValues|random source|pool exhausted|TextEncoder/i.test(
       message
     )
   )
@@ -178,8 +176,8 @@ export class SyncStore {
   private nonce: () => string;
   private timeoutMs: number;
   private localAdapter: LocalAdapter | null;
+  private randomSource: RandomSource | null;
   private guidPool: GuidPool;
-  private envelopeRandom: (n: number) => Uint8Array;
 
   private listeners = new Set<() => void>();
   private state: SyncStoreState = {
@@ -219,8 +217,8 @@ export class SyncStore {
     this.nonce = options.nonce ?? randomNonce;
     this.timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
     this.localAdapter = options.localAdapter ?? null;
-    this.guidPool = new GuidPool(options.randomSource ?? defaultRandomSource());
-    this.envelopeRandom = options.envelopeRandom ?? ((n) => randomBytes(n));
+    this.randomSource = options.randomSource ?? null;
+    this.guidPool = new GuidPool(this.randomSource ?? defaultRandomSource());
     this.http = { request: (input) => this.withTimeout(this.rawHttp.request(input)) };
   }
 
@@ -293,6 +291,7 @@ export class SyncStore {
    *  lands mid-load invalidates the read (generation guard). */
   load(): Promise<void> {
     if (!this.loadPromise) {
+      console.info("sync load start");
       const generation = this.generation;
       const readSecrets = this.storage.readSecrets;
       const readTree = this.storage.readTree;
@@ -317,8 +316,18 @@ export class SyncStore {
           : Promise.resolve(null),
       ])
         .then(([secretsJson, treeJson, outboundJson]) => {
-          if (generation !== this.generation) return;
+          if (generation !== this.generation) {
+            console.info("sync load: generation changed, discarding");
+            return;
+          }
           const credentials = readPersistedCredentials(secretsJson);
+          console.info(
+            "sync load: secrets=%s tree=%s outbound=%s connection=%s",
+            secretsJson == null ? "null" : String(secretsJson).length,
+            treeJson == null ? "null" : String(treeJson).length,
+            outboundJson == null ? "null" : String(outboundJson).length,
+            credentials ? "connected" : "disconnected"
+          );
           this.credentials = credentials;
           this.accessToken = null;
           this.accessTokenExpiresAtMs = 0;
@@ -335,8 +344,12 @@ export class SyncStore {
           };
           this.changed();
         })
-        .catch(() => {
+        .catch((failure) => {
           // Unreadable storage is not fatal: stay disconnected, AC-6 intact.
+          console.info(
+            "sync load: failed",
+            failure instanceof Error ? failure.message : String(failure)
+          );
         })
         .then(() => undefined);
     }
@@ -529,6 +542,7 @@ export class SyncStore {
   runSync(): Promise<SyncResult> {
     if (!this.credentials) {
       // Defensive: no connection, no network (AC-6).
+      console.info("sync skip: no credentials");
       return Promise.resolve({
         kind: "protocol",
         atMs: this.nowMs(),
@@ -543,6 +557,7 @@ export class SyncStore {
   }
 
   private async runSyncGuarded(): Promise<SyncResult> {
+    console.info("sync flight start");
     const generation = this.generation;
     this.state = { ...this.state, syncing: true };
     this.changed();
@@ -779,7 +794,7 @@ export class SyncStore {
       );
 
       if (!adapter) continue;
-      if (guid === "places") continue;
+      if (META_ROOT_GUIDS.has(guid)) continue;
       // mobile root: remoteRaw already noted; structure applied in pass 2.
       if (guid === MOBILE_ROOT_ID) continue;
 
@@ -968,8 +983,12 @@ export class SyncStore {
     await this.persistOutbound(generation);
     if (records.length === 0) return 0;
 
+    const envelopeRandom = this.randomSource
+      ? await drawPoolRandom(this.guidPool, records.length * 16)
+      : (n: number) => randomBytes(n);
+
     const bsos: OutgoingBso[] = records.map((record) =>
-      toOutgoingBso(record, bookmarkBundle, this.envelopeRandom)
+      toOutgoingBso(record, bookmarkBundle, envelopeRandom)
     );
 
     const { limits } = await fetchInfoConfiguration(context);
@@ -1069,6 +1088,22 @@ export class SyncStore {
       );
     });
   }
+}
+
+async function drawPoolRandom(
+  pool: GuidPool,
+  totalBytes: number
+): Promise<(n: number) => Uint8Array> {
+  const bytes = await pool.nextBytes(totalBytes);
+  let cursor = 0;
+  return (n: number) => {
+    if (cursor + n > bytes.length) {
+      throw new Error("sync random pool exhausted");
+    }
+    const slice = bytes.subarray(cursor, cursor + n);
+    cursor += n;
+    return slice;
+  };
 }
 
 function toOutgoingBso(

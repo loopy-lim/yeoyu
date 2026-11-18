@@ -185,8 +185,10 @@ function storageHawkMatches(request: HttpRequest): boolean {
   const ts = /ts="(\d+)"/.exec(header)?.[1];
   const nonce = /nonce="([^"]+)"/.exec(header)?.[1];
   const mac = /mac="([^"]+)"/.exec(header)?.[1];
-  const hashAttr = /hash="([^"]+)"/.exec(header)?.[1];
   if (ts === undefined || !nonce || !mac) return false;
+  // No hash attribute is ever sent — reference wire format (see
+  // hawkAuthorizationHeader in src/sync/crypto.ts).
+  if (/hash="/.test(header)) return false;
   const url = new URL(request.url);
   const normalized =
     [
@@ -198,22 +200,10 @@ function storageHawkMatches(request: HttpRequest): boolean {
       url.host,
       url.protocol === "https:" ? "443" : "80",
       "",
-      hashAttr ?? "",
+      "",
     ].join("\n") + "\n";
   const expected = encodeBase64(hmac(sha256, utf8("hawk-key"), utf8(normalized)));
-  if (expected !== mac) return false;
-  if (request.body !== undefined) {
-    const contentType = request.headers?.["Content-Type"] ?? "";
-    const expectedHash = encodeBase64(
-      hmac(
-        sha256,
-        utf8("hawk-key"),
-        utf8(`hawk.1.payload\n${contentType}\n${request.body}\n`)
-      )
-    );
-    return hashAttr === expectedHash;
-  }
-  return hashAttr === undefined;
+  return expected === mac;
 }
 
 class FakeStorage implements SyncPlatformStorage {
@@ -1516,5 +1506,68 @@ describe("upload orchestration (V-4)", () => {
     );
     expect(state.guidByLocalId.lb1).toBeUndefined();
     expect(state.dirty.lb1).toBeDefined();
+  });
+
+  test("upload encrypts >64 BSOs via async randomSource without crypto.getRandomValues", async () => {
+    const bookmarks = Array.from({ length: 70 }, (_, i) => ({
+      id: `lb-${i}`,
+      title: `Bookmark ${i}`,
+      url: `https://example.com/${i}`,
+    }));
+    const adapter = new MockLocalAdapter(localSnapshot(bookmarks));
+    const storage = new FakeStorage();
+    storage.secrets = credentialsJson("zen@example.com");
+    const http = scriptHttp({
+      postModified: 9.0,
+      bookmarksRecords: mobileRemoteBookmarkRecords("remoteguid01", 5.0),
+    });
+    let refillCalls = 0;
+    const store = new SyncStore(storage, http, {
+      nonce: () => "nonce12345",
+      localAdapter: adapter,
+      randomSource: {
+        randomB64: async (count: number) => {
+          refillCalls += 1;
+          // Deterministic non-zero non-reserved entropy (0x10 + call index).
+          const bytes = new Uint8Array(count);
+          for (let i = 0; i < count; i += 1) {
+            bytes[i] = (i + refillCalls * 17) & 0xff;
+          }
+          return encodeBase64Url(bytes);
+        },
+      },
+    });
+    await store.load();
+
+    // Simulate Hermes having no global crypto.getRandomValues during uploadDirty.
+    const originalCrypto = globalThis.crypto;
+    Object.defineProperty(globalThis, "crypto", {
+      value: undefined,
+      configurable: true,
+    });
+    try {
+      const result = await store.runSync();
+      expect(result.kind).toBe("ok");
+      if (result.kind === "ok") expect(result.uploaded).toBe(71); // 70 bookmarks + mobile root
+    } finally {
+      Object.defineProperty(globalThis, "crypto", {
+        value: originalCrypto,
+        configurable: true,
+      });
+    }
+    // 70*9 (630 GUID bytes) + 71*16 (1136 IV bytes) = 1766 bytes -> >= 2 refills of 1024 bytes.
+    expect(refillCalls).toBeGreaterThanOrEqual(2);
+    expect(postCalls(http).length).toBeGreaterThan(0);
+  });
+
+  test("Hermes random/TextEncoder runtime errors classify as protocol", async () => {
+    const { classifySyncFailure } = await import("../src/syncStore");
+    expect(classifySyncFailure(new Error("crypto.getRandomValues must be defined"))).toBe(
+      "protocol"
+    );
+    expect(classifySyncFailure(new Error("sync random pool exhausted"))).toBe("protocol");
+    expect(classifySyncFailure(new Error("Can't find variable: TextEncoder"))).toBe(
+      "protocol"
+    );
   });
 });

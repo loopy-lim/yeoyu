@@ -19,6 +19,7 @@ import {
   SyncNode,
   SyncTree,
   UNRESOLVED_PARENT_GUID,
+  WIRE_ROOT_GUIDS,
 } from "./model";
 
 // ---------------------------------------------------------------------------
@@ -204,6 +205,27 @@ export class GuidPool {
       if (guid.length === GUID_CHARS && !RESERVED_GUIDS.has(guid)) return guid;
       // Reserved draw — burn it and draw again.
     }
+  }
+
+  async nextBytes(count: number): Promise<Uint8Array> {
+    if (count <= 0) return new Uint8Array(0);
+    const out = new Uint8Array(count);
+    let offset = 0;
+    while (offset < count) {
+      if (this.cursor >= this.bytes.length) {
+        const poolB64 = await this.source.randomB64(POOL_REFILL_BYTES);
+        this.bytes = decodeBase64Url(poolB64);
+        this.cursor = 0;
+        if (this.bytes.length === 0) {
+          throw new Error("sync random source returned 0 bytes");
+        }
+      }
+      const take = Math.min(count - offset, this.bytes.length - this.cursor);
+      out.set(this.bytes.subarray(this.cursor, this.cursor + take), offset);
+      this.cursor += take;
+      offset += take;
+    }
+    return out;
   }
 }
 
@@ -711,6 +733,9 @@ function collectProtectedGuids(tree: SyncTree | null): Set<string> {
   const protectedGuids = new Set<string>();
   if (!tree) return protectedGuids;
   const protectedRoots = new Set<string>([
+    WIRE_ROOT_GUIDS.menu,
+    WIRE_ROOT_GUIDS.toolbar,
+    WIRE_ROOT_GUIDS.unfiled,
     ROOT_GUIDS.menu,
     ROOT_GUIDS.toolbar,
     ROOT_GUIDS.unfiled,

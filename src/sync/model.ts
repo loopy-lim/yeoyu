@@ -28,10 +28,28 @@ export const ROOT_GUIDS = {
   mobile: "mobile______",
 } as const;
 
+/** Sync 1.5 wire short root IDs (canonical on Firefox/Zen Sync servers). */
+export const WIRE_ROOT_GUIDS = {
+  menu: "menu",
+  toolbar: "toolbar",
+  unfiled: "unfiled",
+  mobile: "mobile",
+} as const;
+
+/** Meta-root wrapper GUIDs that contain the four user roots and must not land in unresolved. */
+export const META_ROOT_GUIDS: ReadonlySet<string> = new Set([
+  "places",
+  "root________",
+]);
+
 export const ROOT_ORDER: readonly string[] = [
+  WIRE_ROOT_GUIDS.menu,
   ROOT_GUIDS.menu,
+  WIRE_ROOT_GUIDS.toolbar,
   ROOT_GUIDS.toolbar,
+  WIRE_ROOT_GUIDS.unfiled,
   ROOT_GUIDS.unfiled,
+  WIRE_ROOT_GUIDS.mobile,
   ROOT_GUIDS.mobile,
 ];
 

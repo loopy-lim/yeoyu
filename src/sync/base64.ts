@@ -75,8 +75,47 @@ export function decodeHex(input: string): Uint8Array {
   return out;
 }
 
+export function encodeUtf8(input: string): Uint8Array {
+  const out: number[] = [];
+  for (let i = 0; i < input.length; i += 1) {
+    let codePoint = input.charCodeAt(i);
+    if (codePoint >= 0xd800 && codePoint <= 0xdbff) {
+      const next = i + 1 < input.length ? input.charCodeAt(i + 1) : 0;
+      if (next >= 0xdc00 && next <= 0xdfff) {
+        codePoint = 0x10000 + ((codePoint - 0xd800) << 10) + (next - 0xdc00);
+        i += 1;
+      } else {
+        codePoint = 0xfffd;
+      }
+    } else if (codePoint >= 0xdc00 && codePoint <= 0xdfff) {
+      codePoint = 0xfffd;
+    }
+    if (codePoint < 0x80) {
+      out.push(codePoint);
+    } else if (codePoint < 0x800) {
+      out.push(0xc0 | (codePoint >> 6), 0x80 | (codePoint & 0x3f));
+    } else if (codePoint < 0x10000) {
+      out.push(
+        0xe0 | (codePoint >> 12),
+        0x80 | ((codePoint >> 6) & 0x3f),
+        0x80 | (codePoint & 0x3f)
+      );
+    } else {
+      out.push(
+        0xf0 | (codePoint >> 18),
+        0x80 | ((codePoint >> 12) & 0x3f),
+        0x80 | ((codePoint >> 6) & 0x3f),
+        0x80 | (codePoint & 0x3f)
+      );
+    }
+  }
+  return Uint8Array.from(out);
+}
+
 export function utf8(input: string): Uint8Array {
-  return new TextEncoder().encode(input);
+  return typeof TextEncoder === "function"
+    ? new TextEncoder().encode(input)
+    : encodeUtf8(input);
 }
 
 /** Strict (fatal) UTF-8 decode. Hermes guarantees no TextDecoder global — a

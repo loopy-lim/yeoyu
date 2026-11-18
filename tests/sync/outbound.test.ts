@@ -605,3 +605,58 @@ describe("outbound serialization", () => {
     expect(restored!.remoteRaw).toEqual({ GB1: { cleartext: { id: "GB1" }, modifiedMs: 8 } });
   });
 });
+
+describe("wire short root protection and GuidPool.nextBytes", () => {
+  test("buildUploadSet protects items under wire short menu/toolbar/unfiled roots", async () => {
+    const { source } = fixedPoolSource(2);
+    const state = emptyOutboundState();
+    assignGuidMapping(state, "b-menu", "WIRE_MENU_1");
+    assignGuidMapping(state, "b-local", "LOCAL_MOB_1");
+    markDirty(state, "b-menu", 5000);
+    markDirty(state, "b-local", 5000);
+    const remoteTree: SyncTree = {
+      roots: [
+        {
+          guid: "menu",
+          type: "folder",
+          title: "menu",
+          children: [{ guid: "WIRE_MENU_1", type: "bookmark", title: "Menu" }],
+        },
+        {
+          guid: "toolbar",
+          type: "folder",
+          title: "toolbar",
+          children: [],
+        },
+      ],
+      fetchedAt: 0,
+      bookmarksModified: 1,
+    };
+    const records = await buildUploadSet(
+      state,
+      snap([
+        { id: "b-menu", title: "Menu", url: "https://menu.example", folderId: "" },
+        { id: "b-local", title: "Local", url: "https://local.example", folderId: "" },
+      ]),
+      { pool: poolOf(source), remoteTree, nowMs: 6000 }
+    );
+    expect(records.some((r) => r.guid === "WIRE_MENU_1")).toBe(false);
+    expect(records.some((r) => r.guid === "LOCAL_MOB_1")).toBe(true);
+  });
+
+  test("GuidPool.nextBytes slices cleanly across multiple refills", async () => {
+    let calls = 0;
+    const pool = new GuidPool({
+      randomB64: async () => {
+        calls += 1;
+        return encodeBase64Url(new Uint8Array(20).fill(calls));
+      },
+    });
+    const first = await pool.nextBytes(12);
+    const second = await pool.nextBytes(16);
+    expect(calls).toBe(2);
+    expect(Array.from(first)).toEqual(new Array(12).fill(1));
+    expect(Array.from(second.subarray(0, 8))).toEqual(new Array(8).fill(1));
+    expect(Array.from(second.subarray(8, 16))).toEqual(new Array(8).fill(2));
+  });
+});
