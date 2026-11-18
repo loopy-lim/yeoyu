@@ -1406,17 +1406,25 @@ function BrowserApp() {
         };
       },
     };
+    // syncStore.load() runs the storage channels through
+    // Promise.resolve().then(fn), which invokes fn with the promise's
+    // fulfillment value (undefined) as an argument. A raw NativeModules
+    // reference would then be called with one extra argument; RN's native
+    // arity validation rejects it and the channel's .catch(() => null)
+    // swallows the rejection into a silent null (credentials never load —
+    // the cold-start bug). Arrow wrappers ignore the injected argument.
+    const native = platform;
     syncStore.attach(
       {
-        readSecrets: platform.readSyncSecrets,
-        saveSecrets: platform.saveSyncSecrets,
-        clearSecrets: platform.clearSyncSecrets,
-        readTree: platform.readSyncTree,
-        saveTree: platform.saveSyncTree,
-        clearTree: platform.clearSyncTree,
-        readOutbound: platform.loadOutbound,
-        saveOutbound: platform.saveOutbound,
-        clearOutbound: platform.clearOutbound,
+        readSecrets: () => native.readSyncSecrets!(),
+        saveSecrets: (json: string) => native.saveSyncSecrets!(json),
+        clearSecrets: () => native.clearSyncSecrets!(),
+        readTree: () => native.readSyncTree!(),
+        saveTree: (json: string) => native.saveSyncTree!(json),
+        clearTree: () => native.clearSyncTree!(),
+        readOutbound: () => native.loadOutbound!(),
+        saveOutbound: (json: string) => native.saveOutbound!(json),
+        clearOutbound: () => native.clearOutbound!(),
       },
       syncHttp
     );
@@ -1572,16 +1580,20 @@ function BrowserApp() {
     const initial = controller.getSnapshot();
     syncBookmarkPrevRef.current = initial
       ? toLocalBookmarkSnapshot(initial)
-      : { bookmarks: [], bookmarkFolders: [] };
+      : null;
 
     const onBookmarksChanged = () => {
       const snap = controller.getSnapshot();
       if (!snap) return;
       const next = toLocalBookmarkSnapshot(snap);
-      const prev = syncBookmarkPrevRef.current ?? {
-        bookmarks: [],
-        bookmarkFolders: [],
-      };
+      // Wait for the initial snapshot from controller.initialize() before
+      // diffing; otherwise every restored bookmark looks newly created at
+      // Date.now() and marks outbound dirty on every cold launch.
+      if (syncBookmarkPrevRef.current === null) {
+        syncBookmarkPrevRef.current = next;
+        return;
+      }
+      const prev = syncBookmarkPrevRef.current;
       syncBookmarkPrevRef.current = next;
       const diff = diffBookmarks(prev, next);
       const changedAtMs = Date.now();
@@ -1616,6 +1628,23 @@ function BrowserApp() {
       }
     };
   }, [syncStore, syncPlatformAvailable]);
+  const syncStartupDoneRef = useRef(false);
+  useEffect(() => {
+    if (!syncPlatformAvailable || syncStartupDoneRef.current) return;
+    if (!state || syncState.connection !== "connected") return;
+    syncStartupDoneRef.current = true;
+    console.info("sync startup: auto runSync");
+    void syncStore.runSync();
+  }, [syncPlatformAvailable, state, syncState.connection, syncStore]);
+  useEffect(() => {
+    if (!syncLogin?.tabId || !state) return;
+    const tabs = controller.getSnapshot()?.tabs ?? state.tabs;
+    if (!tabs.some((tab) => tab.id === syncLogin.tabId)) {
+      syncLoginRef.current = null;
+      setSyncLogin(null);
+      platform.setSyncLoginCapture?.(false, null);
+    }
+  }, [state, syncLogin]);
   useEffect(() => {
     if (!syncPlatformAvailable) return;
     const subscription = AppState.addEventListener("change", (next) => {
@@ -1668,11 +1697,15 @@ function BrowserApp() {
     ? { ...syncState, connection: "connecting" }
     : syncState;
   const closeSyncLoginTab = (tabId: string | null) => {
-    if (!tabId) return;
+    if (!tabId) {
+      console.info("sync login close skipped: no tabId");
+      return;
+    }
     // The user may have closed the login tab themselves; closing again
     // would surface a controller error for a tab that is already gone.
     if (controller.getSnapshot()?.tabs.some((tab) => tab.id === tabId))
       run(controller.close(tabId));
+    else console.info("sync login tab already absent at close time");
   };
   const startSyncConnect = () => {
     if (!syncPlatformAvailable || syncLoginRef.current) return;
@@ -1711,10 +1744,17 @@ function BrowserApp() {
               const tabId = snapshot.activeTabId ?? null;
               platform.setSyncLoginCapture?.(true, tabId);
               setSyncLogin({ request, tabId });
+              setSettings(false);
+              setSplitLayout(null);
+              setFocused(tabId);
+              setLittleArcTabId(null);
+              updateUi({ type: "setLittleArcActiveTab", id: null });
             })
         );
       })
-      .catch(() => flashNotice(tr("sync.error.network")));
+      .catch((failure) =>
+        flashNotice(tr(`sync.error.${classifySyncFailure(failure)}`))
+      );
   };
   const cancelSyncConnect = () => {
     const login = syncLoginRef.current;
@@ -1726,6 +1766,7 @@ function BrowserApp() {
   };
   const completeSyncLogin = async (code: string) => {
     const login = syncLoginRef.current;
+    console.info(`sync login completing tab=${login?.tabId ?? "none"}`);
     if (!login) return;
     syncLoginRef.current = null;
     setSyncLogin(null);
@@ -1735,6 +1776,10 @@ function BrowserApp() {
       await syncStore.connect(login.request, code);
     } catch (failure) {
       // The exchange itself failed: back to disconnected, surface why.
+      // Message carries status/errno only — never tokens or codes.
+      console.warn(
+        `sync connect failed: ${failure instanceof Error ? failure.message : String(failure)}`
+      );
       flashNotice(tr(`sync.error.${classifySyncFailure(failure)}`));
       return;
     }

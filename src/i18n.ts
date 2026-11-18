@@ -53,10 +53,10 @@ const en = {
   "category.data": "Your data and downloads",
   "category.dataDetail": "History, bookmarks, export and import",
   "category.sync": "Firefox Sync",
-  "category.syncDetail": "Read bookmarks from your Firefox account",
+  "category.syncDetail": "Sync bookmarks with your Firefox account",
   "sync.title": "Firefox Sync",
   "sync.connectDetail":
-    "Sign in with your Firefox account to read the bookmarks synced by your other Firefox-based browsers. Nothing is sent back.",
+    "Sign in with your Firefox account to sync bookmarks across your Firefox-based browsers.",
   "sync.connect": "Connect",
   "sync.connectingTitle": "Connecting to Firefox",
   "sync.connectingDetail":
@@ -982,10 +982,10 @@ const ko: { [K in keyof typeof en]: string } = {
   "category.media": "동영상",
   "category.mediaDetail": "떠 있는 동영상과 시스템 권한",
   "category.sync": "Firefox 동기화",
-  "category.syncDetail": "Firefox 계정의 북마크 읽어오기",
+  "category.syncDetail": "Firefox 계정과 북마크 동기화",
   "sync.title": "Firefox 동기화",
   "sync.connectDetail":
-    "Firefox 계정으로 로그인하면 다른 Firefox 계열 브라우저에서 동기화된 북마크를 읽어옵니다. 여유에서는 보내지 않습니다.",
+    "Firefox 계정으로 로그인하면 다른 Firefox 계열 브라우저와 북마크를 동기화합니다.",
   "sync.connect": "연결",
   "sync.connectingTitle": "Firefox에 연결 중",
   "sync.connectingDetail":
