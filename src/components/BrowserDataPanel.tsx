@@ -107,19 +107,27 @@ export function BrowserDataPanel({
         "side.bottom"
       )} ${value.framePx.bottom} px`,
     ].join("\n");
-  const perform = (action: () => Promise<void>) => {
+  const cancelRef = useRef<AbortController | null>(null);
+  const perform = (action: (signal: AbortSignal) => Promise<void>) => {
     if (lock.current) return;
     lock.current = true;
     setBusy(true);
-    void action()
-      .catch((error) =>
-        onError(
-          tr("archive.error", {
-            detail: error instanceof Error ? error.message : "",
-          })
-        )
-      )
+    const operation = new AbortController();
+    cancelRef.current = operation;
+    void action(operation.signal)
+      .catch((error) => {
+        // This panel is the only abort source: a rejection after the user
+        // cancelled reports the cancellation, not the abandoned outcome.
+        if (operation.signal.aborted) onNotice(tr("archive.cancelledNotice"));
+        else
+          onError(
+            tr("archive.error", {
+              detail: error instanceof Error ? error.message : "",
+            })
+          );
+      })
       .finally(() => {
+        cancelRef.current = null;
         lock.current = false;
         setBusy(false);
       });
@@ -147,10 +155,11 @@ export function BrowserDataPanel({
         {
           text: tr("archive.chooseDestination"),
           onPress: () =>
-            perform(async () => {
+            perform(async (signal) => {
               if (!portableFiles) throw new Error(tr("archive.unavailable"));
               const archive = await controller.exportArchive(
-                html ? null : portablePresentation(ui)
+                html ? null : portablePresentation(ui),
+                signal
               );
               const result = await portableFiles.chooseExport(
                 html ? bookmarksToHtml(archive) : archive,
@@ -166,7 +175,7 @@ export function BrowserDataPanel({
         },
       ]
     );
-  const readImportPreview = async () => {
+  const readImportPreview = async (signal: AbortSignal) => {
     if (!portableFiles) throw new Error(tr("archive.unavailable"));
     const contents = await portableFiles.chooseImport();
     if (contents === null) return;
@@ -174,7 +183,7 @@ export function BrowserDataPanel({
     const raw = contents.replace(/^\uFEFF/, "").trim();
     checkArchiveSize(raw);
     const json = raw.startsWith("{") ? raw : bookmarkHtmlToArchive(raw);
-    const counts = await controller.previewArchive(json);
+    const counts = await controller.previewArchive(json, signal);
     let parsedPresentation: PortablePresentation | null;
     try {
       parsedPresentation = parsePresentation(counts.presentation ?? null);
@@ -217,8 +226,8 @@ export function BrowserDataPanel({
     setPresentation(false);
   };
   const chooseImport = () => perform(readImportPreview);
-  const commitImport = async (selected: Preview) => {
-    await controller.importArchive(selected.json, favorites, keymap);
+  const commitImport = async (selected: Preview, signal: AbortSignal) => {
+    await controller.importArchive(selected.json, favorites, keymap, signal);
     // Clear the preview once data is committed; a failed appearance write
     // must never invite retrying the entire append and duplicating Spaces.
     setPreview(null);
@@ -243,7 +252,7 @@ export function BrowserDataPanel({
         { text: tr("common.cancel"), style: "cancel" },
         {
           text: tr("archive.import"),
-          onPress: () => perform(() => commitImport(selected)),
+          onPress: () => perform((signal) => commitImport(selected, signal)),
         },
       ]
     );
@@ -257,6 +266,16 @@ export function BrowserDataPanel({
             {button(tr("archive.exportHtml"), () => exportFile(true))}
             {button(tr("archive.exportWork"), () => exportFile(false))}
             {button(tr("archive.chooseImport"), chooseImport)}
+            {busy && (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={tr("archive.cancelOperation")}
+                className={c.action}
+                onPress={() => cancelRef.current?.abort()}
+              >
+                <Text className={c.text}>{tr("archive.cancelOperation")}</Text>
+              </Pressable>
+            )}
           </View>
           {preview && (
             <View className={c.preview}>

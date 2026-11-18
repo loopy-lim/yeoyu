@@ -52,7 +52,9 @@ export type BrowserCommands = {
   keymapDefaults?: typeof import("@generated/commands").keymapDefaults;
   tabOpenExternal?: typeof import("@generated/commands").tabOpenExternal;
 } & {
-  [Name in keyof ArchiveCommands]?: (
+  // -readonly keeps const-declared generated commands (workArchivePreview)
+  // replaceable like the function-declared ones, for test ports.
+  -readonly [Name in keyof ArchiveCommands]?: (
     ...args: Parameters<ArchiveCommands[Name]>
   ) => ReturnType<ArchiveCommands[Name]>;
 };
@@ -105,6 +107,18 @@ export interface NewWindowRequest {
 
 // A pristine tab shows the centered new-tab page instead of web content.
 export const NEW_TAB_URL = "about:blank";
+/**
+ * Hang escape for archive commands. The payloads are bounded (8 MB import
+ * limit), so a reply that takes longer than this is a lost bridge reply or a
+ * stuck native worker — the invoke must reject so the queue and the data
+ * panel recover instead of waiting forever. Expiry never interrupts Rust
+ * (shallow cancellation); the import recovery path reconciles durable state.
+ */
+export const ARCHIVE_TIMEOUT_MS = 30_000;
+const archiveInvokeOptions = (signal?: AbortSignal) => ({
+  signal,
+  timeoutMs: ARCHIVE_TIMEOUT_MS,
+});
 const singleVisibleTab = (snapshot: Snapshot): readonly string[] =>
   snapshot.activeTabId ? [snapshot.activeTabId] : [];
 
@@ -431,28 +445,35 @@ export class BrowserController {
   private assertMutable() {
     if (this.importRecoveryRequired) throw this.importRecoveryRequired;
   }
-  exportArchive(presentation: string | null) {
+  exportArchive(presentation: string | null, signal?: AbortSignal) {
     return this.initialize().then(() =>
       this.queue.run(async () => {
         if (!this.commands.workArchiveExport)
           throw new Error("Rebuild the browser to export data");
-        return this.commands.workArchiveExport({ presentation });
+        return this.commands.workArchiveExport(
+          { presentation },
+          archiveInvokeOptions(signal)
+        );
       })
     );
   }
-  previewArchive(json: string) {
+  previewArchive(json: string, signal?: AbortSignal) {
     return this.initialize().then(() =>
       this.queue.run(async () => {
         if (!this.commands.workArchivePreview)
           throw new Error("Rebuild the browser to import data");
-        return this.commands.workArchivePreview({ json });
+        return this.commands.workArchivePreview(
+          { json },
+          archiveInvokeOptions(signal)
+        );
       })
     );
   }
   importArchive(
     json: string,
     includeFavorites: boolean,
-    restoreKeymap: boolean
+    restoreKeymap: boolean,
+    signal?: AbortSignal
   ) {
     return this.initialize().then(() =>
       this.queue.run(async () => {
@@ -468,20 +489,26 @@ export class BrowserController {
         await this.drainSaves();
         const before = this.snapshot!;
         const input = { json, includeFavorites, restoreKeymap };
-        const candidate = await prepare(input);
+        const options = archiveInvokeOptions(signal);
+        const candidate = await prepare(input, options);
         // No domain mutation, reconciliation or publication until the append is durable.
         await this.platform.saveSnapshot(
           JSON.stringify(persistableSnapshot(candidate))
         );
         let committed: Snapshot;
         try {
-          committed = await commit({
-            ...input,
-            expectedRevision: before.revision,
-          });
+          committed = await commit(
+            {
+              ...input,
+              expectedRevision: before.revision,
+            },
+            options
+          );
         } catch (failure) {
           // A failed bridge reply does not prove the native command failed. Read
           // state before deciding whether to publish or restore the previous file.
+          // The reconciliation read deliberately carries no signal: a cancelled
+          // commit must resolve durable truth, not freeze mutations.
           let actual: Snapshot;
           try {
             actual = await this.commands.browserSnapshot({});

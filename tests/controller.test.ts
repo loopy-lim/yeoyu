@@ -83,6 +83,33 @@ test("ambiguous archive commit recovers committed state without erasing the dura
   expect(ports.writes.at(-1)?.revision).toBe(candidate.revision);
 });
 
+test("archive invocations carry the hang timeout and a caller-supplied cancellation signal", async () => {
+  const { BrowserController, ARCHIVE_TIMEOUT_MS } = await import("../src/BrowserController");
+  const ports = fixture();
+  const controller = new BrowserController(ports.commands, ports.storage);
+  await controller.initialize(); await controller.flush();
+  const before = controller.snapshot!;
+  const seen: { signal?: AbortSignal; timeoutMs?: number }[] = [];
+  ports.commands.workArchiveExport = async (_input, options) => { seen.push(options ?? {}); return "{}"; };
+  ports.commands.workArchivePreview = async (_input, options) => {
+    seen.push(options ?? {});
+    return { spaces: 0, tabs: 0, bookmarks: 0, folders: 0, favorites: 0, duplicateUrls: 0, hasKeyBindings: false, presentation: null };
+  };
+  ports.commands.workArchivePrepare = async (_input, options) => { seen.push(options ?? {}); return { ...before, revision: before.revision + 1 }; };
+  ports.commands.workArchiveImport = async (_input, options) => { seen.push(options ?? {}); return { ...before, revision: before.revision + 1 }; };
+  await controller.exportArchive(null);
+  await controller.previewArchive("{}");
+  const cancellation = new AbortController();
+  await controller.importArchive("{}", false, false, cancellation.signal);
+  expect(seen.map((options) => options.timeoutMs)).toEqual(Array.from({ length: 4 }, () => ARCHIVE_TIMEOUT_MS));
+  // The signal-less calls stay cancellable only by timeout; the import flow
+  // hands the UI-owned signal to both prepare and commit.
+  expect(seen[0].signal).toBeUndefined();
+  expect(seen[1].signal).toBeUndefined();
+  expect(seen[2].signal).toBe(cancellation.signal);
+  expect(seen[3].signal).toBe(cancellation.signal);
+});
+
 type FixtureSnapshot = Snapshot & {
   bookmarks: NonNullable<Snapshot["bookmarks"]>;
 };

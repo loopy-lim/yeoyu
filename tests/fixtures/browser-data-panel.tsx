@@ -18,13 +18,20 @@ mock.module("react-native", () => ({
 const { BrowserDataPanel } = await import("../../src/components/BrowserDataPanel");
 const imports: unknown[] = [], errors: string[] = [], notices: string[] = [];
 const presentation = portablePresentation({...defaultUiPreferences,appearance:"warm"});
+let exportSignal: AbortSignal | undefined;
 const controller = {
   previewArchive: async (json:string) => {
     if (JSON.parse(json).format !== "yeoyu-work") throw Error("Unsupported archive");
     return {spaces:1,tabs:2,bookmarks:3,folders:1,favorites:1,duplicateUrls:1,hasKeyBindings:true,presentation};
   },
   importArchive: async (...options:unknown[]) => { imports.push(options); },
-  exportArchive: async()=>file,
+  exportArchive: (_presentation:string|null, signal?:AbortSignal) => {
+    exportSignal = signal;
+    return new Promise((_resolve, reject) => {
+      signal?.addEventListener("abort", () =>
+        reject(Object.assign(new Error('invoke("workArchiveExport") aborted'), {code:"cancelled"})));
+    });
+  },
 } as unknown as BrowserController;
 let renderer: ReactTestRenderer;
 await act(async()=>{ renderer=create(<BrowserDataPanel controller={controller} ui={defaultUiPreferences} hydrated onPresentation={async()=>{throw Error("disk failed");}} onError={(error)=>errors.push(error)} onNotice={(notice)=>notices.push(notice)} />); });
@@ -37,7 +44,8 @@ await press("Add imported data");
 assert.equal(imports.length,0,"confirmation must precede data mutation");
 await act(async()=>{const action=alertButtons.find(b=>b.text==="Import")!.onPress!; action(); action();});
 assert.equal(imports.length,1,"double confirmation cannot duplicate the append");
-assert.deepEqual((imports[0] as unknown[]).slice(1),[true,false]);
+assert.deepEqual((imports[0] as unknown[]).slice(1,3),[true,false]);
+assert.ok((imports[0] as unknown[]).at(-1) instanceof AbortSignal);
 assert.equal(errors.length,1);
 assert.match(errors[0],/data was imported/i);
 assert.equal(renderer!.root.findAllByProps({accessibilityLabel:"Add imported data"}).length,0,"appearance failure cannot leave an import retry button");
@@ -45,5 +53,17 @@ file = '{"format":"wrong"}';
 await press("Import bookmarks or work archive");
 assert.equal(imports.length,1);
 assert.equal(renderer!.root.findAllByProps({accessibilityLabel:"Add imported data"}).length,0);
+// Cancelling an in-flight archive invoke frees the panel without an error dialog.
+const errorsBeforeCancel = errors.length;
+await press("Export work archive");
+await act(async()=>{alertButtons.find(b=>b.text==="Choose destination")!.onPress!();});
+assert.ok(exportSignal instanceof AbortSignal,"the panel must thread its AbortSignal into the invoke");
+const cancel = renderer!.root.findByProps({accessibilityLabel:"Cancel data operation"});
+await act(async()=>{cancel.props.onPress();});
+assert.equal(exportSignal.aborted,true);
+assert.equal(errors.length,errorsBeforeCancel,"cancellation is a notice, not an error");
+assert.match(notices.at(-1)!,/cancelled/i);
+assert.equal(renderer!.root.findAllByProps({accessibilityLabel:"Cancel data operation"}).length,0,"busy clears after cancellation");
+assert.equal(renderer!.root.findByProps({accessibilityLabel:"Export work archive"}).props.disabled,false);
 await act(async()=>renderer!.unmount());
-console.log("Portable data preview, default-off settings, confirmation and failure handling passed.");
+console.log("Portable data preview, default-off settings, confirmation, failure and cancellation handling passed.");
