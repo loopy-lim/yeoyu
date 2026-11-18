@@ -177,9 +177,12 @@ import { ThemeScope, useTierSizes } from "@/ui/ThemeScope";
 import { withUniwind } from "uniwind";
 import { motion as motionTokens, phoneSize, resolveTheme, size, space } from "@/theme";
 import {
+  compactToolbarVisibleExtensions,
   denseVerticalHitSlop,
   hitSlopForTarget,
   iconButtonHitSlop,
+  LITTLE_ARC_PORTRAIT_GUTTER,
+  littleArcPromoteHitSlop,
   spaceChipHitSlop,
   toolbarLayerHeight,
 } from "@/touchTargets";
@@ -2906,7 +2909,7 @@ function BrowserApp() {
     if (!isLandscape) {
       // Portrait (e.g. mobile phone):
       // Clean sheet appearance: close to top status bar, generous width, balanced margins.
-      const horizontalGutter = 12;
+      const horizontalGutter = LITTLE_ARC_PORTRAIT_GUTTER;
       const cardWidth = Math.max(bodyWidth - horizontalGutter * 2, 280);
       const topGutter = 6;
       const bottomGutter = 10;
@@ -3833,6 +3836,17 @@ function BrowserApp() {
     paddingTop: Math.max(0, framePxToDp(ui.framePx.top) - (safeInsets.top > 0 ? 6 : 0)),
     paddingBottom: framePxToDp(ui.framePx.bottom),
   };
+  const canvasToolbarFrameDp =
+    !contentFullscreen && !isLittleArc
+      ? frameStyle.paddingLeft + frameStyle.paddingRight
+      : 0;
+  const canvasToolbarExtensionActions = compactWindow
+    ? compactToolbarVisibleExtensions(
+        extensionActions,
+        windowWidth,
+        canvasToolbarFrameDp
+      )
+    : extensionActions;
   // While a sheet is open the whole body behind it stops receiving touches
   // at the native level — a JS responder on the overlay alone doesn't stop
   // the GeckoView from scrolling/taking selection underneath. The flip is
@@ -5363,7 +5377,10 @@ function BrowserApp() {
                       <View className="w-[36px] h-[4px] rounded-full bg-ink-muted/30" />
                     </Pressable>
                     <Animated.View
-                      className={c.littleArcToolbar}
+                      className={cn(
+                        c.littleArcToolbar,
+                        compactWindow && c.littleArcToolbarCompact
+                      )}
                       style={{
                         opacity: littleArcHeaderCollapsed.interpolate({
                           inputRange: [0, 0.6, 1],
@@ -5379,7 +5396,12 @@ function BrowserApp() {
                         ],
                       }}
                     >
-                      <View className={c.compactNavigation}>
+                      <View
+                        className={cn(
+                          c.compactNavigation,
+                          compactWindow && c.compactNavigationCompact
+                        )}
+                      >
                         <IconButton
                           label={tr("chrome.back")}
                           icon="back"
@@ -5417,7 +5439,12 @@ function BrowserApp() {
                           active={readerActive}
                         />
                       </View>
-                      <View className="flex-row items-center gap-lg">
+                      <View
+                        className={cn(
+                          c.littleArcActions,
+                          compactWindow && c.littleArcActionsCompact
+                        )}
+                      >
                         <UnikitButton
                           variant="default"
                           size="sm"
@@ -5427,13 +5454,12 @@ function BrowserApp() {
                           accessibilityLabel={tr("littleArc.promote")}
                           // hitSlop widens the touch target past the 32dp
                           // visual (issue #24 helper); vertically the
-                          // h-toolbar row bounds the effective target (the
-                          // slop cannot cross into the drag handle above or
-                          // the webview below).
-                          hitSlop={hitSlopForTarget(32)}
+                          // h-toolbar row bounds the effective target, and on
+                          // compactWindow horizontal slop stays inside gap-sm.
+                          hitSlop={littleArcPromoteHitSlop(compactWindow)}
                           className={cn(
                             c.littleArcPromoteButton,
-                            compactWindow && "px-md min-w-0"
+                            compactWindow && "min-w-0"
                           )}
                           onPress={promoteLittleArc}
                         >
@@ -5520,19 +5546,21 @@ function BrowserApp() {
                         security={target ? browser.security[target] : undefined}
                         onPress={() => openLocationEditor("touch")}
                       />
-                      <IconButton
-                        label={tr(
-                          readerActive
-                            ? "chrome.readerModeExit"
-                            : "chrome.readerMode"
-                        )}
-                        icon="reader"
-                        onPress={toggleReaderMode}
-                        disabled={!canToggleReader}
-                        active={readerActive}
-                      />
+                      {!compactWindow && (
+                        <IconButton
+                          label={tr(
+                            readerActive
+                              ? "chrome.readerModeExit"
+                              : "chrome.readerMode"
+                          )}
+                          icon="reader"
+                          onPress={toggleReaderMode}
+                          disabled={!canToggleReader}
+                          active={readerActive}
+                        />
+                      )}
                       <ExtensionActionsBar
-                        actions={extensionActions}
+                        actions={canvasToolbarExtensionActions}
                         onOpen={openExtensionAction}
                       />
                     </AnimatedView>

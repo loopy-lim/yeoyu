@@ -5,13 +5,19 @@ import { readFileSync } from "node:fs";
 import { URL } from "node:url";
 import { resolveTestClassNames } from "./uniwindTestHarness";
 import { phoneSize, size, space, themes, TOUCH_TARGET } from "../src/theme";
+import { defaultFramePadding } from "../src/uiPreferences";
 import {
   COMPACT_TOOLBAR_VIEWPORT_WIDTH,
+  compactLittleArcAddressWidth,
   compactToolbarAddressWidth,
+  compactToolbarMaxExtensions,
+  compactToolbarVisibleExtensions,
   denseVerticalHitSlop,
   failedTouchTargetGates,
   hitSlopForTarget,
   iconButtonHitSlop,
+  LITTLE_ARC_PROMOTE_COMPACT_WIDTH,
+  littleArcPromoteHitSlop,
   phoneTouchTargetGates,
   spaceChipHitSlop,
   toolbarLayerHeight,
@@ -114,6 +120,10 @@ test("every phone-tier primary control passes the touch-target gates", () => {
   expect(app).not.toContain("hitSlopForTarget(24)");
   expect(app).toContain("c.canvasToolbarCompact");
   expect(app).toContain("c.compactNavigationCompact");
+  expect(app).toContain("c.littleArcToolbarCompact");
+  expect(app).toContain("c.littleArcActionsCompact");
+  expect(app).toContain("littleArcPromoteHitSlop(compactWindow)");
+  expect(app).toContain("compactToolbarVisibleExtensions(");
   expect(bar).not.toContain("hitSlopForTarget(size.iconButton)");
   expect(collections).not.toContain("hitSlopForTarget(36)");
   expect(extensionBar).not.toContain("hitSlop={8}");
@@ -122,12 +132,53 @@ test("every phone-tier primary control passes the touch-target gates", () => {
   expect(appClasses.spaceHeader).not.toContain("min-h-[32px]");
 });
 
-test("compact canvasToolbar keeps AddressTrigger at or above touch floor on 360dp phones", () => {
-  const width360 = compactToolbarAddressWidth(COMPACT_TOOLBAR_VIEWPORT_WIDTH);
-  expect(width360).toBeGreaterThanOrEqual(TOUCH_TARGET.floor);
+test("compact canvasToolbar accounts for default frame padding and overflows extensions at 360dp", () => {
+  const withoutFrame = compactToolbarAddressWidth(
+    COMPACT_TOOLBAR_VIEWPORT_WIDTH,
+    0,
+    0,
+  );
+  const withDefaultFrame = compactToolbarAddressWidth(
+    COMPACT_TOOLBAR_VIEWPORT_WIDTH,
+  );
+  expect(withoutFrame - withDefaultFrame).toBe(
+    defaultFramePadding.left + defaultFramePadding.right,
+  );
+  expect(withDefaultFrame).toBeGreaterThanOrEqual(TOUCH_TARGET.floor);
   expect(
-    width360 + 2 * hitSlopForTarget(phoneSize.addressCompact),
+    withDefaultFrame + 2 * hitSlopForTarget(phoneSize.addressCompact),
   ).toBeGreaterThanOrEqual(TOUCH_TARGET.target);
+
+  // Raw non-zero extension count at 360dp collapses AddressTrigger below floor,
+  // so overflow capping hides excess extensions in canvasToolbar.
+  expect(
+    compactToolbarAddressWidth(COMPACT_TOOLBAR_VIEWPORT_WIDTH, 1),
+  ).toBeLessThan(TOUCH_TARGET.floor);
+  expect(compactToolbarMaxExtensions(COMPACT_TOOLBAR_VIEWPORT_WIDTH)).toBe(0);
+  expect(
+    compactToolbarVisibleExtensions(
+      ["ext-1", "ext-2"],
+      COMPACT_TOOLBAR_VIEWPORT_WIDTH,
+    ),
+  ).toEqual([]);
+  expect(
+    compactToolbarAddressWidth(
+      COMPACT_TOOLBAR_VIEWPORT_WIDTH,
+      compactToolbarVisibleExtensions(
+        ["ext-1", "ext-2"],
+        COMPACT_TOOLBAR_VIEWPORT_WIDTH,
+      ).length,
+    ),
+  ).toBeGreaterThanOrEqual(TOUCH_TARGET.floor);
+
+  // Wider phones (390dp) retain room for one extension while keeping >=44dp.
+  expect(compactToolbarMaxExtensions(390)).toBe(1);
+  expect(compactToolbarVisibleExtensions(["ext-1", "ext-2"], 390)).toEqual([
+    "ext-1",
+  ]);
+  expect(compactToolbarAddressWidth(390, 1)).toBeGreaterThanOrEqual(
+    TOUCH_TARGET.floor,
+  );
   expect(compactToolbarAddressWidth(390)).toBeGreaterThanOrEqual(80);
 
   expect(resolveTestClassNames(appClasses.canvasToolbarCompact)).toEqual({
@@ -142,6 +193,44 @@ test("compact canvasToolbar keeps AddressTrigger at or above touch floor on 360d
   });
   expect(resolveTestClassNames(appClasses.compactNavigation)).toMatchObject({
     gap: space.md,
+  });
+});
+
+test("compact littleArcToolbar keeps AddressTrigger and promote button at or above touch floor on 360dp phones", () => {
+  const littleArcWidth360 = compactLittleArcAddressWidth(
+    COMPACT_TOOLBAR_VIEWPORT_WIDTH,
+  );
+  expect(littleArcWidth360).toBeGreaterThanOrEqual(TOUCH_TARGET.floor);
+  expect(
+    littleArcWidth360 + 2 * hitSlopForTarget(phoneSize.addressCompact),
+  ).toBeGreaterThanOrEqual(TOUCH_TARGET.target);
+  expect(compactLittleArcAddressWidth(390)).toBeGreaterThanOrEqual(70);
+
+  const promoteSlop = littleArcPromoteHitSlop(true);
+  expect(promoteSlop).toEqual({
+    top: 8,
+    bottom: 8,
+    left: space.sm,
+    right: space.sm,
+  });
+  expect(LITTLE_ARC_PROMOTE_COMPACT_WIDTH + 2 * space.sm).toBeGreaterThanOrEqual(
+    TOUCH_TARGET.floor,
+  );
+  expect(littleArcPromoteHitSlop(false)).toBe(8);
+
+  expect(resolveTestClassNames(appClasses.littleArcToolbarCompact)).toEqual({
+    paddingHorizontal: space.sm,
+    gap: space.sm,
+  });
+  expect(resolveTestClassNames(appClasses.littleArcActionsCompact)).toEqual({
+    gap: space.sm,
+  });
+  expect(resolveTestClassNames(appClasses.littleArcToolbar)).toMatchObject({
+    paddingHorizontal: space.lg,
+    gap: space.lg,
+  });
+  expect(resolveTestClassNames(appClasses.littleArcActions)).toMatchObject({
+    gap: space.lg,
   });
 });
 

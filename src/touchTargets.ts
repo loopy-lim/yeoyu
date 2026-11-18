@@ -1,4 +1,5 @@
 import { phoneSize, size, space, TOUCH_TARGET } from "@/theme";
+import { defaultFramePadding } from "@/uiPreferences";
 
 // Touch-target policy runtime (issue #24). The baseline lives in
 // theme.ts (TOUCH_TARGET + phoneSize) so it stays next to the size tokens
@@ -6,23 +7,105 @@ import { phoneSize, size, space, TOUCH_TARGET } from "@/theme";
 // acceptance gates, mirroring src/themeGates.ts for geometry.
 
 export const COMPACT_TOOLBAR_VIEWPORT_WIDTH = 360;
+export const LITTLE_ARC_PORTRAIT_GUTTER = 12;
+export const LITTLE_ARC_PROMOTE_HEIGHT = 32;
+// px-lg (10dp * 2) + 14dp pin icon + 1dp border each side
+export const LITTLE_ARC_PROMOTE_COMPACT_WIDTH = 2 * space.lg + 14 + 2;
 
 /**
  * Horizontal budget remaining for the flex-1 AddressTrigger inside compact
- * `canvasToolbar` at `viewportWidth` (48dp rail + 4dp content margin + 2dp
- * card border + compact px-md padding + five 44dp icon buttons + five 4dp
- * gaps). Keeping this at or above TOUCH_TARGET.floor prevents the address
- * trigger from collapsing into an untappable sliver on 360-390dp phones.
+ * `canvasToolbar` at `viewportWidth` (default outer frame horizontal padding +
+ * 48dp rail + 4dp content margin + 2dp card border + compact px-md padding +
+ * four 44dp icon buttons [back, forward, reload, split] + four 4dp gaps +
+ * extension actions). Reader mode stays in the rail `+` menu and expanded
+ * sidebar on compact windows. Keeping this at or above TOUCH_TARGET.floor
+ * prevents the address trigger from collapsing into an untappable sliver on
+ * 360-390dp phones.
  */
 export function compactToolbarAddressWidth(
   viewportWidth: number = COMPACT_TOOLBAR_VIEWPORT_WIDTH,
   extensionCount: number = 0,
+  frameHorizontalDp: number = defaultFramePadding.left + defaultFramePadding.right,
 ): number {
   const railColumn = size.rail + space.sm + 2;
-  const toolbarChrome = 2 * space.md + 5 * space.sm;
+  const toolbarChrome = 2 * space.md + 4 * space.sm;
   const iconButtons =
-    (5 + extensionCount) * phoneSize.iconButton + extensionCount * space.sm;
-  return viewportWidth - railColumn - toolbarChrome - iconButtons;
+    (4 + extensionCount) * phoneSize.iconButton + extensionCount * space.sm;
+  return (
+    viewportWidth -
+    frameHorizontalDp -
+    railColumn -
+    toolbarChrome -
+    iconButtons
+  );
+}
+
+/**
+ * Maximum ExtensionActionsBar buttons that fit inside compact `canvasToolbar`
+ * while keeping AddressTrigger at or above TOUCH_TARGET.floor. Overflowing
+ * actions stay accessible in the expanded sidebar and rail `+` menu.
+ */
+export function compactToolbarMaxExtensions(
+  viewportWidth: number = COMPACT_TOOLBAR_VIEWPORT_WIDTH,
+  frameHorizontalDp: number = defaultFramePadding.left + defaultFramePadding.right,
+): number {
+  const baseBudget = compactToolbarAddressWidth(
+    viewportWidth,
+    0,
+    frameHorizontalDp,
+  );
+  if (baseBudget < TOUCH_TARGET.floor) return 0;
+  return Math.floor(
+    (baseBudget - TOUCH_TARGET.floor) / (phoneSize.iconButton + space.sm),
+  );
+}
+
+export function compactToolbarVisibleExtensions<T>(
+  actions: readonly T[],
+  viewportWidth: number = COMPACT_TOOLBAR_VIEWPORT_WIDTH,
+  frameHorizontalDp: number = defaultFramePadding.left + defaultFramePadding.right,
+): T[] {
+  return actions.slice(
+    0,
+    compactToolbarMaxExtensions(viewportWidth, frameHorizontalDp),
+  );
+}
+
+/**
+ * Horizontal budget remaining for the flex-1 AddressTrigger inside compact
+ * `littleArcToolbar` at `viewportWidth` (portrait card inner width minus
+ * compact px-sm padding, six 4dp gaps, five 44dp icon buttons, and the
+ * icon-only promote button).
+ */
+export function compactLittleArcAddressWidth(
+  viewportWidth: number = COMPACT_TOOLBAR_VIEWPORT_WIDTH,
+): number {
+  const cardWidth = Math.max(
+    viewportWidth - LITTLE_ARC_PORTRAIT_GUTTER * 2,
+    280,
+  );
+  const cardInnerWidth = cardWidth - 2;
+  const toolbarChrome = 2 * space.sm + 6 * space.sm;
+  const buttons =
+    5 * phoneSize.iconButton + LITTLE_ARC_PROMOTE_COMPACT_WIDTH;
+  return cardInnerWidth - toolbarChrome - buttons;
+}
+
+/**
+ * HitSlop for the Little Arc promote button. On compact phones the label
+ * hides and surrounding horizontal gaps tighten to space.sm (4dp), so
+ * horizontal slop stays inside the gap while vertical slop lifts the 32dp
+ * visual to the 48dp toolbar target.
+ */
+export function littleArcPromoteHitSlop(compactWindow: boolean): HitSlop {
+  const vertical = hitSlopForTarget(LITTLE_ARC_PROMOTE_HEIGHT);
+  if (!compactWindow) return vertical;
+  return {
+    top: vertical,
+    bottom: vertical,
+    left: space.sm,
+    right: space.sm,
+  };
 }
 
 /**
@@ -172,6 +255,24 @@ export const phoneTouchTargetGates = (): TouchTargetGate[] => [
     stackAxis: "horizontal",
   },
   {
+    name: "compact littleArc address trigger",
+    visual: phoneSize.addressCompact,
+    width: compactLittleArcAddressWidth(),
+    hitSlop: hitSlopForTarget(phoneSize.addressCompact),
+    cap: toolbarLayerHeight(true),
+    neighborGap: space.sm,
+    stackAxis: "horizontal",
+  },
+  {
+    name: "compact littleArc promote button",
+    visual: LITTLE_ARC_PROMOTE_HEIGHT,
+    width: LITTLE_ARC_PROMOTE_COMPACT_WIDTH,
+    hitSlop: littleArcPromoteHitSlop(true),
+    cap: toolbarLayerHeight(true),
+    neighborGap: space.sm,
+    stackAxis: "horizontal",
+  },
+  {
     name: "rail tile (tab, favorite, pinned)",
     visual: phoneSize.railItem,
     width: 36, // appClasses.railItem visual width inside the 48dp rail
@@ -254,6 +355,25 @@ export const failedTouchTargetGates = () => {
   if (addressBudget < TOUCH_TARGET.floor)
     failures.push(
       `compact canvasToolbar: AddressTrigger gets ${addressBudget}dp at ${COMPACT_TOOLBAR_VIEWPORT_WIDTH}dp (below ${TOUCH_TARGET.floor}dp floor)`,
+    );
+  for (const installedExtensions of [1, 2, 4]) {
+    const visibleExtensions = Math.min(
+      installedExtensions,
+      compactToolbarMaxExtensions(),
+    );
+    const overflowBudget = compactToolbarAddressWidth(
+      COMPACT_TOOLBAR_VIEWPORT_WIDTH,
+      visibleExtensions,
+    );
+    if (overflowBudget < TOUCH_TARGET.floor)
+      failures.push(
+        `compact canvasToolbar (${installedExtensions} extensions): AddressTrigger gets ${overflowBudget}dp at ${COMPACT_TOOLBAR_VIEWPORT_WIDTH}dp (below ${TOUCH_TARGET.floor}dp floor)`,
+      );
+  }
+  const littleArcAddressBudget = compactLittleArcAddressWidth();
+  if (littleArcAddressBudget < TOUCH_TARGET.floor)
+    failures.push(
+      `compact littleArcToolbar: AddressTrigger gets ${littleArcAddressBudget}dp at ${COMPACT_TOOLBAR_VIEWPORT_WIDTH}dp (below ${TOUCH_TARGET.floor}dp floor)`,
     );
   for (const gate of phoneTouchTargetGates()) {
     if (coversNeighbor(gate))

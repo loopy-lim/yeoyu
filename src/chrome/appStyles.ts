@@ -93,6 +93,7 @@ export const appClasses = {
   canvasToolbarCompact: "px-md gap-sm",
   littleArcToolbar:
     "h-toolbar px-lg gap-lg flex-row items-center border-b-hairline-width border-b-hairline bg-surface-elevated",
+  littleArcToolbarCompact: "px-sm gap-sm",
   // h-[32px] is explicit: the h-control token does not exist in size (only
   // radius), so the class silently no-ops and the button hugs its content
   // (~20dp). Little Arc windows render outside the main app root, so they
@@ -100,6 +101,8 @@ export const appClasses = {
   // 32dp visual — vertically the toolbar row bounds the effective target.
   littleArcPromoteButton:
     "h-[32px] px-lg rounded-control bg-accent-strong flex-row items-center gap-xs border border-accent-strong active:opacity-90",
+  littleArcActions: "flex-row items-center gap-lg",
+  littleArcActionsCompact: "gap-sm",
   compactNavigation: "flex-1 flex-row items-center gap-md",
   compactNavigationCompact: "gap-sm",
   // Phone compact chrome (issue #19): the toolbar row docks at the screen
