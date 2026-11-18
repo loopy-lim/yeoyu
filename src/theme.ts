@@ -58,6 +58,7 @@ export const size = {
   input: 48,
   actionRow: 48,
   bookmarkRow: 48,
+  spaceHeader: 32, // expanded sidebar space header; phone tier lifts it to the floor
 } as const;
 
 // Touch-target baseline (issue #24): `target` is the Android-recommended
@@ -86,6 +87,7 @@ export const phoneSize: SizeTokens = {
   toolbar: Math.max(size.toolbar, TOUCH_TARGET.target),
   address: Math.max(size.address, TOUCH_TARGET.floor),
   addressCompact: Math.max(size.addressCompact, TOUCH_TARGET.floor),
+  spaceHeader: Math.max(size.spaceHeader, TOUCH_TARGET.floor),
 };
 
 // Durations in ms. `pill` uses physical spring params (tension/friction):

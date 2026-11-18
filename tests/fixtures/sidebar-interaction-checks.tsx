@@ -260,6 +260,7 @@ test("actual App IconButton resets its retained scale as its sidebar becomes ina
     motionTokens,
     size,
     hitSlopForTarget,
+    useTierSizes: () => size,
     easing,
     c,
     cn,

@@ -37,7 +37,11 @@ export const appClasses = {
   workspaceCount: "text-ink-faint text-micro font-semibold",
   persistentSection: "gap-[2px] pb-xs",
   ordinarySection: "min-h-[40px]",
-  spaceHeader: "min-h-[32px] px-md gap-sm flex-row items-center rounded-[8px] mb-[2px]",
+  // min-h-space-header is 32dp at tablet density. The phone ThemeScope
+  // overrides the token to the 44dp floor (issue #24); a literal 32px
+  // would stay short on the compact tier.
+  spaceHeader:
+    "min-h-space-header px-md gap-sm flex-row items-center rounded-[8px] mb-[2px]",
   spaceHeaderTitle:
     "flex-1 text-ink-faint text-[11px] font-semibold tracking-[0.4px]",
   rowPressed: "bg-field-on-chrome",

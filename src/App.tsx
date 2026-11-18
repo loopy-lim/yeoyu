@@ -173,10 +173,16 @@ import { appClasses as c } from "@/chrome/appStyles";
 import { cn } from "@/ui/cn";
 import { cva } from "class-variance-authority";
 import { controlVariants, rowVariants } from "@/ui/variants";
-import { ThemeScope } from "@/ui/ThemeScope";
+import { ThemeScope, useTierSizes } from "@/ui/ThemeScope";
 import { withUniwind } from "uniwind";
 import { motion as motionTokens, phoneSize, resolveTheme, size, space } from "@/theme";
-import { hitSlopForTarget } from "@/touchTargets";
+import {
+  denseVerticalHitSlop,
+  hitSlopForTarget,
+  iconButtonHitSlop,
+  spaceChipHitSlop,
+  toolbarLayerHeight,
+} from "@/touchTargets";
 import { ThemeContext } from "@/themeContext";
 import { Favicon } from "@/components/Favicon";
 import {
@@ -285,6 +291,7 @@ const IconButton = ({
   active?: boolean;
 }) => {
   const sidebarActive = useSidebarActive();
+  const iconVisual = useTierSizes().iconButton;
   const [scale] = useState(() => new Animated.Value(1));
   const reduced = useReducedMotion();
   useEffect(() => {
@@ -323,7 +330,7 @@ const IconButton = ({
       accessibilityLabel={label}
       accessibilityState={{ disabled, selected: active }}
       disabled={disabled}
-      hitSlop={hitSlopForTarget(size.iconButton)}
+      hitSlop={hitSlopForTarget(iconVisual)}
       onPress={onPress}
       onPressIn={pressIn}
       onPressOut={pressOut}
@@ -4321,8 +4328,8 @@ function BrowserApp() {
       <ThemeContext.Provider value={theme}>
         {/* Phone tier (issue #24): a compact window scales the interactive
             size tokens to the touch-target floor; tablet windows keep the
-            default density. Little Arc renders in YeoyuWindow roots and
-            never enters this scope. */}
+            default density. In-app Little Arc renders inside this scope.
+            A detached Little Arc window keeps its own YeoyuWindow ThemeScope. */}
         <ThemeScope theme={theme} sizes={compactWindow ? phoneSize : undefined}>
           <SafeInsetsContext.Provider value={safeInsets}>
           <SafeAreaView
@@ -4927,9 +4934,10 @@ function BrowserApp() {
                                   accessibilityState={{
                                     selected: active,
                                   }}
-                                  // Dense strip: nominal target only
-                                  // (issue #24 dense-strip exception).
-                                  hitSlop={hitSlopForTarget(24)}
+                                  // 24dp chips, 2px apart: horizontal slop
+                                  // stays in the gap; vertical slop lifts
+                                  // the target (issue #24 dense-strip exception).
+                                  hitSlop={spaceChipHitSlop()}
                                   className={cn(
                                     c.spaceChip,
                                     active && c.spaceChipActive,
@@ -4966,7 +4974,7 @@ function BrowserApp() {
                         <SidebarPressable
                           accessibilityRole="button"
                           accessibilityLabel={tr("chrome.addSidebar")}
-                          hitSlop={hitSlopForTarget(size.iconButton)}
+                          hitSlop={iconButtonHitSlop(compactWindow)}
                           className={cn(
                             controlVariants({ size: "icon" }),
                             c.iconButton,
@@ -5040,7 +5048,7 @@ function BrowserApp() {
                               name: title,
                             })}
                             accessibilityState={{ selected: isActive }}
-                            hitSlop={hitSlopForTarget(36)}
+                            hitSlop={denseVerticalHitSlop()}
                             className={cn(
                               c.railItem,
                               isActive && c.railTabActive,
@@ -5099,7 +5107,7 @@ function BrowserApp() {
                           accessibilityLabel={tr("chrome.tabNamed", {
                             name: tabLabel(t),
                           })}
-                          hitSlop={hitSlopForTarget(36)}
+                          hitSlop={denseVerticalHitSlop()}
                           className={cn(
                             c.railItem,
                             splitPaneIds.includes(t.id) &&
@@ -5156,7 +5164,7 @@ function BrowserApp() {
                               accessibilityLabel={tr("chrome.favoriteLabel", {
                                 name: tabLabel(tab),
                               })}
-                              hitSlop={hitSlopForTarget(36)}
+                              hitSlop={denseVerticalHitSlop()}
                               className={cn(
                                 c.railItem,
                                 splitPaneIds.includes(tab.id) &&
@@ -5208,7 +5216,7 @@ function BrowserApp() {
                     <SidebarPressable
                       accessibilityRole="button"
                       accessibilityLabel={tr("chrome.openSpaces")}
-                      hitSlop={hitSlopForTarget(size.iconButton)}
+                      hitSlop={iconButtonHitSlop(compactWindow)}
                       className={cn(
                         controlVariants({ size: "icon" }),
                         c.iconButton,
@@ -5242,7 +5250,7 @@ function BrowserApp() {
                     <SidebarPressable
                       accessibilityRole="button"
                       accessibilityLabel={tr("chrome.newTab")}
-                      hitSlop={hitSlopForTarget(size.iconButton)}
+                      hitSlop={iconButtonHitSlop(compactWindow)}
                       className={cn(
                         controlVariants({ size: "icon" }),
                         c.iconButton,
@@ -5464,7 +5472,8 @@ function BrowserApp() {
                   style={{
                     height: sideP.interpolate({
                       inputRange: [0, 1],
-                      outputRange: [size.toolbar, 0],
+                      // Phone h-toolbar is 48; the tablet token (46) clips it.
+                      outputRange: [toolbarLayerHeight(compactWindow), 0],
                     }),
                     opacity: sideP.interpolate({
                       inputRange: [0, 1],

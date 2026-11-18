@@ -5,7 +5,14 @@ import { readFileSync } from "node:fs";
 import { URL } from "node:url";
 import { resolveTestClassNames } from "./uniwindTestHarness";
 import { phoneSize, size, themes, TOUCH_TARGET } from "../src/theme";
-import { failedTouchTargetGates, hitSlopForTarget } from "../src/touchTargets";
+import {
+  denseVerticalHitSlop,
+  failedTouchTargetGates,
+  hitSlopForTarget,
+  iconButtonHitSlop,
+  spaceChipHitSlop,
+  toolbarLayerHeight,
+} from "../src/touchTargets";
 import { appClasses } from "../src/chrome/appStyles";
 
 const { useResolveClassNames } = await import("uniwind");
@@ -23,6 +30,7 @@ const SCALED_TOKENS = [
   "toolbar",
   "address",
   "addressCompact",
+  "spaceHeader",
 ] as const;
 const UNSCALED_TOKENS = [
   "frame",
@@ -62,7 +70,38 @@ test("phone tier scales only interactive tokens and never below the floor", () =
 });
 
 test("every phone-tier primary control passes the touch-target gates", () => {
+  expect(denseVerticalHitSlop()).toEqual({
+    top: 1,
+    bottom: 1,
+    left: 6,
+    right: 6,
+  });
+  expect(spaceChipHitSlop()).toEqual({
+    top: 12,
+    bottom: 12,
+    left: 1,
+    right: 1,
+  });
+  expect(toolbarLayerHeight(true)).toBe(phoneSize.toolbar);
+  expect(toolbarLayerHeight(false)).toBe(size.toolbar);
+  expect(iconButtonHitSlop(true)).toBe(2);
+  expect(iconButtonHitSlop(false)).toBe(7);
   expect(failedTouchTargetGates()).toEqual([]);
+
+  const read = (relative: string) =>
+    readFileSync(new URL(relative, import.meta.url), "utf8");
+  const app = read("../src/App.tsx");
+  const bar = read("../src/components/PhoneBottomBar.tsx");
+  const collections = read("../src/components/SidebarCollections.tsx");
+  expect(app).toContain("toolbarLayerHeight(compactWindow)");
+  expect(app).not.toContain("outputRange: [size.toolbar, 0]");
+  expect(app).not.toContain("hitSlopForTarget(size.iconButton)");
+  expect(app).not.toContain("hitSlopForTarget(36)");
+  expect(app).not.toContain("hitSlopForTarget(24)");
+  expect(bar).not.toContain("hitSlopForTarget(size.iconButton)");
+  expect(collections).not.toContain("hitSlopForTarget(36)");
+  expect(appClasses.spaceHeader).toContain("min-h-space-header");
+  expect(appClasses.spaceHeader).not.toContain("min-h-[32px]");
 });
 
 test("token utilities keep the default tablet density (regression guard)", () => {
@@ -81,6 +120,9 @@ test("token utilities keep the default tablet density (regression guard)", () =>
   expect(resolveTestClassNames("h-address-compact")).toEqual({
     height: size.addressCompact,
   });
+  expect(resolveTestClassNames("min-h-space-header")).toEqual({
+    minHeight: size.spaceHeader,
+  });
 });
 
 test("scoped phone size variables retarget the same utilities at runtime", () => {
@@ -97,6 +139,9 @@ test("scoped phone size variables retarget the same utilities at runtime", () =>
   expect(
     resolveTestClassNames("h-rail-item", undefined, phoneVariables),
   ).toEqual({ height: phoneSize.railItem });
+  expect(
+    resolveTestClassNames("min-h-space-header", undefined, phoneVariables),
+  ).toEqual({ minHeight: phoneSize.spaceHeader });
   // Scoped overrides must not leak outside their ThemeScope subtree.
   expect(resolveTestClassNames("h-tab-row")).toEqual({ height: size.tabRow });
 });

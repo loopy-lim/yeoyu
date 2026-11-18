@@ -1,6 +1,15 @@
-import React, { useMemo, type ReactNode } from "react";
+import React, { createContext, useContext, useMemo, type ReactNode } from "react";
 import { ScopedVariables } from "uniwind";
-import { type SizeTokens, type Theme } from "@/theme";
+import { size, type SizeTokens, type Theme } from "@/theme";
+
+const TierSizesContext = createContext<SizeTokens>(size);
+
+/** Size tokens of the enclosing ThemeScope. A phone scope passes phoneSize;
+ *  every other scope keeps the tablet defaults, matching its CSS variables.
+ *  Hit slop reads this so it follows the painted control, not the tablet token. */
+export function useTierSizes(): SizeTokens {
+  return useContext(TierSizesContext);
+}
 
 /** Keep every resolved Theme role local to its RN root or nested Space. */
 export function themeToVariables(
@@ -53,5 +62,15 @@ export function ThemeScope({
     }),
     [theme, sizes]
   );
-  return <ScopedVariables variables={variables}>{children}</ScopedVariables>;
+  // A nested scope that omits `sizes` resets to the tablet tokens. Leaving
+  // the parent phone context in place would pair phone slop with tablet CSS.
+  const tier = useMemo<SizeTokens>(
+    () => (sizes ? { ...size, ...sizes } : size),
+    [sizes]
+  );
+  return (
+    <TierSizesContext.Provider value={tier}>
+      <ScopedVariables variables={variables}>{children}</ScopedVariables>
+    </TierSizesContext.Provider>
+  );
 }

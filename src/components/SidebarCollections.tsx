@@ -17,7 +17,7 @@ import type { SidebarSplit } from "@/sidebarPresentation";
 import { cva } from "class-variance-authority";
 import { cn } from "@/ui/cn";
 import { useI18n } from "@/i18nContext";
-import { hitSlopForTarget } from "@/touchTargets";
+import { denseVerticalHitSlop } from "@/touchTargets";
 import { Favicon } from "@/components/Favicon";
 
 const pageTitle = (page: { title: string; url: string }) =>
@@ -113,7 +113,7 @@ export function SplitSidebarItem({
       })}
       accessibilityHint={tr("collections.splitHint")}
       accessibilityState={{ selected: true, expanded: open }}
-      hitSlop={hitSlopForTarget(36)}
+      hitSlop={denseVerticalHitSlop()}
       onPress={({ nativeEvent }) =>
         onOpen({ x: nativeEvent.pageX, y: nativeEvent.pageY })
       }
@@ -204,7 +204,7 @@ export function SidebarFolderItem({
         containsFocused ? ", contains selected page" : ""
       }`}
       accessibilityState={{ expanded: open, selected: containsFocused }}
-      hitSlop={hitSlopForTarget(36)}
+      hitSlop={denseVerticalHitSlop()}
       className={cn(
         folderItemVariants({ collapsed, selected: containsFocused })
       )}

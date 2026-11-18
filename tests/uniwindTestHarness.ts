@@ -1,4 +1,5 @@
 import { mock } from "bun:test";
+import { realpathSync } from "node:fs";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -33,7 +34,11 @@ type Engine = {
 };
 
 const projectRoot = path.resolve(import.meta.dir, "..");
-const uniwindSrc = path.join(projectRoot, "node_modules/uniwind/src");
+// node_modules may be a symlink (worktree setup). Bun realpaths the importer,
+// so the `@/` rewrite has to use the same path or uniwind's internal imports miss.
+const uniwindSrc = realpathSync(
+  path.join(projectRoot, "node_modules/uniwind/src")
+);
 const temporaryRoot = await mkdtemp(path.join(tmpdir(), "yeoyu-uniwind-test-"));
 const entryFile = path.join(temporaryRoot, "entry.ts");
 await Bun.write(
