@@ -90,6 +90,7 @@ export const appClasses = {
   paneFullscreen: "border-0",
   canvasToolbar:
     "h-toolbar px-xxl flex-row items-center border-b-hairline-width border-b-hairline bg-surface-elevated",
+  canvasToolbarCompact: "px-md gap-sm",
   littleArcToolbar:
     "h-toolbar px-lg gap-lg flex-row items-center border-b-hairline-width border-b-hairline bg-surface-elevated",
   // h-[32px] is explicit: the h-control token does not exist in size (only
@@ -100,6 +101,7 @@ export const appClasses = {
   littleArcPromoteButton:
     "h-[32px] px-lg rounded-control bg-accent-strong flex-row items-center gap-xs border border-accent-strong active:opacity-90",
   compactNavigation: "flex-1 flex-row items-center gap-md",
+  compactNavigationCompact: "gap-sm",
   // Phone compact chrome (issue #19): the toolbar row docks at the screen
   // bottom, mirroring canvasToolbar with the hairline on its top edge. The
   // 48dp rail stays for tab/favorites/settings access.

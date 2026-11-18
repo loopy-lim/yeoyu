@@ -1,9 +1,29 @@
-import { phoneSize, size, TOUCH_TARGET } from "@/theme";
+import { phoneSize, size, space, TOUCH_TARGET } from "@/theme";
 
 // Touch-target policy runtime (issue #24). The baseline lives in
 // theme.ts (TOUCH_TARGET + phoneSize) so it stays next to the size tokens
 // it scales; this module derives the hitSlop compensation and the numeric
 // acceptance gates, mirroring src/themeGates.ts for geometry.
+
+export const COMPACT_TOOLBAR_VIEWPORT_WIDTH = 360;
+
+/**
+ * Horizontal budget remaining for the flex-1 AddressTrigger inside compact
+ * `canvasToolbar` at `viewportWidth` (48dp rail + 4dp content margin + 2dp
+ * card border + compact px-md padding + five 44dp icon buttons + five 4dp
+ * gaps). Keeping this at or above TOUCH_TARGET.floor prevents the address
+ * trigger from collapsing into an untappable sliver on 360-390dp phones.
+ */
+export function compactToolbarAddressWidth(
+  viewportWidth: number = COMPACT_TOOLBAR_VIEWPORT_WIDTH,
+  extensionCount: number = 0,
+): number {
+  const railColumn = size.rail + space.sm + 2;
+  const toolbarChrome = 2 * space.md + 5 * space.sm;
+  const iconButtons =
+    (5 + extensionCount) * phoneSize.iconButton + extensionCount * space.sm;
+  return viewportWidth - railColumn - toolbarChrome - iconButtons;
+}
 
 /**
  * Per-side hitSlop that lifts a `visual`-dp control to the 48dp target:
@@ -145,8 +165,11 @@ export const phoneTouchTargetGates = (): TouchTargetGate[] => [
   {
     name: "compact address trigger",
     visual: phoneSize.addressCompact,
-    hitSlop: hitSlopForTarget(size.addressCompact),
+    width: compactToolbarAddressWidth(),
+    hitSlop: hitSlopForTarget(phoneSize.addressCompact),
     cap: toolbarLayerHeight(true),
+    neighborGap: space.sm,
+    stackAxis: "horizontal",
   },
   {
     name: "rail tile (tab, favorite, pinned)",
@@ -226,6 +249,11 @@ export const failedTouchTargetGates = () => {
   if (tabletToolbar !== size.toolbar)
     failures.push(
       `top toolbar layer: tablet wrapper ${tabletToolbar}dp moved off ${size.toolbar}dp`,
+    );
+  const addressBudget = compactToolbarAddressWidth();
+  if (addressBudget < TOUCH_TARGET.floor)
+    failures.push(
+      `compact canvasToolbar: AddressTrigger gets ${addressBudget}dp at ${COMPACT_TOOLBAR_VIEWPORT_WIDTH}dp (below ${TOUCH_TARGET.floor}dp floor)`,
     );
   for (const gate of phoneTouchTargetGates()) {
     if (coversNeighbor(gate))

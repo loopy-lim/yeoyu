@@ -5327,7 +5327,7 @@ function BrowserApp() {
                     style={{
                       maxHeight: littleArcHeaderCollapsed.interpolate({
                         inputRange: [0, 1],
-                        outputRange: [58, 14],
+                        outputRange: [14 + toolbarLayerHeight(compactWindow), 14],
                       }),
                       overflow: "hidden",
                       backgroundColor: theme.surfaceElevated,
@@ -5373,7 +5373,7 @@ function BrowserApp() {
                           {
                             translateY: littleArcHeaderCollapsed.interpolate({
                               inputRange: [0, 1],
-                              outputRange: [0, -44],
+                              outputRange: [0, -toolbarLayerHeight(compactWindow)],
                             }),
                           },
                         ],
@@ -5482,11 +5482,17 @@ function BrowserApp() {
                   }}
                 >
                   <View
-                    className={c.canvasToolbar}
+                    className={cn(
+                      c.canvasToolbar,
+                      compactWindow && c.canvasToolbarCompact
+                    )}
                     {...toolbarTabSwipe.panHandlers}
                   >
                     <AnimatedView
-                      className={c.compactNavigation}
+                      className={cn(
+                        c.compactNavigation,
+                        compactWindow && c.compactNavigationCompact
+                      )}
                       style={{
                         transform: [{ translateX: toolbarTabSwipe.offsetX }],
                       }}
