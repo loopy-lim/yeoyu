@@ -16,11 +16,6 @@ export type ArchiveCommand =
 
 export type AsyncFrameCommand = ArchiveCommand | "browserSnapshot";
 
-// F-4: schema events are empty and yeoyu-core emits no progress producers, so
-// archive work has no event channel. Bounded one-shot import/export is
-// cancelled and timed out through InvokeOptions; add Rust event producers when
-// multi-second jobs (e.g. large sync) need streaming progress.
-
 let archiveAsyncEngine: ReactNativeEngine | null = null;
 
 async function archiveEngine(): Promise<ReactNativeEngine> {
@@ -54,6 +49,3 @@ export function bindAsyncFrameCommand<Command extends AsyncFrameCommand>(
   ) => invokeArchiveCommand(command, input, options);
   return bound as (typeof commands)[Command];
 }
-
-/** @deprecated use bindAsyncFrameCommand */
-export const bindArchiveCommand = bindAsyncFrameCommand;

@@ -93,5 +93,40 @@ assert.equal(errors.length,errorsBeforeCancel,"cancellation is a notice, not an 
 assert.match(notices.at(-1)!,/cancelled/i);
 assert.equal(renderer!.root.findAllByProps({accessibilityLabel:"Cancel data operation"}).length,0,"busy clears after cancellation");
 assert.equal(renderer!.root.findByProps({accessibilityLabel:"Export work archive"}).props.disabled,false);
+// Recovery-required failures must not be masked as a cancellation notice.
+notices.length = 0;
+errors.length = 0;
+controller.importArchive = (async (...options: unknown[]) => {
+  imports.push(options);
+  const signal = options.at(-1) as AbortSignal | undefined;
+  return new Promise<void>((_resolve, reject) => {
+    const fail = () =>
+      reject(
+        new Error(
+          "Import recovery needs an app restart. Further changes are paused to protect saved data.",
+        ),
+      );
+    signal?.addEventListener("abort", () => void fail());
+    if (signal?.aborted) fail();
+  });
+}) as BrowserController["importArchive"];
+await act(async()=>{
+  renderer!.update(
+    <BrowserDataPanel controller={controller} ui={defaultUiPreferences} hydrated
+      onPresentation={async()=>{}}
+      onError={(error)=>errors.push(error)} onNotice={(notice)=>notices.push(notice)} />);
+});
+file = JSON.stringify({format:"yeoyu-work",version:1,spaces:[{name:"한글"}],keyBindings:[{key:"N",ctrl:true,command:"tab.new"}]});
+await press("Import bookmarks or work archive");
+await press("Add imported data");
+await act(async()=>{alertButtons.find(b=>b.text==="Import")!.onPress!();});
+await act(async()=>{
+  const cancelImport = renderer!.root.findByProps({accessibilityLabel:"Cancel data operation"});
+  cancelImport.props.onPress();
+  await new Promise((r)=>setTimeout(r,50));
+});
+assert.equal(errors.length,1,"import recovery stays an error after user cancel");
+assert.match(errors[0],/recovery needs an app restart/i);
+assert.equal(notices.some((notice)=>/cancelled/i.test(notice)),false);
 await act(async()=>renderer!.unmount());
 console.log("Portable data preview, default-off settings, confirmation, failure and cancellation handling passed.");

@@ -21,6 +21,14 @@ import { SettingsGroup, settingsClasses } from "@/components/settings/kit";
 
 type PostCommitError = Error & { postCommit?: true };
 
+function isArchiveCancellation(error: unknown): boolean {
+  return (
+    error instanceof Error &&
+    ((error as Error & { code?: string }).code === "cancelled" ||
+      error.name === "AbortError")
+  );
+}
+
 type Preview = {
   json: string;
   counts: WorkArchivePreview;
@@ -122,7 +130,7 @@ export function BrowserDataPanel({
         // cancelled reports the cancellation, not the abandoned outcome.
         const postCommit =
           error instanceof Error && (error as PostCommitError).postCommit;
-        if (operation.signal.aborted && !postCommit)
+        if (operation.signal.aborted && isArchiveCancellation(error) && !postCommit)
           onNotice(tr("archive.cancelledNotice"));
         else
           onError(
