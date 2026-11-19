@@ -18,10 +18,14 @@
     "@rustra/generated-react-native": "workspace:*",
     "@rustra/react-native": "file:.deps/rustra-main/packages/react-native",
     "@rustra/types": "file:.deps/rustra-main/packages/types",
-    "@unikit-bridge/ui": "file:.deps/unikit",
+    "@unikit-bridge/ui": "0.4.1",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
+    "lucide-react": "1.75.0",
+    "lucide-react-native": "1.75.0",
     "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "react-hook-form": "7.92.0",
     "react-native": "0.87.1",
     "react-native-safe-area-context": "^5.10.1",
     "react-native-svg": "15.15.5",
@@ -51,7 +55,11 @@
     "node": ">= 26.0.0"
   },
   "overrides": {
-    "@rustra/types": "file:.deps/rustra-main/packages/types"
+    "@rustra/types": "file:.deps/rustra-main/packages/types",
+    "metro": "0.87.0",
+    "metro-cache": "0.87.0",
+    "metro-resolver": "0.87.0",
+    "metro-transform-worker": "0.87.0"
   },
   "codegenConfig": {
     "name": "BrowserSurfaceSpec",

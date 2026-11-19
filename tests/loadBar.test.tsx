@@ -50,9 +50,12 @@ function bar() {
 }
 
 test("progress uses the native driver and grows from the left without animating layout width", async () => {
+  const started = animations.length;
   await render({ loading: true, progress: 25 }, false);
   expect(
-    animations.every((animation) => animation.config.useNativeDriver)
+    animations
+      .slice(started)
+      .every((animation) => animation.config.useNativeDriver)
   ).toBe(true);
   expect(bar().fillStyle.width).toBe("100%");
   expect(bar().fillStyle.transformOrigin).toBe("0 0");
