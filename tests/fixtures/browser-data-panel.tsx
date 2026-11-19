@@ -2,6 +2,7 @@ import { mock } from "bun:test";
 import assert from "node:assert/strict";
 import React from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
+import type { Snapshot } from "../../generated/types";
 import type { BrowserController } from "../../src/BrowserController";
 import { defaultUiPreferences } from "../../src/uiPreferences";
 import { portablePresentation } from "../../src/workArchive";
@@ -99,7 +100,7 @@ errors.length = 0;
 controller.importArchive = (async (...options: unknown[]) => {
   imports.push(options);
   const signal = options.at(-1) as AbortSignal | undefined;
-  return new Promise<void>((_resolve, reject) => {
+  return new Promise<Snapshot>((_resolve, reject) => {
     const fail = () =>
       reject(
         new Error(
