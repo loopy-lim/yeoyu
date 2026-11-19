@@ -112,11 +112,16 @@ const engine = (await import(
     await build.outputs[0].text()
   ).toString("base64")}`
 )) as Engine;
-const config = engine.UniwindBundlerConfig.fromMetroConfig(
-  { cssEntryFile: "./global.css" },
-  "android"
-);
-const compiled = await engine.compileCSS(config);
+/** Compiles a css entry through the installed uniwind's real bundler pipeline. */
+export function compileEntryCss(cssEntryFile: string): Promise<string> {
+  const config = engine.UniwindBundlerConfig.fromMetroConfig(
+    { cssEntryFile },
+    "android"
+  );
+  return engine.compileCSS(config);
+}
+
+const compiled = await compileEntryCss("./global.css");
 engine.UniwindStore.reinit(
   new Function("rt", `return ${compiled}`) as (runtime: unknown) => unknown,
   ["light", "dark"]

@@ -1,0 +1,14 @@
+/* Upstream uniwind#709 reproduction fixture. 1.12.1 leaked the `:root`
+   parser state into sibling classes inside at-rule blocks, so `.after-root`
+   lost its declarations to the variables store (empty class style) — the
+   failure shape that killed release-build ScrollView gestures in yeoyu
+   (issue #30). Keep this file alone in its directory: compileTailwind scans
+   the entry's directory for candidate classes. */
+@layer utilities {
+  :root {
+    --root-width: 10px;
+  }
+  .after-root {
+    width: 42px;
+  }
+}

@@ -28,11 +28,11 @@
     "react-hook-form": "7.92.0",
     "react-native": "0.87.1",
     "react-native-safe-area-context": "^5.10.1",
-    "react-native-svg": "15.15.5",
+    "react-native-svg": "15.16.1",
     "react-native-url-polyfill": "4.0.0",
     "tailwind-merge": "3.7.0",
     "tailwindcss": "4.3.3",
-    "uniwind": "1.12.1"
+    "uniwind": "1.14.0"
   },
   "devDependencies": {
     "@babel/core": "^7.29.0",
