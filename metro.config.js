@@ -11,11 +11,18 @@ const contains = (root, file) => {
     !path.isAbsolute(relative)
   );
 };
-const config = mergeConfig(getDefaultConfig(__dirname), {
+const defaultConfig = getDefaultConfig(__dirname);
+const config = mergeConfig(defaultConfig, {
   watchFolders: [path.resolve(__dirname, ".deps/rustra-main/packages")],
   resolver: {
+    sourceExts: [...defaultConfig.resolver.sourceExts, "mjs"],
     nodeModulesPaths: [path.resolve(__dirname, "node_modules")],
-    blockList: [/[/\\](target|build|\.gradle|\.cxx)[/\\]/],
+    blockList: [
+      /[/\\]android[/\\]build[/\\]/,
+      /[/\\]native[/\\]target[/\\]/,
+      /[/\\]\.gradle[/\\]/,
+      /[/\\]\.cxx[/\\]/,
+    ],
     resolveRequest(context, name, platform) {
       const origin = context.originModulePath;
       // The installed compiler has its own @/ sources; keep that namespace
@@ -72,7 +79,11 @@ const config = mergeConfig(getDefaultConfig(__dirname), {
     },
   },
 });
-module.exports = withUniwindConfig(config, {
+const uniwindConfig = withUniwindConfig(config, {
   cssEntryFile: "./global.css",
   dtsFile: "./src/uniwind-types.d.ts",
 });
+if (!uniwindConfig.resolver.sourceExts.includes("mjs")) {
+  uniwindConfig.resolver.sourceExts.push("mjs");
+}
+module.exports = uniwindConfig;
