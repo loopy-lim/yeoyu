@@ -24,7 +24,7 @@
 실측으로 1.12.1과 1.12.2가 **이 리포의 global.css에 대해 바이트 동일한 컴파일 스토어**를 생성함을 확인했다(md5 일치, 210,150바이트). 네이티브 런타임 소스·nativeResolver도 두 버전이 동일하다(전체 패키지 diff에서 네이티브 경로 차이는 프로세서뿐이며 산출물에 영향 없음). 즉 순수 1.12.1→1.12.2 스왑만으로는 릴리스 번들이 달라질 수 없고, 종전 "1.12.2 css-processor가 스토어를 바꿔 제스처를 깨뜨린다"는 귀속은 성립하지 않는다.
 
 - bisect 커밋 792012e는 uniwind 단독이 아니라 Bun 1.4.3·Node 26·react 19.3·TypeScript 7 동기화 커밋이다.
-- "uniwind만 1.12.2로 올린 단독 재현"도 실제로는 `bun install`의 peer 재해석으로 metro 0.87.0→0.87.3급 패치 이동을 수반한다(이번 1.14.0 설치에서 동일 현상 관찰 — typecheck가 metro-resolver 타입 신규 필드로 실패). 당시 문서화된 "수용 빌드의 스테일 JS 번들 재사용" 함정과 겹치면, 단독 재현의 인과는 uniwind 코드가 아니라 번들/캐시 신선도였을 가능성이 크다.
+- "uniwind만 1.12.2로 올린 단독 재현"도 실제로는 `bun install`의 peer 재해석으로 metro 0.87.0→0.87.3급 패치 이동을 수반한다(초안 작성 시점의 1.14.0 설치에서 동일 현상 관찰 — typecheck가 metro-resolver 타입 신규 필드로 실패). 다만 리베이스 후 최종 스냅샷에서는 해당 없음: #48이 `package.json` overrides로 `metro*`를 0.87.0에 고정해 패치 이동과 typecheck 실패가 모두 발생하지 않았다. 당시 문서화된 "수용 빌드의 스테일 JS 번들 재사용" 함정과 겹치면, 단독 재현의 인과는 uniwind 코드가 아니라 번들/캐시 신선도였을 가능성이 크다.
 - 결론: 핀의 근거가 소실됐으므로 실측 재판정이 유일한 정당한 기준이다(아래 검증 참조).
 
 ## 회귀 방어 (tests/uniwindReleaseCompile.test.ts)
@@ -36,6 +36,8 @@
 
 판별력 실측: 1.12.1에서는 실패(`.after-root` 스타일시트 항목 소실), 1.12.2·1.14.0에서는 통과 — 고장 입력에서 확실히 붉어지는 재현 테스트다.
 
+증명 범위 경계: 이 회귀 테스트는 CSS 컴파일 스토어 계층(#709 `:root` 누수 + global.css 유틸 해석)의 자동 방어일 뿐, 릴리스 Android 런타임의 ScrollView 제스처 자체를 증명하지 않는다. 런타임 제스처는 V-5 수용 빌드 실측이 보완하며, 자동 테스트가 이를 대체하지 않는다.
+
 ## loadBar 테스트 간섭 종결 (rustra 문서 :50 유보)
 
 - 2026-11-02 문서는 "loadBar 간섭 실패는 rustra 채택과 무관 — 별도 원인 규명 필요(uniwind 1.12.2 또는 테스트 격리)"로 유보했다.
@@ -46,14 +48,14 @@
 
 | ID | 방법 | 환경 | 기대 결과 | 실제 | 판정 |
 |---|---|---|---|---|---|
-| V-1 | `bun test tests` 전체(1.14.0) | repo root | 749 pass | 749 pass / 0 fail | PASS |
-| V-2 | `bun run typecheck` | repo root | 무오류 | metro-resolver 0.87.3 신규 컨텍스트 필드 2개로 importAliases 스텁 실패 → 스텁에 `unstable_applyBrowserSpecAfterExports`·`unstable_resolveExportsFromPackageRoot` 추가 후 통과 | PASS(수정 후) |
+| V-1 | `bun test tests` 전체(1.14.0) | repo root | 759 pass | 759 pass / 0 fail (100파일) | PASS |
+| V-2 | `bun run typecheck` | repo root | 무오류 | #48의 `metro*` 0.87.0 overrides로 metro-resolver가 고정되어 패치 이동 없음 — `tests/importAliases.test.ts` 스텁은 무수정, typecheck exit 0 | PASS |
 | V-3 | `node scripts/css-compile-check.mjs`, `bun run codegen --check` | repo root | 게이트 통과 | 25 유틸리티 통과 / codegen check 통과 | PASS |
 | V-4 | 재현 테스트 판별력: 노드 모듈 스왑(1.12.1 ↔ 1.14.0) | repo root | 1.12.1 실패·1.14.0 통과 | 1.12.1에서 `.after-root` 소실로 실패, 1.14.0 통과 | PASS |
 | V-5 | x86_64 수용 빌드(스테일 번들 정리 후) + 에뮬레이터 설정 다이얼로그·사이드바 스크롤 실측 | emulator-5556 (yeoyu-tab) | 스와이프 스크롤 동작 | Acceptance(`ll3.kr.yeoyu.acceptance.issue30`) 포그라운드 확인 후 설정 Appearance 패널 스와이프 스크롤(`COLOR MODE`→`DISPLAY`·`Restore default sidebar and frame` 노출) 및 38+탭 오버플로 사이드바 양방향 스와이프 스크롤 동작 실측(uniwind `1.14.0` 핀 해제 + `react-native-svg` `15.16.1` 유지) | PASS |
-| V-6 | `./scripts/check.sh` 전체 | repo root | 모두 통과 | `cargo fmt/test(81 pass)/clippy`, `bun test tests`(99파일 752 pass), `split-geometry`, `unittest`(75 pass), `contrast-check`, `css-compile-check`(25 유틸), `typecheck`, `codegen --check` 모두 통과 (exit 0) | PASS |
+| V-6 | `./scripts/check.sh` 전체 | repo root | 모두 통과 | `cargo fmt/test(81 pass)/clippy`, `bun test tests`(100파일 759 pass), `split-geometry`, `unittest`(75 pass), `contrast-check`, `css-compile-check`(25 유틸), `typecheck`, `codegen --check` 모두 통과 (exit 0) | PASS |
 
 ## 잔여 리스크
 
 - 물리 태블릿(ARM64) 수용 빌드 재검증은 이번 재검증 범위에서 분리(이전에도 x86 에뮬레이터로 bisect하고 ARM은 별도 확인했다). 필요 시 dist 산출 APK로 후속 실측.
-- `@unikit-bridge/ui`의 중첩 uniwind(1.13.2)는 metro `nodeModulesPaths` 단일 룩업으로 번들에 섞이지 않으나(현행과 동일 구조), unikit 측 devDependencies 정렬 시 잠재적 이중 스토어 위험은 남는다 — 별도 이슈 감.
+- #48의 npm 기반 `@unikit-bridge/ui`(0.4.1) 전환 후 중첩 uniwind 설치는 부재하다(`node_modules/@unikit-bridge/ui/node_modules` 없음) — 번들은 루트 uniwind 1.14.0 단일 스토어로만 구성된다. 다만 unikit 측 의존성 정렬 시점에 uniwind 버전이 엇갈리면 이중 스토어 위험이 다시 생길 수 있으므로 별도 이슈로 감시한다.
