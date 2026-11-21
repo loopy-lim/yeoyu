@@ -749,6 +749,8 @@ function BrowserApp() {
   const tabListBounds = useRef<Bounds | null>(null);
   const ordinarySectionRef = useRef<React.ElementRef<typeof View>>(null);
   const ordinarySectionBounds = useRef<Bounds | null>(null);
+  const panelSectionRef = useRef<React.ElementRef<typeof View>>(null);
+  const panelSectionBounds = useRef<Bounds | null>(null);
   const sidebarRowRefs = useRef(
     new Map<string, React.ElementRef<typeof View>>()
   );
@@ -3502,6 +3504,7 @@ function BrowserApp() {
     pinnedSectionBounds.current = null;
     tabListBounds.current = null;
     ordinarySectionBounds.current = null;
+    panelSectionBounds.current = null;
     sidebarRowBounds.current.clear();
   };
   const measurePanes = () => {
@@ -3536,6 +3539,9 @@ function BrowserApp() {
     });
     measureSidebar(ordinarySectionRef, (bounds) => {
       ordinarySectionBounds.current = bounds;
+    });
+    measureSidebar(panelSectionRef, (bounds) => {
+      panelSectionBounds.current = bounds;
     });
     sidebarRowRefs.current.forEach((row, id) => {
       row.measureInWindow((x, y, width, height) => {
@@ -3597,6 +3603,16 @@ function BrowserApp() {
       : null;
     setDrag((current) => {
       if (!current) return current;
+      // Panels only ever reorder their own section; pane zones and the
+      // favorites row must not light up under a panel drag.
+      if (
+        !current.tabId.startsWith("bookmark:") &&
+        state?.tabs.find((tab) => tab.id === current.tabId)?.panel
+      ) {
+        return current.zone === null && current.reorderIndex === null
+          ? current
+          : { ...current, zone: null, reorderIndex: null };
+      }
       const inFavoritesRow =
         sidebarDropActive.current && within(x, y, favoritesRowBounds.current);
       if (inFavoritesRow) {
@@ -3641,7 +3657,43 @@ function BrowserApp() {
         inTabList &&
         !!ordinarySectionBounds.current &&
         y >= ordinarySectionBounds.current.y;
-      if (draggedTab && state && (inFavorites || inPinned || inOrdinary)) {
+      if (draggedTab?.panel && state) {
+        // Panels never split a pane or join the tab sections — dropping
+        // inside their own section reorders the panel list, anything else
+        // cancels. Indices are absolute in the tabs vec, so the order
+        // persists through restart and the session pipeline like tab order.
+        if (
+          sidebarDropActive.current &&
+          within(x, y, panelSectionBounds.current)
+        ) {
+          const rows = state.tabs
+            .filter(
+              (tab) =>
+                tab.panel && tab.workspaceId === state.activeWorkspaceId
+            )
+            .flatMap((tab) => {
+              const bounds = sidebarRowBounds.current.get(tab.id);
+              return bounds
+                ? [{ id: tab.id, y: bounds.y, height: bounds.height }]
+                : [];
+            });
+          const index = sidebarTabMoveIndex(
+            state.tabs,
+            draggedTab.id,
+            y,
+            rows
+          );
+          const from = state.tabs.findIndex((tab) => tab.id === draggedTab.id);
+          if (index !== null && index !== from) {
+            haptic("click");
+            run(controller.moveTab(draggedTab.id, index));
+          }
+        }
+      } else if (
+        draggedTab &&
+        state &&
+        (inFavorites || inPinned || inOrdinary)
+      ) {
         const region = inFavorites
           ? "favorites"
           : inPinned
@@ -4148,23 +4200,32 @@ function BrowserApp() {
       </View>
     );
   };
-  // Panel rows share the tab row anatomy but never drag (their place is the
-  // sidebar itself) and select the panel view instead of activating a tab.
+  // Panel rows share the tab row anatomy: a tap selects the panel view, a
+  // long-press-then-move drag reorders the panel list (dropped inside the
+  // section only — panels never activate, split, or join the tab sections).
   const renderPanelRow = (tab: NonNullable<typeof state>["tabs"][number]) => {
     const selected = ui.sidebarPanelId === tab.id;
     return (
       <View
         key={tab.id}
+        ref={(view) => {
+          if (view) sidebarRowRefs.current.set(tab.id, view);
+          else sidebarRowRefs.current.delete(tab.id);
+        }}
         className={cn(rowVariants({ density: "tab", selected }), c.tab)}
       >
-        <SidebarPressable
-          accessibilityRole="button"
+        <DragSource
+          reducedMotion={reducedMotion}
           accessibilityLabel={tr("chrome.panelLabel", {
             name: tabLabel(tab),
           })}
           accessibilityState={{ selected }}
           className={c.tabDrag}
           onPress={() => openPanelView(tab.id)}
+          onDragStart={(x, y) => beginDrag(tab.id, tabLabel(tab), x, y)}
+          onDragMove={moveDrag}
+          onDragRelease={finishDrag}
+          onDragCancel={cancelDrag}
         >
           <View className={c.tabFavicon}>
             <Favicon
@@ -4191,7 +4252,7 @@ function BrowserApp() {
               name="private"
             />
           )}
-        </SidebarPressable>
+        </DragSource>
         <SidebarPressable
           accessibilityRole="button"
           accessibilityLabel={tr("chrome.closePanel", {
@@ -5180,7 +5241,10 @@ function BrowserApp() {
                               renderSidebarTab(tab)
                             )}
                             {sidebar.panelTabs.length > 0 && (
-                              <View className={c.privateSection}>
+                              <View
+                                ref={panelSectionRef}
+                                className={c.privateSection}
+                              >
                                 <View className={c.privateHeader}>
                                   <ChromeIcon
                                     className={cn(

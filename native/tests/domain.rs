@@ -2076,6 +2076,69 @@ fn panel_survives_restart_while_private_panels_do_not() {
 }
 
 #[test]
+fn move_tab_reorders_panels_and_survives_restart() {
+    let mut state = BrowserState::default();
+    let active = state
+        .create_tab("workspace-1", "https://example.com/start")
+        .unwrap()
+        .active_tab_id
+        .unwrap();
+    for url in [
+        "https://a.example",
+        "https://b.example",
+        "https://c.example",
+    ] {
+        state.create_panel_tab("workspace-1", url, false).unwrap();
+    }
+    let first = state
+        .snapshot()
+        .tabs
+        .iter()
+        .find(|tab| tab.panel)
+        .unwrap()
+        .id
+        .clone();
+    // A panel dropped at the end of the section is a post-removal index,
+    // exactly like the ordinary tab drop the sidebar already issues.
+    let moved = state.move_tab(&first, 3).unwrap();
+    let urls: Vec<_> = moved
+        .tabs
+        .iter()
+        .filter(|tab| tab.panel)
+        .map(|tab| tab.url.as_str())
+        .collect();
+    assert_eq!(
+        urls,
+        [
+            "https://b.example",
+            "https://c.example",
+            "https://a.example"
+        ]
+    );
+    // Reordering a panel leaves the working set alone.
+    assert_eq!(moved.active_tab_id, Some(active));
+    // The reordered panel list is what a restart restores.
+    let saved = serde_json::to_value(state.snapshot()).unwrap();
+    let mut restored_state = BrowserState::default();
+    restored_state.restore(&saved.to_string()).unwrap();
+    let restored_snapshot = restored_state.snapshot();
+    let restored: Vec<_> = restored_snapshot
+        .tabs
+        .iter()
+        .filter(|tab| tab.panel)
+        .map(|tab| tab.url.as_str())
+        .collect();
+    assert_eq!(
+        restored,
+        [
+            "https://b.example",
+            "https://c.example",
+            "https://a.example"
+        ]
+    );
+}
+
+#[test]
 fn restore_repairs_active_pointers_that_target_panels() {
     let mut state = BrowserState::default();
     let id = state
