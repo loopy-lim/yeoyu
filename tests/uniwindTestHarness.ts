@@ -1,4 +1,5 @@
 import { mock } from "bun:test";
+import { realpathSync } from "node:fs";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -33,7 +34,11 @@ type Engine = {
 };
 
 const projectRoot = path.resolve(import.meta.dir, "..");
-const uniwindSrc = path.join(projectRoot, "node_modules/uniwind/src");
+// node_modules may be a symlink (worktree setup). Bun realpaths the importer,
+// so the `@/` rewrite has to use the same path or uniwind's internal imports miss.
+const uniwindSrc = realpathSync(
+  path.join(projectRoot, "node_modules/uniwind/src")
+);
 const temporaryRoot = await mkdtemp(path.join(tmpdir(), "yeoyu-uniwind-test-"));
 const entryFile = path.join(temporaryRoot, "entry.ts");
 await Bun.write(
@@ -107,11 +112,16 @@ const engine = (await import(
     await build.outputs[0].text()
   ).toString("base64")}`
 )) as Engine;
-const config = engine.UniwindBundlerConfig.fromMetroConfig(
-  { cssEntryFile: "./global.css" },
-  "android"
-);
-const compiled = await engine.compileCSS(config);
+/** Compiles a css entry through the installed uniwind's real bundler pipeline. */
+export function compileEntryCss(cssEntryFile: string): Promise<string> {
+  const config = engine.UniwindBundlerConfig.fromMetroConfig(
+    { cssEntryFile },
+    "android"
+  );
+  return engine.compileCSS(config);
+}
+
+const compiled = await compileEntryCss("./global.css");
 engine.UniwindStore.reinit(
   new Function("rt", `return ${compiled}`) as (runtime: unknown) => unknown,
   ["light", "dark"]
@@ -123,9 +133,10 @@ const emptyContext: Context = { scopedTheme: null, rtl: null, variables: null };
 /** Uses the actual installed native store against the actual compiled CSS. */
 export function resolveTestClassNames(
   className: string | undefined,
-  theme?: Theme
+  theme?: Theme,
+  extraVariables?: Variables
 ): Record<string, unknown> {
-  const variables =
+  const themeVariables =
     theme &&
     Object.fromEntries(
       Object.entries(theme).map(([key, value]) => [
@@ -136,7 +147,8 @@ export function resolveTestClassNames(
         value,
       ])
     );
-  const context = variables
+  const variables = { ...themeVariables, ...extraVariables };
+  const context = Object.keys(variables).length
     ? engine.buildScopedVariablesContext(emptyContext, variables)
     : emptyContext;
   return engine.UniwindStore.getStyles(

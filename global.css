@@ -2,7 +2,10 @@
 @import "uniwind";
 
 /* src/theme.ts remains the palette/token source. These defaults let Metro
-   compile semantic utilities; ThemeScope supplies each root's resolved colors. */
+   compile semantic utilities; ThemeScope supplies each root's resolved colors.
+   Interactive --spacing-* tokens are static tablet density: the phone tier
+   (compact window) overrides them at runtime via ThemeScope's sizes prop
+   (theme.ts phoneSize, issue #24) — do not fork these values per form factor. */
 @theme static {
   --color-chrome: #e8e8ec;
   --color-sidebar: #ebebf0;
@@ -55,7 +58,7 @@
   --spacing-row: 34px;
   --spacing-tab-row: 36px;
   --spacing-workspace-row: 32px;
-  --spacing-rail-item: 38px;
+  --spacing-rail-item: 36px;
   --spacing-tile: 40px;
   --spacing-favorite: 38px;
   --spacing-icon-button: 34px;
@@ -66,6 +69,7 @@
   --spacing-input: 48px;
   --spacing-action-row: 48px;
   --spacing-bookmark-row: 48px;
+  --spacing-space-header: 32px;
 
   --radius-chip: 5px;
   --radius-control: 9px;

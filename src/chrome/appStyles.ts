@@ -37,7 +37,11 @@ export const appClasses = {
   workspaceCount: "text-ink-faint text-micro font-semibold",
   persistentSection: "gap-[2px] pb-xs",
   ordinarySection: "min-h-[40px]",
-  spaceHeader: "min-h-[32px] px-md gap-sm flex-row items-center rounded-[8px] mb-[2px]",
+  // min-h-space-header is 32dp at tablet density. The phone ThemeScope
+  // overrides the token to the 44dp floor (issue #24); a literal 32px
+  // would stay short on the compact tier.
+  spaceHeader:
+    "min-h-space-header px-md gap-sm flex-row items-center rounded-[8px] mb-[2px]",
   spaceHeaderTitle:
     "flex-1 text-ink-faint text-[11px] font-semibold tracking-[0.4px]",
   rowPressed: "bg-field-on-chrome",
@@ -86,16 +90,21 @@ export const appClasses = {
   paneFullscreen: "border-0",
   canvasToolbar:
     "h-toolbar px-xxl flex-row items-center border-b-hairline-width border-b-hairline bg-surface-elevated",
+  canvasToolbarCompact: "px-md gap-sm",
   littleArcToolbar:
     "h-toolbar px-lg gap-lg flex-row items-center border-b-hairline-width border-b-hairline bg-surface-elevated",
+  littleArcToolbarCompact: "px-sm gap-sm",
   // h-[32px] is explicit: the h-control token does not exist in size (only
   // radius), so the class silently no-ops and the button hugs its content
-  // (~20dp). 32dp matches IconButton height inside the 44dp toolbar;
-  // hitSlop in App.tsx widens the target horizontally — vertically the
-  // toolbar row caps it at 44dp.
+  // (~20dp). Little Arc windows render outside the main app root, so they
+  // keep their own density; hitSlop in App.tsx widens the target past the
+  // 32dp visual — vertically the toolbar row bounds the effective target.
   littleArcPromoteButton:
     "h-[32px] px-lg rounded-control bg-accent-strong flex-row items-center gap-xs border border-accent-strong active:opacity-90",
+  littleArcActions: "flex-row items-center gap-lg",
+  littleArcActionsCompact: "gap-sm",
   compactNavigation: "flex-1 flex-row items-center gap-md",
+  compactNavigationCompact: "gap-sm",
   // Phone compact chrome (issue #19): the toolbar row docks at the screen
   // bottom, mirroring canvasToolbar with the hairline on its top edge. The
   // 48dp rail stays for tab/favorites/settings access.
@@ -109,8 +118,10 @@ export const appClasses = {
   tabSwipeBadgeLabel: "text-ink text-small font-semibold",
   phoneHybridTabs: "flex-1",
   phoneHybridTabsContent: "flex-row items-center gap-sm pl-sm pr-md",
+  // Hybrid chips only render in the compact window, so h-tab-row resolves
+  // at the phone tier (44dp, issue #24); the tablet default never applies.
   phoneHybridTab:
-    "h-[40px] min-w-[44px] max-w-[128px] px-md rounded-control flex-row items-center gap-sm border border-transparent active:opacity-pressed",
+    "h-tab-row min-w-[44px] max-w-[128px] px-md rounded-control flex-row items-center gap-sm border border-transparent active:opacity-pressed",
   phoneHybridTabActive: "bg-pill border-hairline-on-chrome",
   phoneHybridTabLabel: "text-ink text-small font-semibold",
   panes: "flex-1 flex-row bg-canvas",
@@ -138,8 +149,11 @@ export const appClasses = {
   surface: "flex-1",
   paneContent: "flex-1",
   findOverlay: "absolute inset-0 z-[30]",
-  newTabOverlay: "absolute inset-0 items-center justify-center bg-surface",
+  newTabOverlay: "absolute inset-0 items-center justify-center bg-canvas",
   newTabPanel: "w-full max-w-[460px] px-xxl items-center gap-xxxl",
+  newTabClockTime:
+    "text-ink text-[40px] leading-[46px] font-bold tracking-[-0.5px]",
+  newTabClockDate: "text-ink-muted text-body",
   newTabHeading:
     "self-start text-ink-faint text-small font-bold tracking-[0.8px] uppercase",
   newTabGrid: "flex-row flex-wrap gap-xxl",
@@ -147,6 +161,12 @@ export const appClasses = {
   newTabTileIcon:
     "w-[48px] h-[48px] rounded-tile items-center justify-center bg-sunken border border-hairline",
   newTabTileLabel: "text-ink-muted text-small font-semibold",
+  newTabTileBadge:
+    "absolute top-[-6px] right-[-6px] w-[20px] h-[20px] rounded-full items-center justify-center bg-surface-elevated border border-hairline",
+  newTabEditToggle: "px-sm py-xs rounded-control active:opacity-pressed",
+  newTabEditToggleLabel: "text-ink-muted text-small font-semibold",
+  newTabForm: "self-stretch gap-md",
+  newTabFormError: "text-error-ink text-small",
   newTabHint: "text-ink-faint text-body text-center",
   quickOpenDialog: "w-[90%] max-w-[560px] gap-xl",
   quickOpenRow: "flex-row gap-xl py-sm",
@@ -157,7 +177,11 @@ export const appClasses = {
   quickOpenHint: "text-ink-faint text-body",
   railContent: "items-center gap-[3px] pb-lg",
   railHeader: "items-center gap-[3px]",
-  railItem: "size-[36px] rounded-[9px] items-center justify-center border border-transparent",
+  // Height rides the rail-item token so the phone tier (issue #24) can lift
+  // the stacked tiles to the 44dp touch floor; width stays a 36dp visual
+  // centered in the 48dp rail (40dp inner column after px-sm).
+  railItem:
+    "w-[36px] h-rail-item rounded-[9px] items-center justify-center border border-transparent",
   railIcon:
     "size-[20px] items-center justify-center",
   railInitial: "text-ink-muted text-small font-extrabold",

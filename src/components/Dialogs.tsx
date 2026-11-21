@@ -30,7 +30,9 @@ import { permissionSupportsOnce } from "@/permissionRequests";
 import { useI18n } from "@/i18nContext";
 
 const spaceRowVariants = cva(
-  "min-h-[40px] px-lg rounded-control flex-row items-center gap-md border border-transparent",
+  // 44dp floor (issue #24): rows are the primary Space switching target in
+  // the phone bottom sheet; the centered dialog shares the same geometry.
+  "min-h-[44px] px-lg rounded-control flex-row items-center gap-md border border-transparent",
   {
     variants: {
       selected: {
@@ -139,7 +141,7 @@ function NewSpaceRow({ onPress }: { onPress: () => void }) {
       accessibilityRole="button"
       accessibilityLabel={tr("dialog.newSpace")}
       className={cn(
-        "min-h-[38px] px-lg rounded-control flex-row items-center gap-md bg-transparent active:bg-sunken"
+        "min-h-[44px] px-lg rounded-control flex-row items-center gap-md bg-transparent active:bg-sunken"
       )}
       onPress={onPress}
     >

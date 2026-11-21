@@ -245,8 +245,9 @@ test("ContextPressGuard resets on inactive even when its existing menu remains o
 test("actual App IconButton resets its retained scale as its sidebar becomes inactive", async () => {
   const { withUniwind } = await import("uniwind");
   const { loadAppIconButton } = require("./loadNativePressable.cjs");
-  const { motion: motionTokens } = await import("../../src/theme");
+  const { motion: motionTokens, size } = await import("../../src/theme");
   const { easing } = await import("../../src/chrome/motion");
+  const { hitSlopForTarget } = await import("../../src/touchTargets");
   const IconButton = loadAppIconButton({
     React,
     useState: React.useState,
@@ -257,6 +258,9 @@ test("actual App IconButton resets its retained scale as its sidebar becomes ina
     useSidebarActive,
     SidebarPressable,
     motionTokens,
+    size,
+    hitSlopForTarget,
+    useTierSizes: () => size,
     easing,
     c,
     cn,

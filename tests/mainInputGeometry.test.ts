@@ -10,6 +10,14 @@ const ast = parse(source, {
   sourceType: "module",
   plugins: ["typescript", "jsx"],
 });
+const newTabSource = readFileSync(
+  new URL("../src/components/NewTabPage.tsx", import.meta.url),
+  "utf8"
+);
+const newTabAst = parse(newTabSource, {
+  sourceType: "module",
+  plugins: ["typescript", "jsx"],
+});
 const overlaySource = readFileSync(
   new URL("../src/chrome/Overlay.tsx", import.meta.url),
   "utf8"
@@ -27,11 +35,6 @@ let sheetInsets: string[] = [],
 const addressOpenBodies: Record<string, string> = {};
 function visit(node: any) {
   if (!node || typeof node !== "object") return;
-  if (
-    node.type === "VariableDeclarator" &&
-    node.id?.name === "newTabKeyboardInset"
-  )
-    newTabInset = source.slice(node.init.start, node.init.end);
   if (node.type === "VariableDeclarator" && node.id?.name === "closeQuickOpen")
     closeAddressSheet = source.slice(node.init.start, node.init.end);
   if (
@@ -76,6 +79,20 @@ function visit(node: any) {
   }
 }
 visit(ast);
+function visitNewTab(node: any) {
+  if (!node || typeof node !== "object") return;
+  if (
+    node.type === "VariableDeclarator" &&
+    node.id?.name === "newTabKeyboardInset" &&
+    node.init
+  )
+    newTabInset = newTabSource.slice(node.init.start, node.init.end);
+  for (const value of Object.values(node)) {
+    if (Array.isArray(value)) value.forEach(visitNewTab);
+    else if (value && typeof value === "object") visitNewTab(value);
+  }
+}
+visitNewTab(newTabAst);
 function visitOverlay(node: any) {
   if (!node || typeof node !== "object") return;
   if (

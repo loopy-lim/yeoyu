@@ -547,6 +547,8 @@ const en = {
   "archive.appearanceFailed":
     "Your data was imported. Appearance settings could not be saved; current appearance was kept.",
   "archive.imported": "Imported data was added in new Spaces.",
+  "archive.cancelOperation": "Cancel data operation",
+  "archive.cancelledNotice": "The data operation was cancelled.",
   "archive.title": "YOUR DATA",
   "archive.help":
     "Export bookmarks or a work archive of ordinary Spaces, tabs, pins, Favorites and shortcuts. Login sessions and unfinished forms are not included.",
@@ -772,10 +774,19 @@ const en = {
   "chrome.addFolder": "Add folder",
   "chrome.saveName": "Save name",
   "chrome.backBookmarks": "Back to all bookmarks",
-  "chrome.favorites": "FAVORITES",
   "chrome.favoriteLabel": "Favorite {{name}}",
-  "chrome.newTabHint":
-    "Search or enter a link. Add favorite sites from a tab’s menu.",
+  "chrome.shortcuts": "SHORTCUTS",
+  "chrome.shortcutEdit": "Edit",
+  "chrome.shortcutDone": "Done",
+  "chrome.addShortcut": "Add shortcut",
+  "chrome.shortcutUrl": "Address",
+  "chrome.shortcutTitle": "Name (optional)",
+  "chrome.shortcutUrlInvalid": "Enter a valid http(s) address.",
+  "chrome.shortcutDuplicate": "A shortcut for this address already exists.",
+  "chrome.openShortcut": "Open {{name}}",
+  "chrome.removeShortcut": "Remove {{name}}",
+  "chrome.newTabShortcutHint":
+    "Pin the sites you use for one-tap access from the new tab.",
   "chrome.startupError": "Browser settings could not be read",
   "chrome.opening": "Opening browser…",
   "window.preferencesFailed": "This window could not be loaded. Retry to open it.",
@@ -1476,6 +1487,8 @@ const ko: { [K in keyof typeof en]: string } = {
   "archive.appearanceFailed":
     "데이터는 가져왔지만 화면 설정을 저장하지 못했습니다. 현재 화면 설정을 유지했습니다.",
   "archive.imported": "가져온 데이터를 새 Space에 추가했습니다.",
+  "archive.cancelOperation": "데이터 작업 취소",
+  "archive.cancelledNotice": "데이터 작업을 취소했습니다.",
   "archive.title": "내 데이터",
   "archive.help":
     "일반 Space, 탭, 고정 탭, 즐겨찾기, 단축키의 북마크나 작업 보관 파일을 내보냅니다. 로그인 세션과 작성 중인 양식은 포함되지 않습니다.",
@@ -1702,10 +1715,19 @@ const ko: { [K in keyof typeof en]: string } = {
   "chrome.addFolder": "폴더 추가",
   "chrome.saveName": "이름 저장",
   "chrome.backBookmarks": "모든 북마크로 돌아가기",
-  "chrome.favorites": "즐겨찾기",
   "chrome.favoriteLabel": "즐겨찾기 {{name}}",
-  "chrome.newTabHint":
-    "검색하거나 링크를 입력하세요. 탭 메뉴에서 즐겨찾기를 추가할 수 있습니다.",
+  "chrome.shortcuts": "바로가기",
+  "chrome.shortcutEdit": "편집",
+  "chrome.shortcutDone": "완료",
+  "chrome.addShortcut": "바로가기 추가",
+  "chrome.shortcutUrl": "주소",
+  "chrome.shortcutTitle": "이름 (선택)",
+  "chrome.shortcutUrlInvalid": "올바른 http(s) 주소를 입력하세요.",
+  "chrome.shortcutDuplicate": "이 주소의 바로가기가 이미 있습니다.",
+  "chrome.openShortcut": "{{name}} 열기",
+  "chrome.removeShortcut": "{{name}} 제거",
+  "chrome.newTabShortcutHint":
+    "자주 쓰는 사이트를 고정해 새 탭에서 한 번에 열어보세요.",
   "chrome.startupError": "브라우저 설정을 읽지 못했습니다",
   "chrome.opening": "브라우저를 여는 중…",
   "window.preferencesFailed": "창을 불러오지 못했습니다. 다시 시도해 주세요.",
