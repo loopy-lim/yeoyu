@@ -9,6 +9,7 @@ import React, {
 import {
   Animated,
   PanResponder,
+  type AccessibilityState,
   type GestureResponderEvent,
   type PointerEvent,
   type StyleProp,
@@ -32,6 +33,7 @@ type ContactEvent = {
 type Phase = "idle" | "pending" | "armed" | "dragging" | "cancelled";
 interface Props {
   accessibilityLabel: string;
+  accessibilityState?: AccessibilityState;
   children: React.ReactNode;
   style?: StyleProp<ViewStyle>;
   className?: string;
@@ -441,6 +443,7 @@ export function DragSource(props: Props) {
       accessible
       accessibilityRole="button"
       accessibilityLabel={props.accessibilityLabel}
+      accessibilityState={props.accessibilityState}
       hitSlop={props.hitSlop}
       onPointerDown={pointerDown}
       onPointerMove={pointerMove}

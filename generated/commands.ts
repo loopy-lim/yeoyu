@@ -85,7 +85,7 @@ export const tabActivate = createGeneratedFields1<TabIdInput, Snapshot>(9, 'tabA
 export const tabClose = createGeneratedFields1<TabIdInput, Snapshot>(10, 'tabClose', "tabId", 'tabClose');
 
 export function tabCreate(input: TabCreateInput, options?: InvokeOptions): Promise<Snapshot> {
-  return invokeGeneratedFields3<Snapshot>(7, 'tabCreate', input, input["workspaceId"], input["url"], input["private"], options);
+  return invokeGenerated<Snapshot>(7, 'tabCreate', input, options);
 }
 tabCreate.commandId = 'tabCreate';
 

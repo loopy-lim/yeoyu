@@ -200,6 +200,11 @@
               "default": false,
               "type": "boolean"
             },
+            "panel": {
+              "description": "Sidebar web panels render this tab in the sidebar instead of the content area; a panel never becomes the active tab. Older snapshots restore without the field as ordinary tabs.",
+              "default": false,
+              "type": "boolean"
+            },
             "private": {
               "description": "Private tabs run engine-private sessions and never persist: the controller strips them from saved copies and restore drops them.",
               "default": false,
@@ -560,6 +565,11 @@
               "default": false,
               "type": "boolean"
             },
+            "panel": {
+              "description": "Sidebar web panels render this tab in the sidebar instead of the content area; a panel never becomes the active tab. Older snapshots restore without the field as ordinary tabs.",
+              "default": false,
+              "type": "boolean"
+            },
             "private": {
               "description": "Private tabs run engine-private sessions and never persist: the controller strips them from saved copies and restore drops them.",
               "default": false,
@@ -912,6 +922,11 @@
             },
             "pinned": {
               "description": "Pinned tabs keep their own section under favorites, per space.",
+              "default": false,
+              "type": "boolean"
+            },
+            "panel": {
+              "description": "Sidebar web panels render this tab in the sidebar instead of the content area; a panel never becomes the active tab. Older snapshots restore without the field as ordinary tabs.",
               "default": false,
               "type": "boolean"
             },
@@ -1271,6 +1286,11 @@
             },
             "pinned": {
               "description": "Pinned tabs keep their own section under favorites, per space.",
+              "default": false,
+              "type": "boolean"
+            },
+            "panel": {
+              "description": "Sidebar web panels render this tab in the sidebar instead of the content area; a panel never becomes the active tab. Older snapshots restore without the field as ordinary tabs.",
               "default": false,
               "type": "boolean"
             },
@@ -1634,6 +1654,11 @@
               "default": false,
               "type": "boolean"
             },
+            "panel": {
+              "description": "Sidebar web panels render this tab in the sidebar instead of the content area; a panel never becomes the active tab. Older snapshots restore without the field as ordinary tabs.",
+              "default": false,
+              "type": "boolean"
+            },
             "private": {
               "description": "Private tabs run engine-private sessions and never persist: the controller strips them from saved copies and restore drops them.",
               "default": false,
@@ -1992,6 +2017,11 @@
             },
             "pinned": {
               "description": "Pinned tabs keep their own section under favorites, per space.",
+              "default": false,
+              "type": "boolean"
+            },
+            "panel": {
+              "description": "Sidebar web panels render this tab in the sidebar instead of the content area; a panel never becomes the active tab. Older snapshots restore without the field as ordinary tabs.",
               "default": false,
               "type": "boolean"
             },
@@ -2359,6 +2389,11 @@
               "default": false,
               "type": "boolean"
             },
+            "panel": {
+              "description": "Sidebar web panels render this tab in the sidebar instead of the content area; a panel never becomes the active tab. Older snapshots restore without the field as ordinary tabs.",
+              "default": false,
+              "type": "boolean"
+            },
             "private": {
               "description": "Private tabs run engine-private sessions and never persist: the controller strips them from saved copies and restore drops them.",
               "default": false,
@@ -2711,6 +2746,11 @@
             },
             "pinned": {
               "description": "Pinned tabs keep their own section under favorites, per space.",
+              "default": false,
+              "type": "boolean"
+            },
+            "panel": {
+              "description": "Sidebar web panels render this tab in the sidebar instead of the content area; a panel never becomes the active tab. Older snapshots restore without the field as ordinary tabs.",
               "default": false,
               "type": "boolean"
             },
@@ -3070,6 +3110,11 @@
             },
             "pinned": {
               "description": "Pinned tabs keep their own section under favorites, per space.",
+              "default": false,
+              "type": "boolean"
+            },
+            "panel": {
+              "description": "Sidebar web panels render this tab in the sidebar instead of the content area; a panel never becomes the active tab. Older snapshots restore without the field as ordinary tabs.",
               "default": false,
               "type": "boolean"
             },
@@ -3436,6 +3481,11 @@
               "default": false,
               "type": "boolean"
             },
+            "panel": {
+              "description": "Sidebar web panels render this tab in the sidebar instead of the content area; a panel never becomes the active tab. Older snapshots restore without the field as ordinary tabs.",
+              "default": false,
+              "type": "boolean"
+            },
             "private": {
               "description": "Private tabs run engine-private sessions and never persist: the controller strips them from saved copies and restore drops them.",
               "default": false,
@@ -3780,6 +3830,11 @@
             },
             "pinned": {
               "description": "Pinned tabs keep their own section under favorites, per space.",
+              "default": false,
+              "type": "boolean"
+            },
+            "panel": {
+              "description": "Sidebar web panels render this tab in the sidebar instead of the content area; a panel never becomes the active tab. Older snapshots restore without the field as ordinary tabs.",
               "default": false,
               "type": "boolean"
             },
@@ -4231,6 +4286,11 @@
               "default": false,
               "type": "boolean"
             },
+            "panel": {
+              "description": "Sidebar web panels render this tab in the sidebar instead of the content area; a panel never becomes the active tab. Older snapshots restore without the field as ordinary tabs.",
+              "default": false,
+              "type": "boolean"
+            },
             "private": {
               "description": "Private tabs run engine-private sessions and never persist: the controller strips them from saved copies and restore drops them.",
               "default": false,
@@ -4552,6 +4612,11 @@
             },
             "pinned": {
               "description": "Pinned tabs keep their own section under favorites, per space.",
+              "default": false,
+              "type": "boolean"
+            },
+            "panel": {
+              "description": "Sidebar web panels render this tab in the sidebar instead of the content area; a panel never becomes the active tab. Older snapshots restore without the field as ordinary tabs.",
               "default": false,
               "type": "boolean"
             },
@@ -4907,6 +4972,11 @@
             },
             "pinned": {
               "description": "Pinned tabs keep their own section under favorites, per space.",
+              "default": false,
+              "type": "boolean"
+            },
+            "panel": {
+              "description": "Sidebar web panels render this tab in the sidebar instead of the content area; a panel never becomes the active tab. Older snapshots restore without the field as ordinary tabs.",
               "default": false,
               "type": "boolean"
             },
@@ -5297,6 +5367,11 @@
               "default": false,
               "type": "boolean"
             },
+            "panel": {
+              "description": "Sidebar web panels render this tab in the sidebar instead of the content area; a panel never becomes the active tab. Older snapshots restore without the field as ordinary tabs.",
+              "default": false,
+              "type": "boolean"
+            },
             "private": {
               "description": "Private tabs run engine-private sessions and never persist: the controller strips them from saved copies and restore drops them.",
               "default": false,
@@ -5649,6 +5724,11 @@
             },
             "pinned": {
               "description": "Pinned tabs keep their own section under favorites, per space.",
+              "default": false,
+              "type": "boolean"
+            },
+            "panel": {
+              "description": "Sidebar web panels render this tab in the sidebar instead of the content area; a panel never becomes the active tab. Older snapshots restore without the field as ordinary tabs.",
               "default": false,
               "type": "boolean"
             },
@@ -6007,6 +6087,11 @@
               "default": false,
               "type": "boolean"
             },
+            "panel": {
+              "description": "Sidebar web panels render this tab in the sidebar instead of the content area; a panel never becomes the active tab. Older snapshots restore without the field as ordinary tabs.",
+              "default": false,
+              "type": "boolean"
+            },
             "private": {
               "description": "Private tabs run engine-private sessions and never persist: the controller strips them from saved copies and restore drops them.",
               "default": false,
@@ -6196,6 +6281,11 @@
             "description": "Older clients omit the field; absent means an ordinary tab.",
             "default": false,
             "type": "boolean"
+          },
+          "panel": {
+            "description": "Sidebar web panel: a background tab the sidebar renders instead of the content area. Absent means an ordinary tab.",
+            "default": false,
+            "type": "boolean"
           }
         }
       },
@@ -6368,6 +6458,11 @@
             },
             "pinned": {
               "description": "Pinned tabs keep their own section under favorites, per space.",
+              "default": false,
+              "type": "boolean"
+            },
+            "panel": {
+              "description": "Sidebar web panels render this tab in the sidebar instead of the content area; a panel never becomes the active tab. Older snapshots restore without the field as ordinary tabs.",
               "default": false,
               "type": "boolean"
             },
@@ -6729,6 +6824,11 @@
             },
             "pinned": {
               "description": "Pinned tabs keep their own section under favorites, per space.",
+              "default": false,
+              "type": "boolean"
+            },
+            "panel": {
+              "description": "Sidebar web panels render this tab in the sidebar instead of the content area; a panel never becomes the active tab. Older snapshots restore without the field as ordinary tabs.",
               "default": false,
               "type": "boolean"
             },
@@ -7095,6 +7195,11 @@
               "default": false,
               "type": "boolean"
             },
+            "panel": {
+              "description": "Sidebar web panels render this tab in the sidebar instead of the content area; a panel never becomes the active tab. Older snapshots restore without the field as ordinary tabs.",
+              "default": false,
+              "type": "boolean"
+            },
             "private": {
               "description": "Private tabs run engine-private sessions and never persist: the controller strips them from saved copies and restore drops them.",
               "default": false,
@@ -7451,6 +7556,11 @@
             },
             "pinned": {
               "description": "Pinned tabs keep their own section under favorites, per space.",
+              "default": false,
+              "type": "boolean"
+            },
+            "panel": {
+              "description": "Sidebar web panels render this tab in the sidebar instead of the content area; a panel never becomes the active tab. Older snapshots restore without the field as ordinary tabs.",
               "default": false,
               "type": "boolean"
             },
@@ -7813,6 +7923,11 @@
               "default": false,
               "type": "boolean"
             },
+            "panel": {
+              "description": "Sidebar web panels render this tab in the sidebar instead of the content area; a panel never becomes the active tab. Older snapshots restore without the field as ordinary tabs.",
+              "default": false,
+              "type": "boolean"
+            },
             "private": {
               "description": "Private tabs run engine-private sessions and never persist: the controller strips them from saved copies and restore drops them.",
               "default": false,
@@ -8165,6 +8280,11 @@
             },
             "pinned": {
               "description": "Pinned tabs keep their own section under favorites, per space.",
+              "default": false,
+              "type": "boolean"
+            },
+            "panel": {
+              "description": "Sidebar web panels render this tab in the sidebar instead of the content area; a panel never becomes the active tab. Older snapshots restore without the field as ordinary tabs.",
               "default": false,
               "type": "boolean"
             },
@@ -8527,6 +8647,11 @@
               "default": false,
               "type": "boolean"
             },
+            "panel": {
+              "description": "Sidebar web panels render this tab in the sidebar instead of the content area; a panel never becomes the active tab. Older snapshots restore without the field as ordinary tabs.",
+              "default": false,
+              "type": "boolean"
+            },
             "private": {
               "description": "Private tabs run engine-private sessions and never persist: the controller strips them from saved copies and restore drops them.",
               "default": false,
@@ -8886,6 +9011,11 @@
               "default": false,
               "type": "boolean"
             },
+            "panel": {
+              "description": "Sidebar web panels render this tab in the sidebar instead of the content area; a panel never becomes the active tab. Older snapshots restore without the field as ordinary tabs.",
+              "default": false,
+              "type": "boolean"
+            },
             "private": {
               "description": "Private tabs run engine-private sessions and never persist: the controller strips them from saved copies and restore drops them.",
               "default": false,
@@ -9242,6 +9372,11 @@
             },
             "pinned": {
               "description": "Pinned tabs keep their own section under favorites, per space.",
+              "default": false,
+              "type": "boolean"
+            },
+            "panel": {
+              "description": "Sidebar web panels render this tab in the sidebar instead of the content area; a panel never becomes the active tab. Older snapshots restore without the field as ordinary tabs.",
               "default": false,
               "type": "boolean"
             },
@@ -9645,6 +9780,11 @@
               "default": false,
               "type": "boolean"
             },
+            "panel": {
+              "description": "Sidebar web panels render this tab in the sidebar instead of the content area; a panel never becomes the active tab. Older snapshots restore without the field as ordinary tabs.",
+              "default": false,
+              "type": "boolean"
+            },
             "private": {
               "description": "Private tabs run engine-private sessions and never persist: the controller strips them from saved copies and restore drops them.",
               "default": false,
@@ -10005,6 +10145,11 @@
             },
             "pinned": {
               "description": "Pinned tabs keep their own section under favorites, per space.",
+              "default": false,
+              "type": "boolean"
+            },
+            "panel": {
+              "description": "Sidebar web panels render this tab in the sidebar instead of the content area; a panel never becomes the active tab. Older snapshots restore without the field as ordinary tabs.",
               "default": false,
               "type": "boolean"
             },
@@ -10436,6 +10581,11 @@
               "default": false,
               "type": "boolean"
             },
+            "panel": {
+              "description": "Sidebar web panels render this tab in the sidebar instead of the content area; a panel never becomes the active tab. Older snapshots restore without the field as ordinary tabs.",
+              "default": false,
+              "type": "boolean"
+            },
             "private": {
               "description": "Private tabs run engine-private sessions and never persist: the controller strips them from saved copies and restore drops them.",
               "default": false,
@@ -10788,6 +10938,11 @@
             },
             "pinned": {
               "description": "Pinned tabs keep their own section under favorites, per space.",
+              "default": false,
+              "type": "boolean"
+            },
+            "panel": {
+              "description": "Sidebar web panels render this tab in the sidebar instead of the content area; a panel never becomes the active tab. Older snapshots restore without the field as ordinary tabs.",
               "default": false,
               "type": "boolean"
             },
@@ -11152,6 +11307,11 @@
               "default": false,
               "type": "boolean"
             },
+            "panel": {
+              "description": "Sidebar web panels render this tab in the sidebar instead of the content area; a panel never becomes the active tab. Older snapshots restore without the field as ordinary tabs.",
+              "default": false,
+              "type": "boolean"
+            },
             "private": {
               "description": "Private tabs run engine-private sessions and never persist: the controller strips them from saved copies and restore drops them.",
               "default": false,
@@ -11504,6 +11664,11 @@
             },
             "pinned": {
               "description": "Pinned tabs keep their own section under favorites, per space.",
+              "default": false,
+              "type": "boolean"
+            },
+            "panel": {
+              "description": "Sidebar web panels render this tab in the sidebar instead of the content area; a panel never becomes the active tab. Older snapshots restore without the field as ordinary tabs.",
               "default": false,
               "type": "boolean"
             },
@@ -11863,6 +12028,11 @@
             },
             "pinned": {
               "description": "Pinned tabs keep their own section under favorites, per space.",
+              "default": false,
+              "type": "boolean"
+            },
+            "panel": {
+              "description": "Sidebar web panels render this tab in the sidebar instead of the content area; a panel never becomes the active tab. Older snapshots restore without the field as ordinary tabs.",
               "default": false,
               "type": "boolean"
             },

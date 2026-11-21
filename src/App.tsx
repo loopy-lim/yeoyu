@@ -150,9 +150,11 @@ import {
   type MenuItem,
 } from "@/components/ActionMenu";
 import {
+  activatableTabs,
   bookmarkTabsForSpace,
   libraryItemsForSpace,
   favoriteDropIndex,
+  isStalePanelPointer,
   liveSplitLayout,
   sidebarTabMoveIndex,
   sidebarDropChange,
@@ -645,6 +647,8 @@ function BrowserApp() {
   const tabListBounds = useRef<Bounds | null>(null);
   const ordinarySectionRef = useRef<React.ElementRef<typeof View>>(null);
   const ordinarySectionBounds = useRef<Bounds | null>(null);
+  const panelSectionRef = useRef<React.ElementRef<typeof View>>(null);
+  const panelSectionBounds = useRef<Bounds | null>(null);
   const sidebarRowRefs = useRef(
     new Map<string, React.ElementRef<typeof View>>()
   );
@@ -778,13 +782,10 @@ function BrowserApp() {
         title: tabLabel(t),
       })),
       bookmarks: spaceBookmarks,
-      tabs: (state?.tabs ?? [])
-        .filter(
-          (t) =>
-            !t.suspended &&
-            !t.private &&
-            (t.favorite || t.workspaceId === state?.activeWorkspaceId)
-        )
+      // Panels never qualify as quick-open tab candidates: switching to one
+      // would hit the domain's "cannot become the active tab" rejection.
+      tabs: activatableTabs(state?.tabs, state?.activeWorkspaceId)
+        .filter((t) => !t.private)
         .map((t) => ({
           id: t.id,
           url: t.url,
@@ -1510,11 +1511,12 @@ function BrowserApp() {
     syncStore.setLocalAdapter(adapter);
     // Publish our open tabs (non-private) so Zen/Firefox list this device in
     // their synced-tabs panels; recency from the active tab + updatedAt.
+    // Sidebar panels are background utilities, not tabs we advertise.
     syncStore.setTabsSource(() => {
       const snap = controller.getSnapshot();
       if (!snap) return null;
       return snap.tabs
-        .filter((tab) => !tab.private)
+        .filter((tab) => !tab.private && !tab.panel)
         .map((tab) => ({
           title: tab.customTitle || tab.title || tab.url,
           url: tab.url,
@@ -1938,7 +1940,10 @@ function BrowserApp() {
         counts: Object.fromEntries(
           state.workspaces.map((w) => [
             w.id,
-            state.tabs.filter((t) => t.workspaceId === w.id).length,
+            // Panels are background surfaces, not open pages: the badge
+            // counts only what a Space switch would reveal.
+            state.tabs.filter((t) => t.workspaceId === w.id && !t.panel)
+              .length,
           ])
         ),
         onSwitch: (id) => {
@@ -2206,6 +2211,50 @@ function BrowserApp() {
       })
     );
   };
+  // Sidebar web panels: a panel is a background tab rendered in the sidebar
+  // instead of the content canvas, so opening one never disturbs the active
+  // tab, the split, or the Space — like adding a bookmark row.
+  const openPanel = ui.sidebarPanelId
+    ? (state?.tabs.find(
+        (tab) => tab.id === ui.sidebarPanelId && tab.panel
+      ) ?? null)
+    : null;
+  const panelNav = openPanel ? navigation[openPanel.id] : undefined;
+  const openPanelView = (id: string) => {
+    haptic("tick");
+    updateUi({ type: "setSidebarPanel", id });
+  };
+  const closePanelView = () => {
+    haptic("tick");
+    updateUi({ type: "setSidebarPanel", id: null });
+  };
+  const createPanelFromCurrent = () => {
+    if (!targetTab || targetTab.url === NEW_TAB_URL) return;
+    haptic("click");
+    // The panel inherits the current tab's privacy: a panel added from a
+    // private tab lives and dies with that private session.
+    run(
+      controller
+        .createPanelTab(targetTab.url, { private: targetTab.private })
+        .then((id) => updateUi({ type: "setSidebarPanel", id }))
+    );
+  };
+  const removePanel = (tabId: string) => {
+    haptic("tick");
+    if (ui.sidebarPanelId === tabId)
+      updateUi({ type: "setSidebarPanel", id: null });
+    run(controller.close(tabId));
+  };
+  // A restored pointer can outlive its panel (removed, or a private panel
+  // after a restart); fall back to the library instead of a dead view. The
+  // gate mirrors the Little Arc one-shot above: until the preferences read
+  // and the session snapshot both land, a missing panel means "not loaded
+  // yet", not gone — sweeping early would erase the restored view and
+  // persist the erasure.
+  useEffect(() => {
+    if (isStalePanelPointer(uiHydrated, state?.tabs, ui.sidebarPanelId))
+      updateUi({ type: "setSidebarPanel", id: null });
+  }, [uiHydrated, state, ui.sidebarPanelId, updateUi]);
 
   const promoteLittleArc = useCallback(() => {
     const spaceName = activeWorkspace?.name || tr("chrome.thisSpace");
@@ -2338,12 +2387,7 @@ function BrowserApp() {
     ]
   );
   const stepTab = (delta: number) => {
-    const tabs =
-      state?.tabs.filter(
-        (t) =>
-          !t.suspended &&
-          (t.favorite || t.workspaceId === state.activeWorkspaceId)
-      ) ?? [];
+    const tabs = activatableTabs(state?.tabs, state?.activeWorkspaceId);
     if (!tabs.length) return;
     const index = tabs.findIndex((t) => t.id === target);
     const next = tabs[(Math.max(index, 0) + delta + tabs.length) % tabs.length];
@@ -2486,11 +2530,9 @@ function BrowserApp() {
   });
   for (let i = 1; i <= 9; i++)
     registry.register(`tab.activate.${i}`, () => {
-      const tab = state?.tabs.filter(
-        (t) =>
-          !t.suspended &&
-          (t.favorite || t.workspaceId === state.activeWorkspaceId)
-      )[i - 1];
+      const tab = activatableTabs(state?.tabs, state?.activeWorkspaceId)[
+        i - 1
+      ];
       if (tab) switchTab(tab.id);
     });
   useEffect(() => {
@@ -3367,6 +3409,7 @@ function BrowserApp() {
     pinnedSectionBounds.current = null;
     tabListBounds.current = null;
     ordinarySectionBounds.current = null;
+    panelSectionBounds.current = null;
     sidebarRowBounds.current.clear();
   };
   const measurePanes = () => {
@@ -3401,6 +3444,9 @@ function BrowserApp() {
     });
     measureSidebar(ordinarySectionRef, (bounds) => {
       ordinarySectionBounds.current = bounds;
+    });
+    measureSidebar(panelSectionRef, (bounds) => {
+      panelSectionBounds.current = bounds;
     });
     sidebarRowRefs.current.forEach((row, id) => {
       row.measureInWindow((x, y, width, height) => {
@@ -3462,6 +3508,16 @@ function BrowserApp() {
       : null;
     setDrag((current) => {
       if (!current) return current;
+      // Panels only ever reorder their own section; pane zones and the
+      // favorites row must not light up under a panel drag.
+      if (
+        !current.tabId.startsWith("bookmark:") &&
+        state?.tabs.find((tab) => tab.id === current.tabId)?.panel
+      ) {
+        return current.zone === null && current.reorderIndex === null
+          ? current
+          : { ...current, zone: null, reorderIndex: null };
+      }
       const inFavoritesRow =
         sidebarDropActive.current && within(x, y, favoritesRowBounds.current);
       if (inFavoritesRow) {
@@ -3506,7 +3562,43 @@ function BrowserApp() {
         inTabList &&
         !!ordinarySectionBounds.current &&
         y >= ordinarySectionBounds.current.y;
-      if (draggedTab && state && (inFavorites || inPinned || inOrdinary)) {
+      if (draggedTab?.panel && state) {
+        // Panels never split a pane or join the tab sections — dropping
+        // inside their own section reorders the panel list, anything else
+        // cancels. Indices are absolute in the tabs vec, so the order
+        // persists through restart and the session pipeline like tab order.
+        if (
+          sidebarDropActive.current &&
+          within(x, y, panelSectionBounds.current)
+        ) {
+          const rows = state.tabs
+            .filter(
+              (tab) =>
+                tab.panel && tab.workspaceId === state.activeWorkspaceId
+            )
+            .flatMap((tab) => {
+              const bounds = sidebarRowBounds.current.get(tab.id);
+              return bounds
+                ? [{ id: tab.id, y: bounds.y, height: bounds.height }]
+                : [];
+            });
+          const index = sidebarTabMoveIndex(
+            state.tabs,
+            draggedTab.id,
+            y,
+            rows
+          );
+          const from = state.tabs.findIndex((tab) => tab.id === draggedTab.id);
+          if (index !== null && index !== from) {
+            haptic("click");
+            run(controller.moveTab(draggedTab.id, index));
+          }
+        }
+      } else if (
+        draggedTab &&
+        state &&
+        (inFavorites || inPinned || inOrdinary)
+      ) {
         const region = inFavorites
           ? "favorites"
           : inPinned
@@ -4013,6 +4105,79 @@ function BrowserApp() {
       </View>
     );
   };
+  // Panel rows share the tab row anatomy: a tap selects the panel view, a
+  // long-press-then-move drag reorders the panel list (dropped inside the
+  // section only — panels never activate, split, or join the tab sections).
+  const renderPanelRow = (tab: NonNullable<typeof state>["tabs"][number]) => {
+    const selected = ui.sidebarPanelId === tab.id;
+    return (
+      <View
+        key={tab.id}
+        ref={(view) => {
+          if (view) sidebarRowRefs.current.set(tab.id, view);
+          else sidebarRowRefs.current.delete(tab.id);
+        }}
+        className={cn(rowVariants({ density: "tab", selected }), c.tab)}
+      >
+        <DragSource
+          reducedMotion={reducedMotion}
+          accessibilityLabel={tr("chrome.panelLabel", {
+            name: tabLabel(tab),
+          })}
+          accessibilityState={{ selected }}
+          className={c.tabDrag}
+          onPress={() => openPanelView(tab.id)}
+          onDragStart={(x, y) => beginDrag(tab.id, tabLabel(tab), x, y)}
+          onDragMove={moveDrag}
+          onDragRelease={finishDrag}
+          onDragCancel={cancelDrag}
+        >
+          <View className={c.tabFavicon}>
+            <Favicon
+              url={tab.url}
+              fallback="globe"
+              size={14}
+              radius={4}
+              persist={!tab.private}
+            />
+          </View>
+          <Text
+            numberOfLines={1}
+            maxFontSizeMultiplier={1.35}
+            className={cn(
+              c.tabTitle,
+              selected ? "text-ink font-medium" : "text-ink-muted font-normal"
+            )}
+          >
+            {tabLabel(tab)}
+          </Text>
+          {tab.private && (
+            <ChromeIcon
+              className={cn("size-[12px]", "text-accent-strong")}
+              name="private"
+            />
+          )}
+        </DragSource>
+        <SidebarPressable
+          accessibilityRole="button"
+          accessibilityLabel={tr("chrome.closePanel", {
+            name: tabLabel(tab),
+          })}
+          hitSlop={hitSlopForTarget(26)}
+          className={cn(c.tabClose, "active:bg-field-on-chrome")}
+          onPress={() => removePanel(tab.id)}
+        >
+          <ChromeIcon
+            className={cn(
+              "size-[12px]",
+              selected ? "text-ink-muted" : "text-ink-faint opacity-55"
+            )}
+            name="close"
+          />
+        </SidebarPressable>
+      </View>
+    );
+  };
   const renderRailFolder = (item: SidebarFolder): React.ReactNode => (
     <View key={item.folder.id}>
       <SidebarFolderItem
@@ -4130,6 +4295,13 @@ function BrowserApp() {
           onPress: () => {
             if (target) run(controller.setFavorite(target, true));
           },
+        },
+        {
+          id: "new-panel",
+          label: tr("chrome.addPanel"),
+          icon: "sidebar",
+          disabled: !target || targetUrl === NEW_TAB_URL,
+          onPress: createPanelFromCurrent,
         },
         {
           id: "clear-unpinned",
@@ -4762,6 +4934,129 @@ function BrowserApp() {
                     className={c.tabScrollWrap}
                     style={[spaceStyle]}
                   >
+                    {openPanel ? (
+                    <View className={c.panelView}>
+                      {/* The panel view keeps the sidebar chrome above and
+                      below; only the tab list area swaps for the web panel,
+                      and the panel gets its own compact navigation row. */}
+                      <View className={c.navigationRow}>
+                        <IconButton
+                          label={tr("chrome.panelLibrary")}
+                          icon="sidebar"
+                          onPress={closePanelView}
+                        />
+                        <View className={c.navSpacer} />
+                        <IconButton
+                          label={tr("chrome.back")}
+                          icon="back"
+                          onPress={() => {
+                            const ref = refs.current.get(openPanel.id);
+                            if (ref) Commands.goBack(ref);
+                          }}
+                          disabled={!panelNav?.canGoBack}
+                        />
+                        <IconButton
+                          label={tr("chrome.forward")}
+                          icon="forward"
+                          onPress={() => {
+                            const ref = refs.current.get(openPanel.id);
+                            if (ref) Commands.goForward(ref);
+                          }}
+                          disabled={!panelNav?.canGoForward}
+                        />
+                        <IconButton
+                          label={tr(
+                            panelNav?.loading ? "chrome.stop" : "chrome.reload"
+                          )}
+                          icon={panelNav?.loading ? "close" : "reload"}
+                          onPress={() => {
+                            const ref = refs.current.get(openPanel.id);
+                            if (ref)
+                              panelNav?.loading
+                                ? Commands.stop(ref)
+                                : Commands.reload(ref);
+                          }}
+                        />
+                      </View>
+                      <View className={c.panelTitleRow}>
+                        <View className={c.tabFavicon}>
+                          <Favicon
+                            url={openPanel.url}
+                            fallback="globe"
+                            size={14}
+                            radius={4}
+                            persist={!openPanel.private}
+                          />
+                        </View>
+                        <Text
+                          numberOfLines={1}
+                          maxFontSizeMultiplier={1.35}
+                          className={c.panelTitle}
+                        >
+                          {tabLabel(openPanel)}
+                        </Text>
+                        {openPanel.private && (
+                          <ChromeIcon
+                            className={cn(
+                              "size-[12px]",
+                              "text-accent-strong"
+                            )}
+                            name="private"
+                          />
+                        )}
+                        <SidebarPressable
+                          accessibilityRole="button"
+                          accessibilityLabel={tr("chrome.closePanel", {
+                            name: tabLabel(openPanel),
+                          })}
+                          hitSlop={hitSlopForTarget(26)}
+                          className={cn(
+                            c.tabClose,
+                            "active:bg-field-on-chrome"
+                          )}
+                          onPress={() => removePanel(openPanel.id)}
+                        >
+                          <ChromeIcon
+                            className={cn(
+                              "size-[12px]",
+                              "text-ink-faint opacity-55"
+                            )}
+                            name="close"
+                          />
+                        </SidebarPressable>
+                      </View>
+                      <View className={c.panelContent}>
+                        <PaneLoadBar
+                          tabId={openPanel.id}
+                          theme={theme}
+                          reducedMotion={reducedMotion}
+                        />
+                        {/* Panels ride the same tab session lifecycle as any
+                        tab: the registry keeps the session alive while the
+                        tab exists, so hiding the view never loses the page. */}
+                        <Surface
+                          ref={(ref) => {
+                            if (ref)
+                              return registerSurfaceRef(
+                                refs.current,
+                                openPanel.id,
+                                ref
+                              );
+                          }}
+                          className={c.surface}
+                          tabId={openPanel.id}
+                          initialUrl={openPanel.url}
+                          active={!ui.sidebarCollapsed && !contentFullscreen}
+                          edgeSwipeDisabled
+                          canEdgeBack={false}
+                          canEdgeForward={false}
+                          refreshAccentColor={theme.accentStrong}
+                          refreshSurfaceColor={theme.surfaceElevated}
+                          onNavigation={(e) => onNavigation(e.nativeEvent)}
+                        />
+                      </View>
+                    </View>
+                    ) : (
                     <FlatList
                       key={state?.activeWorkspaceId}
                       data={sidebar.ordinaryTabs}
@@ -4850,6 +5145,31 @@ function BrowserApp() {
                             {sidebar.pinnedTabs.map((tab) =>
                               renderSidebarTab(tab)
                             )}
+                            {sidebar.panelTabs.length > 0 && (
+                              <View
+                                ref={panelSectionRef}
+                                className={c.privateSection}
+                              >
+                                <View className={c.privateHeader}>
+                                  <ChromeIcon
+                                    className={cn(
+                                      "size-[12px]",
+                                      "text-ink-faint"
+                                    )}
+                                    name="sidebar"
+                                  />
+                                  <Text
+                                    numberOfLines={1}
+                                    className={c.privateHeaderText}
+                                  >
+                                    {tr("chrome.panelTabs")}
+                                  </Text>
+                                </View>
+                                {sidebar.panelTabs.map((tab) =>
+                                  renderPanelRow(tab)
+                                )}
+                              </View>
+                            )}
                             {privateTabs.length > 0 && (
                               <View className={c.privateSection}>
                                 <View className={c.privateHeader}>
@@ -4928,6 +5248,7 @@ function BrowserApp() {
                         </View>
                       }
                     />
+                    )}
                   </AnimatedView>
                   <UnikitSeparator className="bg-hairline-on-chrome mb-[4px]" />
                   <View className={c.sidebarBottom}>
@@ -6084,16 +6405,12 @@ function BrowserApp() {
                     menuTab &&
                     !menuTab.suspended &&
                     (menuTab.id !== target ||
-                      (state?.tabs ?? []).some(
-                        (t) =>
-                          !t.suspended &&
-                          t.id !== menuTab.id &&
-                          (t.favorite ||
-                            t.workspaceId ===
-                              (menuTab.favorite
-                                ? state.activeWorkspaceId
-                                : menuTab.workspaceId))
-                      ))
+                      activatableTabs(
+                        state?.tabs,
+                        menuTab.favorite
+                          ? state.activeWorkspaceId
+                          : menuTab.workspaceId
+                      ).some((t) => t.id !== menuTab.id))
                       ? () => {
                           if (!menuTab) return;
                           setCtxMenuTabId(null);
@@ -6106,12 +6423,10 @@ function BrowserApp() {
                           const workspaceId = menuTab.favorite
                             ? state.activeWorkspaceId
                             : menuTab.workspaceId;
-                          const replacement = (state?.tabs ?? []).find(
-                            (t) =>
-                              !t.suspended &&
-                              t.id !== menuTab.id &&
-                              (t.favorite || t.workspaceId === workspaceId)
-                          );
+                          const replacement = activatableTabs(
+                            state?.tabs,
+                            workspaceId
+                          ).find((t) => t.id !== menuTab.id);
                           if (!replacement) return;
                           void platform
                             .openInNewWindow?.(menuTab.id)

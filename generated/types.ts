@@ -29,6 +29,8 @@ export type Tab = {
   favorite?: boolean;
   /** Pinned tabs keep their own section under favorites, per space. */
   pinned?: boolean;
+  /** Sidebar web panels render this tab in the sidebar instead of the content area; a panel never becomes the active tab. Older snapshots restore without the field as ordinary tabs. */
+  panel?: boolean;
   /** Private tabs run engine-private sessions and never persist: the controller strips them from saved copies and restore drops them. */
   private?: boolean;
   /** The persistent sidebar item owning this tab, independent of its live URL. */
@@ -190,6 +192,8 @@ export type TabCreateInput = {
   url: string;
   /** Older clients omit the field; absent means an ordinary tab. */
   private?: boolean;
+  /** Sidebar web panel: a background tab the sidebar renders instead of the content area. Absent means an ordinary tab. */
+  panel?: boolean;
 };
 
 export type TabMoveInput = {
