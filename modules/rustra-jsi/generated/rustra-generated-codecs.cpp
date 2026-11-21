@@ -23,7 +23,7 @@ using namespace facebook::jsi;
 namespace jsi = facebook::jsi;
 namespace rc = rustra::codec;
 namespace rustra::generated {
-const char* compiled_contract_hash() { return "8367e132a846a9b6ca8235d394a6671450d938baadb29a8a3a498cac7bad9531"; }
+const char* compiled_contract_hash() { return "4b6ce8435a3f8c5711401586072012d8e7eb2ddf9fe1622742d573fc526b3f35"; }
 }
 
 // Each invocation owns its captured map values until canonical encoding finishes.
@@ -172,6 +172,7 @@ std::shared_ptr<const BoundCodecContext> make_bound_codec_context(Runtime& rt, u
     case 12: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"tabId", "favorite"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
     case 13: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"tabId", "pinned"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
     case 15: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"tabId", "workspaceId"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 2: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"presentation"}, {"json"}));
     case 5: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"json", "includeFavorites", "restoreKeymap", "expectedRevision"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
     case 4: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"json", "includeFavorites", "restoreKeymap"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
     case 3: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"json"}, {"spaces", "tabs", "bookmarks", "folders", "favorites", "duplicateUrls", "hasKeyBindings", "presentation"}));
@@ -4116,6 +4117,28 @@ static jsi::Value decode_tabSetWorkspace(jsi::Runtime& rt, rc::Reader& r) {
   return decode_body_tabSetWorkspace(rt, resultObj, r, _properties.data());
 }
 
+static void encode_body_workArchiveExport(jsi::Runtime& rt, const jsi::Object& argsObj, rc::Writer& w, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  { auto _option_value = argsObj.getProperty(rt, _prop_0); if (_option_value.isNull() || _option_value.isUndefined()) { w.push_u8(0); } else { w.push_u8(1); { auto _v = _option_value.getString(rt).utf8(rt); w.push_string(_v); } } }
+}
+static void encode_workArchiveExport(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
+  w.push_u8(2); w.push_u8(0); // cmd_id = 2 LE
+  auto argsObj = args.asObject(rt);
+  const std::array<jsi::PropNameID, 1> _properties{jsi::PropNameID::forAscii(rt, "presentation")};
+  encode_body_workArchiveExport(rt, argsObj, w, _properties.data());
+}
+
+static jsi::Value decode_body_workArchiveExport(jsi::Runtime& rt, jsi::Object& resultObj, rc::Reader& r, const jsi::PropNameID* _properties) {
+  const auto& _prop_0 = _properties[0];
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_0, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  return std::move(resultObj);
+}
+static jsi::Value decode_workArchiveExport(jsi::Runtime& rt, rc::Reader& r) {
+  auto resultObj = jsi::Object(rt);
+  const std::array<jsi::PropNameID, 1> _properties{jsi::PropNameID::forAscii(rt, "json")};
+  return decode_body_workArchiveExport(rt, resultObj, r, _properties.data());
+}
+
 static void encode_body_workArchiveImport(jsi::Runtime& rt, const jsi::Object& argsObj, rc::Writer& w, const jsi::PropNameID* _properties) {
   const auto& _prop_0 = _properties[0];
   const auto& _prop_1 = _properties[1];
@@ -5289,6 +5312,11 @@ bool encode_bound(Runtime& rt, const BoundCodecContext& context, const Value& ar
       auto argsObj = args.asObject(rt);
       encode_body_tabSetWorkspace(rt, argsObj, w, context.input.data()); return true;
     }
+    case 2: {
+      w.push_u8(2); w.push_u8(0);
+      auto argsObj = args.asObject(rt);
+      encode_body_workArchiveExport(rt, argsObj, w, context.input.data()); return true;
+    }
     case 5: {
       w.push_u8(5); w.push_u8(0);
       auto argsObj = args.asObject(rt);
@@ -5443,6 +5471,10 @@ Value decode_bound(Runtime& rt, const BoundCodecContext& context, rc::Reader& r)
       auto resultObj = jsi::Object(rt);
       return decode_body_tabSetWorkspace(rt, resultObj, r, context.output.data());
     }
+    case 2: {
+      auto resultObj = jsi::Object(rt);
+      return decode_body_workArchiveExport(rt, resultObj, r, context.output.data());
+    }
     case 5: {
       auto resultObj = jsi::Object(rt);
       return decode_body_workArchiveImport(rt, resultObj, r, context.output.data());
@@ -5507,6 +5539,7 @@ bool encode_by_name(Runtime& rt, const std::string& name, const Value& args, rc:
   if (name == "tabSetFavorite") { encode_tabSetFavorite(rt, args, w); return true; }
   if (name == "tabSetPinned") { encode_tabSetPinned(rt, args, w); return true; }
   if (name == "tabSetWorkspace") { encode_tabSetWorkspace(rt, args, w); return true; }
+  if (name == "workArchiveExport") { encode_workArchiveExport(rt, args, w); return true; }
   if (name == "workArchiveImport") { encode_workArchiveImport(rt, args, w); return true; }
   if (name == "workArchivePrepare") { encode_workArchivePrepare(rt, args, w); return true; }
   if (name == "workArchivePreview") { encode_workArchivePreview(rt, args, w); return true; }
@@ -5546,6 +5579,7 @@ Value decode_by_name(Runtime& rt, const std::string& name, rc::Reader& r) {
   if (name == "tabSetFavorite") return decode_tabSetFavorite(rt, r);
   if (name == "tabSetPinned") return decode_tabSetPinned(rt, r);
   if (name == "tabSetWorkspace") return decode_tabSetWorkspace(rt, r);
+  if (name == "workArchiveExport") return decode_workArchiveExport(rt, r);
   if (name == "workArchiveImport") return decode_workArchiveImport(rt, r);
   if (name == "workArchivePrepare") return decode_workArchivePrepare(rt, r);
   if (name == "workArchivePreview") return decode_workArchivePreview(rt, r);
@@ -5586,6 +5620,7 @@ bool encode_by_id(Runtime& rt, uint16_t cmd_id, const Value& args, rc::Writer& w
     case 12: encode_tabSetFavorite(rt, args, w); return true;
     case 13: encode_tabSetPinned(rt, args, w); return true;
     case 15: encode_tabSetWorkspace(rt, args, w); return true;
+    case 2: encode_workArchiveExport(rt, args, w); return true;
     case 5: encode_workArchiveImport(rt, args, w); return true;
     case 4: encode_workArchivePrepare(rt, args, w); return true;
     case 3: encode_workArchivePreview(rt, args, w); return true;
@@ -5627,6 +5662,7 @@ Value decode_by_id(Runtime& rt, uint16_t cmd_id, rc::Reader& r) {
     case 12: return decode_tabSetFavorite(rt, r);
     case 13: return decode_tabSetPinned(rt, r);
     case 15: return decode_tabSetWorkspace(rt, r);
+    case 2: return decode_workArchiveExport(rt, r);
     case 5: return decode_workArchiveImport(rt, r);
     case 4: return decode_workArchivePrepare(rt, r);
     case 3: return decode_workArchivePreview(rt, r);
@@ -5667,6 +5703,7 @@ bool has_static_codec(const std::string& name) {
   if (name == "tabSetFavorite") return true;
   if (name == "tabSetPinned") return true;
   if (name == "tabSetWorkspace") return true;
+  if (name == "workArchiveExport") return true;
   if (name == "workArchiveImport") return true;
   if (name == "workArchivePrepare") return true;
   if (name == "workArchivePreview") return true;
@@ -5707,6 +5744,7 @@ bool has_static_codec_id(uint16_t cmd_id) {
     case 12: return true;
     case 13: return true;
     case 15: return true;
+    case 2: return true;
     case 5: return true;
     case 4: return true;
     case 3: return true;

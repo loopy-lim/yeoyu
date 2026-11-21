@@ -9415,7 +9415,7 @@
       "name": "workArchiveExport",
       "commandId": 2,
       "inputType": "WorkArchiveExportInput",
-      "outputType": "String",
+      "outputType": "WorkArchiveExportOutput",
       "inputSchema": {
         "title": "WorkArchiveExportInput",
         "type": "object",
@@ -9429,8 +9429,16 @@
         }
       },
       "outputSchema": {
-        "title": "String",
-        "type": "string"
+        "title": "WorkArchiveExportOutput",
+        "type": "object",
+        "required": [
+          "json"
+        ],
+        "properties": {
+          "json": {
+            "type": "string"
+          }
+        }
       },
       "execution": "sync"
     },

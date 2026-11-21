@@ -175,9 +175,19 @@ import { appClasses as c } from "@/chrome/appStyles";
 import { cn } from "@/ui/cn";
 import { cva } from "class-variance-authority";
 import { controlVariants, rowVariants } from "@/ui/variants";
-import { ThemeScope } from "@/ui/ThemeScope";
+import { ThemeScope, useTierSizes } from "@/ui/ThemeScope";
 import { withUniwind } from "uniwind";
-import { motion as motionTokens, resolveTheme, size, space } from "@/theme";
+import { motion as motionTokens, phoneSize, resolveTheme, size, space } from "@/theme";
+import {
+  compactToolbarVisibleExtensions,
+  denseVerticalHitSlop,
+  hitSlopForTarget,
+  iconButtonHitSlop,
+  LITTLE_ARC_PORTRAIT_GUTTER,
+  littleArcPromoteHitSlop,
+  spaceChipHitSlop,
+  toolbarLayerHeight,
+} from "@/touchTargets";
 import { ThemeContext } from "@/themeContext";
 import { Favicon } from "@/components/Favicon";
 import {
@@ -290,6 +300,7 @@ const IconButton = ({
   active?: boolean;
 }) => {
   const sidebarActive = useSidebarActive();
+  const iconVisual = useTierSizes().iconButton;
   const [scale] = useState(() => new Animated.Value(1));
   const reduced = useReducedMotion();
   useEffect(() => {
@@ -328,7 +339,7 @@ const IconButton = ({
       accessibilityLabel={label}
       accessibilityState={{ disabled, selected: active }}
       disabled={disabled}
-      hitSlop={8}
+      hitSlop={hitSlopForTarget(iconVisual)}
       onPress={onPress}
       onPressIn={pressIn}
       onPressOut={pressOut}
@@ -349,6 +360,13 @@ const IconButton = ({
     </SidebarPressable>
   );
 };
+// The docked phone bar follows the IME frame-by-frame (the inset tracker
+// publishes on WindowInsetsAnimation progress), parking on top of the soft
+// keyboard instead of behind it. Zero keeps the resting chrome untouched.
+const imeLiftStyle = (keyboardInset: number) =>
+  keyboardInset > 0
+    ? { transform: [{ translateY: -keyboardInset }] }
+    : undefined;
 const NewTabPage = ({
   favorites,
   keyboardInset,
@@ -2150,7 +2168,7 @@ function BrowserApp() {
           <SidebarPressable
             accessibilityRole="button"
             accessibilityLabel={tr("chrome.closeNamedTab", { name: title })}
-            hitSlop={8}
+            hitSlop={hitSlopForTarget(26)}
             className={cn(c.tabClose, "active:bg-field-on-chrome")}
             onPress={() => closeTab(tab.id)}
           >
@@ -3018,7 +3036,7 @@ function BrowserApp() {
     if (!isLandscape) {
       // Portrait (e.g. mobile phone):
       // Clean sheet appearance: close to top status bar, generous width, balanced margins.
-      const horizontalGutter = 12;
+      const horizontalGutter = LITTLE_ARC_PORTRAIT_GUTTER;
       const cardWidth = Math.max(bodyWidth - horizontalGutter * 2, 280);
       const topGutter = 6;
       const bottomGutter = 10;
@@ -3945,6 +3963,17 @@ function BrowserApp() {
     paddingTop: Math.max(0, framePxToDp(ui.framePx.top) - (safeInsets.top > 0 ? 6 : 0)),
     paddingBottom: framePxToDp(ui.framePx.bottom),
   };
+  const canvasToolbarFrameDp =
+    !contentFullscreen && !isLittleArc
+      ? frameStyle.paddingLeft + frameStyle.paddingRight
+      : 0;
+  const canvasToolbarExtensionActions = compactWindow
+    ? compactToolbarVisibleExtensions(
+        extensionActions,
+        windowWidth,
+        canvasToolbarFrameDp
+      )
+    : extensionActions;
   // While a sheet is open the whole body behind it stops receiving touches
   // at the native level — a JS responder on the overlay alone doesn't stop
   // the GeckoView from scrolling/taking selection underneath. The flip is
@@ -4058,7 +4087,7 @@ function BrowserApp() {
             })}
             accessibilityState={{ disabled: !!tab.suspended }}
             disabled={!!tab.suspended}
-            hitSlop={8}
+            hitSlop={hitSlopForTarget(26)}
             className={cn(
               c.tabClose,
               tab.suspended && c.disabled,
@@ -4488,7 +4517,11 @@ function BrowserApp() {
   return (
     <I18nContext.Provider value={language}>
       <ThemeContext.Provider value={theme}>
-        <ThemeScope theme={theme}>
+        {/* Phone tier (issue #24): a compact window scales the interactive
+            size tokens to the touch-target floor; tablet windows keep the
+            default density. In-app Little Arc renders inside this scope.
+            A detached Little Arc window keeps its own YeoyuWindow ThemeScope. */}
+        <ThemeScope theme={theme} sizes={compactWindow ? phoneSize : undefined}>
           <SafeInsetsContext.Provider value={safeInsets}>
           <SafeAreaView
             className={c.app}
@@ -4932,7 +4965,7 @@ function BrowserApp() {
                                     accessibilityLabel={tr(
                                       "chrome.privateNewTab"
                                     )}
-                                    hitSlop={8}
+                                    hitSlop={hitSlopForTarget(28)}
                                     className={cn(
                                       c.privateNewTab,
                                       "active:bg-field-on-chrome"
@@ -5052,7 +5085,10 @@ function BrowserApp() {
                                   accessibilityState={{
                                     selected: active,
                                   }}
-                                  hitSlop={8}
+                                  // 24dp chips, 2px apart: horizontal slop
+                                  // stays in the gap; vertical slop lifts
+                                  // the target (issue #24 dense-strip exception).
+                                  hitSlop={spaceChipHitSlop()}
                                   className={cn(
                                     c.spaceChip,
                                     active && c.spaceChipActive,
@@ -5089,7 +5125,7 @@ function BrowserApp() {
                         <SidebarPressable
                           accessibilityRole="button"
                           accessibilityLabel={tr("chrome.addSidebar")}
-                          hitSlop={8}
+                          hitSlop={iconButtonHitSlop(compactWindow)}
                           className={cn(
                             controlVariants({ size: "icon" }),
                             c.iconButton,
@@ -5163,6 +5199,7 @@ function BrowserApp() {
                               name: title,
                             })}
                             accessibilityState={{ selected: isActive }}
+                            hitSlop={denseVerticalHitSlop()}
                             className={cn(
                               c.railItem,
                               isActive && c.railTabActive,
@@ -5221,6 +5258,7 @@ function BrowserApp() {
                           accessibilityLabel={tr("chrome.tabNamed", {
                             name: tabLabel(t),
                           })}
+                          hitSlop={denseVerticalHitSlop()}
                           className={cn(
                             c.railItem,
                             splitPaneIds.includes(t.id) &&
@@ -5277,6 +5315,7 @@ function BrowserApp() {
                               accessibilityLabel={tr("chrome.favoriteLabel", {
                                 name: tabLabel(tab),
                               })}
+                              hitSlop={denseVerticalHitSlop()}
                               className={cn(
                                 c.railItem,
                                 splitPaneIds.includes(tab.id) &&
@@ -5322,12 +5361,16 @@ function BrowserApp() {
                   </View>
                   <UnikitSeparator className="w-[24px] self-center bg-hairline-on-chrome my-xs" />
                   <View className={c.sidebarBottomCollapsed}>
+                    {/* Rail-bottom Spaces button rides the icon-button token
+                        (issue #24): a 24dp chip missed the target floor in
+                        the rail's primary phone-tier control cluster. */}
                     <SidebarPressable
                       accessibilityRole="button"
                       accessibilityLabel={tr("chrome.openSpaces")}
-                      hitSlop={8}
+                      hitSlop={iconButtonHitSlop(compactWindow)}
                       className={cn(
-                        c.spaceChip,
+                        controlVariants({ size: "icon" }),
+                        c.iconButton,
                         c.spaceChipActive,
                         "active:opacity-pressed"
                       )}
@@ -5358,7 +5401,7 @@ function BrowserApp() {
                     <SidebarPressable
                       accessibilityRole="button"
                       accessibilityLabel={tr("chrome.newTab")}
-                      hitSlop={8}
+                      hitSlop={iconButtonHitSlop(compactWindow)}
                       className={cn(
                         controlVariants({ size: "icon" }),
                         c.iconButton,
@@ -5435,7 +5478,7 @@ function BrowserApp() {
                     style={{
                       maxHeight: littleArcHeaderCollapsed.interpolate({
                         inputRange: [0, 1],
-                        outputRange: [58, 14],
+                        outputRange: [14 + toolbarLayerHeight(compactWindow), 14],
                       }),
                       overflow: "hidden",
                       backgroundColor: theme.surfaceElevated,
@@ -5471,7 +5514,10 @@ function BrowserApp() {
                       <View className="w-[36px] h-[4px] rounded-full bg-ink-muted/30" />
                     </Pressable>
                     <Animated.View
-                      className={c.littleArcToolbar}
+                      className={cn(
+                        c.littleArcToolbar,
+                        compactWindow && c.littleArcToolbarCompact
+                      )}
                       style={{
                         opacity: littleArcHeaderCollapsed.interpolate({
                           inputRange: [0, 0.6, 1],
@@ -5481,13 +5527,18 @@ function BrowserApp() {
                           {
                             translateY: littleArcHeaderCollapsed.interpolate({
                               inputRange: [0, 1],
-                              outputRange: [0, -44],
+                              outputRange: [0, -toolbarLayerHeight(compactWindow)],
                             }),
                           },
                         ],
                       }}
                     >
-                      <View className={c.compactNavigation}>
+                      <View
+                        className={cn(
+                          c.compactNavigation,
+                          compactWindow && c.compactNavigationCompact
+                        )}
+                      >
                         <IconButton
                           label={tr("chrome.back")}
                           icon="back"
@@ -5525,23 +5576,26 @@ function BrowserApp() {
                           active={readerActive}
                         />
                       </View>
-                      <View className="flex-row items-center gap-lg">
+                      <View
+                        className={cn(
+                          c.littleArcActions,
+                          compactWindow && c.littleArcActionsCompact
+                        )}
+                      >
                         <UnikitButton
                           variant="default"
                           size="sm"
-                          // Group icon+label into one focus target; without it
-                          // the inner Text announces separately from the button.
-                          accessible
+                          // UniKit Pressable defaults to a single focus target;
+                          // accessibilityLabel keeps icon+label announced together.
                           accessibilityLabel={tr("littleArc.promote")}
-                          // hitSlop 8 per side widens the touch target past
-                          // the 32dp visual; vertically the h-toolbar row
-                          // bounds the effective target at 44dp (the slop
-                          // cannot cross into the drag handle above or the
-                          // webview below).
-                          hitSlop={8}
+                          // hitSlop widens the touch target past the 32dp
+                          // visual (issue #24 helper); vertically the
+                          // h-toolbar row bounds the effective target, and on
+                          // compactWindow horizontal slop stays inside gap-sm.
+                          hitSlop={littleArcPromoteHitSlop(compactWindow)}
                           className={cn(
                             c.littleArcPromoteButton,
-                            compactWindow && "px-md min-w-0"
+                            compactWindow && "min-w-0"
                           )}
                           onPress={promoteLittleArc}
                         >
@@ -5580,7 +5634,8 @@ function BrowserApp() {
                   style={{
                     height: sideP.interpolate({
                       inputRange: [0, 1],
-                      outputRange: [size.toolbar, 0],
+                      // Phone h-toolbar is 48; the tablet token (46) clips it.
+                      outputRange: [toolbarLayerHeight(compactWindow), 0],
                     }),
                     opacity: sideP.interpolate({
                       inputRange: [0, 1],
@@ -5589,11 +5644,17 @@ function BrowserApp() {
                   }}
                 >
                   <View
-                    className={c.canvasToolbar}
+                    className={cn(
+                      c.canvasToolbar,
+                      compactWindow && c.canvasToolbarCompact
+                    )}
                     {...toolbarTabSwipe.panHandlers}
                   >
                     <AnimatedView
-                      className={c.compactNavigation}
+                      className={cn(
+                        c.compactNavigation,
+                        compactWindow && c.compactNavigationCompact
+                      )}
                       style={{
                         transform: [{ translateX: toolbarTabSwipe.offsetX }],
                       }}
@@ -5621,19 +5682,21 @@ function BrowserApp() {
                         security={target ? browser.security[target] : undefined}
                         onPress={() => openLocationEditor("touch")}
                       />
-                      <IconButton
-                        label={tr(
-                          readerActive
-                            ? "chrome.readerModeExit"
-                            : "chrome.readerMode"
-                        )}
-                        icon="reader"
-                        onPress={toggleReaderMode}
-                        disabled={!canToggleReader}
-                        active={readerActive}
-                      />
+                      {!compactWindow && (
+                        <IconButton
+                          label={tr(
+                            readerActive
+                              ? "chrome.readerModeExit"
+                              : "chrome.readerMode"
+                          )}
+                          icon="reader"
+                          onPress={toggleReaderMode}
+                          disabled={!canToggleReader}
+                          active={readerActive}
+                        />
+                      )}
                       <ExtensionActionsBar
-                        actions={extensionActions}
+                        actions={canvasToolbarExtensionActions}
                         onOpen={openExtensionAction}
                       />
                     </AnimatedView>
@@ -5947,38 +6010,51 @@ function BrowserApp() {
                 </Overlay>
               </AnimatedView>
             </View>
-            {bottomChrome && !contentFullscreen && !isLittleArc && (
-              <PhoneBottomBar
-                canGoBack={canGoBack}
-                canGoForward={canGoForward}
-                loading={targetLoading}
-                onBack={goBack}
-                onForward={() => invoke(Commands.goForward)}
-                onReloadStop={() =>
-                  invoke(targetLoading ? Commands.stop : Commands.reload)
-                }
-                url={addressValue}
-                security={target ? browser.security[target] : undefined}
-                readerAvailable={canToggleReader}
-                readerActive={readerActive}
-                onToggleReader={toggleReaderMode}
-                extensionActions={extensionActions}
-                onOpenExtensionAction={openExtensionAction}
-                onAddressPress={() => openLocationEditor("touch")}
-                onOpenSpaces={() => setSpaceSwitcher(true)}
-                tabSwipe={toolbarTabSwipe}
-              />
-            )}
-            {hybridChrome && !contentFullscreen && !isLittleArc && (
-              <PhoneHybridBar
-                tabs={hybridBarTabs}
-                onSelectTab={revealTab}
-                onLongPressTab={openTabMenu}
-                onNewTab={() => openQuickOpen("touch")}
-                onOpenSettings={() => setSettings(true)}
-                onOpenSpaces={() => setSpaceSwitcher(true)}
-              />
-            )}
+            {/* adjustNothing keeps the Gecko surface stable under the IME;
+                the docked phone bar instead rides the owner-confirmed inset
+                so it never sits behind the soft keyboard (issue #25). The
+                translate keeps the column layout — and the tablet's top
+                chrome, which never reaches this branch — untouched. */}
+            {(bottomChrome || hybridChrome) &&
+              !contentFullscreen &&
+              !isLittleArc && (
+                <View
+                  collapsable={false}
+                  style={imeLiftStyle(keyboardInset)}
+                >
+                  {bottomChrome ? (
+                    <PhoneBottomBar
+                      canGoBack={canGoBack}
+                      canGoForward={canGoForward}
+                      loading={targetLoading}
+                      onBack={goBack}
+                      onForward={() => invoke(Commands.goForward)}
+                      onReloadStop={() =>
+                        invoke(targetLoading ? Commands.stop : Commands.reload)
+                      }
+                      url={addressValue}
+                      security={target ? browser.security[target] : undefined}
+                      readerAvailable={canToggleReader}
+                      readerActive={readerActive}
+                      onToggleReader={toggleReaderMode}
+                      extensionActions={extensionActions}
+                      onOpenExtensionAction={openExtensionAction}
+                      onAddressPress={() => openLocationEditor("touch")}
+                      onOpenSpaces={() => setSpaceSwitcher(true)}
+                      tabSwipe={toolbarTabSwipe}
+                    />
+                  ) : (
+                    <PhoneHybridBar
+                      tabs={hybridBarTabs}
+                      onSelectTab={revealTab}
+                      onLongPressTab={openTabMenu}
+                      onNewTab={() => openQuickOpen("touch")}
+                      onOpenSettings={() => setSettings(true)}
+                      onOpenSpaces={() => setSpaceSwitcher(true)}
+                    />
+                  )}
+                </View>
+              )}
             </View>
             <Overlay
               open={notice !== ""}

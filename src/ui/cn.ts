@@ -42,6 +42,7 @@ const merge = extendTailwindMerge({
         "input",
         "action-row",
         "bookmark-row",
+        "space-header",
       ],
     },
     classGroups: {

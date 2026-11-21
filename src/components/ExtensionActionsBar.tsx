@@ -3,6 +3,9 @@ import { Image, Pressable, Text, View } from "react-native";
 import { cva } from "class-variance-authority";
 import { cn } from "@/ui/cn";
 import { useI18n } from "@/i18nContext";
+import { size } from "@/theme";
+import { hitSlopForTarget } from "@/touchTargets";
+import { useTierSizes } from "@/ui/ThemeScope";
 import type { ExtensionToolbarAction } from "@/browserExtensionActions";
 
 const extensionButtonVariants = cva("size-icon-button rounded-[8px] items-center justify-center", {
@@ -20,10 +23,13 @@ export function ExtensionActionsBar({
   onOpen: (action: ExtensionToolbarAction, anchor: { x: number; y: number }) => void;
 }) {
   const { tr } = useI18n();
+  const sizes = useTierSizes();
   if (actions.length === 0) return null;
+  const compactTier = sizes.iconButton > size.iconButton;
+  const buttonHitSlop = hitSlopForTarget(sizes.iconButton);
   return (
     <View
-      className="flex-row items-center gap-md"
+      className={cn("flex-row items-center", compactTier ? "gap-sm" : "gap-md")}
       accessibilityRole="toolbar"
     >
       {actions.map((action) => (
@@ -33,7 +39,7 @@ export function ExtensionActionsBar({
           accessibilityLabel={tr("extension.actionOpen", { name: action.name })}
           accessibilityState={{ disabled: !action.actionEnabled }}
           disabled={!action.actionEnabled}
-          hitSlop={8}
+          hitSlop={buttonHitSlop}
           onPress={(event) =>
             onOpen(action, {
               x: event.nativeEvent.pageX,

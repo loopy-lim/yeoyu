@@ -160,9 +160,9 @@ function _pcDecodeF64(buf: Uint8Array, offset: number): { value: number; bytesRe
 function _pcEncodeF32(n: number): Uint8Array { const buf = new ArrayBuffer(4); new DataView(buf).setFloat32(0, n, true); return new Uint8Array(buf); }
 function _pcDecodeF32(buf: Uint8Array, offset: number): { value: number; bytesRead: number } { return { value: new DataView(buf.buffer, buf.byteOffset + offset, 4).getFloat32(0, true), bytesRead: 4 }; }
 
-import { createComplexCodec, createSchemaPostcardCodec } from '@rustra/types';
+import { createComplexCodec } from '@rustra/types';
 import type { FrameCodec, RustraError, ComplexSchema } from '@rustra/types';
-import type { Bookmark, BookmarkCreateInput, BookmarkFolder, BookmarkFolderCreateInput, BookmarkFolderIdInput, BookmarkFolderRenameInput, BookmarkFolderSetParentInput, BookmarkIdInput, BookmarkMoveInput, BookmarkOpenInput, BookmarkSetFolderInput, BookmarkUpdateInput, BrowserSnapshotInput, KeyBinding, KeymapSetInput, Snapshot, SnapshotRestoreInput, SplitGroup, SplitGroupIdInput, SplitGroupSaveInput, String, Tab, TabCreateInput, TabFavoriteInput, TabIdInput, TabMoveInput, TabNavigatedInput, TabOpenExternalInput, TabPinnedInput, TabRenameInput, TabWorkspaceInput, WorkArchiveExportInput, WorkArchiveImportInput, WorkArchivePrepareInput, WorkArchivePreview, WorkArchivePreviewInput, Workspace, WorkspaceCreateInput, WorkspaceIdInput, WorkspaceMoveInput, WorkspaceRenameInput } from './types.js';
+import type { Bookmark, BookmarkCreateInput, BookmarkFolder, BookmarkFolderCreateInput, BookmarkFolderIdInput, BookmarkFolderRenameInput, BookmarkFolderSetParentInput, BookmarkIdInput, BookmarkMoveInput, BookmarkOpenInput, BookmarkSetFolderInput, BookmarkUpdateInput, BrowserSnapshotInput, KeyBinding, KeymapSetInput, Snapshot, SnapshotRestoreInput, SplitGroup, SplitGroupIdInput, SplitGroupSaveInput, Tab, TabCreateInput, TabFavoriteInput, TabIdInput, TabMoveInput, TabNavigatedInput, TabOpenExternalInput, TabPinnedInput, TabRenameInput, TabWorkspaceInput, WorkArchiveExportInput, WorkArchiveExportOutput, WorkArchiveImportInput, WorkArchivePrepareInput, WorkArchivePreview, WorkArchivePreviewInput, Workspace, WorkspaceCreateInput, WorkspaceIdInput, WorkspaceMoveInput, WorkspaceRenameInput } from './types.js';
 
 export const bookmarkCreateCodec: FrameCodec<BookmarkCreateInput, Snapshot> = {
   commandId: 23,
@@ -9836,7 +9836,66 @@ export const tabSetWorkspaceCodec: FrameCodec<TabWorkspaceInput, Snapshot> = {
   },
 };
 
-export const workArchiveExportCodec = createSchemaPostcardCodec(2, {"title":"WorkArchiveExportInput","type":"object","properties":{"presentation":{"type":["string","null"]}}} as ComplexSchema, {"title":"String","type":"string"} as ComplexSchema, {"Workspace":{"type":"object","required":["id","name"],"properties":{"id":{"type":"string"},"name":{"type":"string"},"color":{"description":"Space tint as #rrggbb. Empty means \"follow the appearance hue\" — the default space stays appearance-colored so existing snapshots keep their look; created spaces pick from the palette round-robin.","default":"","type":"string"},"lastActiveTabId":{"description":"The space's most recently used tab; activate_workspace reopens the space where the user left off (Arc's working-set behavior). Dangling values are rejected on restore like the other active pointers.","default":null,"type":["string","null"]}}},"Tab":{"type":"object","required":["id","title","url","workspaceId"],"properties":{"id":{"type":"string"},"workspaceId":{"type":"string"},"url":{"type":"string"},"title":{"type":"string"},"customTitle":{"description":"User-assigned label that survives navigation; display prefers it over the page title. Navigating to a different URL releases it, reloads and title churn on the same URL keep it.","default":"","type":"string"},"favorite":{"description":"Favorites appear in every space without changing the selected space. Older snapshots restore without the field as non-favorites.","default":false,"type":"boolean"},"pinned":{"description":"Pinned tabs keep their own section under favorites, per space.","default":false,"type":"boolean"},"private":{"description":"Private tabs run engine-private sessions and never persist: the controller strips them from saved copies and restore drops them.","default":false,"type":"boolean"},"bookmarkId":{"description":"The persistent sidebar item owning this tab, independent of its live URL.","default":"","type":"string"},"homeUrl":{"description":"Saved destination, independent of navigation in the live session.","default":"","type":"string"},"homeTitle":{"default":"","type":"string"},"suspended":{"description":"The saved row remains while its browser session is closed.","default":false,"type":"boolean"},"updatedAt":{"description":"Last touch in epoch ms; drives the Today/Earlier split (12h archive).","default":0,"type":"integer","format":"uint64","minimum":0}}},"Bookmark":{"type":"object","required":["id","title","url"],"properties":{"id":{"type":"string"},"workspaceId":{"description":"Empty only in legacy snapshots, assigned to a Space during restore.","default":"","type":"string"},"title":{"type":"string"},"url":{"type":"string"},"folderId":{"default":"","type":"string"}}},"BookmarkFolder":{"type":"object","required":["id","title"],"properties":{"id":{"type":"string"},"workspaceId":{"default":"","type":"string"},"title":{"type":"string"},"parentFolderId":{"description":"\"\" is a space-root folder; otherwise another bookmark_folders ID in the same space. Old snapshots without the field restore as root folders.","default":"","type":"string"}}},"SplitGroup":{"description":"A saved two-pane arrangement. Panes are stored as home URLs, never tab IDs — tabs churn across restarts and private tabs are stripped from snapshots. Restoring creates fresh tabs and re-applies the layout.","type":"object","required":["firstTitle","firstUrl","id","name","orientation","ratioMilli","secondTitle","secondUrl"],"properties":{"id":{"type":"string"},"workspaceId":{"default":"","type":"string"},"name":{"type":"string"},"orientation":{"description":"\"horizontal\" (side by side) or \"vertical\" (stacked).","type":"string"},"ratioMilli":{"description":"Share of the first pane in thousandths, always 250..=750 so the value matches the runtime clamp in the address bar UI.","type":"integer","format":"uint32","minimum":0},"firstTitle":{"type":"string"},"firstUrl":{"type":"string"},"secondTitle":{"type":"string"},"secondUrl":{"type":"string"}}},"KeyBinding":{"type":"object","required":["alt","command","ctrl","key","meta","shift"],"properties":{"key":{"type":"string"},"meta":{"type":"boolean"},"ctrl":{"type":"boolean"},"alt":{"type":"boolean"},"shift":{"type":"boolean"},"command":{"type":"string"}}}} as Record<string, ComplexSchema>, true)! as FrameCodec<WorkArchiveExportInput, String>;
+export const workArchiveExportCodec: FrameCodec<WorkArchiveExportInput, WorkArchiveExportOutput> = {
+  commandId: 2,
+  execution: "sync",
+
+  encode(args: WorkArchiveExportInput): ArrayBuffer {
+    // [cmd_id: u16 LE][postcard(WorkArchiveExportInput)]
+    const parts: Uint8Array[] = [];
+    const cmdId = new Uint8Array(2);
+    new DataView(cmdId.buffer).setUint16(0, 2, true);
+    parts.push(cmdId);
+    {
+      const _opt = args.presentation;
+      if (_opt === null || _opt === undefined) {
+        parts.push(new Uint8Array([0]));
+      } else {
+        parts.push(new Uint8Array([1]));
+        parts.push(_pcEncodeString(_opt));
+      }
+    }
+    return _pcConcatUint8Arrays(parts).buffer as ArrayBuffer;
+  },
+
+  decode(buf: ArrayBuffer | ArrayBufferView): { ok: boolean; result?: WorkArchiveExportOutput; error?: RustraError } {
+    // caller-buffer 뷰(Uint8Array subarray 등)도 받는다 — node-loop 가 왕복당
+    // 사본 없이 프레임 뷰를 그대로 넘긴다. DataView 는 ArrayBuffer 만 받으므로
+    // (buf.buffer, byteOffset) 로 정규화한다.
+    const isView = ArrayBuffer.isView(buf);
+    const u8 = isView
+      ? new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength)
+      : new Uint8Array(buf);
+    const view = isView
+      ? new DataView(buf.buffer, buf.byteOffset, buf.byteLength)
+      : new DataView(buf);
+    if (view.byteLength < 8) return { ok: false, error: { code: 'invoke.too_short', message: 'response too short' } };
+    if (u8[0] !== 1) {
+      let err: RustraError = { code: 'invoke.failed', message: 'invoke failed' };
+      try {
+        const errLen = view.getUint16(8, true);
+        if (errLen > 0) {
+          // postcard({ code: String, message: String })
+          const c = _pcDecodeString(u8, 10);
+          const m = _pcDecodeString(u8, 10 + c.bytesRead);
+          err = { code: c.value, message: m.value };
+        }
+      } catch {
+        // 잘린/뒤틀린 에러 프레임 — 기본 err 를 유지한다.
+      }
+      return { ok: false, error: err };
+    }
+    // Decode postcard from offset 8
+    let offset = 8;
+    const result: Partial<WorkArchiveExportOutput> = {};
+    {
+      const _v = _pcDecodeString(u8, offset);
+      result.json = _v.value;
+      offset += _v.bytesRead;
+    }
+    return { ok: true, result: result as WorkArchiveExportOutput };
+  },
+};
 
 export const workArchiveImportCodec: FrameCodec<WorkArchiveImportInput, Snapshot> = {
   commandId: 5,

@@ -546,6 +546,8 @@ const en = {
   "archive.appearanceFailed":
     "Your data was imported. Appearance settings could not be saved; current appearance was kept.",
   "archive.imported": "Imported data was added in new Spaces.",
+  "archive.cancelOperation": "Cancel data operation",
+  "archive.cancelledNotice": "The data operation was cancelled.",
   "archive.title": "YOUR DATA",
   "archive.help":
     "Export bookmarks or a work archive of ordinary Spaces, tabs, pins, Favorites and shortcuts. Login sessions and unfinished forms are not included.",
@@ -1474,6 +1476,8 @@ const ko: { [K in keyof typeof en]: string } = {
   "archive.appearanceFailed":
     "데이터는 가져왔지만 화면 설정을 저장하지 못했습니다. 현재 화면 설정을 유지했습니다.",
   "archive.imported": "가져온 데이터를 새 Space에 추가했습니다.",
+  "archive.cancelOperation": "데이터 작업 취소",
+  "archive.cancelledNotice": "데이터 작업을 취소했습니다.",
   "archive.title": "내 데이터",
   "archive.help":
     "일반 Space, 탭, 고정 탭, 즐겨찾기, 단축키의 북마크나 작업 보관 파일을 내보냅니다. 로그인 세션과 작성 중인 양식은 포함되지 않습니다.",
