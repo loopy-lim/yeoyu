@@ -243,18 +243,18 @@ const Surface = withUniwind(NativeSurface);
 
 type SurfaceRef = React.ElementRef<typeof Surface>;
 
+import {
+  Button as UnikitButton,
+  Badge as UnikitBadge,
+  Separator as UnikitSeparator,
+} from "@unikit-bridge/ui";
+
 /** Newest synced-history rows shown in the history dialog's other-devices
  * section (issue #13 receive-only exposure cap). */
 const SYNCED_HISTORY_DIALOG_ROWS = 20;
 /** Per-device synced-tab rows shown inside quick open (same exposure cap
  * policy; the sidebar region keeps showing every tab). */
 const QUICK_OPEN_SYNCED_TABS_PER_DEVICE = 5;
-
-import {
-  Button as UnikitButton,
-  Badge as UnikitBadge,
-  Separator as UnikitSeparator,
-} from "@unikit-bridge/ui";
 
 const favoriteClasses = cva(c.favorite, {
   variants: { selected: { true: c.favoriteActive } },

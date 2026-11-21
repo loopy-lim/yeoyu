@@ -59,8 +59,10 @@ const dialogClasses = {
   historyList: "max-h-[420px]",
   historyRow:
     "min-h-bookmark-row flex-row items-center gap-lg px-lg py-sm border-b-hairline-width border-b-hairline active:bg-sunken",
+  // 44dp floor (issue #24): the header folds the other-devices synced
+  // section and is a primary press target inside the history dialog.
   historySectionHeader:
-    "min-h-[36px] flex-row items-center gap-sm px-lg pt-md pb-xs active:opacity-pressed",
+    "min-h-[44px] flex-row items-center gap-sm px-lg pt-md pb-xs active:opacity-pressed",
   grow: "flex-1",
   permissionScroll: "grow-0",
   permissionContent: "gap-xxxl",
