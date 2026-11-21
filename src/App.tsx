@@ -112,7 +112,6 @@ import {
   normalizeBoostHost,
   reduceUiPreferences,
   type PermissionKind,
-  type SiteSearchEntry,
 } from "@/uiPreferences";
 import { littleArcOrphaned } from "@/littleArcLifecycle";
 import { permissionKindsFromEvent } from "@/permissions";
@@ -5718,6 +5717,12 @@ function BrowserApp() {
                                     onOpenUrl={(url) =>
                                       loadInPane(item.id, url)
                                     }
+                                    onOpenTab={(id) => {
+                                      const blank = item.id;
+                                      switchTab(id);
+                                      if (blank !== id)
+                                        run(controller.close(blank));
+                                    }}
                                   />
                                 )}
                             </Overlay>

@@ -33,7 +33,19 @@ const probe = `
   }));
   mock.module('./src/chrome/ChromeIcon', () => ({ ChromeIcon: 'ChromeIcon' }));
   mock.module('./src/components/Favicon', () => ({ Favicon: 'Favicon' }));
-  mock.module('./src/components/AddressBox', () => ({ AddressBox: 'AddressBox' }));
+  // The dashboard owns no suggestion logic; the mock records what NewTabPage
+  // hands AddressBox and offers one pressable that plays the role of a
+  // selected open-tab suggestion (tabs/favorites carry result.page.tabId).
+  let lastAddressProps = null;
+  mock.module('./src/components/AddressBox', () => ({
+    AddressBox: (props) => {
+      lastAddressProps = props;
+      return React.createElement('Pressable', {
+        accessibilityLabel: 'Tab suggestion',
+        onPress: () => props.onOpenTab?.('tab-existing'),
+      });
+    },
+  }));
   const { NewTabPage, clockLabel } = await import('./src/components/NewTabPage');
 
   const assert = (condition, message) => {
@@ -83,6 +95,7 @@ const probe = `
       commands: [],
       onCommand: () => {},
       onOpenUrl: () => {},
+      onOpenTab: () => {},
       ...overrides,
     })
   );
@@ -158,6 +171,27 @@ const probe = `
       try { textInput(tree, 'Address'); } catch { missing = true; }
       assert(missing, 'form stayed open after cancel');
     }],
+    ['selecting an open-tab suggestion switches to that tab, not a url load', () => {
+      const openedTabs = [];
+      const loadedUrls = [];
+      const tree = mountPage({
+        onOpenTab: (id) => openedTabs.push(id),
+        onOpenUrl: (url) => loadedUrls.push(url),
+      });
+      assert(
+        typeof lastAddressProps?.onOpenTab === 'function',
+        'AddressBox did not receive onOpenTab from NewTabPage'
+      );
+      press(button(tree, 'Tab suggestion'));
+      assert(
+        JSON.stringify(openedTabs) === '["tab-existing"]',
+        'openedTabs: ' + JSON.stringify(openedTabs)
+      );
+      assert(
+        loadedUrls.length === 0,
+        'tab suggestion fell through to a url load: ' + JSON.stringify(loadedUrls)
+      );
+    }],
   ];
   const results = [];
   for (const [name, run] of scenarios) {
@@ -191,7 +225,7 @@ test("new-tab dashboard scenarios pass in an isolated render process", async () 
   const results: { name: string; error: string | null }[] = JSON.parse(
     out.slice(marker + "@@RESULTS@@".length)
   ).scenarios;
-  expect(results).toHaveLength(7);
+  expect(results).toHaveLength(8);
   for (const scenario of results)
     expect(scenario.error).toBeNull();
   // A non-zero exit with results means an unhandled render error escaped.

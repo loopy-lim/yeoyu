@@ -120,6 +120,7 @@ export function NewTabPage({
   commands,
   onCommand,
   onOpenUrl,
+  onOpenTab,
 }: {
   shortcuts: NewTabShortcut[];
   onSetShortcuts: (shortcuts: NewTabShortcut[]) => void;
@@ -132,6 +133,7 @@ export function NewTabPage({
   commands: ProductCommand[];
   onCommand: (id: string) => void;
   onOpenUrl: (url: string) => void;
+  onOpenTab: (id: string) => void;
 }) {
   const { tr, language } = useI18n();
   const theme = useTheme();
@@ -220,6 +222,7 @@ export function NewTabPage({
             suggestions={suggestions}
             commands={commands}
             onCommand={onCommand}
+            onOpenTab={onOpenTab}
             onSubmit={onOpenUrl}
           />
           <View className="self-stretch gap-md">
