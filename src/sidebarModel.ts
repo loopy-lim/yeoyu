@@ -165,6 +165,7 @@ export function clearUnpinnedTargets(
     favorite?: boolean;
     pinned?: boolean;
     private?: boolean;
+    panel?: boolean;
     suspended?: boolean;
   }[],
   workspaceId: string
@@ -175,6 +176,7 @@ export function clearUnpinnedTargets(
         !tab.favorite &&
         !tab.pinned &&
         !tab.private &&
+        !tab.panel &&
         !tab.suspended &&
         tab.workspaceId === workspaceId
     )

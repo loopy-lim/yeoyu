@@ -571,6 +571,32 @@ export class BrowserController {
       })
     );
   }
+  /** Sidebar web panel: a background tab that must not disturb the active
+   * working set. Returns the created panel id; panel creation never changes
+   * activeTabId, so the id comes from the serialized queue's before/after
+   * diff where no other mutation can interleave. */
+  createPanelTab(url: string, options?: { private?: boolean }): Promise<string> {
+    return this.initialize()
+      .then(() =>
+        this.queue.run(async () => {
+          this.assertMutable();
+          const before = new Set(this.snapshot!.tabs.map((tab) => tab.id));
+          const snapshot = await this.commands.tabCreate({
+            workspaceId: this.snapshot!.activeWorkspaceId,
+            url,
+            private: !!options?.private,
+            panel: true,
+          });
+          const created = snapshot.tabs.find(
+            (tab) => tab.panel && !before.has(tab.id)
+          );
+          if (!created)
+            throw new Error("Panel tab allocation did not return a new tab");
+          await this.publish(snapshot);
+          return created.id;
+        })
+      );
+  }
   openExternal(requestId: string, url: string) {
     return this.mutate(() => {
       if (!this.commands.tabOpenExternal)

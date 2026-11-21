@@ -2180,6 +2180,46 @@ function BrowserApp() {
       })
     );
   };
+  // Sidebar web panels: a panel is a background tab rendered in the sidebar
+  // instead of the content canvas, so opening one never disturbs the active
+  // tab, the split, or the Space — like adding a bookmark row.
+  const openPanel = ui.sidebarPanelId
+    ? (state?.tabs.find(
+        (tab) => tab.id === ui.sidebarPanelId && tab.panel
+      ) ?? null)
+    : null;
+  const panelNav = openPanel ? navigation[openPanel.id] : undefined;
+  const openPanelView = (id: string) => {
+    haptic("tick");
+    updateUi({ type: "setSidebarPanel", id });
+  };
+  const closePanelView = () => {
+    haptic("tick");
+    updateUi({ type: "setSidebarPanel", id: null });
+  };
+  const createPanelFromCurrent = () => {
+    if (!targetTab || targetTab.url === NEW_TAB_URL) return;
+    haptic("click");
+    // The panel inherits the current tab's privacy: a panel added from a
+    // private tab lives and dies with that private session.
+    run(
+      controller
+        .createPanelTab(targetTab.url, { private: targetTab.private })
+        .then((id) => updateUi({ type: "setSidebarPanel", id }))
+    );
+  };
+  const removePanel = (tabId: string) => {
+    haptic("tick");
+    if (ui.sidebarPanelId === tabId)
+      updateUi({ type: "setSidebarPanel", id: null });
+    run(controller.close(tabId));
+  };
+  // A restored pointer can outlive its panel (removed, or a private panel
+  // after a restart); fall back to the library instead of a dead view.
+  useEffect(() => {
+    if (ui.sidebarPanelId && !openPanel)
+      updateUi({ type: "setSidebarPanel", id: null });
+  }, [ui.sidebarPanelId, openPanel]);
 
   const promoteLittleArc = useCallback(() => {
     const spaceName = activeWorkspace?.name || tr("chrome.thisSpace");
@@ -3987,6 +4027,70 @@ function BrowserApp() {
       </View>
     );
   };
+  // Panel rows share the tab row anatomy but never drag (their place is the
+  // sidebar itself) and select the panel view instead of activating a tab.
+  const renderPanelRow = (tab: NonNullable<typeof state>["tabs"][number]) => {
+    const selected = ui.sidebarPanelId === tab.id;
+    return (
+      <View
+        key={tab.id}
+        className={cn(rowVariants({ density: "tab", selected }), c.tab)}
+      >
+        <SidebarPressable
+          accessibilityRole="button"
+          accessibilityLabel={tr("chrome.panelLabel", {
+            name: tabLabel(tab),
+          })}
+          accessibilityState={{ selected }}
+          className={c.tabDrag}
+          onPress={() => openPanelView(tab.id)}
+        >
+          <View className={c.tabFavicon}>
+            <Favicon
+              url={tab.url}
+              fallback="globe"
+              size={14}
+              radius={4}
+              persist={!tab.private}
+            />
+          </View>
+          <Text
+            numberOfLines={1}
+            maxFontSizeMultiplier={1.35}
+            className={cn(
+              c.tabTitle,
+              selected ? "text-ink font-medium" : "text-ink-muted font-normal"
+            )}
+          >
+            {tabLabel(tab)}
+          </Text>
+          {tab.private && (
+            <ChromeIcon
+              className={cn("size-[12px]", "text-accent-strong")}
+              name="private"
+            />
+          )}
+        </SidebarPressable>
+        <SidebarPressable
+          accessibilityRole="button"
+          accessibilityLabel={tr("chrome.closePanel", {
+            name: tabLabel(tab),
+          })}
+          hitSlop={hitSlopForTarget(26)}
+          className={cn(c.tabClose, "active:bg-field-on-chrome")}
+          onPress={() => removePanel(tab.id)}
+        >
+          <ChromeIcon
+            className={cn(
+              "size-[12px]",
+              selected ? "text-ink-muted" : "text-ink-faint opacity-55"
+            )}
+            name="close"
+          />
+        </SidebarPressable>
+      </View>
+    );
+  };
   const renderRailFolder = (item: SidebarFolder) => (
     <SidebarFolderItem
       key={item.folder.id}
@@ -4054,6 +4158,13 @@ function BrowserApp() {
           onPress: () => {
             if (target) run(controller.setFavorite(target, true));
           },
+        },
+        {
+          id: "new-panel",
+          label: tr("chrome.addPanel"),
+          icon: "sidebar",
+          disabled: !target || targetUrl === NEW_TAB_URL,
+          onPress: createPanelFromCurrent,
         },
         {
           id: "clear-unpinned",
@@ -4686,6 +4797,129 @@ function BrowserApp() {
                     className={c.tabScrollWrap}
                     style={[spaceStyle]}
                   >
+                    {openPanel ? (
+                    <View className={c.panelView}>
+                      {/* The panel view keeps the sidebar chrome above and
+                      below; only the tab list area swaps for the web panel,
+                      and the panel gets its own compact navigation row. */}
+                      <View className={c.navigationRow}>
+                        <IconButton
+                          label={tr("chrome.panelLibrary")}
+                          icon="sidebar"
+                          onPress={closePanelView}
+                        />
+                        <View className={c.navSpacer} />
+                        <IconButton
+                          label={tr("chrome.back")}
+                          icon="back"
+                          onPress={() => {
+                            const ref = refs.current.get(openPanel.id);
+                            if (ref) Commands.goBack(ref);
+                          }}
+                          disabled={!panelNav?.canGoBack}
+                        />
+                        <IconButton
+                          label={tr("chrome.forward")}
+                          icon="forward"
+                          onPress={() => {
+                            const ref = refs.current.get(openPanel.id);
+                            if (ref) Commands.goForward(ref);
+                          }}
+                          disabled={!panelNav?.canGoForward}
+                        />
+                        <IconButton
+                          label={tr(
+                            panelNav?.loading ? "chrome.stop" : "chrome.reload"
+                          )}
+                          icon={panelNav?.loading ? "close" : "reload"}
+                          onPress={() => {
+                            const ref = refs.current.get(openPanel.id);
+                            if (ref)
+                              panelNav?.loading
+                                ? Commands.stop(ref)
+                                : Commands.reload(ref);
+                          }}
+                        />
+                      </View>
+                      <View className={c.panelTitleRow}>
+                        <View className={c.tabFavicon}>
+                          <Favicon
+                            url={openPanel.url}
+                            fallback="globe"
+                            size={14}
+                            radius={4}
+                            persist={!openPanel.private}
+                          />
+                        </View>
+                        <Text
+                          numberOfLines={1}
+                          maxFontSizeMultiplier={1.35}
+                          className={c.panelTitle}
+                        >
+                          {tabLabel(openPanel)}
+                        </Text>
+                        {openPanel.private && (
+                          <ChromeIcon
+                            className={cn(
+                              "size-[12px]",
+                              "text-accent-strong"
+                            )}
+                            name="private"
+                          />
+                        )}
+                        <SidebarPressable
+                          accessibilityRole="button"
+                          accessibilityLabel={tr("chrome.closePanel", {
+                            name: tabLabel(openPanel),
+                          })}
+                          hitSlop={hitSlopForTarget(26)}
+                          className={cn(
+                            c.tabClose,
+                            "active:bg-field-on-chrome"
+                          )}
+                          onPress={() => removePanel(openPanel.id)}
+                        >
+                          <ChromeIcon
+                            className={cn(
+                              "size-[12px]",
+                              "text-ink-faint opacity-55"
+                            )}
+                            name="close"
+                          />
+                        </SidebarPressable>
+                      </View>
+                      <View className={c.panelContent}>
+                        <PaneLoadBar
+                          tabId={openPanel.id}
+                          theme={theme}
+                          reducedMotion={reducedMotion}
+                        />
+                        {/* Panels ride the same tab session lifecycle as any
+                        tab: the registry keeps the session alive while the
+                        tab exists, so hiding the view never loses the page. */}
+                        <Surface
+                          ref={(ref) => {
+                            if (ref)
+                              return registerSurfaceRef(
+                                refs.current,
+                                openPanel.id,
+                                ref
+                              );
+                          }}
+                          className={c.surface}
+                          tabId={openPanel.id}
+                          initialUrl={openPanel.url}
+                          active={!ui.sidebarCollapsed && !contentFullscreen}
+                          edgeSwipeDisabled
+                          canEdgeBack={false}
+                          canEdgeForward={false}
+                          refreshAccentColor={theme.accentStrong}
+                          refreshSurfaceColor={theme.surfaceElevated}
+                          onNavigation={(e) => onNavigation(e.nativeEvent)}
+                        />
+                      </View>
+                    </View>
+                    ) : (
                     <FlatList
                       key={state?.activeWorkspaceId}
                       data={sidebar.ordinaryTabs}
@@ -4814,6 +5048,28 @@ function BrowserApp() {
                             {sidebar.pinnedTabs.map((tab) =>
                               renderSidebarTab(tab)
                             )}
+                            {sidebar.panelTabs.length > 0 && (
+                              <View className={c.privateSection}>
+                                <View className={c.privateHeader}>
+                                  <ChromeIcon
+                                    className={cn(
+                                      "size-[12px]",
+                                      "text-ink-faint"
+                                    )}
+                                    name="sidebar"
+                                  />
+                                  <Text
+                                    numberOfLines={1}
+                                    className={c.privateHeaderText}
+                                  >
+                                    {tr("chrome.panelTabs")}
+                                  </Text>
+                                </View>
+                                {sidebar.panelTabs.map((tab) =>
+                                  renderPanelRow(tab)
+                                )}
+                              </View>
+                            )}
                             {privateTabs.length > 0 && (
                               <View className={c.privateSection}>
                                 <View className={c.privateHeader}>
@@ -4892,6 +5148,7 @@ function BrowserApp() {
                         </View>
                       }
                     />
+                    )}
                   </AnimatedView>
                   <UnikitSeparator className="bg-hairline-on-chrome mb-[4px]" />
                   <View className={c.sidebarBottom}>

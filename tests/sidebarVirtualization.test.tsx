@@ -102,6 +102,9 @@ function renderList(rail: boolean, grouped = false) {
     sidebar,
     sidebarMenu: null,
     expandedFolders: new Set(),
+    // The harness renders the library view: a null panel pointer short-
+    // circuits the panel view branch inside the extracted list element.
+    openPanel: null,
     openSplitCollection: () => {},
     renderRailFolder: (item: { folder: { id: string } }) =>
       React.createElement("SidebarFolderItem", { key: item.folder.id }),

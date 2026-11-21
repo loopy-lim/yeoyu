@@ -167,3 +167,35 @@ test("folder membership follows bookmark ownership after live navigation and doe
   ]);
   expect(view.railTabs).toEqual([]);
 });
+
+test("panels leave every tab list and split for their own sidebar section", () => {
+  const view = sidebarPresentation({
+    ...base,
+    tabs: [
+      ...tabs,
+      tab("panel", { panel: true }),
+      tab("panel-private", { panel: true, private: true }),
+      tab("panel-other", { panel: true, workspaceId: "personal" }),
+    ],
+    split: { first: "panel", second: "ordinary", orientation: "vertical", ratio: 0.5 },
+  });
+  // Panels never appear as tabs, favorites, rail rows, or split panes.
+  for (const key of [
+    "favorites",
+    "ordinaryTabs",
+    "pinnedTabs",
+    "privateTabs",
+    "railTabs",
+  ] as const) {
+    expect(view[key].map((t) => t.id)).not.toContain("panel");
+    expect(view[key].map((t) => t.id)).not.toContain("panel-private");
+  }
+  expect(view.split).toBeNull();
+  // The panel section lists this Space's panels, private ones included.
+  expect(view.panelTabs.map((t) => t.id)).toEqual([
+    "panel",
+    "panel-private",
+  ]);
+});
+
+

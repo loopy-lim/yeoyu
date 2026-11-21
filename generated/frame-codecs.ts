@@ -321,6 +321,10 @@ export const bookmarkCreateCodec: FrameCodec<BookmarkCreateInput, Snapshot> = {
           offset += 1;
         }
         {
+          _obj.panel = u8[offset] === 1;
+          offset += 1;
+        }
+        {
           _obj.private = u8[offset] === 1;
           offset += 1;
         }
@@ -683,6 +687,10 @@ export const bookmarkFolderCreateCodec: FrameCodec<BookmarkFolderCreateInput, Sn
           offset += 1;
         }
         {
+          _obj.panel = u8[offset] === 1;
+          offset += 1;
+        }
+        {
           _obj.private = u8[offset] === 1;
           offset += 1;
         }
@@ -1042,6 +1050,10 @@ export const bookmarkFolderRemoveCodec: FrameCodec<BookmarkFolderIdInput, Snapsh
         }
         {
           _obj.pinned = u8[offset] === 1;
+          offset += 1;
+        }
+        {
+          _obj.panel = u8[offset] === 1;
           offset += 1;
         }
         {
@@ -1409,6 +1421,10 @@ export const bookmarkFolderRenameCodec: FrameCodec<BookmarkFolderRenameInput, Sn
           offset += 1;
         }
         {
+          _obj.panel = u8[offset] === 1;
+          offset += 1;
+        }
+        {
           _obj.private = u8[offset] === 1;
           offset += 1;
         }
@@ -1770,6 +1786,10 @@ export const bookmarkMoveCodec: FrameCodec<BookmarkMoveInput, Snapshot> = {
         }
         {
           _obj.pinned = u8[offset] === 1;
+          offset += 1;
+        }
+        {
+          _obj.panel = u8[offset] === 1;
           offset += 1;
         }
         {
@@ -2139,6 +2159,10 @@ export const bookmarkOpenCodec: FrameCodec<BookmarkOpenInput, Snapshot> = {
           offset += 1;
         }
         {
+          _obj.panel = u8[offset] === 1;
+          offset += 1;
+        }
+        {
           _obj.private = u8[offset] === 1;
           offset += 1;
         }
@@ -2498,6 +2522,10 @@ export const bookmarkRemoveCodec: FrameCodec<BookmarkIdInput, Snapshot> = {
         }
         {
           _obj.pinned = u8[offset] === 1;
+          offset += 1;
+        }
+        {
+          _obj.panel = u8[offset] === 1;
           offset += 1;
         }
         {
@@ -2862,6 +2890,10 @@ export const bookmarkSetFolderCodec: FrameCodec<BookmarkSetFolderInput, Snapshot
         }
         {
           _obj.pinned = u8[offset] === 1;
+          offset += 1;
+        }
+        {
+          _obj.panel = u8[offset] === 1;
           offset += 1;
         }
         {
@@ -3231,6 +3263,10 @@ export const bookmarkUpdateCodec: FrameCodec<BookmarkUpdateInput, Snapshot> = {
           offset += 1;
         }
         {
+          _obj.panel = u8[offset] === 1;
+          offset += 1;
+        }
+        {
           _obj.private = u8[offset] === 1;
           offset += 1;
         }
@@ -3587,6 +3623,10 @@ export const browserSnapshotCodec: FrameCodec<BrowserSnapshotInput, Snapshot> = 
         }
         {
           _obj.pinned = u8[offset] === 1;
+          offset += 1;
+        }
+        {
+          _obj.panel = u8[offset] === 1;
           offset += 1;
         }
         {
@@ -4044,6 +4084,10 @@ export const keymapSetCodec: FrameCodec<KeymapSetInput, Snapshot> = {
           offset += 1;
         }
         {
+          _obj.panel = u8[offset] === 1;
+          offset += 1;
+        }
+        {
           _obj.private = u8[offset] === 1;
           offset += 1;
         }
@@ -4403,6 +4447,10 @@ export const snapshotRestoreCodec: FrameCodec<SnapshotRestoreInput, Snapshot> = 
         }
         {
           _obj.pinned = u8[offset] === 1;
+          offset += 1;
+        }
+        {
+          _obj.panel = u8[offset] === 1;
           offset += 1;
         }
         {
@@ -4768,6 +4816,10 @@ export const splitGroupRemoveCodec: FrameCodec<SplitGroupIdInput, Snapshot> = {
           offset += 1;
         }
         {
+          _obj.panel = u8[offset] === 1;
+          offset += 1;
+        }
+        {
           _obj.private = u8[offset] === 1;
           offset += 1;
         }
@@ -5126,6 +5178,10 @@ export const splitGroupSaveCodec: FrameCodec<SplitGroupSaveInput, Snapshot> = {
         }
         {
           _obj.pinned = u8[offset] === 1;
+          offset += 1;
+        }
+        {
+          _obj.panel = u8[offset] === 1;
           offset += 1;
         }
         {
@@ -5491,6 +5547,10 @@ export const tabActivateCodec: FrameCodec<TabIdInput, Snapshot> = {
           offset += 1;
         }
         {
+          _obj.panel = u8[offset] === 1;
+          offset += 1;
+        }
+        {
           _obj.private = u8[offset] === 1;
           offset += 1;
         }
@@ -5853,6 +5913,10 @@ export const tabCloseCodec: FrameCodec<TabIdInput, Snapshot> = {
           offset += 1;
         }
         {
+          _obj.panel = u8[offset] === 1;
+          offset += 1;
+        }
+        {
           _obj.private = u8[offset] === 1;
           offset += 1;
         }
@@ -6065,7 +6129,6 @@ export const tabCloseCodec: FrameCodec<TabIdInput, Snapshot> = {
 export const tabCreateCodec: FrameCodec<TabCreateInput, Snapshot> = {
   commandId: 7,
   execution: "sync",
-  syncFields: ["workspaceId","url","private"],
 
   encode(args: TabCreateInput): ArrayBuffer {
     // [cmd_id: u16 LE][postcard(TabCreateInput)]
@@ -6076,6 +6139,7 @@ export const tabCreateCodec: FrameCodec<TabCreateInput, Snapshot> = {
     parts.push(_pcEncodeString(args.workspaceId));
     parts.push(_pcEncodeString(args.url));
     parts.push(new Uint8Array([args.private ? 1 : 0]));
+    parts.push(new Uint8Array([args.panel ? 1 : 0]));
     return _pcConcatUint8Arrays(parts).buffer as ArrayBuffer;
   },
 
@@ -6093,6 +6157,7 @@ export const tabCreateCodec: FrameCodec<TabCreateInput, Snapshot> = {
     { const _s = args.workspaceId; const _u = _utf8Encode(_s); ensure(5 + _u.length); let _v = _u.length; do { out[w++] = (_v % 128) | 0x80; _v = Math.floor(_v / 128); } while (_v > 0); out[w - 1] &= 0x7f; out.set(_u, w); w += _u.length; }
     { const _s = args.url; const _u = _utf8Encode(_s); ensure(5 + _u.length); let _v = _u.length; do { out[w++] = (_v % 128) | 0x80; _v = Math.floor(_v / 128); } while (_v > 0); out[w - 1] &= 0x7f; out.set(_u, w); w += _u.length; }
     { ensure(1); out[w++] = args.private ? 1 : 0; }
+    { ensure(1); out[w++] = args.panel ? 1 : 0; }
     return out.subarray(0, w);
   },
 
@@ -6216,6 +6281,10 @@ export const tabCreateCodec: FrameCodec<TabCreateInput, Snapshot> = {
         }
         {
           _obj.pinned = u8[offset] === 1;
+          offset += 1;
+        }
+        {
+          _obj.panel = u8[offset] === 1;
           offset += 1;
         }
         {
@@ -6580,6 +6649,10 @@ export const tabMoveCodec: FrameCodec<TabMoveInput, Snapshot> = {
         }
         {
           _obj.pinned = u8[offset] === 1;
+          offset += 1;
+        }
+        {
+          _obj.panel = u8[offset] === 1;
           offset += 1;
         }
         {
@@ -6949,6 +7022,10 @@ export const tabNavigatedCodec: FrameCodec<TabNavigatedInput, Snapshot> = {
           offset += 1;
         }
         {
+          _obj.panel = u8[offset] === 1;
+          offset += 1;
+        }
+        {
           _obj.private = u8[offset] === 1;
           offset += 1;
         }
@@ -7310,6 +7387,10 @@ export const tabOpenExternalCodec: FrameCodec<TabOpenExternalInput, Snapshot> = 
         }
         {
           _obj.pinned = u8[offset] === 1;
+          offset += 1;
+        }
+        {
+          _obj.panel = u8[offset] === 1;
           offset += 1;
         }
         {
@@ -7677,6 +7758,10 @@ export const tabRenameCodec: FrameCodec<TabRenameInput, Snapshot> = {
           offset += 1;
         }
         {
+          _obj.panel = u8[offset] === 1;
+          offset += 1;
+        }
+        {
           _obj.private = u8[offset] === 1;
           offset += 1;
         }
@@ -8036,6 +8121,10 @@ export const tabResetCodec: FrameCodec<TabIdInput, Snapshot> = {
         }
         {
           _obj.pinned = u8[offset] === 1;
+          offset += 1;
+        }
+        {
+          _obj.panel = u8[offset] === 1;
           offset += 1;
         }
         {
@@ -8403,6 +8492,10 @@ export const tabSetFavoriteCodec: FrameCodec<TabFavoriteInput, Snapshot> = {
           offset += 1;
         }
         {
+          _obj.panel = u8[offset] === 1;
+          offset += 1;
+        }
+        {
           _obj.private = u8[offset] === 1;
           offset += 1;
         }
@@ -8767,6 +8860,10 @@ export const tabSetPinnedCodec: FrameCodec<TabPinnedInput, Snapshot> = {
           offset += 1;
         }
         {
+          _obj.panel = u8[offset] === 1;
+          offset += 1;
+        }
+        {
           _obj.private = u8[offset] === 1;
           offset += 1;
         }
@@ -9128,6 +9225,10 @@ export const tabSetWorkspaceCodec: FrameCodec<TabWorkspaceInput, Snapshot> = {
         }
         {
           _obj.pinned = u8[offset] === 1;
+          offset += 1;
+        }
+        {
+          _obj.panel = u8[offset] === 1;
           offset += 1;
         }
         {
@@ -9559,6 +9660,10 @@ export const workArchiveImportCodec: FrameCodec<WorkArchiveImportInput, Snapshot
           offset += 1;
         }
         {
+          _obj.panel = u8[offset] === 1;
+          offset += 1;
+        }
+        {
           _obj.private = u8[offset] === 1;
           offset += 1;
         }
@@ -9922,6 +10027,10 @@ export const workArchivePrepareCodec: FrameCodec<WorkArchivePrepareInput, Snapsh
         }
         {
           _obj.pinned = u8[offset] === 1;
+          offset += 1;
+        }
+        {
+          _obj.panel = u8[offset] === 1;
           offset += 1;
         }
         {
@@ -10398,6 +10507,10 @@ export const workspaceActivateCodec: FrameCodec<WorkspaceIdInput, Snapshot> = {
           offset += 1;
         }
         {
+          _obj.panel = u8[offset] === 1;
+          offset += 1;
+        }
+        {
           _obj.private = u8[offset] === 1;
           offset += 1;
         }
@@ -10757,6 +10870,10 @@ export const workspaceCreateCodec: FrameCodec<WorkspaceCreateInput, Snapshot> = 
         }
         {
           _obj.pinned = u8[offset] === 1;
+          offset += 1;
+        }
+        {
+          _obj.panel = u8[offset] === 1;
           offset += 1;
         }
         {
@@ -11124,6 +11241,10 @@ export const workspaceMoveCodec: FrameCodec<WorkspaceMoveInput, Snapshot> = {
           offset += 1;
         }
         {
+          _obj.panel = u8[offset] === 1;
+          offset += 1;
+        }
+        {
           _obj.private = u8[offset] === 1;
           offset += 1;
         }
@@ -11483,6 +11604,10 @@ export const workspaceRemoveCodec: FrameCodec<WorkspaceIdInput, Snapshot> = {
         }
         {
           _obj.pinned = u8[offset] === 1;
+          offset += 1;
+        }
+        {
+          _obj.panel = u8[offset] === 1;
           offset += 1;
         }
         {
@@ -11847,6 +11972,10 @@ export const workspaceRenameCodec: FrameCodec<WorkspaceRenameInput, Snapshot> = 
         }
         {
           _obj.pinned = u8[offset] === 1;
+          offset += 1;
+        }
+        {
+          _obj.panel = u8[offset] === 1;
           offset += 1;
         }
         {

@@ -29,11 +29,15 @@ export function sidebarPresentation(input: {
   pinnedTabs: Tab[];
   privateTabs: Tab[];
   railTabs: Tab[];
+  panelTabs: Tab[];
   folders: SidebarFolder[];
   looseBookmarks: Bookmark[];
 } {
   const { tabs, workspaceId, focusedId, split: layout } = input;
-  const available = tabs.filter(
+  // Panels render in the sidebar's web panel area, never in the tab lists,
+  // the split rotation, or the content canvas.
+  const content = tabs.filter((tab) => !tab.panel);
+  const available = content.filter(
     (tab) => tab.favorite || tab.workspaceId === workspaceId
   );
   const first = available.find(
@@ -56,7 +60,7 @@ export function sidebarPresentation(input: {
         }
       : null;
   const paired = new Set(split?.pages.map((tab) => tab.id));
-  const owners = bookmarkTabsForSpace(tabs, workspaceId);
+  const owners = bookmarkTabsForSpace(content, workspaceId);
   const spaceBookmarks = libraryItemsForSpace(input.bookmarks, workspaceId);
   const spaceFolders = libraryItemsForSpace(input.folders, workspaceId);
   const folderIds = new Set(spaceFolders.map((folder) => folder.id));
@@ -83,7 +87,7 @@ export function sidebarPresentation(input: {
       }),
     };
   });
-  const remaining = tabs.filter((tab) => !paired.has(tab.id));
+  const remaining = content.filter((tab) => !paired.has(tab.id));
   const local = remaining.filter(
     (tab) => tab.workspaceId === workspaceId && !tab.favorite && !tab.private
   );
@@ -94,6 +98,9 @@ export function sidebarPresentation(input: {
     pinnedTabs: local.filter((tab) => tab.pinned && !tab.bookmarkId),
     privateTabs: remaining.filter((tab) => tab.private),
     railTabs: local.filter((tab) => !groupedTabs.has(tab.id)),
+    // Private panels vanish with the session like private tabs; ordinary
+    // panels restore with the space after a restart.
+    panelTabs: tabs.filter((tab) => tab.panel && tab.workspaceId === workspaceId),
     folders,
     looseBookmarks: spaceBookmarks.filter(
       (bookmark) =>

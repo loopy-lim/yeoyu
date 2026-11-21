@@ -528,3 +528,58 @@ test("resolvePhoneChromeLayout defaults compact windows to the bottom bar and ne
   expect(resolvePhoneChromeLayout("hybrid", true)).toBe("hybrid");
   expect(resolvePhoneChromeLayout("hybrid", false)).toBe("top");
 });
+
+// --- Sidebar web panel view pointer -----------------------------------------
+// The pointer remembers which panel view is open across restarts; membership
+// lives on the tabs, so a stale id (removed or private panel) must fall back
+// to the library view instead of rendering a dead panel.
+
+test("sidebar panel pointer round-trips set → clear with stable identity on no-op", () => {
+  const opened = reduceUiPreferences(defaultUiPreferences, {
+    type: "setSidebarPanel",
+    id: "tab-panel",
+  });
+  expect(opened.sidebarPanelId).toBe("tab-panel");
+  expect(
+    reduceUiPreferences(defaultUiPreferences, {
+      type: "setSidebarPanel",
+      id: null,
+    })
+  ).toBe(defaultUiPreferences);
+  const closed = reduceUiPreferences(opened, {
+    type: "setSidebarPanel",
+    id: null,
+  });
+  expect(closed.sidebarPanelId).toBeUndefined();
+  expect(
+    reduceUiPreferences(opened, { type: "setSidebarPanel", id: "tab-panel" })
+  ).toBe(opened);
+});
+
+test("sidebar panel pointer survives persistence round-trip and sanitizes malformed ids", async () => {
+  const base = { sidebarCollapsed: false, appearance: "lavender" };
+  const loaded = await loadUiPreferences(async () =>
+    JSON.stringify({ ...base, sidebarPanelId: "tab-panel" })
+  );
+  expect(loaded.sidebarPanelId).toBe("tab-panel");
+  let written: string | null = null;
+  await saveUiPreferences(async (json) => { written = json; }, loaded);
+  expect(JSON.parse(written ?? "{}").sidebarPanelId).toBe("tab-panel");
+  for (const bad of ["", 42, null]) {
+    expect(
+      (await loadUiPreferences(async () =>
+        JSON.stringify({ ...base, sidebarPanelId: bad })
+      )).sidebarPanelId
+    ).toBeUndefined();
+  }
+});
+
+test("resetLayout clears the panel pointer with the rest of the chrome layout", () => {
+  const opened = reduceUiPreferences(defaultUiPreferences, {
+    type: "setSidebarPanel",
+    id: "tab-panel",
+  });
+  const reset = reduceUiPreferences(opened, { type: "resetLayout" });
+  expect(reset.sidebarPanelId).toBeUndefined();
+  expect(reset.sidebarWidth).toBe(defaultUiPreferences.sidebarWidth);
+});
