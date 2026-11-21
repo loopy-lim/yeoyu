@@ -1604,11 +1604,12 @@ function BrowserApp() {
     syncStore.setLocalAdapter(adapter);
     // Publish our open tabs (non-private) so Zen/Firefox list this device in
     // their synced-tabs panels; recency from the active tab + updatedAt.
+    // Sidebar panels are background utilities, not tabs we advertise.
     syncStore.setTabsSource(() => {
       const snap = controller.getSnapshot();
       if (!snap) return null;
       return snap.tabs
-        .filter((tab) => !tab.private)
+        .filter((tab) => !tab.private && !tab.panel)
         .map((tab) => ({
           title: tab.customTitle || tab.title || tab.url,
           url: tab.url,
