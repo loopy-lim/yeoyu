@@ -147,9 +147,11 @@ import {
   type MenuItem,
 } from "@/components/ActionMenu";
 import {
+  activatableTabs,
   bookmarkTabsForSpace,
   libraryItemsForSpace,
   favoriteDropIndex,
+  isStalePanelPointer,
   liveSplitLayout,
   sidebarTabMoveIndex,
   sidebarDropChange,
@@ -884,13 +886,10 @@ function BrowserApp() {
         title: tabLabel(t),
       })),
       bookmarks: spaceBookmarks,
-      tabs: (state?.tabs ?? [])
-        .filter(
-          (t) =>
-            !t.suspended &&
-            !t.private &&
-            (t.favorite || t.workspaceId === state?.activeWorkspaceId)
-        )
+      // Panels never qualify as quick-open tab candidates: switching to one
+      // would hit the domain's "cannot become the active tab" rejection.
+      tabs: activatableTabs(state?.tabs, state?.activeWorkspaceId)
+        .filter((t) => !t.private)
         .map((t) => ({
           id: t.id,
           url: t.url,
@@ -2035,7 +2034,10 @@ function BrowserApp() {
         counts: Object.fromEntries(
           state.workspaces.map((w) => [
             w.id,
-            state.tabs.filter((t) => t.workspaceId === w.id).length,
+            // Panels are background surfaces, not open pages: the badge
+            // counts only what a Space switch would reveal.
+            state.tabs.filter((t) => t.workspaceId === w.id && !t.panel)
+              .length,
           ])
         ),
         onSwitch: (id) => {
@@ -2338,11 +2340,15 @@ function BrowserApp() {
     run(controller.close(tabId));
   };
   // A restored pointer can outlive its panel (removed, or a private panel
-  // after a restart); fall back to the library instead of a dead view.
+  // after a restart); fall back to the library instead of a dead view. The
+  // gate mirrors the Little Arc one-shot above: until the preferences read
+  // and the session snapshot both land, a missing panel means "not loaded
+  // yet", not gone — sweeping early would erase the restored view and
+  // persist the erasure.
   useEffect(() => {
-    if (ui.sidebarPanelId && !openPanel)
+    if (isStalePanelPointer(uiHydrated, state?.tabs, ui.sidebarPanelId))
       updateUi({ type: "setSidebarPanel", id: null });
-  }, [ui.sidebarPanelId, openPanel]);
+  }, [uiHydrated, state, ui.sidebarPanelId, updateUi]);
 
   const promoteLittleArc = useCallback(() => {
     const spaceName = activeWorkspace?.name || tr("chrome.thisSpace");
@@ -2475,12 +2481,7 @@ function BrowserApp() {
     ]
   );
   const stepTab = (delta: number) => {
-    const tabs =
-      state?.tabs.filter(
-        (t) =>
-          !t.suspended &&
-          (t.favorite || t.workspaceId === state.activeWorkspaceId)
-      ) ?? [];
+    const tabs = activatableTabs(state?.tabs, state?.activeWorkspaceId);
     if (!tabs.length) return;
     const index = tabs.findIndex((t) => t.id === target);
     const next = tabs[(Math.max(index, 0) + delta + tabs.length) % tabs.length];
@@ -2623,11 +2624,9 @@ function BrowserApp() {
   });
   for (let i = 1; i <= 9; i++)
     registry.register(`tab.activate.${i}`, () => {
-      const tab = state?.tabs.filter(
-        (t) =>
-          !t.suspended &&
-          (t.favorite || t.workspaceId === state.activeWorkspaceId)
-      )[i - 1];
+      const tab = activatableTabs(state?.tabs, state?.activeWorkspaceId)[
+        i - 1
+      ];
       if (tab) switchTab(tab.id);
     });
   useEffect(() => {
@@ -6494,16 +6493,12 @@ function BrowserApp() {
                     menuTab &&
                     !menuTab.suspended &&
                     (menuTab.id !== target ||
-                      (state?.tabs ?? []).some(
-                        (t) =>
-                          !t.suspended &&
-                          t.id !== menuTab.id &&
-                          (t.favorite ||
-                            t.workspaceId ===
-                              (menuTab.favorite
-                                ? state.activeWorkspaceId
-                                : menuTab.workspaceId))
-                      ))
+                      activatableTabs(
+                        state?.tabs,
+                        menuTab.favorite
+                          ? state.activeWorkspaceId
+                          : menuTab.workspaceId
+                      ).some((t) => t.id !== menuTab.id))
                       ? () => {
                           if (!menuTab) return;
                           setCtxMenuTabId(null);
@@ -6516,12 +6511,10 @@ function BrowserApp() {
                           const workspaceId = menuTab.favorite
                             ? state.activeWorkspaceId
                             : menuTab.workspaceId;
-                          const replacement = (state?.tabs ?? []).find(
-                            (t) =>
-                              !t.suspended &&
-                              t.id !== menuTab.id &&
-                              (t.favorite || t.workspaceId === workspaceId)
-                          );
+                          const replacement = activatableTabs(
+                            state?.tabs,
+                            workspaceId
+                          ).find((t) => t.id !== menuTab.id);
                           if (!replacement) return;
                           void platform
                             .openInNewWindow?.(menuTab.id)
