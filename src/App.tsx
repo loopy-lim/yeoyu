@@ -354,6 +354,13 @@ const IconButton = ({
     </SidebarPressable>
   );
 };
+// The docked phone bar follows the IME frame-by-frame (the inset tracker
+// publishes on WindowInsetsAnimation progress), parking on top of the soft
+// keyboard instead of behind it. Zero keeps the resting chrome untouched.
+const imeLiftStyle = (keyboardInset: number) =>
+  keyboardInset > 0
+    ? { transform: [{ translateY: -keyboardInset }] }
+    : undefined;
 const NewTabPage = ({
   favorites,
   keyboardInset,
@@ -5448,9 +5455,8 @@ function BrowserApp() {
                         <UnikitButton
                           variant="default"
                           size="sm"
-                          // Group icon+label into one focus target; without it
-                          // the inner Text announces separately from the button.
-                          accessible
+                          // UniKit Pressable defaults to a single focus target;
+                          // accessibilityLabel keeps icon+label announced together.
                           accessibilityLabel={tr("littleArc.promote")}
                           // hitSlop widens the touch target past the 32dp
                           // visual (issue #24 helper); vertically the
@@ -5874,38 +5880,51 @@ function BrowserApp() {
                 </Overlay>
               </AnimatedView>
             </View>
-            {bottomChrome && !contentFullscreen && !isLittleArc && (
-              <PhoneBottomBar
-                canGoBack={canGoBack}
-                canGoForward={canGoForward}
-                loading={targetLoading}
-                onBack={goBack}
-                onForward={() => invoke(Commands.goForward)}
-                onReloadStop={() =>
-                  invoke(targetLoading ? Commands.stop : Commands.reload)
-                }
-                url={addressValue}
-                security={target ? browser.security[target] : undefined}
-                readerAvailable={canToggleReader}
-                readerActive={readerActive}
-                onToggleReader={toggleReaderMode}
-                extensionActions={extensionActions}
-                onOpenExtensionAction={openExtensionAction}
-                onAddressPress={() => openLocationEditor("touch")}
-                onOpenSpaces={() => setSpaceSwitcher(true)}
-                tabSwipe={toolbarTabSwipe}
-              />
-            )}
-            {hybridChrome && !contentFullscreen && !isLittleArc && (
-              <PhoneHybridBar
-                tabs={hybridBarTabs}
-                onSelectTab={revealTab}
-                onLongPressTab={openTabMenu}
-                onNewTab={() => openQuickOpen("touch")}
-                onOpenSettings={() => setSettings(true)}
-                onOpenSpaces={() => setSpaceSwitcher(true)}
-              />
-            )}
+            {/* adjustNothing keeps the Gecko surface stable under the IME;
+                the docked phone bar instead rides the owner-confirmed inset
+                so it never sits behind the soft keyboard (issue #25). The
+                translate keeps the column layout — and the tablet's top
+                chrome, which never reaches this branch — untouched. */}
+            {(bottomChrome || hybridChrome) &&
+              !contentFullscreen &&
+              !isLittleArc && (
+                <View
+                  collapsable={false}
+                  style={imeLiftStyle(keyboardInset)}
+                >
+                  {bottomChrome ? (
+                    <PhoneBottomBar
+                      canGoBack={canGoBack}
+                      canGoForward={canGoForward}
+                      loading={targetLoading}
+                      onBack={goBack}
+                      onForward={() => invoke(Commands.goForward)}
+                      onReloadStop={() =>
+                        invoke(targetLoading ? Commands.stop : Commands.reload)
+                      }
+                      url={addressValue}
+                      security={target ? browser.security[target] : undefined}
+                      readerAvailable={canToggleReader}
+                      readerActive={readerActive}
+                      onToggleReader={toggleReaderMode}
+                      extensionActions={extensionActions}
+                      onOpenExtensionAction={openExtensionAction}
+                      onAddressPress={() => openLocationEditor("touch")}
+                      onOpenSpaces={() => setSpaceSwitcher(true)}
+                      tabSwipe={toolbarTabSwipe}
+                    />
+                  ) : (
+                    <PhoneHybridBar
+                      tabs={hybridBarTabs}
+                      onSelectTab={revealTab}
+                      onLongPressTab={openTabMenu}
+                      onNewTab={() => openQuickOpen("touch")}
+                      onOpenSettings={() => setSettings(true)}
+                      onOpenSpaces={() => setSpaceSwitcher(true)}
+                    />
+                  )}
+                </View>
+              )}
             </View>
             <Overlay
               open={notice !== ""}

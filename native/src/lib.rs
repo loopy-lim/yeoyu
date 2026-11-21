@@ -215,6 +215,11 @@ pub struct WorkArchiveExportInput {
     pub presentation: Option<String>,
 }
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct WorkArchiveExportOutput {
+    pub json: String,
+}
+#[derive(Debug, Serialize, Deserialize, JsonSchema)]
 pub struct WorkArchivePreviewInput {
     pub json: String,
 }
@@ -234,8 +239,9 @@ pub struct WorkArchiveImportInput {
     pub expected_revision: u32,
 }
 #[command]
-pub fn work_archive_export(input: WorkArchiveExportInput) -> Result<String> {
-    lock_state()?.work_archive_export(input.presentation)
+pub fn work_archive_export(input: WorkArchiveExportInput) -> Result<WorkArchiveExportOutput> {
+    let json = lock_state()?.work_archive_export(input.presentation)?;
+    Ok(WorkArchiveExportOutput { json })
 }
 #[command]
 pub fn work_archive_preview(input: WorkArchivePreviewInput) -> Result<archive::WorkArchivePreview> {
