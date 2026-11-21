@@ -287,6 +287,10 @@ export interface FetchCollectionOptions {
    *  limit keeps paging deterministic and guarantees the offset protocol
    *  is exercised on large collections. */
   limit?: number;
+  /** Stop following X-Weave-Next-Offset once this many records have been
+   *  read (history-sized collections would otherwise page through every
+   *  URL the account ever visited). Undefined = fetch the whole set. */
+  maxRecords?: number;
 }
 
 /** Upper bound on page-follow iterations — a server that always answers
@@ -348,6 +352,12 @@ export async function fetchCollection(
     const nextOffset = headerValue(response.headers, "x-weave-next-offset");
     offset = nextOffset !== undefined && nextOffset !== "" ? nextOffset : null;
     if (offset === null) break;
+    if (
+      options.maxRecords !== undefined &&
+      records.length >= options.maxRecords
+    ) {
+      break;
+    }
   }
   return { status: 200, records, backoffSeconds: backoffSecondsValue };
 }

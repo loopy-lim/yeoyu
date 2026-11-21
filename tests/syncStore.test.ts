@@ -329,6 +329,10 @@ interface SyncServerScript {
   tabsCollectionsModified?: number;
   /** tabs collection records (default-bundle envelopes, one per device). */
   tabsRecords?: Array<{ id: string; payload: string; modified?: number }>;
+  /** info/collections history timestamp — advertises the history engine. */
+  historyCollectionsModified?: number;
+  /** history collection records (default-bundle envelopes, one per URL). */
+  historyRecords?: Array<{ id: string; payload: string; modified?: number }>;
   /** info/collections spaces timestamp — advertises Zen's spaces engine. */
   spacesCollectionsModified?: number;
   /** spaces collection records (default-bundle envelopes). */
@@ -360,6 +364,34 @@ function deviceTabsRecords(
       modified,
     },
   ];
+}
+
+/** Wire-format history BSOs (default-bundle places history cleartexts; visit
+ * dates are PRTime epoch MICROseconds). */
+function historyRecords(
+  entries: Array<{
+    id: string;
+    histUri: string;
+    title?: string;
+    visits: Array<{ date: number; type?: number }>;
+    deleted?: boolean;
+  }>,
+  modified = 1.0
+) {
+  return entries.map((entry) => ({
+    id: entry.id,
+    payload: envelope(
+      DEFAULT_KEYS.bundle,
+      JSON.stringify({
+        id: entry.id,
+        histUri: entry.histUri,
+        ...(entry.title !== undefined ? { title: entry.title } : {}),
+        visits: entry.visits.map((visit) => ({ date: visit.date, type: visit.type ?? 1 })),
+        ...(entry.deleted ? { deleted: entry.deleted } : {}),
+      })
+    ),
+    modified,
+  }));
 }
 
 /** Wire-format Zen spaces BSOs (default-bundle CryptoWrapper cleartexts). */
@@ -525,6 +557,9 @@ function scriptHttp(script: SyncServerScript) {
                 ...(script.tabsCollectionsModified !== undefined
                   ? { tabs: script.tabsCollectionsModified }
                   : {}),
+                ...(script.historyCollectionsModified !== undefined
+                  ? { history: script.historyCollectionsModified }
+                  : {}),
                 ...(script.spacesCollectionsModified !== undefined
                   ? { spaces: script.spacesCollectionsModified }
                   : {}),
@@ -596,6 +631,20 @@ function scriptHttp(script: SyncServerScript) {
       request.url.startsWith(`${API_ENDPOINT}/storage/tabs?`)
     ) {
       const records = script.tabsRecords ?? [];
+      return {
+        status: 200,
+        body: JSON.stringify(
+          records.map((record) =>
+            bso(record.id, record.payload, record.modified ?? 1.0)
+          )
+        ),
+      };
+    }
+    if (
+      request.method === "GET" &&
+      request.url.startsWith(`${API_ENDPOINT}/storage/history?`)
+    ) {
+      const records = script.historyRecords ?? [];
       return {
         status: 200,
         body: JSON.stringify(
@@ -2183,6 +2232,114 @@ describe("synced tabs (receive-only)", () => {
     expect(store.getState().tabs?.map((device) => device.clientId)).toEqual([
       "zenmac01",
     ]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Synced history (receive-only)
+
+describe("synced history (receive-only)", () => {
+  test("first sync populates history state newest-first with PRTime ms dates", async () => {
+    const { store } = connectedStore({
+      historyCollectionsModified: 3.0,
+      historyRecords: historyRecords([
+        {
+          id: "hist00000001",
+          histUri: "https://older.example",
+          title: "Older",
+          visits: [{ date: 1_700_000_000_000_000 }],
+        },
+        {
+          id: "hist00000002",
+          histUri: "https://newer.example",
+          title: "Newer",
+          visits: [{ date: 1_700_000_050_000_000 }],
+        },
+        // Tombstones and junk must not poison the list.
+        {
+          id: "hist00000003",
+          histUri: "https://deleted.example",
+          visits: [{ date: 1_700_000_090_000_000 }],
+          deleted: true,
+        },
+        {
+          id: "hist00000004",
+          histUri: "https://never-visited.example",
+          title: "No visits",
+          visits: [],
+        },
+      ]),
+    });
+    await store.load();
+    const result = await store.runSync();
+    expect(result.kind).toBe("ok");
+    const history = store.getState().history;
+    expect(history?.map((visit) => visit.url)).toEqual([
+      "https://newer.example",
+      "https://older.example",
+    ]);
+    expect(history![0]!.visitedAtMs).toBe(1_700_000_050_000);
+  });
+
+  test("unchanged history timestamp skips the fetch entirely", async () => {
+    const { store, http } = connectedStore({
+      historyCollectionsModified: 3.0,
+      historyRecords: historyRecords([
+        {
+          id: "hist00000001",
+          histUri: "https://docs.example",
+          visits: [{ date: 1_700_000_000_000_000 }],
+        },
+      ]),
+    });
+    await store.load();
+    await store.runSync();
+    const historyGets = () =>
+      http.calls.filter(
+        (c) => c.method === "GET" && c.url.includes("/storage/history")
+      ).length;
+    const afterFirst = historyGets();
+    const second = await store.runSync();
+    expect(second.kind).toBe("ok");
+    expect(historyGets()).toBe(afterFirst);
+  });
+
+  test("a history fetch failure never fails the bookmarks flight", async () => {
+    const { store, http } = connectedStore({
+      historyCollectionsModified: 3.0,
+    });
+    const base = http.handler;
+    http.handler = chainHandlers(base, async (request) => {
+      if (
+        request.method === "GET" &&
+        request.url.startsWith(`${API_ENDPOINT}/storage/history?`)
+      ) {
+        return { status: 503, body: "" };
+      }
+      return undefined;
+    });
+    await store.load();
+    const result = await store.runSync();
+    expect(result.kind).toBe("ok");
+    expect(store.getState().history).toBeNull();
+  });
+
+  test("disconnect clears the history panel state (V-8)", async () => {
+    const { store } = connectedStore({
+      historyCollectionsModified: 3.0,
+      historyRecords: historyRecords([
+        {
+          id: "hist00000001",
+          histUri: "https://docs.example",
+          visits: [{ date: 1_700_000_000_000_000 }],
+        },
+      ]),
+    });
+    await store.load();
+    await store.runSync();
+    expect(store.getState().history).not.toBeNull();
+    await store.disconnect();
+    expect(store.getState().history).toBeNull();
   });
 });
 

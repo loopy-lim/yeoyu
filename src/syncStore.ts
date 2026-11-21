@@ -47,6 +47,7 @@ import {
 import {
   META_ROOT_GUIDS,
   SyncedDeviceTabs,
+  SyncedHistoryVisit,
   SyncedSpacesTree,
   SyncErrorKind,
   SyncNode,
@@ -54,6 +55,7 @@ import {
   TokenserverInfo,
 } from "./sync/model";
 import { fetchSyncedTabs, LocalTabForSync, buildClientsRecordCleartext, buildTabsRecordCleartext } from "./sync/tabs";
+import { fetchSyncedHistory } from "./sync/history";
 import { fetchSyncedSpaces } from "./sync/spaces";
 import {
   applySyncedSpacesTree,
@@ -107,6 +109,9 @@ export interface SyncStoreState {
   /** Other devices' open tabs (receive-only; null = never fetched, the
    * sidebar hides the region until the first tabs fetch lands). */
   tabs: SyncedDeviceTabs[] | null;
+  /** Newest synced history visits (receive-only; null = never fetched, the
+   * history dialog hides the section until the first fetch lands). */
+  history: SyncedHistoryVisit[] | null;
   /** Zen Spaces collection tree (receive-only; null = never fetched). */
   spaces: SyncedSpacesTree | null;
   lastSyncAtMs: number | null;
@@ -226,6 +231,7 @@ export class SyncStore {
     email: null,
     tree: null,
     tabs: null,
+    history: null,
     spaces: null,
     lastSyncAtMs: null,
     lastResult: null,
@@ -240,6 +246,9 @@ export class SyncStore {
   /** Incremental boundary for the receive-only tabs collection (in-memory:
    * tabs are ephemeral display data, the first sync after launch refetches). */
   private tabsModifiedSeconds: number | null = null;
+  /** Incremental boundary for the receive-only history collection (same
+   * ephemeral-display policy as tabs). */
+  private historyModifiedSeconds: number | null = null;
   /** Incremental boundary for the receive-only Zen spaces collection. */
   private spacesModifiedSeconds: number | null = null;
   /** Last tabs cleartext we published — an unchanged list is not re-POSTed
@@ -533,6 +542,7 @@ export class SyncStore {
       this.tokenserver = null;
       this.outbound = emptyOutboundState();
       this.tabsModifiedSeconds = null;
+      this.historyModifiedSeconds = null;
       this.spacesModifiedSeconds = null;
       this.lastSentTabsJson = null;
       this.clientsRecordPosted = false;
@@ -542,6 +552,7 @@ export class SyncStore {
         email: null,
         tree: null,
         tabs: null,
+        history: null,
         spaces: null,
         lastSyncAtMs: null,
         lastResult: null,
@@ -590,6 +601,7 @@ export class SyncStore {
     this.tokenserver = null;
     this.outbound = emptyOutboundState();
     this.tabsModifiedSeconds = null;
+    this.historyModifiedSeconds = null;
     this.spacesModifiedSeconds = null;
     this.lastSentTabsJson = null;
     this.clientsRecordPosted = false;
@@ -599,6 +611,7 @@ export class SyncStore {
       email: null,
       tree: null,
       tabs: null,
+      history: null,
       spaces: null,
       lastSyncAtMs: null,
       lastResult: null,
@@ -747,6 +760,12 @@ export class SyncStore {
     const tabsModified = info.collections["tabs"];
     const tabsChanged =
       tabsModified !== undefined && tabsModified !== this.tabsModifiedSeconds;
+    // Receive-only history: same change gate as tabs (accounts with the
+    // engine declined simply never advertise the collection).
+    const historyModified = info.collections["history"];
+    const historyChanged =
+      historyModified !== undefined &&
+      historyModified !== this.historyModifiedSeconds;
     // Receive-only Zen Spaces: same change gate as tabs.
     const spacesModified = info.collections["spaces"];
     const spacesChanged =
@@ -801,6 +820,7 @@ export class SyncStore {
       !initialPlan.hasOutboundWork &&
       !needMetaHandshake &&
       !tabsChanged &&
+      !historyChanged &&
       !spacesChanged &&
       !this.ownTabsChanged()
     ) {
@@ -964,6 +984,21 @@ export class SyncStore {
               ? tabs
               : tabs.filter((device) => device.clientId !== ownClientId),
           };
+          this.changed();
+        }
+      } catch {
+        // best-effort
+      }
+    }
+
+    if (historyChanged) {
+      // Receive-only synced history: same best-effort policy as tabs — the
+      // bookmarks flight never fails on the history engine.
+      try {
+        const visits = await fetchSyncedHistory(context, bundles.default);
+        if (generation === this.generation) {
+          this.historyModifiedSeconds = historyModified ?? null;
+          this.state = { ...this.state, history: visits };
           this.changed();
         }
       } catch {

@@ -89,6 +89,21 @@ export interface SyncedDeviceTabs {
 }
 
 // ---------------------------------------------------------------------------
+// Synced History (receive-only): the Sync 1.5 "history" collection. One BSO
+// per visited URL (id = Places GUID), cleartext { id, histUri, title, visits }
+// where each visit date is epoch MICROseconds (PRTime). yeoyu only displays
+// the newest visits — no local history is published to the server.
+
+export interface SyncedHistoryVisit {
+  /** history BSO id (Places GUID). */
+  id: string;
+  url: string;
+  title: string;
+  /** Newest visit for this URL, epoch ms. */
+  visitedAtMs: number;
+}
+
+// ---------------------------------------------------------------------------
 // Synced Spaces (receive→local): Zen's "spaces" Sync 1.5 collection. Records
 // are CryptoWrapper cleartexts `{ id, kind, data }` (or tombstones). After
 // fetch, spacesApply materializes them into Snapshot workspaces / favorites /
