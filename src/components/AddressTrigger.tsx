@@ -7,6 +7,9 @@ import { ChromeIcon, type IconName } from "@/chrome/ChromeIcon";
 import { useTheme } from "@/themeContext";
 import { useI18n } from "@/i18nContext";
 import { sidebarAddressLabel } from "@/sidebarModel";
+import { size } from "@/theme";
+import { hitSlopForTarget } from "@/touchTargets";
+import { useTierSizes } from "@/ui/ThemeScope";
 import type { BrowserSecurity } from "@/hooks/useBrowserWorkflows";
 
 export type AddressShield = "secure" | "attention" | "loading";
@@ -52,6 +55,8 @@ export function AddressTrigger({
 }) {
   const t = useTheme();
   const { tr } = useI18n();
+  const sizes = useTierSizes();
+  const compactTier = sizes.addressCompact > size.addressCompact;
   const label = sidebarAddressLabel(url);
   const empty = label === "";
   const shield = addressShield(url, security);
@@ -66,16 +71,26 @@ export function AddressTrigger({
           ? tr("address.editHintEmpty")
           : tr("address.editHintSite", { url })
       }
-      hitSlop={8}
+      hitSlop={hitSlopForTarget(
+        compact ? sizes.addressCompact : sizes.address
+      )}
       onPress={onPress}
       className={cn(
-        "justify-center rounded-[9px] px-lg active:opacity-pressed",
+        "justify-center rounded-[9px] active:opacity-pressed",
         compact
-          ? "flex-1 h-address-compact ml-sm bg-sunken border border-hairline"
-          : "self-stretch h-address bg-field-on-chrome border border-transparent"
+          ? cn(
+              "flex-1 h-address-compact bg-sunken border border-hairline",
+              compactTier ? "px-md" : "px-lg ml-sm"
+            )
+          : "self-stretch h-address px-lg bg-field-on-chrome border border-transparent"
       )}
     >
-      <View className="flex-row items-center gap-md">
+      <View
+        className={cn(
+          "flex-row items-center",
+          compact && compactTier ? "gap-sm" : "gap-md"
+        )}
+      >
         {shieldGlyph && (
           <ChromeIcon
             name={shieldGlyph}

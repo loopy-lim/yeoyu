@@ -4,12 +4,21 @@ import { act, create } from "react-test-renderer";
 import { readFileSync } from "node:fs";
 import { URL } from "node:url";
 import { resolveTestClassNames } from "./uniwindTestHarness";
-import { phoneSize, size, themes, TOUCH_TARGET } from "../src/theme";
+import { phoneSize, size, space, themes, TOUCH_TARGET } from "../src/theme";
+import { defaultFramePadding } from "../src/uiPreferences";
 import {
+  COMPACT_TOOLBAR_VIEWPORT_WIDTH,
+  compactLittleArcAddressWidth,
+  compactToolbarAddressWidth,
+  compactToolbarMaxExtensions,
+  compactToolbarVisibleExtensions,
   denseVerticalHitSlop,
   failedTouchTargetGates,
   hitSlopForTarget,
   iconButtonHitSlop,
+  LITTLE_ARC_PROMOTE_COMPACT_WIDTH,
+  littleArcPromoteHitSlop,
+  phoneTouchTargetGates,
   spaceChipHitSlop,
   toolbarLayerHeight,
 } from "../src/touchTargets";
@@ -88,20 +97,229 @@ test("every phone-tier primary control passes the touch-target gates", () => {
   expect(iconButtonHitSlop(false)).toBe(7);
   expect(failedTouchTargetGates()).toEqual([]);
 
+  const addressGate = phoneTouchTargetGates().find(
+    (gate) => gate.name === "compact address trigger",
+  );
+  expect(addressGate?.hitSlop).toBe(hitSlopForTarget(phoneSize.addressCompact));
+
   const read = (relative: string) =>
     readFileSync(new URL(relative, import.meta.url), "utf8");
   const app = read("../src/App.tsx");
   const bar = read("../src/components/PhoneBottomBar.tsx");
   const collections = read("../src/components/SidebarCollections.tsx");
+  const extensionBar = read("../src/components/ExtensionActionsBar.tsx");
+  const addressTrigger = read("../src/components/AddressTrigger.tsx");
   expect(app).toContain("toolbarLayerHeight(compactWindow)");
+  expect(app).toContain("outputRange: [14 + toolbarLayerHeight(compactWindow), 14]");
+  expect(app).toContain("outputRange: [0, -toolbarLayerHeight(compactWindow)]");
+  expect(app).not.toContain("outputRange: [58, 14]");
+  expect(app).not.toContain("outputRange: [0, -44]");
   expect(app).not.toContain("outputRange: [size.toolbar, 0]");
   expect(app).not.toContain("hitSlopForTarget(size.iconButton)");
   expect(app).not.toContain("hitSlopForTarget(36)");
   expect(app).not.toContain("hitSlopForTarget(24)");
+  expect(app).toContain("c.canvasToolbarCompact");
+  expect(app).toContain("c.compactNavigationCompact");
+  expect(app).toContain("c.littleArcToolbarCompact");
+  expect(app).toContain("c.littleArcActionsCompact");
+  expect(app).toContain("littleArcPromoteHitSlop(compactWindow)");
+  expect(app).toContain("compactToolbarVisibleExtensions(");
   expect(bar).not.toContain("hitSlopForTarget(size.iconButton)");
   expect(collections).not.toContain("hitSlopForTarget(36)");
+  expect(extensionBar).not.toContain("hitSlop={8}");
+  expect(addressTrigger).not.toContain("hitSlop={8}");
   expect(appClasses.spaceHeader).toContain("min-h-space-header");
   expect(appClasses.spaceHeader).not.toContain("min-h-[32px]");
+});
+
+test("compact canvasToolbar accounts for default frame padding and overflows extensions at 360dp", () => {
+  const withoutFrame = compactToolbarAddressWidth(
+    COMPACT_TOOLBAR_VIEWPORT_WIDTH,
+    0,
+    0,
+  );
+  const withDefaultFrame = compactToolbarAddressWidth(
+    COMPACT_TOOLBAR_VIEWPORT_WIDTH,
+  );
+  expect(withoutFrame - withDefaultFrame).toBe(
+    defaultFramePadding.left + defaultFramePadding.right,
+  );
+  expect(withDefaultFrame).toBeGreaterThanOrEqual(TOUCH_TARGET.floor);
+  expect(
+    withDefaultFrame + 2 * hitSlopForTarget(phoneSize.addressCompact),
+  ).toBeGreaterThanOrEqual(TOUCH_TARGET.target);
+
+  // Raw non-zero extension count at 360dp collapses AddressTrigger below floor,
+  // so overflow capping hides excess extensions in canvasToolbar.
+  expect(
+    compactToolbarAddressWidth(COMPACT_TOOLBAR_VIEWPORT_WIDTH, 1),
+  ).toBeLessThan(TOUCH_TARGET.floor);
+  expect(compactToolbarMaxExtensions(COMPACT_TOOLBAR_VIEWPORT_WIDTH)).toBe(0);
+  expect(
+    compactToolbarVisibleExtensions(
+      ["ext-1", "ext-2"],
+      COMPACT_TOOLBAR_VIEWPORT_WIDTH,
+    ),
+  ).toEqual([]);
+  expect(
+    compactToolbarAddressWidth(
+      COMPACT_TOOLBAR_VIEWPORT_WIDTH,
+      compactToolbarVisibleExtensions(
+        ["ext-1", "ext-2"],
+        COMPACT_TOOLBAR_VIEWPORT_WIDTH,
+      ).length,
+    ),
+  ).toBeGreaterThanOrEqual(TOUCH_TARGET.floor);
+
+  // Wider phones (390dp) retain room for one extension while keeping >=44dp.
+  expect(compactToolbarMaxExtensions(390)).toBe(1);
+  expect(compactToolbarVisibleExtensions(["ext-1", "ext-2"], 390)).toEqual([
+    "ext-1",
+  ]);
+  expect(compactToolbarAddressWidth(390, 1)).toBeGreaterThanOrEqual(
+    TOUCH_TARGET.floor,
+  );
+  expect(compactToolbarAddressWidth(390)).toBeGreaterThanOrEqual(80);
+
+  expect(resolveTestClassNames(appClasses.canvasToolbarCompact)).toEqual({
+    paddingHorizontal: space.md,
+    gap: space.sm,
+  });
+  expect(resolveTestClassNames(appClasses.compactNavigationCompact)).toEqual({
+    gap: space.sm,
+  });
+  expect(resolveTestClassNames(appClasses.canvasToolbar)).toMatchObject({
+    paddingHorizontal: space.xxl,
+  });
+  expect(resolveTestClassNames(appClasses.compactNavigation)).toMatchObject({
+    gap: space.md,
+  });
+});
+
+test("compact littleArcToolbar keeps AddressTrigger and promote button at or above touch floor on 360dp phones", () => {
+  const littleArcWidth360 = compactLittleArcAddressWidth(
+    COMPACT_TOOLBAR_VIEWPORT_WIDTH,
+  );
+  expect(littleArcWidth360).toBeGreaterThanOrEqual(TOUCH_TARGET.floor);
+  expect(
+    littleArcWidth360 + 2 * hitSlopForTarget(phoneSize.addressCompact),
+  ).toBeGreaterThanOrEqual(TOUCH_TARGET.target);
+  expect(compactLittleArcAddressWidth(390)).toBeGreaterThanOrEqual(70);
+
+  const promoteSlop = littleArcPromoteHitSlop(true);
+  expect(promoteSlop).toEqual({
+    top: 8,
+    bottom: 8,
+    left: space.sm,
+    right: space.sm,
+  });
+  expect(LITTLE_ARC_PROMOTE_COMPACT_WIDTH + 2 * space.sm).toBeGreaterThanOrEqual(
+    TOUCH_TARGET.floor,
+  );
+  expect(littleArcPromoteHitSlop(false)).toBe(8);
+
+  expect(resolveTestClassNames(appClasses.littleArcToolbarCompact)).toEqual({
+    paddingHorizontal: space.sm,
+    gap: space.sm,
+  });
+  expect(resolveTestClassNames(appClasses.littleArcActionsCompact)).toEqual({
+    gap: space.sm,
+  });
+  expect(resolveTestClassNames(appClasses.littleArcToolbar)).toMatchObject({
+    paddingHorizontal: space.lg,
+    gap: space.lg,
+  });
+  expect(resolveTestClassNames(appClasses.littleArcActions)).toMatchObject({
+    gap: space.lg,
+  });
+});
+
+test("ExtensionActionsBar and AddressTrigger derive hitSlop and spacing from ThemeScope", async () => {
+  const probe = `
+    import { mock } from 'bun:test';
+    import React from 'react';
+    import { act, create } from 'react-test-renderer';
+    mock.module('react-native', () => ({
+      View: 'View', Text: 'Text', Pressable: 'Pressable', Image: 'Image',
+      Animated: { View: 'View' },
+      StyleSheet: { create: (v) => v, hairlineWidth: 1 },
+    }));
+    mock.module('react-native-svg', () => ({ default: 'Svg', Path: 'Path' }));
+    await import('./tests/uniwindTestHarness');
+    Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
+    const { ThemeScope } = await import('./src/ui/ThemeScope');
+    const { phoneSize, themes } = await import('./src/theme');
+    const { ExtensionActionsBar } = await import('./src/components/ExtensionActionsBar');
+    const { AddressTrigger } = await import('./src/components/AddressTrigger');
+    const actions = [{
+      id: 'ext@example', name: 'Sample', badge: '',
+      badgeBackgroundColor: '', badgeTextColor: '', icon: '', actionEnabled: true,
+    }];
+    let tree;
+    await act(async () => {
+      tree = create(
+        React.createElement(
+          React.Fragment,
+          null,
+          React.createElement(
+            ThemeScope,
+            { theme: themes.lavender },
+            React.createElement(ViewWrap, { id: 'tablet-ext' },
+              React.createElement(ExtensionActionsBar, { actions, onOpen: () => {} })
+            ),
+            React.createElement(ViewWrap, { id: 'tablet-addr' },
+              React.createElement(AddressTrigger, { compact: true, url: 'https://example.com', onPress: () => {} })
+            ),
+          ),
+          React.createElement(
+            ThemeScope,
+            { theme: themes.lavender, sizes: phoneSize },
+            React.createElement(ViewWrap, { id: 'phone-ext' },
+              React.createElement(ExtensionActionsBar, { actions, onOpen: () => {} })
+            ),
+            React.createElement(ViewWrap, { id: 'phone-addr' },
+              React.createElement(AddressTrigger, { compact: true, url: 'https://example.com', onPress: () => {} })
+            ),
+          ),
+        ),
+      );
+    });
+    function ViewWrap(props) { return React.createElement('Wrap', props); }
+    const pressableOf = (id) => tree.root.findByProps({ id }).findByType('Pressable');
+    const toolbarOf = (id) => tree.root.findByProps({ id }).findByProps({ accessibilityRole: 'toolbar' });
+    console.log(JSON.stringify({
+      tabletExtSlop: pressableOf('tablet-ext').props.hitSlop,
+      phoneExtSlop: pressableOf('phone-ext').props.hitSlop,
+      tabletExtClass: toolbarOf('tablet-ext').props.className,
+      phoneExtClass: toolbarOf('phone-ext').props.className,
+      tabletAddrSlop: pressableOf('tablet-addr').props.hitSlop,
+      phoneAddrSlop: pressableOf('phone-addr').props.hitSlop,
+      tabletAddrClass: pressableOf('tablet-addr').props.className,
+      phoneAddrClass: pressableOf('phone-addr').props.className,
+    }));
+  `;
+  const child = Bun.spawn([process.execPath, "-e", probe], {
+    cwd: new URL("..", import.meta.url).pathname,
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+  const [out, err, code] = await Promise.all([
+    new Response(child.stdout).text(),
+    new Response(child.stderr).text(),
+    child.exited,
+  ]);
+  expect(err.replace(/react-test-renderer is deprecated[^\n]*\n?/g, "")).toBe("");
+  expect(code).toBe(0);
+  const result = JSON.parse(out.trim());
+  expect(result.tabletExtSlop).toBe(hitSlopForTarget(size.iconButton));
+  expect(result.phoneExtSlop).toBe(hitSlopForTarget(phoneSize.iconButton));
+  expect(result.tabletExtClass).toContain("gap-md");
+  expect(result.phoneExtClass).toContain("gap-sm");
+  expect(result.tabletAddrSlop).toBe(hitSlopForTarget(size.addressCompact));
+  expect(result.phoneAddrSlop).toBe(hitSlopForTarget(phoneSize.addressCompact));
+  expect(result.tabletAddrClass).toContain("ml-sm");
+  expect(result.phoneAddrClass).not.toContain("ml-sm");
+  expect(result.phoneAddrClass).toContain("px-md");
 });
 
 test("token utilities keep the default tablet density (regression guard)", () => {
