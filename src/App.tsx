@@ -75,8 +75,10 @@ import { NavigationEventOrder } from "@/navigationEvents";
 import { NEW_TAB_URL } from "@/BrowserController";
 import { favicons } from "@/favicons";
 import { platform } from "@/platform";
-import { SidebarSyncRegion } from "@/components/SidebarSyncRegion";
+import type { SpacesApplyHost } from "@/sync/spacesApply";
 import { SyncSettingsSection } from "@/components/SyncSettingsSection";
+import { SidebarSyncRegion } from "@/components/SidebarSyncRegion";
+import { SidebarSyncedTabsRegion } from "@/components/SidebarSyncedTabsRegion";
 import { decodeBase64Url } from "@/sync/base64";
 import {
   buildAuthorizationFlow,
@@ -183,7 +185,11 @@ import {
   SidebarPageMenu,
   SplitSidebarItem,
 } from "@/components/SidebarCollections";
-import { sidebarPresentation, type SidebarFolder } from "@/sidebarPresentation";
+import {
+  findSidebarFolder,
+  sidebarPresentation,
+  type SidebarFolder,
+} from "@/sidebarPresentation";
 import { AddressBox } from "@/components/AddressBox";
 import { SettingsGroup } from "@/components/settings/kit";
 import { AddressTrigger } from "@/components/AddressTrigger";
@@ -1213,7 +1219,8 @@ function BrowserApp() {
       setSidebarMenu(null);
     if (
       sidebarMenu?.kind === "folderPages" &&
-      !sidebar.folders.some((item) => item.folder.id === sidebarMenu.id)
+      (!sidebarMenu.id ||
+        !findSidebarFolder(sidebar.folders, sidebarMenu.id))
     )
       setSidebarMenu(null);
   }, [sidebarMenu, sidebar.split?.key, sidebar.folders]);
@@ -1577,6 +1584,58 @@ function BrowserApp() {
     };
 
     syncStore.setLocalAdapter(adapter);
+    // Publish our open tabs (non-private) so Zen/Firefox list this device in
+    // their synced-tabs panels; recency from the active tab + updatedAt.
+    syncStore.setTabsSource(() => {
+      const snap = controller.getSnapshot();
+      if (!snap) return null;
+      return snap.tabs
+        .filter((tab) => !tab.private)
+        .map((tab) => ({
+          title: tab.customTitle || tab.title || tab.url,
+          url: tab.url,
+          lastUsedMs:
+            tab.id === snap.activeTabId
+              ? Date.now()
+              : tab.updatedAt !== undefined
+                ? Number(tab.updatedAt)
+                : null,
+        }));
+    });
+    const spacesHost: SpacesApplyHost = {
+      getSnapshot: () => controller.getSnapshot(),
+      createWorkspace: (name) => controller.workspace(name),
+      renameWorkspace: (workspaceId, name) =>
+        controller.renameWorkspace(workspaceId, name),
+      removeWorkspace: (workspaceId) => controller.removeWorkspace(workspaceId),
+      moveWorkspace: (workspaceId, index) =>
+        controller.moveWorkspace(workspaceId, index),
+      activateWorkspace: (workspaceId) =>
+        controller.activateWorkspace(workspaceId),
+      createTab: (url, workspaceId) => controller.createTab(url, workspaceId),
+      closeTab: (tabId) => controller.close(tabId),
+      renameTab: (tabId, title) => controller.rename(tabId, title),
+      setFavorite: (tabId, favorite) =>
+        controller.setFavorite(tabId, favorite),
+      setPinned: (tabId, pinned) => controller.setPinned(tabId, pinned),
+      bookmarkFolderCreate: (title, parentFolderId) =>
+        controller.bookmarkFolderCreate(title, parentFolderId ?? ""),
+      bookmarkFolderRename: (folderId, title) =>
+        controller.bookmarkFolderRename(folderId, title),
+      bookmarkFolderSetParent: (folderId, parentFolderId) =>
+        controller.bookmarkFolderSetParent(folderId, parentFolderId),
+      bookmarkFolderRemove: (folderId) =>
+        controller.bookmarkFolderRemove(folderId),
+      bookmarkCreate: (title, url, folderId) =>
+        controller.bookmarkCreate(title, url, folderId),
+      bookmarkUpdate: (bookmarkId, title, url) =>
+        controller.bookmarkUpdate(bookmarkId, title, url),
+      bookmarkRemove: (bookmarkId) => controller.bookmarkRemove(bookmarkId),
+      skipLocalId: (localId) => {
+        syncEchoSkipRef.current.add(localId);
+      },
+    };
+    syncStore.setSpacesHost(spacesHost);
     const initial = controller.getSnapshot();
     syncBookmarkPrevRef.current = initial
       ? toLocalBookmarkSnapshot(initial)
@@ -1622,6 +1681,8 @@ function BrowserApp() {
     return () => {
       unsubscribeController();
       syncStore.setLocalAdapter(null);
+      syncStore.setTabsSource(null);
+      syncStore.setSpacesHost(null);
       if (syncDebounceRef.current) {
         clearTimeout(syncDebounceRef.current);
         syncDebounceRef.current = null;
@@ -1653,6 +1714,20 @@ function BrowserApp() {
     });
     return () => subscription.remove();
   }, [syncStore, syncPlatformAvailable]);
+  useEffect(() => {
+    if (!syncPlatformAvailable || syncState.connection !== "connected") return;
+    // Foreground keep-warm: without this, bookmarks/tabs changed on other
+    // devices only arrive at cold start or a manual sync while yeoyu stays
+    // open (idle syncs are a single cheap info/collections GET).
+    const timer = setInterval(() => {
+      if (
+        AppState.currentState === "active" &&
+        syncStore.getState().connection === "connected"
+      )
+        void syncStore.runSync();
+    }, 5 * 60_000);
+    return () => clearInterval(timer);
+  }, [syncStore, syncPlatformAvailable, syncState.connection]);
   useEffect(() => {
     if (!syncPlatformAvailable) return;
     const { connection, lastResult, pendingUploads, syncing } = syncState;
@@ -4003,27 +4078,77 @@ function BrowserApp() {
       </View>
     );
   };
-  const renderRailFolder = (item: SidebarFolder) => (
-    <SidebarFolderItem
-      key={item.folder.id}
-      title={item.folder.title}
-      count={item.bookmarks.length}
-      open={
-        sidebarMenu?.kind === "folderPages" && sidebarMenu.id === item.folder.id
-      }
-      collapsed
-      containsFocused={item.containsFocused}
-      contextOpen={
-        sidebarMenu?.kind === "folder" && sidebarMenu.id === item.folder.id
-      }
-      onPress={() =>
-        setSidebarMenu({ kind: "folderPages", id: item.folder.id })
-      }
-      onContextMenu={(x, y) =>
-        setSidebarMenu({ kind: "folder", id: item.folder.id, anchor: { x, y } })
-      }
-    />
+  const renderRailFolder = (item: SidebarFolder): React.ReactNode => (
+    <View key={item.folder.id}>
+      <SidebarFolderItem
+        title={item.folder.title}
+        count={item.bookmarks.length}
+        open={
+          sidebarMenu?.kind === "folderPages" &&
+          sidebarMenu.id === item.folder.id
+        }
+        collapsed
+        containsFocused={item.containsFocused}
+        contextOpen={
+          sidebarMenu?.kind === "folder" && sidebarMenu.id === item.folder.id
+        }
+        onPress={() =>
+          setSidebarMenu({ kind: "folderPages", id: item.folder.id })
+        }
+        onContextMenu={(x, y) =>
+          setSidebarMenu({
+            kind: "folder",
+            id: item.folder.id,
+            anchor: { x, y },
+          })
+        }
+      />
+      {item.children.map(renderRailFolder)}
+    </View>
   );
+  const renderSidebarFolderTree = (
+    item: SidebarFolder,
+    depth = 0
+  ): React.ReactNode => {
+    const open = expandedFolders.has(item.folder.id);
+    const { folder, bookmarks, visibleBookmarks, containsFocused, children } =
+      item;
+    return (
+      <View
+        key={folder.id}
+        style={depth > 0 ? { paddingLeft: 12 } : undefined}
+      >
+        <SidebarFolderItem
+          title={folder.title}
+          count={bookmarks.length}
+          open={open}
+          containsFocused={containsFocused}
+          onPress={() => toggleFolder(folder.id)}
+          contextOpen={
+            sidebarMenu?.kind === "folder" && sidebarMenu.id === folder.id
+          }
+          onContextMenu={(x, y) =>
+            setSidebarMenu({
+              kind: "folder",
+              id: folder.id,
+              anchor: { x, y },
+            })
+          }
+        />
+        <FolderDisclosure open={open} reducedMotion={reducedMotion}>
+          <View className={c.folderChildren}>
+            {children.map((child) => renderSidebarFolderTree(child, depth + 1))}
+            {visibleBookmarks.map((bookmark) =>
+              bookmarkTreeRow(bookmark, true)
+            )}
+            {bookmarks.length === 0 && children.length === 0 && (
+              <Text className={c.emptyFolder}>{tr("chrome.emptyFolder")}</Text>
+            )}
+          </View>
+        </FolderDisclosure>
+      </View>
+    );
+  };
   const createSpace = () =>
     run(
       controller
@@ -4759,52 +4884,8 @@ function BrowserApp() {
                                 name="chevronDown"
                               />
                             </SidebarPressable>
-                            {sidebar.folders.map(
-                              ({
-                                folder,
-                                bookmarks,
-                                visibleBookmarks,
-                                containsFocused,
-                              }) => {
-                                const open = expandedFolders.has(folder.id);
-                                return (
-                                  <View key={folder.id}>
-                                    <SidebarFolderItem
-                                      title={folder.title}
-                                      count={bookmarks.length}
-                                      open={open}
-                                      containsFocused={containsFocused}
-                                      onPress={() => toggleFolder(folder.id)}
-                                      contextOpen={
-                                        sidebarMenu?.kind === "folder" &&
-                                        sidebarMenu.id === folder.id
-                                      }
-                                      onContextMenu={(x, y) =>
-                                        setSidebarMenu({
-                                          kind: "folder",
-                                          id: folder.id,
-                                          anchor: { x, y },
-                                        })
-                                      }
-                                    />
-                                    <FolderDisclosure
-                                      open={open}
-                                      reducedMotion={reducedMotion}
-                                    >
-                                      <View className={c.folderChildren}>
-                                        {visibleBookmarks.map((bookmark) =>
-                                          bookmarkTreeRow(bookmark, true)
-                                        )}
-                                        {bookmarks.length === 0 && (
-                                          <Text className={c.emptyFolder}>
-                                            {tr("chrome.emptyFolder")}
-                                          </Text>
-                                        )}
-                                      </View>
-                                    </FolderDisclosure>
-                                  </View>
-                                );
-                              }
+                            {sidebar.folders.map((folder) =>
+                              renderSidebarFolderTree(folder)
                             )}
                             <SidebarSyncRegion
                               tree={syncState.tree}
@@ -4821,6 +4902,10 @@ function BrowserApp() {
                                   ? syncState.lastResult.retryAfterSeconds
                                   : null
                               }
+                              onOpenUrl={createTabAndShow}
+                            />
+                            <SidebarSyncedTabsRegion
+                              devices={syncState.tabs}
                               onOpenUrl={createTabAndShow}
                             />
                             {sidebar.pinnedTabs.map((tab) =>
@@ -6142,19 +6227,17 @@ function BrowserApp() {
                       },
                     ]}
                   />
-                ) : sidebarMenu.kind === "folderPages" ? (
+                ) : sidebarMenu.kind === "folderPages" && sidebarMenu.id ? (
                   <SidebarPageMenu
                     title={
-                      sidebar.folders.find(
-                        (item) => item.folder.id === sidebarMenu.id
-                      )?.folder.title ?? tr("chrome.folder")
+                      findSidebarFolder(sidebar.folders, sidebarMenu.id)?.folder
+                        .title ?? tr("chrome.folder")
                     }
                     anchor={sidebarMenu.anchor}
                     onClose={() => setSidebarMenu(null)}
                     pages={(
-                      sidebar.folders.find(
-                        (item) => item.folder.id === sidebarMenu.id
-                      )?.bookmarks ?? []
+                      findSidebarFolder(sidebar.folders, sidebarMenu.id)
+                        ?.bookmarks ?? []
                     ).map((bookmark) => {
                       const tab = bookmarkTabs.get(bookmark.id);
                       return {

@@ -25,6 +25,12 @@ import {
   fetchCollection,
   fetchInfoCollections,
   fetchInfoConfiguration,
+  fetchMetaGlobal,
+  putMetaGlobal,
+  storagePost,
+  BOOKMARKS_ENGINE_VERSION,
+  MetaGlobalPayload,
+  STORAGE_VERSION,
   fetchTokenserverToken,
   SyncServerError,
   collectionKeysFromCleartext,
@@ -38,7 +44,23 @@ import {
   buildSyncTree,
   DecryptedRecord,
 } from "./sync/bookmarkTree";
-import { META_ROOT_GUIDS, SyncErrorKind, SyncNode, SyncTree, TokenserverInfo } from "./sync/model";
+import {
+  META_ROOT_GUIDS,
+  SyncedDeviceTabs,
+  SyncedSpacesTree,
+  SyncErrorKind,
+  SyncNode,
+  SyncTree,
+  TokenserverInfo,
+} from "./sync/model";
+import { fetchSyncedTabs, LocalTabForSync, buildClientsRecordCleartext, buildTabsRecordCleartext } from "./sync/tabs";
+import { fetchSyncedSpaces } from "./sync/spaces";
+import {
+  applySyncedSpacesTree,
+  emptySpacesBindings,
+  type SpacesApplyHost,
+  type SpacesBindings,
+} from "./sync/spacesApply";
 import {
   LocalAdapter,
   LocalApplyOp,
@@ -82,6 +104,11 @@ export interface SyncStoreState {
   syncing: boolean;
   email: string | null;
   tree: SyncTree | null;
+  /** Other devices' open tabs (receive-only; null = never fetched, the
+   * sidebar hides the region until the first tabs fetch lands). */
+  tabs: SyncedDeviceTabs[] | null;
+  /** Zen Spaces collection tree (receive-only; null = never fetched). */
+  spaces: SyncedSpacesTree | null;
   lastSyncAtMs: number | null;
   lastResult: SyncResult | null;
   /** Dirty + pending tombstone count awaiting upload. */
@@ -109,6 +136,13 @@ export interface SyncStoreOptions {
   localAdapter?: LocalAdapter;
   /** GUID issuance and envelope IV entropy (defaults to noble randomBytes → base64url). */
   randomSource?: RandomSource;
+  /** Device name published in the clients/tabs collections (default yeoyu). */
+  deviceName?: string;
+  /** When set, each successful sync publishes our open tabs (other clients
+   *  then list this device in their synced-tabs panel). */
+  tabsSource?: () => LocalTabForSync[] | null;
+  /** When set, a received Spaces tree is materialized into local workspaces. */
+  spacesHost?: SpacesApplyHost | null;
 }
 
 interface PersistedCredentials {
@@ -120,6 +154,9 @@ interface PersistedCredentials {
 }
 
 const BATCH_SIZE = 64; // F-G1-2: yield between decrypt batches on Hermes
+/** GET page size for collection fetches — keeps server paging deterministic
+ *  so X-Weave-Next-Offset continuation is always exercised on big sets. */
+const COLLECTION_PAGE_RECORDS = 1000;
 const DEFAULT_TIMEOUT_MS = 30_000;
 
 /** Storage GET returned 401 — one automatic recovery round is allowed. */
@@ -178,6 +215,9 @@ export class SyncStore {
   private localAdapter: LocalAdapter | null;
   private randomSource: RandomSource | null;
   private guidPool: GuidPool;
+  private deviceName: string;
+  private tabsSource: (() => LocalTabForSync[] | null) | null;
+  private spacesHost: SpacesApplyHost | null;
 
   private listeners = new Set<() => void>();
   private state: SyncStoreState = {
@@ -185,6 +225,8 @@ export class SyncStore {
     syncing: false,
     email: null,
     tree: null,
+    tabs: null,
+    spaces: null,
     lastSyncAtMs: null,
     lastResult: null,
     pendingUploads: 0,
@@ -195,6 +237,17 @@ export class SyncStore {
   private accessTokenExpiresAtMs = 0;
   private tokenserver: TokenserverInfo | null = null;
   private outbound: OutboundState = emptyOutboundState();
+  /** Incremental boundary for the receive-only tabs collection (in-memory:
+   * tabs are ephemeral display data, the first sync after launch refetches). */
+  private tabsModifiedSeconds: number | null = null;
+  /** Incremental boundary for the receive-only Zen spaces collection. */
+  private spacesModifiedSeconds: number | null = null;
+  /** Last tabs cleartext we published — an unchanged list is not re-POSTed
+   * within a session (the first sync after a restart sends once). */
+  private lastSentTabsJson: string | null = null;
+  /** Whether the clients-collection device record has been written for the
+   * current identity (reset with the identity). */
+  private clientsRecordPosted = false;
 
   /** Bumped by connect/disconnect so late loads/persists cannot clobber. */
   private generation = 0;
@@ -218,6 +271,9 @@ export class SyncStore {
     this.timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
     this.localAdapter = options.localAdapter ?? null;
     this.randomSource = options.randomSource ?? null;
+    this.deviceName = options.deviceName ?? "yeoyu";
+    this.tabsSource = options.tabsSource ?? null;
+    this.spacesHost = options.spacesHost ?? null;
     this.guidPool = new GuidPool(this.randomSource ?? defaultRandomSource());
     this.http = { request: (input) => this.withTimeout(this.rawHttp.request(input)) };
   }
@@ -231,6 +287,38 @@ export class SyncStore {
   /** T-4 wires the controller-backed adapter after construction. */
   setLocalAdapter(adapter: LocalAdapter | null) {
     this.localAdapter = adapter;
+  }
+
+  /** Wires (or clears) the Spaces→Snapshot materializer. */
+  setSpacesHost(host: SpacesApplyHost | null) {
+    this.spacesHost = host;
+    // First sync can finish before App wires the host — re-apply the
+    // cached tree so collision leftovers and favorite dupes still heal.
+    if (host && this.state.spaces) {
+      void this.applyCachedSpaces();
+    }
+  }
+
+  private async applyCachedSpaces(): Promise<void> {
+    const host = this.spacesHost;
+    const spaces = this.state.spaces;
+    if (!host || !spaces) return;
+    const generation = this.generation;
+    try {
+      const previous = this.outbound.spacesBindings ?? emptySpacesBindings();
+      const next = await applySyncedSpacesTree(spaces, host, previous);
+      if (generation !== this.generation) return;
+      this.outbound = { ...this.outbound, spacesBindings: next };
+      await this.persistOutbound(generation);
+    } catch {
+      // best-effort — same tolerance as the sync flight
+    }
+  }
+
+  /** Wires (or clears) the open-tab publisher for the tabs collection. */
+  setTabsSource(source: (() => LocalTabForSync[] | null) | null) {
+    this.tabsSource = source;
+    this.lastSentTabsJson = null;
   }
 
   subscribe = (listener: () => void) => {
@@ -444,11 +532,17 @@ export class SyncStore {
         this.nowMs() + tokens.expiresInSeconds * 1000;
       this.tokenserver = null;
       this.outbound = emptyOutboundState();
+      this.tabsModifiedSeconds = null;
+      this.spacesModifiedSeconds = null;
+      this.lastSentTabsJson = null;
+      this.clientsRecordPosted = false;
       this.state = {
         ...this.state,
         connection: "connected",
         email: null,
         tree: null,
+        tabs: null,
+        spaces: null,
         lastSyncAtMs: null,
         lastResult: null,
         pendingUploads: 0,
@@ -495,11 +589,17 @@ export class SyncStore {
     this.accessTokenExpiresAtMs = 0;
     this.tokenserver = null;
     this.outbound = emptyOutboundState();
+    this.tabsModifiedSeconds = null;
+    this.spacesModifiedSeconds = null;
+    this.lastSentTabsJson = null;
+    this.clientsRecordPosted = false;
     this.state = {
       connection: "disconnected",
       syncing: false,
       email: null,
       tree: null,
+      tabs: null,
+      spaces: null,
       lastSyncAtMs: null,
       lastResult: null,
       pendingUploads: 0,
@@ -634,29 +734,76 @@ export class SyncStore {
     }
 
     const bookmarksModified = info.collections["bookmarks"];
-    const currentTree = this.state.tree;
-    const receiveUnchanged =
-      !!currentTree &&
-      (bookmarksModified === undefined ||
-        bookmarksModified === currentTree.bookmarksModified);
-    const needsInitialUpload =
-      this.localAdapter !== null &&
-      Object.keys(this.outbound.guidByLocalId).length === 0;
-    const hasOutboundWork =
-      needsInitialUpload ||
-      Object.keys(this.outbound.dirty).length > 0 ||
-      Object.keys(this.outbound.pendingDeletes).length > 0;
-    // PLAN §0 / D10: never POST an initial (or unprimed) upload without a
-    // fresh receive — early-skip would leave remoteRaw empty and let
-    // buildUploadSet replace mobile children with local-only order.
-    const needsRemotePriming =
-      this.localAdapter !== null &&
-      hasOutboundWork &&
-      (needsInitialUpload ||
-        this.outbound.remoteRaw[MOBILE_ROOT_ID] === undefined);
-    const shouldReceive = !receiveUnchanged || needsRemotePriming;
+    const metaModified = info.collections["meta"];
+    // meta/global handshake: on the first sync, and afterwards only when the
+    // meta collection changed (another client reset or declared engines) —
+    // idle syncs keep making zero requests past info/collections.
+    const needMetaHandshake =
+      this.outbound.engine === undefined ||
+      metaModified === undefined ||
+      metaModified !== this.outbound.engine.metaModifiedSeconds;
+    // Receive-only tabs: fetch when the collection changed vs. the last
+    // flight (null boundary = first sync after launch).
+    const tabsModified = info.collections["tabs"];
+    const tabsChanged =
+      tabsModified !== undefined && tabsModified !== this.tabsModifiedSeconds;
+    // Receive-only Zen Spaces: same change gate as tabs.
+    const spacesModified = info.collections["spaces"];
+    const spacesChanged =
+      spacesModified !== undefined &&
+      spacesModified !== this.spacesModifiedSeconds;
 
-    if (!shouldReceive && !hasOutboundWork) {
+    // Computed as a closure: a meta/global reset invalidates every input
+    // (tree, guid mappings) and the plan must be recomputed after it.
+    const plan = () => {
+      const currentTree = this.state.tree;
+      const receiveUnchanged =
+        !!currentTree &&
+        (bookmarksModified === undefined ||
+          bookmarksModified === currentTree.bookmarksModified);
+      const needsInitialUpload =
+        this.localAdapter !== null &&
+        Object.keys(this.outbound.guidByLocalId).length === 0;
+      const hasOutboundWork =
+        needsInitialUpload ||
+        Object.keys(this.outbound.dirty).length > 0 ||
+        Object.keys(this.outbound.pendingDeletes).length > 0;
+      // PLAN §0 / D10: never POST an initial (or unprimed) upload without a
+      // fresh receive — early-skip would leave remoteRaw empty and let
+      // buildUploadSet replace mobile children with local-only order.
+      const needsRemotePriming =
+        this.localAdapter !== null &&
+        hasOutboundWork &&
+        (needsInitialUpload ||
+          this.outbound.remoteRaw[MOBILE_ROOT_ID] === undefined);
+      const shouldReceive = !receiveUnchanged || needsRemotePriming;
+      // Incremental delta boundary: only with a complete remoteRaw (the
+      // engine handshake has run and nothing needs re-priming) — the first
+      // post-upgrade sync deliberately refetches everything so pagination
+      // rebuilds a complete cumulative view.
+      const incrementalFrom =
+        this.outbound.engine !== undefined &&
+        currentTree !== null &&
+        !needsRemotePriming
+          ? currentTree.bookmarksModified
+          : null;
+      return {
+        shouldReceive,
+        hasOutboundWork,
+        needsInitialUpload,
+        incrementalFrom,
+      };
+    };
+
+    const initialPlan = plan();
+    if (
+      !initialPlan.shouldReceive &&
+      !initialPlan.hasOutboundWork &&
+      !needMetaHandshake &&
+      !tabsChanged &&
+      !spacesChanged &&
+      !this.ownTabsChanged()
+    ) {
       return { kind: "ok", atMs: this.nowMs(), received: 0, uploaded: 0 };
     }
 
@@ -675,16 +822,48 @@ export class SyncStore {
       decryptRecordCleartext(kSyncBundle(credentials.kSync), keysRecord)
     );
     const bookmarkBundle = bundles.forBookmarks;
+    const spacesBundle = bundles.forCollection("spaces");
+
+    // meta/global handshake — declare the bookmarks engine, detect
+    // server-side resets. A reset voids all local sync state; the plan is
+    // recomputed below and the sync continues as a fresh prime.
+    if (needMetaHandshake) {
+      const reset = await this.metaGlobalHandshake(
+        context,
+        metaModified,
+        generation
+      );
+      if (reset) {
+        this.outbound = emptyOutboundState();
+        this.state = { ...this.state, tree: null };
+        this.changed();
+        // Cancelled by a mid-flight disconnect: do not touch storage.
+        if (generation !== this.generation) {
+          return { kind: "ok", atMs: this.nowMs(), received: 0, uploaded: 0 };
+        }
+        await Promise.all([
+          this.persistOutbound(generation),
+          this.clearPersistedTree(generation),
+        ]);
+      }
+    }
+
+    const { shouldReceive, hasOutboundWork, needsInitialUpload, incrementalFrom } =
+      plan();
 
     let received = 0;
-    let tree = currentTree;
+    let tree = this.state.tree;
     let xiusSeconds =
       typeof bookmarksModified === "number"
         ? bookmarksModified
-        : currentTree?.bookmarksModified ?? 0;
+        : tree?.bookmarksModified ?? 0;
 
     if (shouldReceive) {
-      const bookmarks = await fetchCollection(context, "bookmarks");
+      const bookmarks = await fetchCollection(context, "bookmarks", {
+        newerThanSeconds:
+          incrementalFrom !== null ? incrementalFrom : undefined,
+        limit: COLLECTION_PAGE_RECORDS,
+      });
       if (bookmarks.status === 401) throw new StorageUnauthorizedError();
       if (bookmarks.status !== 200) {
         if (bookmarks.backoffSeconds !== null && bookmarks.backoffSeconds > 0) {
@@ -711,19 +890,40 @@ export class SyncStore {
         if ((index + 1) % BATCH_SIZE === 0) await this.yieldControl();
       }
 
-      tree = buildSyncTree(decrypted, bookmarksModified ?? null);
-      // Cancelled by a mid-flight disconnect: do not resurrect the tree.
-      if (generation !== this.generation) {
-        return { kind: "ok", atMs: this.nowMs(), received: 0, uploaded: 0 };
-      }
-      this.state = { ...this.state, tree };
-      this.changed();
-      await this.persistTree(tree, generation);
+      if (incrementalFrom === null) {
+        tree = buildSyncTree(decrypted, bookmarksModified ?? null);
+        // Cancelled by a mid-flight disconnect: do not resurrect the tree.
+        if (generation !== this.generation) {
+          return { kind: "ok", atMs: this.nowMs(), received: 0, uploaded: 0 };
+        }
+        this.state = { ...this.state, tree };
+        this.changed();
+        await this.persistTree(tree, generation);
 
-      const applied = await this.mergeIncoming(wireRecords, generation);
-      // Without a local adapter, "received" is the fetch size (sidebar tree
-      // refresh); with an adapter it is the number of local apply ops.
-      received = this.localAdapter ? applied : wireRecords.length;
+        const applied = await this.mergeIncoming(wireRecords, generation);
+        // Without a local adapter, "received" is the fetch size (sidebar tree
+        // refresh); with an adapter it is the number of local apply ops.
+        received = this.localAdapter ? applied : wireRecords.length;
+      } else {
+        // Incremental: fold the delta into remoteRaw first (live records
+        // refresh, tombstones drop out), then rebuild the tree from the
+        // cumulative view so parent moves and deletions resolve globally.
+        const applied = await this.mergeIncoming(wireRecords, generation);
+        if (generation !== this.generation) {
+          return { kind: "ok", atMs: this.nowMs(), received: 0, uploaded: 0 };
+        }
+        const union: DecryptedRecord[] = Object.entries(
+          this.outbound.remoteRaw
+        ).map(([guid, entry]) => ({
+          guid,
+          payload: entry.cleartext as BookmarkRecord,
+        }));
+        tree = buildSyncTree(union, bookmarksModified ?? null);
+        this.state = { ...this.state, tree };
+        this.changed();
+        await this.persistTree(tree, generation);
+        received = this.localAdapter ? applied : wireRecords.length;
+      }
       xiusSeconds =
         typeof bookmarksModified === "number"
           ? bookmarksModified
@@ -732,16 +932,298 @@ export class SyncStore {
 
     let uploaded = 0;
     if (this.localAdapter && (hasOutboundWork || needsInitialUpload)) {
-      uploaded = await this.uploadDirty(
+      const upload = await this.uploadDirty(
         context,
         bookmarkBundle,
         tree,
         xiusSeconds,
         generation
       );
+      uploaded = upload.uploaded;
+      if (upload.quotaExhausted) {
+        // The account is out of storage: committed records stay acked and
+        // the dirty set survives, but the flight reports the quota state
+        // instead of a silent partial success.
+        return { kind: "quota", atMs: this.nowMs(), retryAfterSeconds: null };
+      }
+    }
+
+    if (tabsChanged) {
+      // Receive-only tabs panel data: best-effort — a tabs failure (missing
+      // collection on the server, one broken device record) never fails the
+      // bookmarks flight; the previous list just stays on screen.
+      try {
+        const tabs = await fetchSyncedTabs(context, bundles.default);
+        if (generation === this.generation) {
+          this.tabsModifiedSeconds = tabsModified ?? null;
+          // Never list our own device in our own panel.
+          const ownClientId = this.outbound.client?.id;
+          this.state = {
+            ...this.state,
+            tabs: ownClientId === undefined
+              ? tabs
+              : tabs.filter((device) => device.clientId !== ownClientId),
+          };
+          this.changed();
+        }
+      } catch {
+        // best-effort
+      }
+    }
+
+    if (spacesChanged) {
+      // Zen Spaces → local Snapshot materialization: best-effort — a spaces
+      // failure never fails the bookmarks flight.
+      try {
+        const spaces = await fetchSyncedSpaces(context, spacesBundle);
+        if (generation === this.generation) {
+          this.spacesModifiedSeconds = spacesModified ?? null;
+          this.state = { ...this.state, spaces };
+          this.changed();
+        }
+      } catch {
+        // best-effort
+      }
+    }
+    // Always re-apply when we have a tree + host. Covers: host raced behind
+    // the first fetch, and local leftover cleanup when the server timestamp
+    // did not move (YouTube favorite dupes, merged "Name 2" folders).
+    if (this.spacesHost && this.state.spaces && generation === this.generation) {
+      await this.applyCachedSpaces();
+    }
+
+    if (this.tabsSource) {
+      // Publish our open tabs (clients + tabs records): best-effort, same
+      // tolerance as the receive side.
+      try {
+        await this.publishOwnTabs(context, bundles.default, generation);
+      } catch {
+        // best-effort
+      }
     }
 
     return { kind: "ok", atMs: this.nowMs(), received, uploaded };
+  }
+
+  /**
+   * meta/global handshake (run when the meta collection changed or on the
+   * first sync): adopts or declares the bookmarks engine entry, and detects
+   * server-side engine resets — a changed syncID (or a vanished meta/global
+   * while we had state) means the server replaced our data and every piece
+   * of local sync state (tree, guid mappings, dirty) is void.
+   * Returns true when the caller must perform that reset.
+   */
+  private async metaGlobalHandshake(
+    context: StorageContext,
+    metaModifiedSeconds: number | undefined,
+    generation: number
+  ): Promise<boolean> {
+    const meta = await fetchMetaGlobal(context);
+    if (meta.status === 401) throw new StorageUnauthorizedError();
+    const hadState =
+      this.outbound.engine !== undefined || this.state.tree !== null;
+
+    if (meta.status !== 200 && meta.status !== 404) {
+      throw new SyncServerError(meta.status, `meta ${meta.status}`);
+    }
+    const record = meta.status === 200 ? meta.record : null;
+    if (!record) {
+      // No meta/global on the server: fresh account (declare ours) or a
+      // wiped storage (reset if we had state).
+      if (!hadState) {
+        await this.declareBookmarksEngine(
+          context,
+          null,
+          metaModifiedSeconds,
+          generation
+        );
+        return false;
+      }
+      return true;
+    }
+    if (record.payload.storageVersion !== STORAGE_VERSION) {
+      throw new ProtocolFormatError(
+        `unsupported meta/global storage version ${record.payload.storageVersion}`
+      );
+    }
+    const engineEntry = record.payload.engines["bookmarks"];
+    const known = this.outbound.engine?.bookmarksSyncId;
+    if (engineEntry && known) {
+      if (engineEntry.syncID !== known) {
+        // Another client reset the bookmarks engine server-side.
+        return true;
+      }
+      // Unchanged declaration — record the observed meta timestamp so idle
+      // syncs can skip the handshake entirely next time.
+      this.outbound.engine = {
+        bookmarksSyncId: known,
+        metaModifiedSeconds: metaModifiedSeconds ?? null,
+      };
+      await this.persistOutbound(generation);
+      return false;
+    }
+    if (engineEntry && !known) {
+      // Live meta/global from other clients: adopt the declaration.
+      this.outbound.engine = {
+        bookmarksSyncId: engineEntry.syncID,
+        metaModifiedSeconds: metaModifiedSeconds ?? null,
+      };
+      await this.persistOutbound(generation);
+      return false;
+    }
+    // No bookmarks entry (all other clients declined it): declare ours
+    // while preserving every other entry and the declined list.
+    await this.declareBookmarksEngine(
+      context,
+      record.payload,
+      metaModifiedSeconds,
+      generation
+    );
+    return false;
+  }
+
+  /** Write meta/global with a bookmarks engine entry — creating the whole
+   *  record when none exists, otherwise preserving the existing payload. */
+  private async declareBookmarksEngine(
+    context: StorageContext,
+    existing: MetaGlobalPayload | null,
+    metaModifiedSeconds: number | undefined,
+    generation: number
+  ): Promise<void> {
+    const bookmarksSyncId = await this.newEngineSyncId();
+    const payload: MetaGlobalPayload = existing
+      ? {
+          ...existing,
+          engines: {
+            ...existing.engines,
+            bookmarks: {
+              version: BOOKMARKS_ENGINE_VERSION,
+              syncID: bookmarksSyncId,
+            },
+          },
+        }
+      : {
+          storageVersion: STORAGE_VERSION,
+          syncID: await this.newEngineSyncId(),
+          engines: {
+            bookmarks: {
+              version: BOOKMARKS_ENGINE_VERSION,
+              syncID: bookmarksSyncId,
+            },
+          },
+          declined: [],
+        };
+    const result = await putMetaGlobal(
+      context,
+      payload,
+      metaModifiedSeconds
+    );
+    if (result.status < 200 || result.status > 299) {
+      throw new SyncServerError(
+        result.status,
+        `meta/global POST ${result.status}`
+      );
+    }
+    this.outbound.engine = {
+      bookmarksSyncId,
+      metaModifiedSeconds: result.modifiedSeconds ?? metaModifiedSeconds ?? null,
+    };
+    await this.persistOutbound(generation);
+  }
+
+  /** Fresh opaque engine syncID (12 base64url chars, pool entropy). */
+  private async newEngineSyncId(): Promise<string> {
+    return encodeBase64Url(await this.guidPool.nextBytes(9)).slice(0, 12);
+  }
+
+  /** Cheap idle-sync gate: true when a tabs publish would send anything
+   * (no identity yet, or the built record differs from the last send). */
+  private ownTabsChanged(): boolean {
+    if (this.tabsSource === null) return false;
+    const client = this.outbound.client;
+    if (!client || !this.clientsRecordPosted) return true;
+    const tabs = this.tabsSource();
+    if (!tabs) return false;
+    return buildTabsRecordCleartext(client.id, client.name, tabs) !== this.lastSentTabsJson;
+  }
+
+  /**
+   * Publish this device's open tabs: a clients-collection device record
+   * (once per identity) plus the tabs-collection BSO other clients render
+   * in their synced-tabs panels. Both share the outbound.client id and the
+   * default key bundle; the whole-record overwrite is this device's alone,
+   * so no XIUS (a race with ourselves is impossible — single flight).
+   */
+  private async publishOwnTabs(
+    context: StorageContext,
+    defaultBundle: KeyBundle,
+    generation: number
+  ): Promise<void> {
+    const source = this.tabsSource;
+    if (!source) return;
+    let client = this.outbound.client;
+    if (!client) {
+      client = { id: await this.newEngineSyncId(), name: this.deviceName };
+      this.outbound.client = client;
+      this.clientsRecordPosted = false;
+      await this.persistOutbound(generation);
+    }
+    const tabs = source();
+    if (!tabs) return;
+    const cleartext = buildTabsRecordCleartext(client.id, client.name, tabs);
+    if (cleartext === null) return;
+    if (cleartext === this.lastSentTabsJson) return;
+
+    // Two sequential IV draws from one pool (AES-CBC IV reuse across
+    // plaintexts is a leak — the cursor function advances per call).
+    const random = await drawPoolRandom(this.guidPool, 32);
+    if (!this.clientsRecordPosted) {
+      const clientsEnvelope = encryptEnvelope(
+        defaultBundle,
+        buildClientsRecordCleartext(client.id, client.name),
+        random
+      );
+      const clientsResult = await storagePost(context, "clients", [
+        {
+          id: client.id,
+          sortindex: 1,
+          payload: JSON.stringify(clientsEnvelope),
+        },
+      ]);
+      if (clientsResult.status < 200 || clientsResult.status > 299) {
+        return; // retried on the next flight (clientsRecordPosted stays false)
+      }
+      this.clientsRecordPosted = true;
+    }
+    const tabsEnvelope = encryptEnvelope(defaultBundle, cleartext, random);
+    const tabsResult = await storagePost(context, "tabs", [
+      {
+        id: client.id,
+        sortindex: 1,
+        payload: JSON.stringify(tabsEnvelope),
+      },
+    ]);
+    if (
+      tabsResult.status >= 200 &&
+      tabsResult.status <= 299 &&
+      generation === this.generation
+    ) {
+      this.lastSentTabsJson = cleartext;
+    }
+  }
+
+  /** Remove the persisted tree (engine reset path). */
+  private clearPersistedTree(generation: number): Promise<unknown> {
+    const clearTree = this.storage.clearTree;
+    if (typeof clearTree !== "function") return Promise.resolve();
+    const operation = this.treeQueue.then(() =>
+      generation === this.generation ? clearTree() : undefined
+    );
+    this.treeQueue = operation.then(
+      () => undefined,
+      () => undefined
+    );
+    return operation;
   }
 
   /**
@@ -960,9 +1442,9 @@ export class SyncStore {
     tree: SyncTree | null,
     xiusSeconds: number,
     generation: number
-  ): Promise<number> {
+  ): Promise<{ uploaded: number; quotaExhausted: boolean }> {
     const adapter = this.localAdapter;
-    if (!adapter) return 0;
+    if (!adapter) return { uploaded: 0, quotaExhausted: false };
 
     const snapshot = adapter.getLocalSnapshot();
     if (Object.keys(this.outbound.guidByLocalId).length === 0) {
@@ -981,7 +1463,7 @@ export class SyncStore {
     // Persist GUID assignments before POST so a 412/crash cannot lose them
     // and force re-issuance on retry (G3 Security P2).
     await this.persistOutbound(generation);
-    if (records.length === 0) return 0;
+    if (records.length === 0) return { uploaded: 0, quotaExhausted: false };
 
     const envelopeRandom = this.randomSource
       ? await drawPoolRandom(this.guidPool, records.length * 16)
@@ -997,6 +1479,9 @@ export class SyncStore {
       xiusSeconds,
     });
     for (const bso of bsos) {
+      // Stop feeding the queue once the account is over quota — the flush
+      // below still commits whatever the server already accepted.
+      if (queue.quotaExhausted) break;
       await queue.enqueue(bso);
     }
     await queue.flush(true);
@@ -1009,7 +1494,7 @@ export class SyncStore {
     // this persist lands while generation still matches.
     await this.persistOutbound(generation);
 
-    if (generation !== this.generation) return successIds.length;
+    if (generation !== this.generation) return { uploaded: successIds.length, quotaExhausted: queue.quotaExhausted };
 
     // Advance the cached collection modified so early-skip does not miss
     // our own upload (research-codebase constraint 10).
@@ -1023,7 +1508,7 @@ export class SyncStore {
       await this.persistTree(nextTree, generation);
     }
 
-    return successIds.length;
+    return { uploaded: successIds.length, quotaExhausted: queue.quotaExhausted };
   }
 
   private async ensureTokenserver(): Promise<TokenserverInfo> {

@@ -31,6 +31,7 @@ type GeneratedCommands = Pick<
   | "bookmarkMove"
   | "bookmarkFolderCreate"
   | "bookmarkFolderRename"
+  | "bookmarkFolderSetParent"
   | "bookmarkFolderRemove"
   | "bookmarkSetFolder"
   | "splitGroupSave"
@@ -754,12 +755,19 @@ export class BrowserController {
       this.commands.bookmarkCreate({ title, url, folderId })
     );
   }
-  bookmarkFolderCreate(title: string) {
-    return this.mutate(() => this.commands.bookmarkFolderCreate({ title }));
+  bookmarkFolderCreate(title: string, parentFolderId = "") {
+    return this.mutate(() =>
+      this.commands.bookmarkFolderCreate({ title, parentFolderId })
+    );
   }
   bookmarkFolderRename(folderId: string, title: string) {
     return this.mutate(() =>
       this.commands.bookmarkFolderRename({ folderId, title })
+    );
+  }
+  bookmarkFolderSetParent(folderId: string, parentFolderId = "") {
+    return this.mutate(() =>
+      this.commands.bookmarkFolderSetParent({ folderId, parentFolderId })
     );
   }
   bookmarkFolderRemove(folderId: string) {

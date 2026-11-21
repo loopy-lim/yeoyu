@@ -99,6 +99,10 @@ pub struct BookmarkFolder {
     #[serde(default)]
     pub workspace_id: String,
     pub title: String,
+    /// "" is a space-root folder; otherwise another bookmark_folders ID in the
+    /// same space. Old snapshots without the field restore as root folders.
+    #[serde(default)]
+    pub parent_folder_id: String,
 }
 
 /// A saved two-pane arrangement. Panes are stored as home URLs, never tab
@@ -1064,7 +1068,11 @@ impl BrowserState {
         Ok(self.snapshot())
     }
 
-    pub fn create_bookmark_folder(&mut self, title: &str) -> Result<Snapshot> {
+    pub fn create_bookmark_folder(
+        &mut self,
+        title: &str,
+        parent_folder_id: &str,
+    ) -> Result<Snapshot> {
         let title = title.trim();
         if title.is_empty() {
             return Err(domain_error("bookmark folder name must not be empty"));
@@ -1075,14 +1083,50 @@ impl BrowserState {
             .checked_add(1)
             .ok_or_else(|| domain_error("bookmark folder ID space exhausted"))?;
         let mut candidate = self.snapshot.clone();
+        validate_folder_parent(
+            &candidate.bookmark_folders,
+            &id,
+            parent_folder_id,
+            &candidate.active_workspace_id,
+        )?;
         candidate.bookmark_folders.push(BookmarkFolder {
             id,
             workspace_id: candidate.active_workspace_id.clone(),
             title: title.into(),
+            parent_folder_id: parent_folder_id.into(),
         });
         self.commit(candidate)?;
         self.next_bookmark_folder_id = next_bookmark_folder_id;
         Ok(self.snapshot())
+    }
+
+    pub fn set_bookmark_folder_parent(
+        &mut self,
+        folder_id: &str,
+        parent_folder_id: &str,
+    ) -> Result<Snapshot> {
+        let mut candidate = self.snapshot.clone();
+        let workspace_id = candidate
+            .bookmark_folders
+            .iter()
+            .find(|folder| {
+                folder.id == folder_id && folder.workspace_id == candidate.active_workspace_id
+            })
+            .map(|folder| folder.workspace_id.clone())
+            .ok_or_else(|| domain_error("bookmark folder does not exist"))?;
+        validate_folder_parent(
+            &candidate.bookmark_folders,
+            folder_id,
+            parent_folder_id,
+            &workspace_id,
+        )?;
+        let folder = candidate
+            .bookmark_folders
+            .iter_mut()
+            .find(|folder| folder.id == folder_id)
+            .ok_or_else(|| domain_error("bookmark folder does not exist"))?;
+        folder.parent_folder_id = parent_folder_id.into();
+        self.commit(candidate)
     }
 
     /// Creates or updates a saved two-pane arrangement. Creation always
@@ -1190,8 +1234,9 @@ impl BrowserState {
         self.commit(candidate)
     }
 
-    /// Removing a folder promotes its bookmarks back to the root — never
-    /// drops bookmarks implicitly.
+    /// Removing a folder promotes its bookmarks and child folders one level
+    /// up (to the removed folder's parent, or space root) — never drops
+    /// bookmarks or nested folders implicitly.
     pub fn remove_bookmark_folder(&mut self, folder_id: &str) -> Result<Snapshot> {
         let mut candidate = self.snapshot.clone();
         let index = candidate
@@ -1201,10 +1246,16 @@ impl BrowserState {
                 folder.id == folder_id && folder.workspace_id == candidate.active_workspace_id
             })
             .ok_or_else(|| domain_error("bookmark folder does not exist"))?;
+        let promoted_parent = candidate.bookmark_folders[index].parent_folder_id.clone();
         candidate.bookmark_folders.remove(index);
         for bookmark in &mut candidate.bookmarks {
             if bookmark.folder_id == folder_id {
                 bookmark.folder_id.clear();
+            }
+        }
+        for folder in &mut candidate.bookmark_folders {
+            if folder.parent_folder_id == folder_id {
+                folder.parent_folder_id = promoted_parent.clone();
             }
         }
         self.commit(candidate)
@@ -1432,6 +1483,40 @@ pub(crate) fn validate_snapshot(snapshot: &Snapshot) -> Result<()> {
             ));
         }
     }
+    for folder in &snapshot.bookmark_folders {
+        if folder.parent_folder_id.is_empty() {
+            continue;
+        }
+        if folder.parent_folder_id == folder.id {
+            return Err(domain_error("bookmark folder cannot be its own parent"));
+        }
+        match bookmark_folder_spaces.get(folder.parent_folder_id.as_str()) {
+            Some(parent_workspace) if *parent_workspace == folder.workspace_id.as_str() => {}
+            _ => {
+                return Err(domain_error(
+                    "bookmark folder parent must exist in its workspace",
+                ));
+            }
+        }
+        let mut cursor = folder.parent_folder_id.as_str();
+        let mut guard = 0usize;
+        while !cursor.is_empty() {
+            if cursor == folder.id {
+                return Err(domain_error("bookmark folder parent cycle"));
+            }
+            let next = snapshot
+                .bookmark_folders
+                .iter()
+                .find(|item| item.id == cursor)
+                .map(|item| item.parent_folder_id.as_str())
+                .unwrap_or("");
+            cursor = next;
+            guard += 1;
+            if guard > snapshot.bookmark_folders.len() {
+                return Err(domain_error("bookmark folder parent cycle"));
+            }
+        }
+    }
     for bookmark in &snapshot.bookmarks {
         if !bookmark.folder_id.is_empty()
             && bookmark_folder_spaces.get(bookmark.folder_id.as_str())
@@ -1508,6 +1593,46 @@ fn next_id(ids: &[&str], prefix: &str) -> Result<u64> {
 
 fn domain_error(message: &str) -> RustraError {
     RustraError::custom("browser.invalid_state", message)
+}
+
+fn validate_folder_parent(
+    folders: &[BookmarkFolder],
+    folder_id: &str,
+    parent_folder_id: &str,
+    workspace_id: &str,
+) -> Result<()> {
+    if parent_folder_id.is_empty() {
+        return Ok(());
+    }
+    if parent_folder_id == folder_id {
+        return Err(domain_error("bookmark folder cannot be its own parent"));
+    }
+    let Some(parent) = folders.iter().find(|folder| folder.id == parent_folder_id) else {
+        return Err(domain_error("parent bookmark folder does not exist"));
+    };
+    if parent.workspace_id != workspace_id {
+        return Err(domain_error(
+            "parent bookmark folder must be in the same workspace",
+        ));
+    }
+    let mut cursor = parent_folder_id;
+    let mut guard = 0usize;
+    while !cursor.is_empty() {
+        if cursor == folder_id {
+            return Err(domain_error("bookmark folder parent cycle"));
+        }
+        let next = folders
+            .iter()
+            .find(|folder| folder.id == cursor)
+            .map(|folder| folder.parent_folder_id.as_str())
+            .unwrap_or("");
+        cursor = next;
+        guard += 1;
+        if guard > folders.len() {
+            return Err(domain_error("bookmark folder parent cycle"));
+        }
+    }
+    Ok(())
 }
 
 fn set_last_active(candidate: &mut Snapshot, workspace_id: &str, tab_id: Option<&str>) {

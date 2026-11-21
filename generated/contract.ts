@@ -6,5 +6,5 @@
 // DO NOT EDIT — changes will be overwritten and fail codegen --check.
 // ────────────────────────────────────────────────────────────
 
-export const GENERATED_CONTRACT_HASH = 'bc91176c1f8247a25bb6c293ddae363ad376936850c1fcd97c4779f10fab0857';
+export const GENERATED_CONTRACT_HASH = '8367e132a846a9b6ca8235d394a6671450d938baadb29a8a3a498cac7bad9531';
 export const SCHEMA_VERSION = 1;

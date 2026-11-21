@@ -330,6 +330,7 @@ impl BrowserState {
                     id,
                     workspace_id: workspace_id.clone(),
                     title: f.title,
+                    parent_folder_id: String::new(),
                 });
             }
             let mut bookmark_ids = Vec::new();

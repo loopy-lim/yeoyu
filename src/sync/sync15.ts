@@ -279,40 +279,190 @@ export interface EncryptedBso {
   payload: string;
 }
 
+export interface FetchCollectionOptions {
+  /** Only records modified strictly after this server timestamp (seconds,
+   *  centisecond precision) — the incremental-fetch delta boundary. */
+  newerThanSeconds?: number;
+  /** Records per page. The server caps page size either way; an explicit
+   *  limit keeps paging deterministic and guarantees the offset protocol
+   *  is exercised on large collections. */
+  limit?: number;
+}
+
+/** Upper bound on page-follow iterations — a server that always answers
+ *  with an X-Weave-Next-Offset must not loop the client forever. */
+const MAX_COLLECTION_PAGES = 1000;
+
+/**
+ * GET /storage/{name}?full=1 — follows X-Weave-Next-Offset pagination until
+ * the server stops offering a continuation, so collections larger than one
+ * server page are never silently truncated (api-1.5 §GET; the offset token
+ * is opaque and round-trips verbatim). A non-200 on any page fails the call
+ * with that status.
+ */
 export async function fetchCollection(
   context: StorageContext,
-  name: string
+  name: string,
+  options: FetchCollectionOptions = {}
 ): Promise<{
   status: number;
   records: EncryptedBso[];
   backoffSeconds: number | null;
 }> {
-  const response = await storageGet(
-    context,
-    `/storage/${name}?full=1`
-  );
-  const backoffSecondsValue = backoffSeconds(response.headers);
-  if (response.status !== 200) {
-    return {
-      status: response.status,
-      records: [],
-      backoffSeconds: backoffSecondsValue,
-    };
+  const records: EncryptedBso[] = [];
+  let backoffSecondsValue: number | null = null;
+  let offset: string | null = null;
+  for (let page = 0; page < MAX_COLLECTION_PAGES; page += 1) {
+    const query = [`full=1`];
+    if (options.newerThanSeconds !== undefined) {
+      query.push(`newer=${weaveTimestamp(options.newerThanSeconds)}`);
+    }
+    if (options.limit !== undefined) {
+      query.push(`limit=${Math.floor(options.limit)}`);
+    }
+    if (offset !== null) query.push(`offset=${encodeURIComponent(offset)}`);
+    const response = await storageGet(
+      context,
+      `/storage/${name}?${query.join("&")}`
+    );
+    backoffSecondsValue = backoffSeconds(response.headers) ?? backoffSecondsValue;
+    if (response.status !== 200) {
+      return {
+        status: response.status,
+        records: [],
+        backoffSeconds: backoffSecondsValue,
+      };
+    }
+    const raw = JSON.parse(response.body) as Array<{
+      id: string;
+      modified: number;
+      payload: string;
+    }>;
+    for (const record of raw) {
+      records.push({
+        id: record.id,
+        modified: record.modified,
+        payload: record.payload,
+      });
+    }
+    const nextOffset = headerValue(response.headers, "x-weave-next-offset");
+    offset = nextOffset !== undefined && nextOffset !== "" ? nextOffset : null;
+    if (offset === null) break;
   }
-  const raw = JSON.parse(response.body) as Array<{
-    id: string;
-    modified: number;
-    payload: string;
-  }>;
+  return { status: 200, records, backoffSeconds: backoffSecondsValue };
+}
+
+/**
+ * Remaining account storage bytes from the POST response's
+ * X-Weave-Quota-Remaining header — null when the server did not send one.
+ * A value of 0 or below means the account is over quota.
+ */
+export function quotaRemaining(headers: Record<string, string>): number | null {
+  const raw = headerValue(headers, "x-weave-quota-remaining");
+  if (raw === undefined) return null;
+  const value = Number(raw);
+  return Number.isFinite(value) ? value : null;
+}
+
+// ---------------------------------------------------------------------------
+// meta/global — engine declarations, declined engines and sync IDs. The record
+// is account-wide (every client shares it): reads detect server-side engine
+// resets (syncID changed / record vanished), writes only ever touch our own
+// engine entry, preserving whatever other clients declared.
+
+/** Sync 1.5 storage version this client speaks (api-1.5). */
+export const STORAGE_VERSION = 5;
+
+/** Bookmarks engine wire version (places engine version 2). */
+export const BOOKMARKS_ENGINE_VERSION = 2;
+
+export interface MetaEngineEntry {
+  version: number;
+  syncID: string;
+}
+
+export interface MetaGlobalPayload {
+  storageVersion: number;
+  syncID: string;
+  engines: Record<string, MetaEngineEntry>;
+  declined: string[];
+}
+
+export interface MetaGlobalRecord {
+  modifiedSeconds: number;
+  payload: MetaGlobalPayload;
+}
+
+/** Fetch the meta/global record. Unlike data collections, meta/global is a
+ * PLAINTEXT BSO (a-s sync15 GlobalPayload / desktop plain WBO) — no envelope,
+ * no key bundle. status mirrors the collection fetch: 404/absent global BSO →
+ * record null with the collection status. */
+export async function fetchMetaGlobal(
+  context: StorageContext
+): Promise<{ status: number; record: MetaGlobalRecord | null }> {
+  const collection = await fetchCollection(context, "meta");
+  if (collection.status !== 200) return { status: collection.status, record: null };
+  const bso = collection.records.find((record) => record.id === "global");
+  if (!bso) return { status: 200, record: null };
+  const payload = parseMetaGlobalPayload(bso.payload);
+  if (!payload) return { status: 200, record: null };
   return {
-    status: response.status,
-    records: raw.map((record) => ({
-      id: record.id,
-      modified: record.modified,
-      payload: record.payload,
-    })),
-    backoffSeconds: backoffSecondsValue,
+    status: 200,
+    record: { modifiedSeconds: bso.modified, payload },
   };
+}
+
+/** Defensive payload reader: junk degrades to null so one malformed
+ *  meta/global cannot wedge every future sync. */
+export function parseMetaGlobalPayload(cleartext: string): MetaGlobalPayload | null {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(cleartext);
+  } catch {
+    return null;
+  }
+  if (typeof parsed !== "object" || parsed === null) return null;
+  const raw = parsed as Partial<MetaGlobalPayload>;
+  if (typeof raw.storageVersion !== "number" || typeof raw.syncID !== "string") {
+    return null;
+  }
+  const engines: Record<string, MetaEngineEntry> = {};
+  if (raw.engines !== null && typeof raw.engines === "object") {
+    for (const [name, entry] of Object.entries(raw.engines)) {
+      if (
+        entry !== null &&
+        typeof entry === "object" &&
+        typeof (entry as MetaEngineEntry).version === "number" &&
+        typeof (entry as MetaEngineEntry).syncID === "string"
+      ) {
+        engines[name] = entry as MetaEngineEntry;
+      }
+    }
+  }
+  return {
+    storageVersion: raw.storageVersion,
+    syncID: raw.syncID,
+    engines,
+    declined: Array.isArray(raw.declined)
+      ? raw.declined.filter((name): name is string => typeof name === "string")
+      : [],
+  };
+}
+
+/** Write meta/global back (single BSO POST, plaintext payload per the
+ *  protocol, XIUS-protected against racing other clients when a modified
+ *  timestamp is known). */
+export async function putMetaGlobal(
+  context: StorageContext,
+  payload: MetaGlobalPayload,
+  xiusSeconds?: number
+): Promise<StoragePostResult> {
+  return storagePost(
+    context,
+    "meta",
+    [{ id: "global", sortindex: 0, payload: JSON.stringify(payload) }],
+    xiusSeconds !== undefined ? { xiusSeconds } : {}
+  );
 }
 
 /** Decrypt one BSO payload (batch-friendly: caller chunks the loop). */
@@ -339,10 +489,16 @@ export function decryptRecordCleartext(
   return decryptEnvelope(bundle, envelope);
 }
 
-/** Parse the crypto/keys cleartext and return the bookmarks key bundle. */
-export function collectionKeysFromCleartext(
-  cleartext: string
-): { default: KeyBundle; forBookmarks: KeyBundle } {
+/** Parsed crypto/keys — mirrors a-s CollectionKeys.key_for_collection. */
+export interface CollectionKeys {
+  default: KeyBundle;
+  forBookmarks: KeyBundle;
+  /** Collection-specific bundle when present, otherwise the default. */
+  forCollection: (name: string) => KeyBundle;
+}
+
+/** Parse the crypto/keys cleartext into the default + per-collection bundles. */
+export function collectionKeysFromCleartext(cleartext: string): CollectionKeys {
   const parsed = JSON.parse(cleartext) as {
     default: [string, string];
     collections?: Record<string, [string, string]>;
@@ -351,12 +507,15 @@ export function collectionKeysFromCleartext(
     parsed.default[0],
     parsed.default[1]
   );
-  const bookmarkPair = parsed.collections?.["bookmarks"];
+  const byName = new Map<string, KeyBundle>();
+  for (const [name, pair] of Object.entries(parsed.collections ?? {})) {
+    if (!Array.isArray(pair) || pair.length < 2) continue;
+    byName.set(name, keyBundleFromBase64Pair(pair[0]!, pair[1]!));
+  }
   return {
     default: defaultBundle,
-    forBookmarks: bookmarkPair
-      ? keyBundleFromBase64Pair(bookmarkPair[0], bookmarkPair[1])
-      : defaultBundle,
+    forBookmarks: byName.get("bookmarks") ?? defaultBundle,
+    forCollection: (name: string) => byName.get(name) ?? defaultBundle,
   };
 }
 

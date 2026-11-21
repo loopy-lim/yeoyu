@@ -1105,7 +1105,7 @@ fn malformed_space_colors_are_rejected_on_restore() {
 #[test]
 fn bookmark_folders_organize_and_clean_up() {
     let mut state = BrowserState::default();
-    let snapshot = state.create_bookmark_folder("News").unwrap();
+    let snapshot = state.create_bookmark_folder("News", "").unwrap();
     let folder_id = snapshot.bookmark_folders[0].id.clone();
 
     let snapshot = state
@@ -1132,7 +1132,7 @@ fn bookmark_folders_organize_and_clean_up() {
             .create_bookmark("X", "https://x.example", "folder-99")
             .is_err()
     );
-    assert!(state.create_bookmark_folder("   ").is_err());
+    assert!(state.create_bookmark_folder("   ", "").is_err());
 
     // Deleting a folder promotes its bookmarks to the root instead of
     // dropping them.
@@ -1359,7 +1359,7 @@ fn bookmarks_and_folders_belong_to_the_space_where_they_are_created() {
             .all(|item| item["workspaceId"] == "workspace-1")
     );
     assert!(fresh["bookmarkFolders"].as_array().unwrap().is_empty());
-    state.create_bookmark_folder("Research").unwrap();
+    state.create_bookmark_folder("Research", "").unwrap();
     let created = serde_json::to_value(
         state
             .create_bookmark("Local", "https://local.example", "folder-1")
@@ -1378,9 +1378,9 @@ fn bookmarks_and_folders_belong_to_the_space_where_they_are_created() {
 #[test]
 fn foreign_bookmark_and_folder_mutations_fail_atomically() {
     let mut state = BrowserState::default();
-    state.create_bookmark_folder("First").unwrap();
+    state.create_bookmark_folder("First", "").unwrap();
     state.create_workspace("Second").unwrap();
-    state.create_bookmark_folder("Second").unwrap();
+    state.create_bookmark_folder("Second", "").unwrap();
     state
         .create_bookmark("Second", "https://second.example", "folder-2")
         .unwrap();
@@ -1426,7 +1426,7 @@ fn foreign_bookmark_and_folder_mutations_fail_atomically() {
 #[test]
 fn moving_a_bound_pin_transfers_its_bookmark_and_clears_the_source_folder() {
     let mut state = BrowserState::default();
-    state.create_bookmark_folder("First").unwrap();
+    state.create_bookmark_folder("First", "").unwrap();
     state.set_bookmark_folder("bookmark-1", "folder-1").unwrap();
     let id = state
         .open_bookmark("bookmark-1", "")
@@ -1471,7 +1471,7 @@ fn moving_a_bound_pin_transfers_its_bookmark_and_clears_the_source_folder() {
 fn a_bound_favorite_stays_global_and_transfers_ownership_when_demoted() {
     for demotion in ["pin", "ordinary", "move"] {
         let mut state = BrowserState::default();
-        state.create_bookmark_folder("First").unwrap();
+        state.create_bookmark_folder("First", "").unwrap();
         state.set_bookmark_folder("bookmark-1", "folder-1").unwrap();
         let id = state
             .open_bookmark("bookmark-1", "")
@@ -1519,7 +1519,7 @@ fn a_bound_favorite_stays_global_and_transfers_ownership_when_demoted() {
 
 fn legacy_bookmark_library() -> serde_json::Value {
     let mut state = BrowserState::default();
-    state.create_bookmark_folder("Research").unwrap();
+    state.create_bookmark_folder("Research", "").unwrap();
     state.set_bookmark_folder("bookmark-1", "folder-1").unwrap();
     state.open_bookmark("bookmark-1", "").unwrap();
     state
@@ -1577,7 +1577,7 @@ fn legacy_bookmarks_migrate_only_to_bound_spaces_with_stable_folder_and_tab_ids(
     );
     assert_eq!(
         state
-            .create_bookmark_folder("Next")
+            .create_bookmark_folder("Next", "")
             .unwrap()
             .bookmark_folders
             .last()
@@ -1621,7 +1621,7 @@ fn unbound_legacy_library_uses_default_or_first_space_regardless_of_active_space
 #[test]
 fn invalid_explicit_bookmark_scope_folder_or_tab_ownership_is_rejected_atomically() {
     let mut state = BrowserState::default();
-    state.create_bookmark_folder("First").unwrap();
+    state.create_bookmark_folder("First", "").unwrap();
     state.set_bookmark_folder("bookmark-1", "folder-1").unwrap();
     let id = state
         .open_bookmark("bookmark-1", "")

@@ -512,12 +512,25 @@ function fixture(seed: Snapshot = initial()) {
       state = { ...state, revision: state.revision + 1, bookmarks };
       return result();
     },
-    bookmarkFolderCreate: async ({ title }) => {
+    bookmarkFolderCreate: async ({ title, parentFolderId = "" }) => {
       const id = `folder-${state.revision + 1}`;
       state = {
         ...state,
         revision: state.revision + 1,
-        bookmarkFolders: [...(state.bookmarkFolders ?? []), { id, title }],
+        bookmarkFolders: [
+          ...(state.bookmarkFolders ?? []),
+          { id, title, parentFolderId },
+        ],
+      };
+      return result();
+    },
+    bookmarkFolderSetParent: async ({ folderId, parentFolderId = "" }) => {
+      state = {
+        ...state,
+        revision: state.revision + 1,
+        bookmarkFolders: (state.bookmarkFolders ?? []).map((folder) =>
+          folder.id === folderId ? { ...folder, parentFolderId } : folder
+        ),
       };
       return result();
     },

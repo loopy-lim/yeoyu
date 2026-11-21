@@ -96,7 +96,7 @@ Host gate: Rust format/tests/Clippy, Bun tests, Python checks, layout geometry, 
 
 ## Status and license
 
-Android-only proof of concept today. An iOS browser-surface interface exists, but there is no runnable iOS app. Sync, saved split groups, isolated account profiles, and automatic archiving are not implemented. Extensions target compatible Mozilla add-ons — not Chrome CRX or every Firefox API.
+Android-only proof of concept today. An iOS browser-surface interface exists, but there is no runnable iOS app. Firefox account sync covers bookmarks and open tabs (both directions) plus receive-only Zen Spaces; history sync and Spaces upload are not implemented, nor are isolated account profiles or automatic archiving. Extensions target compatible Mozilla add-ons — not Chrome CRX or every Firefox API.
 
 Inspired by spatial browser workflows; not affiliated with The Browser Company, Arc, Mozilla, or Google. Third-party components keep their own licenses and trademarks.
 

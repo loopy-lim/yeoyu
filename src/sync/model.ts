@@ -63,6 +63,84 @@ export interface SyncCredentials {
   kid: string;
 }
 
+// ---------------------------------------------------------------------------
+// Synced tabs (receive-only): one tabs-collection BSO per device, sealed
+// with the default bundle. `urlHistory` is the tab's session history with
+// the CURRENT url last (desktop/a-s convention); `lastUsed` is epoch ms.
+
+export interface SyncedTab {
+  title: string;
+  /** Current url (last urlHistory entry). */
+  url: string;
+  /** Back-history, oldest first, excluding the current url (capped). */
+  urlHistory: string[];
+  lastUsedMs: number | null;
+  /** Favicon url when the writer sent one. */
+  icon?: string;
+}
+
+export interface SyncedDeviceTabs {
+  /** tabs-collection BSO id — the writer's client/device id. */
+  clientId: string;
+  clientName: string;
+  tabs: SyncedTab[];
+  /** Collection modified of this device's record (seconds). */
+  modifiedSeconds: number;
+}
+
+// ---------------------------------------------------------------------------
+// Synced Spaces (receive→local): Zen's "spaces" Sync 1.5 collection. Records
+// are CryptoWrapper cleartexts `{ id, kind, data }` (or tombstones). After
+// fetch, spacesApply materializes them into Snapshot workspaces / favorites /
+// pinned tabs / bookmark folders (outbound Spaces upload is separate).
+
+export type SyncedSpaceItem =
+  | SyncedSpaceTabItem
+  | SyncedSpaceFolderItem
+  | SyncedSpaceSplitItem;
+
+export interface SyncedSpaceTabItem {
+  kind: "tab";
+  id: string;
+  title: string;
+  url: string;
+  icon?: string;
+  pinned: boolean;
+  essential: boolean;
+}
+
+export interface SyncedSpaceFolderItem {
+  kind: "folder";
+  id: string;
+  name: string;
+  icon?: string;
+  /** Zen parent folder id when nested; null/absent = space root. yeoyu's
+   *  BookmarkFolder model is flat today, so apply currently promotes nested
+   *  folders to siblings until parentFolderId lands in Snapshot. */
+  parentFolderId?: string | null;
+  children: SyncedSpaceItem[];
+}
+
+export interface SyncedSpaceSplitItem {
+  kind: "split";
+  id: string;
+  tabs: SyncedSpaceTabItem[];
+}
+
+export interface SyncedSpace {
+  uuid: string;
+  name: string;
+  icon?: string;
+  children: SyncedSpaceItem[];
+}
+
+export interface SyncedSpacesTree {
+  /** Space order from the layout record when present; otherwise discovery order. */
+  spaces: SyncedSpace[];
+  /** Cross-space essentials (Zen essentials strip), openable like tabs. */
+  essentials: SyncedSpaceTabItem[];
+}
+
 export interface TokenserverInfo {
   id: string;
   key: string;
@@ -76,7 +154,7 @@ export interface TokenserverInfo {
   durationSeconds: number;
 }
 
-export type SyncErrorKind = "network" | "auth" | "server" | "protocol";
+export type SyncErrorKind = "network" | "auth" | "server" | "protocol" | "quota";
 
 export interface SyncHttpError extends Error {
   kind: SyncErrorKind;

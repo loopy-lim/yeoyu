@@ -37,7 +37,8 @@ for (const count of [10, 50, 100, 500]) {
         workspaceRemove: unsupported, workspaceMove: unsupported, keymapSet: unsupported,
         bookmarkOpen: unsupported, bookmarkCreate: unsupported, bookmarkUpdate: unsupported,
         bookmarkRemove: unsupported, bookmarkMove: unsupported, bookmarkFolderCreate: unsupported,
-        bookmarkFolderRename: unsupported, bookmarkFolderRemove: unsupported, bookmarkSetFolder: unsupported,
+        bookmarkFolderRename: unsupported, bookmarkFolderSetParent: unsupported,
+        bookmarkFolderRemove: unsupported, bookmarkSetFolder: unsupported,
         splitGroupSave: unsupported, splitGroupRemove: unsupported,
       };
       const storage: BrowserStorage = {
