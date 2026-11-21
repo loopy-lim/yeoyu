@@ -242,11 +242,19 @@ const SafeAreaView = withUniwind(NativeSafeAreaView);
 const Surface = withUniwind(NativeSurface);
 
 type SurfaceRef = React.ElementRef<typeof Surface>;
+
 import {
   Button as UnikitButton,
   Badge as UnikitBadge,
   Separator as UnikitSeparator,
 } from "@unikit-bridge/ui";
+
+/** Newest synced-history rows shown in the history dialog's other-devices
+ * section (issue #13 receive-only exposure cap). */
+const SYNCED_HISTORY_DIALOG_ROWS = 20;
+/** Per-device synced-tab rows shown inside quick open (same exposure cap
+ * policy; the sidebar region keeps showing every tab). */
+const QUICK_OPEN_SYNCED_TABS_PER_DEVICE = 5;
 
 const favoriteClasses = cva(c.favorite, {
   variants: { selected: { true: c.favoriteActive } },
@@ -1276,6 +1284,16 @@ function BrowserApp() {
   const syncStore = syncStoreRef.current;
   const [syncState, setSyncState] = useState<SyncStoreState>(() =>
     syncStore.getState()
+  );
+  // Quick open's other-devices list: the sidebar synced-tabs region reused
+  // with a per-device recency cap so the sheet stays compact (issue #13).
+  const quickOpenSyncedDevices = useMemo(
+    () =>
+      syncState.tabs?.map((device) => ({
+        ...device,
+        tabs: device.tabs.slice(0, QUICK_OPEN_SYNCED_TABS_PER_DEVICE),
+      })) ?? null,
+    [syncState.tabs]
   );
   const [syncLogin, setSyncLogin] = useState<{
     request: AuthorizationRequest;
@@ -6563,6 +6581,11 @@ function BrowserApp() {
             >
               <HistoryDialog
                 entries={history.entries}
+                syncedVisits={
+                  syncState.history
+                    ? syncState.history.slice(0, SYNCED_HISTORY_DIALOG_ROWS)
+                    : null
+                }
                 onOpen={(url) => {
                   settingsReturn.current = null;
                   createTabAndShow(url);
@@ -6690,6 +6713,13 @@ function BrowserApp() {
                       {tr("chrome.quickOpenLinkHint")}
                     </Text>
                   )}
+                  <SidebarSyncedTabsRegion
+                    devices={quickOpenSyncedDevices}
+                    onOpenUrl={(url) => {
+                      closeQuickOpen();
+                      createTabAndShow(url);
+                    }}
+                  />
                 </DialogCard>
               )}
             </OverlaySheet>

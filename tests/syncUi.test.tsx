@@ -14,3 +14,17 @@ test("sync settings cover every connection state and the sidebar region folds co
     throw new Error(result.stdout.toString() + result.stderr.toString());
   expect(result.exitCode).toBe(0);
 }, 15000);
+
+test("the history dialog's other-devices section folds, hides and opens rows", () => {
+  const result = Bun.spawnSync(
+    [
+      process.execPath,
+      "test",
+      fileURLToPath(new URL("./fixtures/history-dialog.tsx", import.meta.url)),
+    ],
+    { stdout: "pipe", stderr: "pipe" }
+  );
+  if (result.exitCode)
+    throw new Error(result.stdout.toString() + result.stderr.toString());
+  expect(result.exitCode).toBe(0);
+}, 15000);

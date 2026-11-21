@@ -14,6 +14,8 @@ import { Favicon } from "@/components/Favicon";
 import { josaRo } from "@/i18n";
 import { ActionMenu, type MenuAnchor, type MenuItem } from "@/components/ActionMenu";
 import { ChromeIcon } from "@/chrome/ChromeIcon";
+import { FolderDisclosure } from "@/chrome/FolderDisclosure";
+import type { SyncedHistoryVisit } from "@/sync/model";
 import { DialogCard } from "@/components/DialogCard";
 import { DialogHeader } from "@/components/DialogHeader";
 import type { HistoryEntry } from "@/history";
@@ -57,6 +59,10 @@ const dialogClasses = {
   historyList: "max-h-[420px]",
   historyRow:
     "min-h-bookmark-row flex-row items-center gap-lg px-lg py-sm border-b-hairline-width border-b-hairline active:bg-sunken",
+  // 44dp floor (issue #24): the header folds the other-devices synced
+  // section and is a primary press target inside the history dialog.
+  historySectionHeader:
+    "min-h-[44px] flex-row items-center gap-sm px-lg pt-md pb-xs active:opacity-pressed",
   grow: "flex-1",
   permissionScroll: "grow-0",
   permissionContent: "gap-xxxl",
@@ -535,13 +541,61 @@ const HistoryRow = memo(function HistoryRow({
   );
 });
 
+/** "From Other Devices" section inside the history dialog: the newest
+ *  synced visits (receive-only Firefox/Zen history), folded by default so
+ *  the local history list keeps its place. Rows reuse HistoryRow. */
+function SyncedHistorySection({
+  visits,
+  onOpen,
+}: {
+  visits: readonly SyncedHistoryVisit[];
+  onOpen: (url: string) => void;
+}) {
+  const { tr } = useI18n();
+  const [open, setOpen] = useState(false);
+  return (
+    <View>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={tr("sync.historyHeader")}
+        accessibilityState={{ expanded: open }}
+        className={dialogClasses.historySectionHeader}
+        onPress={() => setOpen((value) => !value)}
+      >
+        <ChromeIcon
+          className="size-[12px] text-ink-faint"
+          name={open ? "chevronDown" : "chevronRight"}
+        />
+        <ChromeIcon className="size-[12px] text-ink-faint" name="sync" />
+        <Text className="text-ink-muted text-input font-semibold">
+          {tr("sync.historyHeader")}
+        </Text>
+      </Pressable>
+      <FolderDisclosure open={open}>
+        <View>
+          {visits.map((visit) => (
+            <HistoryRow
+              key={visit.id}
+              entry={{ url: visit.url, title: visit.title, at: visit.visitedAtMs }}
+              onOpen={onOpen}
+            />
+          ))}
+        </View>
+      </FolderDisclosure>
+    </View>
+  );
+}
+
 export function HistoryDialog({
   entries,
+  syncedVisits,
   onOpen,
   onClear,
   onClose,
 }: {
   entries: HistoryEntry[];
+  /** Newest synced history visits (receive-only); hidden while null/empty. */
+  syncedVisits?: readonly SyncedHistoryVisit[] | null;
   onOpen: (url: string) => void;
   onClear: () => void;
   onClose: () => void;
@@ -560,6 +614,10 @@ export function HistoryDialog({
     ),
     [open]
   );
+  const syncedHeader =
+    syncedVisits && syncedVisits.length > 0 ? (
+      <SyncedHistorySection visits={syncedVisits} onOpen={open} />
+    ) : null;
   return (
     <DialogCard variant="dialog" className="max-w-[560px]">
       <DialogHeader
@@ -584,6 +642,7 @@ export function HistoryDialog({
         windowSize={5}
         maxToRenderPerBatch={12}
         keyExtractor={historyKey}
+        ListHeaderComponent={syncedHeader ?? undefined}
         ListEmptyComponent={
           <Text className={dialogClasses.emptyState}>{tr("dialog.noHistory")}</Text>
         }

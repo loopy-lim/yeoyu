@@ -78,6 +78,7 @@ const en = {
   "sync.tabsHeader": "Synced Tabs",
   "sync.tabsDeviceLabel": "Tabs from {{name}}",
   "sync.tabLabel": "Tab {{name}}",
+  "sync.historyHeader": "From Other Devices",
   "sync.unavailable":
     "Firefox Sync is unavailable on this device.",
   "sync.error.network":
@@ -1023,6 +1024,7 @@ const ko: { [K in keyof typeof en]: string } = {
   "sync.tabsHeader": "동기화된 탭",
   "sync.tabsDeviceLabel": "{{name}}의 탭",
   "sync.tabLabel": "탭 {{name}}",
+  "sync.historyHeader": "다른 기기",
   "sync.unavailable":
     "이 기기에서는 Firefox 동기화를 사용할 수 없습니다.",
   "sync.error.network":

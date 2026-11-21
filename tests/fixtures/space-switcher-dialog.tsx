@@ -9,6 +9,32 @@ mock.module("react-native", () => ({
   View: "View", Text: "Text", TextInput: "TextInput", Pressable: "Pressable",
   FlatList: "FlatList", ScrollView: "ScrollView", Switch: "Switch", Image: "Image",
   Keyboard: { dismiss: () => {} },
+  // FolderDisclosure (the history dialog's synced section folds with it)
+  // pulls Animated + Easing into the Dialogs module graph.
+  Animated: {
+    View: "View",
+    Value: class {
+      value: number;
+      constructor(initial: number) { this.value = initial; }
+      setValue(next: number) { this.value = next; }
+      interpolate(config: unknown) { return config; }
+    },
+    timing: (
+      value: { setValue(next: number): void },
+      config: { toValue: number }
+    ) => ({
+      start(done?: (result: { finished: boolean }) => void) {
+        value.setValue(config.toValue);
+        done?.({ finished: true });
+      },
+      stop() {},
+    }),
+  },
+  Easing: { bezier: () => "bezier" },
+  AccessibilityInfo: {
+    isReduceMotionEnabled: () => Promise.resolve(false),
+    addEventListener: () => ({ remove: () => {} }),
+  },
   useWindowDimensions: () => ({ width: 400, height: 400, fontScale: 1.6 }),
 }));
 mock.module("react-native-svg", () => ({ default: "Svg", Path: "Path" }));
