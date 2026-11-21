@@ -57,6 +57,8 @@ export type BookmarkFolder = {
   id: string;
   workspaceId?: string;
   title: string;
+  /** "" is a space-root folder; otherwise another bookmark_folders ID in the same space. Old snapshots without the field restore as root folders. */
+  parentFolderId?: string;
 };
 
 /**
@@ -110,6 +112,8 @@ export type Snapshot = {
 
 export type BookmarkFolderCreateInput = {
   title: string;
+  /** "" creates a space-root folder; otherwise nests under an existing folder in the active workspace. */
+  parentFolderId: string;
 };
 
 export type BookmarkFolderIdInput = {
@@ -119,6 +123,12 @@ export type BookmarkFolderIdInput = {
 export type BookmarkFolderRenameInput = {
   folderId: string;
   title: string;
+};
+
+export type BookmarkFolderSetParentInput = {
+  folderId: string;
+  /** "" moves the folder to the space root. */
+  parentFolderId: string;
 };
 
 export type BookmarkMoveInput = {

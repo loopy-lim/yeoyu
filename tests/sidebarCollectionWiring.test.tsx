@@ -3,7 +3,7 @@ import { expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { URL } from "node:url";
 import { parse } from "@babel/parser";
-import { sidebarPresentation } from "../src/sidebarPresentation";
+import { findSidebarFolder, sidebarPresentation } from "../src/sidebarPresentation";
 import { translate, type TranslationKey } from "../src/i18n";
 
 // Execute the real App picker elements, with only native rendering at the seam.
@@ -117,6 +117,7 @@ test("App folder picker activates a live bookmark owner but opens a saved page w
   const view = menu(1, {
     SidebarPageMenu: "SidebarPageMenu",
     sidebar,
+    findSidebarFolder,
     sidebarMenu: { kind: "folderPages", id: "docs" },
     bookmarkTabs: new Map([["saved", tabs[0]]]),
     target: "a",

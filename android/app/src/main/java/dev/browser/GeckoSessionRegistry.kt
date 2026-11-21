@@ -1574,11 +1574,12 @@ object GeckoSessionRegistry {
      *  present, disarms the capture and emits BrowserSyncLoginCode. Idempotent
      *  per arming; returns whether the code was captured. */
     private fun captureSyncLogin(uri: String): Boolean {
-        val params = uri.substringAfter('?', "").split('&')
+        val query = uri.substringAfter('?', "").substringBefore('#')
+        val params = query.split('&')
             .mapNotNull { pair ->
                 val separator = pair.indexOf('=')
                 if (separator <= 0) null
-                else pair.substring(0, separator) to pair.substring(separator + 1)
+                else Uri.decode(pair.substring(0, separator)) to Uri.decode(pair.substring(separator + 1))
             }.toMap()
         val code = params["code"]
         val state = params["state"]
@@ -1612,21 +1613,29 @@ object GeckoSessionRegistry {
         if (method !in setOf("GET", "POST") || !url.startsWith("https://"))
             return reply(Result.failure(IllegalArgumentException("sync request must be GET/POST over https")))
         if (url.length > 8_192) return reply(Result.failure(IllegalArgumentException("sync request url too long")))
+        android.util.Log.i("YeoyuSyncHttp", "fetch ${method} ${url.take(96)}")
         val builder = WebRequest.Builder(url)
             .method(method)
             .cacheMode(WebRequest.CACHE_MODE_NO_STORE)
         val headers = requestJson.optJSONObject("headers")
         if (headers != null) for (name in headers.keys()) builder.header(name, headers.optString(name))
         val body = requestJson.optString("body", "")
-        if (body.isNotEmpty()) builder.body(body)
+        if (body.isNotEmpty()) {
+            val bytes = body.toByteArray(Charsets.UTF_8)
+            val buffer = java.nio.ByteBuffer.allocateDirect(bytes.size)
+            buffer.put(bytes)
+            buffer.flip()
+            builder.body(buffer)
+        }
         val executor = syncExecutor ?: GeckoWebExecutor(getRuntime(app)).also { syncExecutor = it }
         try {
             executor.fetch(builder.build()).accept { response ->
                 syncIo.execute {
-                    val result = readSyncResponse(response)
+                    val result = readSyncResponse(response, url)
                     main.post { reply(result) }
                 }
             }.exceptionally { failure ->
+                android.util.Log.w("YeoyuSyncHttp", "fetch failed: ${failure?.message ?: failure}")
                 main.post {
                     reply(Result.failure(if (failure is Exception) failure
                         else IllegalStateException(failure?.message ?: "sync request failed")))
@@ -1634,11 +1643,12 @@ object GeckoSessionRegistry {
                 GeckoResult.fromValue(null)
             }
         } catch (failure: Exception) {
+            android.util.Log.w("YeoyuSyncHttp", "fetch threw: ${failure.message}")
             reply(Result.failure(failure))
         }
     }
 
-    private fun readSyncResponse(response: WebResponse?): Result<String> {
+    private fun readSyncResponse(response: WebResponse?, url: String): Result<String> {
         if (response == null) return Result.failure(IllegalStateException("sync response is empty"))
         return try {
             response.setReadTimeoutMillis(SYNC_HTTP_READ_TIMEOUT_MS)
@@ -1655,6 +1665,14 @@ object GeckoSessionRegistry {
                 }
                 String(buffer.toByteArray(), Charsets.UTF_8)
             } ?: ""
+            // URLs never carry tokens (Hawk creds are headers); bodies only on 4xx.
+            android.util.Log.i("YeoyuSyncHttp",
+                "status=${response.statusCode} url=${url.take(96)}")
+            if (response.statusCode >= 400) {
+                // Error bodies carry only code/errno/message — never tokens.
+                android.util.Log.w("YeoyuSyncHttp",
+                    "status=${response.statusCode} url=${url.take(96)} body=${body.take(200)}")
+            }
             val headers = JSONObject()
             response.headers.forEach { (name, value) -> headers.put(name.lowercase(), value) }
             Result.success(JSONObject()

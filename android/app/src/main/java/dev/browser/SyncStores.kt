@@ -26,7 +26,7 @@ object SyncSecretsStore {
     fun read(context: Context): String? {
         val app = context.applicationContext
         val blob = app.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(BLOB_KEY, null)
-            ?: return null
+        if (blob == null) return null
         // v1:<base64 iv>:<base64 ciphertext+tag>
         val parts = blob.split(":")
         if (parts.size != 3 || parts[0] != "v1") return wipe(app, "format")
@@ -68,6 +68,7 @@ object SyncSecretsStore {
      *  new device): the alias is deleted so the next save provisions a fresh
      *  key instead of wedging every future write. */
     private fun wipe(app: Context, reason: String): String? {
+        android.util.Log.w("YeoyuSyncStore", "secrets wiped: $reason")
         try {
             val keyStore = java.security.KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
             if (keyStore.containsAlias(ALIAS)) keyStore.deleteEntry(ALIAS)

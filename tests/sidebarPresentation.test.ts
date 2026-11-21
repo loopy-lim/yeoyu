@@ -92,6 +92,7 @@ test("rail folders compress their pinned owners but do not absorb promoted favor
     tabs: [...tabs, tab("unpinned", { bookmarkId: "saved" })],
   });
   expect(view.folders.map((f) => f.folder.id)).toEqual(["docs", "empty"]);
+  expect(view.folders[0]!.children).toEqual([]);
   expect(view.folders[0]!.containsFocused).toBe(true);
   expect(view.folders[0]!.visibleBookmarks.map((b) => b.id)).toEqual(["doc"]);
   expect(view.railTabs.map((t) => t.id)).toEqual([
@@ -198,4 +199,43 @@ test("panels leave every tab list and split for their own sidebar section", () =
   ]);
 });
 
+test("nested folders hang under their parentFolderId", () => {
+  const view = sidebarPresentation({
+    ...base,
+    folders: [
+      ...folders,
+      {
+        id: "nested",
+        title: "Nested",
+        workspaceId: "work",
+        parentFolderId: "docs",
+      },
+    ],
+    bookmarks: [
+      ...bookmarks,
+      {
+        id: "child",
+        title: "Child",
+        url: "https://child.example",
+        workspaceId: "work",
+        folderId: "nested",
+      },
+    ],
+  });
+  expect(view.folders.map((f) => f.folder.id)).toEqual(["docs", "empty"]);
+  expect(view.folders[0]!.children.map((f) => f.folder.id)).toEqual(["nested"]);
+  expect(view.folders[0]!.children[0]!.bookmarks.map((b) => b.id)).toEqual([
+    "child",
+  ]);
+});
 
+test("hides empty same-title root folders when a populated copy exists", () => {
+  const view = sidebarPresentation({
+    ...base,
+    folders: [
+      ...folders,
+      { id: "docs-empty", title: "Documents", workspaceId: "work" },
+    ],
+  });
+  expect(view.folders.map((f) => f.folder.id)).toEqual(["docs", "empty"]);
+});

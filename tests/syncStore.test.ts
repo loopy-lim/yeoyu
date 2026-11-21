@@ -185,8 +185,10 @@ function storageHawkMatches(request: HttpRequest): boolean {
   const ts = /ts="(\d+)"/.exec(header)?.[1];
   const nonce = /nonce="([^"]+)"/.exec(header)?.[1];
   const mac = /mac="([^"]+)"/.exec(header)?.[1];
-  const hashAttr = /hash="([^"]+)"/.exec(header)?.[1];
   if (ts === undefined || !nonce || !mac) return false;
+  // No hash attribute is ever sent — reference wire format (see
+  // hawkAuthorizationHeader in src/sync/crypto.ts).
+  if (/hash="/.test(header)) return false;
   const url = new URL(request.url);
   const normalized =
     [
@@ -198,22 +200,10 @@ function storageHawkMatches(request: HttpRequest): boolean {
       url.host,
       url.protocol === "https:" ? "443" : "80",
       "",
-      hashAttr ?? "",
+      "",
     ].join("\n") + "\n";
   const expected = encodeBase64(hmac(sha256, utf8("hawk-key"), utf8(normalized)));
-  if (expected !== mac) return false;
-  if (request.body !== undefined) {
-    const contentType = request.headers?.["Content-Type"] ?? "";
-    const expectedHash = encodeBase64(
-      hmac(
-        sha256,
-        utf8("hawk-key"),
-        utf8(`hawk.1.payload\n${contentType}\n${request.body}\n`)
-      )
-    );
-    return hashAttr === expectedHash;
-  }
-  return hashAttr === undefined;
+  return expected === mac;
 }
 
 class FakeStorage implements SyncPlatformStorage {
@@ -294,22 +284,97 @@ const BOOKMARK_PAYLOADS: Array<[string, string]> = [
   ["b2", JSON.stringify({ id: "b2", parentid: "menu________", type: "bookmark", title: "Two", bmkUri: "https://two.example" })],
 ];
 
+/** Account-wide meta/global the fake server already holds. Per the Sync 1.5
+ * protocol meta/global is a PLAINTEXT BSO (no envelope): Zen declared the
+ * bookmarks engine, yeoyu adopts the declaration. */
+const BOOKMARKS_SYNC_ID = "bsync1234567";
+const META_GLOBAL_CLEARTEXT = JSON.stringify({
+  storageVersion: 5,
+  syncID: "mglobalsync1",
+  engines: {
+    bookmarks: { version: 2, syncID: BOOKMARKS_SYNC_ID },
+    history: { version: 1, syncID: "historysync1" },
+  },
+  declined: [],
+});
+
 function bso(id: string, payload: string, modified = 1.0) {
   return { id, modified, payload };
 }
 
 interface SyncServerScript {
   collectionsModified?: number;
+  /** info/collections meta timestamp — drives the meta/global handshake. */
+  metaCollectionsModified?: number;
+  /** meta collection GET status (default 200). */
+  metaStatus?: number;
+  /** meta collection records; null = empty collection (no meta/global). */
+  metaRecords?: Array<{ id: string; payload: string; modified?: number }> | null;
   infoStatus?: number;
   infoHeaders?: Record<string, string>;
   keysStatus?: number;
   keysEnvelope?: string | null;
   bookmarksStatus?: number;
   bookmarksRecords?: Array<{ id: string; payload: string; modified?: number }>;
+  /** Bookmarks pages served in GET order; intermediate pages get an
+   * X-Weave-Next-Offset continuation so pagination is exercised. */
+  bookmarksPages?: Array<Array<{ id: string; payload: string; modified?: number }>>;
   /** POST /storage/bookmarks HTTP status (default 200). */
   postStatus?: number;
+  /** Extra headers on POST /storage/bookmarks responses (e.g. quota). */
+  postHeaders?: Record<string, string>;
   /** X-Last-Modified / body.modified after a successful POST (seconds). */
   postModified?: number;
+  /** info/collections tabs timestamp — advertises the tabs collection. */
+  tabsCollectionsModified?: number;
+  /** tabs collection records (default-bundle envelopes, one per device). */
+  tabsRecords?: Array<{ id: string; payload: string; modified?: number }>;
+  /** info/collections spaces timestamp — advertises Zen's spaces engine. */
+  spacesCollectionsModified?: number;
+  /** spaces collection records (default-bundle envelopes). */
+  spacesRecords?: Array<{ id: string; payload: string; modified?: number }>;
+}
+
+/** Wire-format tabs BSOs for one device (sealed with the default bundle). */
+function deviceTabsRecords(
+  clientId: string,
+  clientName: string,
+  tabs: Array<{ title: string; urlHistory: string[]; lastUsed?: number }>,
+  modified = 1.0
+) {
+  return [
+    {
+      id: clientId,
+      payload: envelope(
+        DEFAULT_KEYS.bundle,
+        JSON.stringify({
+          id: clientId,
+          clientName,
+          tabs: tabs.map((tab) => ({
+            title: tab.title,
+            urlHistory: tab.urlHistory,
+            lastUsed: tab.lastUsed ?? 1_000,
+          })),
+        })
+      ),
+      modified,
+    },
+  ];
+}
+
+/** Wire-format Zen spaces BSOs (default-bundle CryptoWrapper cleartexts). */
+function zenSpacesRecords(
+  entries: Array<{ id: string; kind: string; data: Record<string, unknown> }>,
+  modified = 1.0
+) {
+  return entries.map((entry) => ({
+    id: entry.id,
+    payload: envelope(
+      DEFAULT_KEYS.bundle,
+      JSON.stringify({ id: entry.id, kind: entry.kind, data: entry.data })
+    ),
+    modified,
+  }));
 }
 
 function fixedRandomSource(guidSlots: number): RandomSource {
@@ -454,8 +519,33 @@ function scriptHttp(script: SyncServerScript) {
         headers: script.infoHeaders,
         body:
           status === 200
-            ? JSON.stringify({ bookmarks: script.collectionsModified ?? 7.25 })
+            ? JSON.stringify({
+                meta: script.metaCollectionsModified ?? 1.0,
+                bookmarks: script.collectionsModified ?? 7.25,
+                ...(script.tabsCollectionsModified !== undefined
+                  ? { tabs: script.tabsCollectionsModified }
+                  : {}),
+                ...(script.spacesCollectionsModified !== undefined
+                  ? { spaces: script.spacesCollectionsModified }
+                  : {}),
+              })
             : "",
+      };
+    }
+    if (request.url === `${API_ENDPOINT}/storage/meta?full=1`) {
+      const status = script.metaStatus ?? 200;
+      if (status !== 200) return { status, body: "" };
+      const records =
+        script.metaRecords === null
+          ? []
+          : script.metaRecords ?? [bso("global", META_GLOBAL_CLEARTEXT)];
+      return {
+        status: 200,
+        body: JSON.stringify(
+          records.map((record) =>
+            bso(record.id, record.payload, record.modified ?? 1.0)
+          )
+        ),
       };
     }
     if (request.url === `${API_ENDPOINT}/storage/crypto?full=1`) {
@@ -467,12 +557,45 @@ function scriptHttp(script: SyncServerScript) {
         body: JSON.stringify([bso("keys", script.keysEnvelope ?? KEYS_ENVELOPE)]),
       };
     }
-    if (request.url === `${API_ENDPOINT}/storage/bookmarks?full=1`) {
+    if (
+      request.method === "GET" &&
+      request.url.startsWith(`${API_ENDPOINT}/storage/bookmarks?full=1`)
+    ) {
       const status = script.bookmarksStatus ?? 200;
       if (status !== 200) return { status, body: "" };
-      const records =
+      let records =
         script.bookmarksRecords ??
         BOOKMARK_PAYLOADS.map(([id, payload]) => bso(id, envelope(BOOKMARK_KEYS.bundle, payload)));
+      let headers: Record<string, string> | undefined;
+      if (script.bookmarksPages) {
+        // Serve pages in GET order; every page but the last offers a
+        // continuation offset (the request is already recorded in http.calls).
+        const priorGets = http.calls.filter(
+          (c) =>
+            c.method === "GET" &&
+            c.url.startsWith(`${API_ENDPOINT}/storage/bookmarks?`)
+        ).length;
+        const index = Math.min(priorGets - 1, script.bookmarksPages.length - 1);
+        records = script.bookmarksPages[index]!;
+        if (index < script.bookmarksPages.length - 1) {
+          headers = { "X-Weave-Next-Offset": String(index + 1) };
+        }
+      }
+      return {
+        status: 200,
+        headers,
+        body: JSON.stringify(
+          records.map((record) =>
+            bso(record.id, record.payload, record.modified ?? 1.0)
+          )
+        ),
+      };
+    }
+    if (
+      request.method === "GET" &&
+      request.url.startsWith(`${API_ENDPOINT}/storage/tabs?`)
+    ) {
+      const records = script.tabsRecords ?? [];
       return {
         status: 200,
         body: JSON.stringify(
@@ -480,6 +603,36 @@ function scriptHttp(script: SyncServerScript) {
             bso(record.id, record.payload, record.modified ?? 1.0)
           )
         ),
+      };
+    }
+    if (
+      request.method === "GET" &&
+      request.url.startsWith(`${API_ENDPOINT}/storage/spaces?`)
+    ) {
+      const records = script.spacesRecords ?? [];
+      return {
+        status: 200,
+        body: JSON.stringify(
+          records.map((record) =>
+            bso(record.id, record.payload, record.modified ?? 1.0)
+          )
+        ),
+      };
+    }
+    if (
+      request.method === "POST" &&
+      (request.url.startsWith(`${API_ENDPOINT}/storage/clients`) ||
+        request.url.startsWith(`${API_ENDPOINT}/storage/tabs`))
+    ) {
+      const posted = JSON.parse(request.body ?? "[]") as Array<{ id: string }>;
+      return {
+        status: 200,
+        headers: { "X-Last-Modified": "6.0" },
+        body: JSON.stringify({
+          modified: 6.0,
+          success: posted.map((item) => item.id),
+          failed: {},
+        }),
       };
     }
     if (request.url === `${API_ENDPOINT}/info/configuration`) {
@@ -493,6 +646,17 @@ function scriptHttp(script: SyncServerScript) {
           max_total_records: 10000,
           max_total_bytes: 100000000,
         }),
+      };
+    }
+    if (
+      request.method === "POST" &&
+      request.url.startsWith(`${API_ENDPOINT}/storage/meta`)
+    ) {
+      const modified = script.metaCollectionsModified ?? 1.0;
+      return {
+        status: 200,
+        headers: { "X-Last-Modified": String(modified) },
+        body: JSON.stringify({ modified, success: ["global"], failed: {} }),
       };
     }
     if (
@@ -511,7 +675,7 @@ function scriptHttp(script: SyncServerScript) {
       const modified = script.postModified ?? (script.collectionsModified ?? 7.25) + 1;
       return {
         status,
-        headers: { "X-Last-Modified": String(modified) },
+        headers: { "X-Last-Modified": String(modified), ...script.postHeaders },
         body: JSON.stringify({
           modified,
           success: posted.map((item) => item.id),
@@ -1123,10 +1287,14 @@ describe("upload orchestration (V-4)", () => {
     http.handler = chainHandlers(base, async (request) => {
       if (request.url === `${API_ENDPOINT}/info/collections`) {
         if (useLwwRemote) {
-          return { status: 200, body: JSON.stringify({ bookmarks: 9.0 }) };
+          return { status: 200, body: JSON.stringify({ meta: 1.0, bookmarks: 9.0 }) };
         }
       }
-      if (request.url === `${API_ENDPOINT}/storage/bookmarks?full=1` && useLwwRemote) {
+      if (
+        request.method === "GET" &&
+        request.url.startsWith(`${API_ENDPOINT}/storage/bookmarks?`) &&
+        useLwwRemote
+      ) {
         const records = mobileRemoteBookmarkRecords(
           mappedGuid!,
           4.0,
@@ -1175,9 +1343,13 @@ describe("upload orchestration (V-4)", () => {
     let lwwRound = false;
     http.handler = chainHandlers(base, async (request) => {
       if (request.url === `${API_ENDPOINT}/info/collections` && lwwRound) {
-        return { status: 200, body: JSON.stringify({ bookmarks: 9.0 }) };
+        return { status: 200, body: JSON.stringify({ meta: 1.0, bookmarks: 9.0 }) };
       }
-      if (request.url === `${API_ENDPOINT}/storage/bookmarks?full=1` && lwwRound) {
+      if (
+        request.method === "GET" &&
+        request.url.startsWith(`${API_ENDPOINT}/storage/bookmarks?`) &&
+        lwwRound
+      ) {
         const records = mobileRemoteBookmarkRecords(
           mappedGuid,
           2.0,
@@ -1217,9 +1389,13 @@ describe("upload orchestration (V-4)", () => {
     let tieRound = false;
     http.handler = chainHandlers(base, async (request) => {
       if (request.url === `${API_ENDPOINT}/info/collections` && tieRound) {
-        return { status: 200, body: JSON.stringify({ bookmarks: 9.0 }) };
+        return { status: 200, body: JSON.stringify({ meta: 1.0, bookmarks: 9.0 }) };
       }
-      if (request.url === `${API_ENDPOINT}/storage/bookmarks?full=1` && tieRound) {
+      if (
+        request.method === "GET" &&
+        request.url.startsWith(`${API_ENDPOINT}/storage/bookmarks?`) &&
+        tieRound
+      ) {
         const records = mobileRemoteBookmarkRecords(
           mappedGuid,
           2.0,
@@ -1516,5 +1692,542 @@ describe("upload orchestration (V-4)", () => {
     );
     expect(state.guidByLocalId.lb1).toBeUndefined();
     expect(state.dirty.lb1).toBeDefined();
+  });
+
+  test("upload encrypts >64 BSOs via async randomSource without crypto.getRandomValues", async () => {
+    const bookmarks = Array.from({ length: 70 }, (_, i) => ({
+      id: `lb-${i}`,
+      title: `Bookmark ${i}`,
+      url: `https://example.com/${i}`,
+    }));
+    const adapter = new MockLocalAdapter(localSnapshot(bookmarks));
+    const storage = new FakeStorage();
+    storage.secrets = credentialsJson("zen@example.com");
+    const http = scriptHttp({
+      postModified: 9.0,
+      bookmarksRecords: mobileRemoteBookmarkRecords("remoteguid01", 5.0),
+    });
+    let refillCalls = 0;
+    const store = new SyncStore(storage, http, {
+      nonce: () => "nonce12345",
+      localAdapter: adapter,
+      randomSource: {
+        randomB64: async (count: number) => {
+          refillCalls += 1;
+          // Deterministic non-zero non-reserved entropy (0x10 + call index).
+          const bytes = new Uint8Array(count);
+          for (let i = 0; i < count; i += 1) {
+            bytes[i] = (i + refillCalls * 17) & 0xff;
+          }
+          return encodeBase64Url(bytes);
+        },
+      },
+    });
+    await store.load();
+
+    // Simulate Hermes having no global crypto.getRandomValues during uploadDirty.
+    const originalCrypto = globalThis.crypto;
+    Object.defineProperty(globalThis, "crypto", {
+      value: undefined,
+      configurable: true,
+    });
+    try {
+      const result = await store.runSync();
+      expect(result.kind).toBe("ok");
+      if (result.kind === "ok") expect(result.uploaded).toBe(71); // 70 bookmarks + mobile root
+    } finally {
+      Object.defineProperty(globalThis, "crypto", {
+        value: originalCrypto,
+        configurable: true,
+      });
+    }
+    // 70*9 (630 GUID bytes) + 71*16 (1136 IV bytes) = 1766 bytes -> >= 2 refills of 1024 bytes.
+    expect(refillCalls).toBeGreaterThanOrEqual(2);
+    expect(postCalls(http).length).toBeGreaterThan(0);
+  });
+
+  test("Hermes random/TextEncoder runtime errors classify as protocol", async () => {
+    const { classifySyncFailure } = await import("../src/syncStore");
+    expect(classifySyncFailure(new Error("crypto.getRandomValues must be defined"))).toBe(
+      "protocol"
+    );
+    expect(classifySyncFailure(new Error("sync random pool exhausted"))).toBe("protocol");
+    expect(classifySyncFailure(new Error("Can't find variable: TextEncoder"))).toBe(
+      "protocol"
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Protocol hardening — meta/global handshake, pagination, incremental
+// fetches and quota surfacing.
+
+describe("protocol hardening (meta/global, pagination, incremental, quota)", () => {
+  test("fetch follows X-Weave-Next-Offset pagination across pages", async () => {
+    const bookmarkPayload = (id: string) =>
+      envelope(
+        BOOKMARK_KEYS.bundle,
+        JSON.stringify({
+          id,
+          parentid: "menu________",
+          type: "bookmark",
+          title: id.toUpperCase(),
+          bmkUri: `https://${id}.example`,
+        })
+      );
+    const menuPayload = (children: string[]) =>
+      envelope(
+        BOOKMARK_KEYS.bundle,
+        JSON.stringify({
+          id: "menu________",
+          type: "folder",
+          title: "menu",
+          children,
+        })
+      );
+    const { store, http } = connectedStore({
+      bookmarksPages: [
+        [
+          { id: "menu________", payload: menuPayload(["b1", "b2"]) },
+          { id: "b1", payload: bookmarkPayload("b1") },
+        ],
+        [{ id: "b2", payload: bookmarkPayload("b2") }],
+      ],
+    });
+    await store.load();
+    const result = await store.runSync();
+    expect(result.kind).toBe("ok");
+    const gets = http.calls.filter(
+      (c) => c.method === "GET" && c.url.includes("/storage/bookmarks")
+    );
+    expect(gets.length).toBe(2);
+    expect(gets[1]?.url).toContain("offset=1");
+    expect(
+      store.getState().tree?.roots[0]?.children?.map((c) => c.guid)
+    ).toEqual(["b1", "b2"]);
+  });
+
+  test("engine-established sync fetches only the delta via newer=", async () => {
+    const { store, http } = connectedStore();
+    await store.load();
+    await store.runSync();
+    const base = http.handler;
+    let deltaRound = false;
+    http.handler = chainHandlers(base, async (request) => {
+      if (request.url === `${API_ENDPOINT}/info/collections` && deltaRound) {
+        return {
+          status: 200,
+          body: JSON.stringify({ meta: 1.0, bookmarks: 9.5 }),
+        };
+      }
+      if (
+        request.method === "GET" &&
+        request.url.startsWith(`${API_ENDPOINT}/storage/bookmarks?`) &&
+        request.url.includes("newer=") &&
+        deltaRound
+      ) {
+        return {
+          status: 200,
+          body: JSON.stringify([
+            bso(
+              "menu________",
+              envelope(
+                BOOKMARK_KEYS.bundle,
+                JSON.stringify({
+                  id: "menu________",
+                  type: "folder",
+                  title: "menu",
+                  children: ["b1", "b2", "b3"],
+                })
+              ),
+              9.5
+            ),
+            bso(
+              "b3",
+              envelope(
+                BOOKMARK_KEYS.bundle,
+                JSON.stringify({
+                  id: "b3",
+                  parentid: "menu________",
+                  type: "bookmark",
+                  title: "Three",
+                  bmkUri: "https://three.example",
+                })
+              ),
+              9.4
+            ),
+          ]),
+        };
+      }
+      return undefined;
+    });
+    deltaRound = true;
+    const result = await store.runSync();
+    expect(result.kind).toBe("ok");
+    const deltaGet = http.calls.find(
+      (c) => c.method === "GET" && c.url.includes("newer=")
+    );
+    expect(deltaGet?.url).toContain("newer=7.25");
+    // The tree is rebuilt from the cumulative view (old page ∪ delta).
+    expect(
+      store.getState().tree?.roots[0]?.children?.map((c) => c.guid)
+    ).toEqual(["b1", "b2", "b3"]);
+  });
+
+  test("fresh account declares the bookmarks engine in meta/global once", async () => {
+    const { store, http } = connectedStore({ metaRecords: null });
+    await store.load();
+    const result = await store.runSync();
+    expect(result.kind).toBe("ok");
+    const metaPosts = () =>
+      http.calls.filter(
+        (c) => c.method === "POST" && c.url.startsWith(`${API_ENDPOINT}/storage/meta`)
+      );
+    expect(metaPosts().length).toBe(1);
+    const posted = JSON.parse(metaPosts()[0]!.body!) as Array<{
+      id: string;
+      payload: string;
+    }>;
+    expect(posted[0]?.id).toBe("global");
+    // meta/global travels plaintext — the posted payload IS the JSON object.
+    const payload = JSON.parse(posted[0]!.payload) as {
+      storageVersion: number;
+      engines: Record<string, { version: number; syncID: string }>;
+    };
+    expect(payload.storageVersion).toBe(5);
+    expect(payload.engines.bookmarks?.version).toBe(2);
+    expect(payload.engines.bookmarks?.syncID.length).toBeGreaterThan(0);
+    // The declared engine + observed meta timestamp stick: the next sync
+    // skips the handshake entirely.
+    const second = await store.runSync();
+    expect(second.kind).toBe("ok");
+    expect(metaPosts().length).toBe(1);
+  });
+
+  test("server-side engine reset (changed syncID) wipes local sync state", async () => {
+    const { store, storage, http } = connectedStore();
+    await store.load();
+    await store.runSync();
+    expect(storage.treeClears).toBe(0);
+    const resetMeta = JSON.stringify({
+      storageVersion: 5,
+      syncID: "mglobalsync1",
+      engines: { bookmarks: { version: 2, syncID: "reset-sync01" } },
+      declined: [],
+    });
+    const base = http.handler;
+    http.handler = chainHandlers(base, async (request) => {
+      if (request.url === `${API_ENDPOINT}/info/collections`) {
+        return { status: 200, body: JSON.stringify({ meta: 2.0, bookmarks: 7.25 }) };
+      }
+      if (request.url === `${API_ENDPOINT}/storage/meta?full=1`) {
+        return {
+          status: 200,
+          body: JSON.stringify([bso("global", resetMeta, 2.0)]),
+        };
+      }
+      return undefined;
+    });
+    const result = await store.runSync();
+    expect(result.kind).toBe("ok");
+    // The cached tree was dropped and re-primed from scratch.
+    expect(storage.treeClears).toBe(1);
+    expect(
+      store.getState().tree?.roots[0]?.children?.map((c) => c.guid)
+    ).toEqual(["b1", "b2"]);
+  });
+
+  test("unsupported meta/global storage version is a protocol error", async () => {
+    const { store } = connectedStore({
+      metaRecords: [
+        {
+          id: "global",
+          payload: JSON.stringify({ storageVersion: 6, syncID: "mglobalsync1", engines: {}, declined: [] }),
+        },
+      ],
+    });
+    await store.load();
+    expect((await store.runSync()).kind).toBe("protocol");
+  });
+
+  test("X-Weave-Quota-Remaining ≤ 0 surfaces a quota result", async () => {
+    const adapter = new MockLocalAdapter(
+      localSnapshot([{ id: "lb1", title: "One", url: "https://one.example" }])
+    );
+    const { store } = connectedStoreWithAdapter(adapter, {
+      postModified: 8.5,
+      postHeaders: { "X-Weave-Quota-Remaining": "0" },
+    });
+    await store.load();
+    const result = await store.runSync();
+    expect(result.kind).toBe("quota");
+    expect(store.getState().lastResult?.kind).toBe("quota");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Synced tabs (receive-only)
+
+describe("synced tabs (receive-only)", () => {
+  test("first sync populates tabs state with per-device records", async () => {
+    const { store } = connectedStore({
+      tabsCollectionsModified: 3.0,
+      tabsRecords: deviceTabsRecords("zenmac01", "Zen on Mac", [
+        {
+          title: "Docs",
+          urlHistory: ["https://a.example", "https://docs.example"],
+          lastUsed: 5_000_000_050_000,
+        },
+        {
+          title: "Mail",
+          urlHistory: ["https://mail.example"],
+          lastUsed: 5_000_000_010_000,
+        },
+      ]),
+    });
+    await store.load();
+    const result = await store.runSync();
+    expect(result.kind).toBe("ok");
+    const devices = store.getState().tabs;
+    expect(devices?.length).toBe(1);
+    expect(devices![0]!.clientName).toBe("Zen on Mac");
+    // Tabs ordered by recency; current url is the last urlHistory entry.
+    expect(devices![0]!.tabs.map((tab) => tab.url)).toEqual([
+      "https://docs.example",
+      "https://mail.example",
+    ]);
+    expect(devices![0]!.tabs[0]!.urlHistory).toEqual(["https://a.example"]);
+  });
+
+  test("unchanged tabs timestamp skips the fetch entirely", async () => {
+    const { store, http } = connectedStore({
+      tabsCollectionsModified: 3.0,
+      tabsRecords: deviceTabsRecords("zenmac01", "Zen on Mac", [
+        { title: "Docs", urlHistory: ["https://docs.example"] },
+      ]),
+    });
+    await store.load();
+    await store.runSync();
+    const tabsGets = () =>
+      http.calls.filter(
+        (c) => c.method === "GET" && c.url.includes("/storage/tabs")
+      ).length;
+    const afterFirst = tabsGets();
+    const second = await store.runSync();
+    expect(second.kind).toBe("ok");
+    expect(tabsGets()).toBe(afterFirst);
+  });
+
+  test("changed timestamp refetches; junk device records are dropped, not fatal", async () => {
+    const { store, http } = connectedStore({
+      tabsCollectionsModified: 3.0,
+      tabsRecords: deviceTabsRecords("zenmac01", "Zen on Mac", [
+        { title: "Docs", urlHistory: ["https://docs.example"] },
+      ]),
+    });
+    await store.load();
+    await store.runSync();
+    expect(store.getState().tabs?.length).toBe(1);
+    const base = http.handler;
+    let bumped = false;
+    http.handler = chainHandlers(base, async (request) => {
+      if (request.url === `${API_ENDPOINT}/info/collections` && bumped) {
+        return {
+          status: 200,
+          body: JSON.stringify({ meta: 1.0, bookmarks: 7.25, tabs: 4.0 }),
+        };
+      }
+      if (
+        request.method === "GET" &&
+        request.url.startsWith(`${API_ENDPOINT}/storage/tabs?`) &&
+        bumped
+      ) {
+        return {
+          status: 200,
+          body: JSON.stringify([
+            ...deviceTabsRecords("ffdesktop", "Firefox on Linux", [
+              { title: "New", urlHistory: ["https://new.example"] },
+            ]),
+            // A client that published garbage must not poison the panel.
+            { id: "broken01", payload: envelope(DEFAULT_KEYS.bundle, "notjson"), modified: 4.0 },
+          ]),
+        };
+      }
+      return undefined;
+    });
+    bumped = true;
+    const result = await store.runSync();
+    expect(result.kind).toBe("ok");
+    const devices = store.getState().tabs;
+    expect(devices?.map((device) => device.clientName)).toEqual([
+      "Firefox on Linux",
+    ]);
+  });
+
+  test("disconnect clears the tabs panel state", async () => {
+    const { store } = connectedStore({
+      tabsCollectionsModified: 3.0,
+      tabsRecords: deviceTabsRecords("zenmac01", "Zen on Mac", [
+        { title: "Docs", urlHistory: ["https://docs.example"] },
+      ]),
+    });
+    await store.load();
+    await store.runSync();
+    expect(store.getState().tabs).not.toBeNull();
+    await store.disconnect();
+    expect(store.getState().tabs).toBeNull();
+  });
+
+  test("publish: writes device + tabs records once, re-sends only on change", async () => {
+    const { store, http, storage } = connectedStore();
+    const localTabs = [
+      { title: "Docs", url: "https://docs.example", lastUsedMs: 1000 },
+      { title: "Mail", url: "https://mail.example", lastUsedMs: 2000 },
+    ];
+    store.setTabsSource(() => localTabs);
+    await store.load();
+    const first = await store.runSync();
+    expect(first.kind).toBe("ok");
+    const clientsPosts = () =>
+      http.calls.filter(
+        (c) => c.method === "POST" && c.url.startsWith(`${API_ENDPOINT}/storage/clients`)
+      );
+    const tabsPosts = () =>
+      http.calls.filter(
+        (c) => c.method === "POST" && c.url.startsWith(`${API_ENDPOINT}/storage/tabs`)
+      );
+    expect(clientsPosts().length).toBe(1);
+    expect(tabsPosts().length).toBe(1);
+    const clientBso = (
+      JSON.parse(clientsPosts()[0]!.body!) as Array<{ id: string; payload: string }>
+    )[0]!;
+    const clientPayload = JSON.parse(
+      decryptRecordCleartext(DEFAULT_KEYS.bundle, {
+        id: clientBso.id,
+        payload: clientBso.payload,
+        modified: 1,
+      })
+    ) as { name: string; type: string };
+    expect(clientPayload.name).toBe("yeoyu");
+    expect(clientPayload.type).toBe("mobile");
+    const tabsBso = (
+      JSON.parse(tabsPosts()[0]!.body!) as Array<{ id: string; payload: string }>
+    )[0]!;
+    const tabsPayload = JSON.parse(
+      decryptRecordCleartext(DEFAULT_KEYS.bundle, {
+        id: tabsBso.id,
+        payload: tabsBso.payload,
+        modified: 1,
+      })
+    ) as { clientName: string; tabs: Array<{ title: string; urlHistory: string[] }> };
+    expect(tabsPayload.clientName).toBe("yeoyu");
+    expect(tabsPayload.tabs.map((tab) => tab.title)).toEqual(["Mail", "Docs"]);
+    expect(tabsBso.id).toBe(clientBso.id); // one shared device identity
+    expect(deserializeOutbound(storage.outbound)?.client?.id).toBe(clientBso.id);
+
+    // Unchanged list: the whole flight early-exits — nothing re-POSTed.
+    const second = await store.runSync();
+    expect(second.kind).toBe("ok");
+    expect(clientsPosts().length).toBe(1);
+    expect(tabsPosts().length).toBe(1);
+
+    // A new tab re-sends the tabs record but not the device record.
+    localTabs.push({ title: "New", url: "https://new.example", lastUsedMs: 3000 });
+    const third = await store.runSync();
+    expect(third.kind).toBe("ok");
+    expect(clientsPosts().length).toBe(1);
+    expect(tabsPosts().length).toBe(2);
+  });
+
+  test("publish: our own device is filtered out of the tabs panel", async () => {
+    const { store, storage, http } = connectedStore();
+    store.setTabsSource(() => [
+      { title: "T", url: "https://t.example", lastUsedMs: 1 },
+    ]);
+    await store.load();
+    await store.runSync(); // identity + first publish
+    const clientId = deserializeOutbound(storage.outbound)?.client?.id;
+    expect(clientId).toBeTruthy();
+    const base = http.handler;
+    let echo = false;
+    http.handler = chainHandlers(base, async (request) => {
+      if (request.url === `${API_ENDPOINT}/info/collections` && echo) {
+        return {
+          status: 200,
+          body: JSON.stringify({ meta: 1.0, bookmarks: 7.25, tabs: 9.0 }),
+        };
+      }
+      if (
+        request.method === "GET" &&
+        request.url.startsWith(`${API_ENDPOINT}/storage/tabs?`) &&
+        echo
+      ) {
+        const own = deviceTabsRecords(clientId!, "yeoyu", [
+          { title: "T", urlHistory: ["https://t.example"] },
+        ]);
+        const other = deviceTabsRecords("zenmac01", "Zen on Mac", [
+          { title: "Z", urlHistory: ["https://z.example"] },
+        ]);
+        return {
+          status: 200,
+          body: JSON.stringify(
+            [...own, ...other].map((r) => bso(r.id, r.payload, 1.0))
+          ),
+        };
+      }
+      return undefined;
+    });
+    echo = true;
+    const result = await store.runSync();
+    expect(result.kind).toBe("ok");
+    expect(store.getState().tabs?.map((device) => device.clientId)).toEqual([
+      "zenmac01",
+    ]);
+  });
+});
+
+describe("synced spaces (receive-only)", () => {
+  test("receives Zen spaces tree; disconnect clears it", async () => {
+    const { store } = connectedStore({
+      spacesCollectionsModified: 5.0,
+      spacesRecords: zenSpacesRecords([
+        {
+          id: "layout",
+          kind: "layout",
+          data: { spaces: ["space-work"], essentials: {} },
+        },
+        {
+          id: "space-work",
+          kind: "space",
+          data: {
+            uuid: "space-work",
+            name: "Work",
+            children: ["tab-docs"],
+          },
+        },
+        {
+          id: "tab-docs",
+          kind: "tab",
+          data: {
+            tabId: "tab-docs",
+            url: "https://docs.example",
+            title: "Docs",
+            pinned: true,
+          },
+        },
+      ]),
+    });
+    await store.load();
+    const result = await store.runSync();
+    expect(result.kind).toBe("ok");
+    const spaces = store.getState().spaces;
+    expect(spaces?.spaces).toHaveLength(1);
+    expect(spaces?.spaces[0]?.name).toBe("Work");
+    expect(spaces?.spaces[0]?.children[0]).toMatchObject({
+      kind: "tab",
+      url: "https://docs.example",
+    });
+    await store.disconnect();
+    expect(store.getState().spaces).toBeNull();
   });
 });

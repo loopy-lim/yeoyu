@@ -88,16 +88,16 @@ function makeContext(http: FakeHttp): StorageContext {
   };
 }
 
-/** Recomputes the storage Hawk MAC from the request actually made, hash
- *  included for bodied requests — the POST analogue of the syncStore
- *  storageHawkMatches cross-check. */
+/** Recomputes the storage Hawk MAC from the request actually made — the POST
+ *  analogue of the syncStore storageHawkMatches cross-check. No hash
+ *  attribute is ever sent (reference wire format; see hawkAuthorizationHeader). */
 function hawkMatches(request: HttpRequest): boolean {
   const header = request.headers?.Authorization ?? "";
   const ts = /ts="(\d+)"/.exec(header)?.[1];
   const nonce = /nonce="([^"]+)"/.exec(header)?.[1];
   const mac = /mac="([^"]+)"/.exec(header)?.[1];
-  const hash = /hash="([^"]+)"/.exec(header)?.[1];
   if (ts === undefined || !nonce || !mac) return false;
+  if (/hash="/.test(header)) return false;
   const url = new URL(request.url);
   const normalized =
     [
@@ -109,24 +109,12 @@ function hawkMatches(request: HttpRequest): boolean {
       url.host,
       url.protocol === "https:" ? "443" : "80",
       "",
-      hash ?? "",
+      "",
     ].join("\n") + "\n";
   const expectedMac = encodeBase64(
     hmac(sha256, utf8("hawk-key"), utf8(normalized))
   );
-  if (expectedMac !== mac) return false;
-  if (request.body !== undefined) {
-    const contentType = request.headers?.["Content-Type"] ?? "";
-    const expectedHash = encodeBase64(
-      hmac(
-        sha256,
-        utf8("hawk-key"),
-        utf8(`hawk.1.payload\n${contentType}\n${request.body}\n`)
-      )
-    );
-    return hash === expectedHash;
-  }
-  return hash === undefined;
+  return expectedMac === mac;
 }
 
 function limits(overrides: Partial<StorageLimits> = {}): StorageLimits {

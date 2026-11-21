@@ -96,7 +96,7 @@ Host gate는 Rust format/test/Clippy, Bun test, Python check, layout geometry, c
 
 ## 상태와 라이선스
 
-지금은 Android POC만 실행됩니다. iOS browser-surface interface는 있지만 실행 가능한 iOS 앱은 없습니다. 동기화, 저장되는 split group, 분리된 계정 profile, 자동 archive는 없습니다. 확장은 호환 Mozilla 부가기능만 대상이며 Chrome CRX나 모든 Firefox API는 지원하지 않습니다.
+지금은 Android POC만 실행됩니다. iOS browser-surface interface는 있지만 실행 가능한 iOS 앱은 없습니다. Firefox 계정 동기화는 북마크·열린 탭(양방향)과 수신 전용 Zen 스페이스를 다루며, history 동기화·스페이스 업로드·분리된 계정 profile·자동 archive는 구현하지 않았습니다. 확장은 호환 Mozilla 부가기능만 대상이며 Chrome CRX나 모든 Firefox API는 지원하지 않습니다.
 
 공간 중심 브라우징에서 영감을 받았지만 The Browser Company, Arc, Mozilla, Google과 제휴·승인 관계가 아닙니다. 외부 구성요소의 라이선스·상표는 각 권리자에게 있습니다.
 

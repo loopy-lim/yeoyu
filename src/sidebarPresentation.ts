@@ -13,6 +13,91 @@ export interface SidebarFolder {
   bookmarks: Bookmark[];
   visibleBookmarks: Bookmark[];
   containsFocused: boolean;
+  children: SidebarFolder[];
+}
+
+function buildFolderTree(
+  spaceFolders: readonly BookmarkFolder[],
+  spaceBookmarks: readonly Bookmark[],
+  owners: Map<string, Tab>,
+  focusedId: string | undefined,
+  visibleBookmark: (bookmark: Bookmark) => boolean,
+  groupedTabs: Set<string>
+): SidebarFolder[] {
+  const folderIds = new Set(spaceFolders.map((folder) => folder.id));
+  const byParent = new Map<string, BookmarkFolder[]>();
+  for (const folder of spaceFolders) {
+    const rawParent = folder.parentFolderId ?? "";
+    const parent =
+      rawParent && folderIds.has(rawParent) ? rawParent : "";
+    const list = byParent.get(parent);
+    if (list) list.push(folder);
+    else byParent.set(parent, [folder]);
+  }
+
+  const buildNode = (folder: BookmarkFolder): SidebarFolder => {
+    const bookmarks = spaceBookmarks.filter(
+      (bookmark) => bookmark.folderId === folder.id
+    );
+    for (const bookmark of bookmarks) {
+      const owner = owners.get(bookmark.id);
+      if (owner?.pinned && !owner.favorite) groupedTabs.add(owner.id);
+    }
+    const children = (byParent.get(folder.id) ?? []).map(buildNode);
+    const containsFocused =
+      bookmarks.some((bookmark) => {
+        const owner = owners.get(bookmark.id);
+        return owner?.id === focusedId && !owner?.suspended;
+      }) || children.some((child) => child.containsFocused);
+    return {
+      folder,
+      bookmarks,
+      visibleBookmarks: bookmarks.filter(visibleBookmark),
+      containsFocused,
+      children,
+    };
+  };
+
+  return (byParent.get("") ?? []).map(buildNode);
+}
+
+export function findSidebarFolder(
+  folders: readonly SidebarFolder[],
+  id: string
+): SidebarFolder | undefined {
+  for (const folder of folders) {
+    if (folder.folder.id === id) return folder;
+    const nested = findSidebarFolder(folder.children, id);
+    if (nested) return nested;
+  }
+  return undefined;
+}
+
+/** Hide empty same-title roots when a populated copy is already shown. */
+function dedupeRootFoldersByTitle(
+  folders: readonly SidebarFolder[]
+): SidebarFolder[] {
+  const bestByTitle = new Map<string, SidebarFolder>();
+  for (const item of folders) {
+    const key = item.folder.title.trim().toLowerCase();
+    const prior = bestByTitle.get(key);
+    if (!prior) {
+      bestByTitle.set(key, item);
+      continue;
+    }
+    const priorScore =
+      prior.bookmarks.length + prior.children.length;
+    const nextScore = item.bookmarks.length + item.children.length;
+    if (nextScore > priorScore) bestByTitle.set(key, item);
+  }
+  const winners = new Set(
+    [...bestByTitle.values()].map((item) => item.folder.id)
+  );
+  return folders.filter((item) => {
+    const key = item.folder.title.trim().toLowerCase();
+    if (!bestByTitle.has(key)) return true;
+    return winners.has(item.folder.id);
+  });
 }
 
 export function sidebarPresentation(input: {
@@ -64,29 +149,24 @@ export function sidebarPresentation(input: {
   const spaceBookmarks = libraryItemsForSpace(input.bookmarks, workspaceId);
   const spaceFolders = libraryItemsForSpace(input.folders, workspaceId);
   const folderIds = new Set(spaceFolders.map((folder) => folder.id));
-  const visibleBookmark = (bookmark: Bookmark) => {
+  const visibleBookmark = (bookmark: Bookmark): boolean => {
     const owner = owners.get(bookmark.id);
-    return !owner || (!owner.favorite && owner.pinned && !paired.has(owner.id));
+    return (
+      !owner ||
+      (!owner.favorite && !!owner.pinned && !paired.has(owner.id))
+    );
   };
   const groupedTabs = new Set<string>();
-  const folders = spaceFolders.map((folder) => {
-    const bookmarks = spaceBookmarks.filter(
-      (bookmark) => bookmark.folderId === folder.id
-    );
-    for (const bookmark of bookmarks) {
-      const owner = owners.get(bookmark.id);
-      if (owner?.pinned && !owner.favorite) groupedTabs.add(owner.id);
-    }
-    return {
-      folder,
-      bookmarks,
-      visibleBookmarks: bookmarks.filter(visibleBookmark),
-      containsFocused: bookmarks.some((bookmark) => {
-        const owner = owners.get(bookmark.id);
-        return owner?.id === focusedId && !owner?.suspended;
-      }),
-    };
-  });
+  const folders = dedupeRootFoldersByTitle(
+    buildFolderTree(
+      spaceFolders,
+      spaceBookmarks,
+      owners,
+      focusedId,
+      visibleBookmark,
+      groupedTabs
+    )
+  );
   const remaining = content.filter((tab) => !paired.has(tab.id));
   const local = remaining.filter(
     (tab) => tab.workspaceId === workspaceId && !tab.favorite && !tab.private

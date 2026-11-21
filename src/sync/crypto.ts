@@ -285,26 +285,6 @@ export interface HawkRequest {
   pathAndQuery: string;
   host: string;
   port: number;
-  /** Optional payload validation (Hawk 1.1): POST bodies. When present the
-   *  header carries hash = hawkPayloadHash(...) and the MAC normalized
-   *  string's hash field holds it; GETs keep the legacy empty hash. */
-  payload?: { contentType: string; body: string };
-}
-
-/**
- * Hawk 1.1 payload hash artifact: BASE64(HMAC-SHA256(key,
- * "hawk.1.payload\n" + contentType + "\n" + body + "\n")). The content type
- * is the normalized (lowercase, parameter-free) value — "application/json"
- * for storage POSTs.
- */
-export function hawkPayloadHash(
-  macKey: string,
-  contentType: string,
-  body: string
-): string {
-  return encodeBase64(
-    hmac(sha256, utf8(macKey), utf8(`hawk.1.payload\n${contentType}\n${body}\n`))
-  );
 }
 
 /** Server-time in seconds — the tokenserver X-Timestamp keeps us in sync. */
@@ -316,30 +296,25 @@ export function hawkAuthorizationHeader(
 ): string {
   const nonceValue = nonce();
   // hawk.1.header: …\n{host}\n{port}\n{ext}\n{hash}\n — ext stays empty
-  // (never used against the storage server); hash is set only for bodied
-  // requests, keeping the GET wire format byte-identical to Phase 1.
-  const hash = request.payload
-    ? hawkPayloadHash(
-        credentials.key,
-        request.payload.contentType,
-        request.payload.body
-      )
-    : "";
+  // (never used against the storage server). No payload hash attribute on
+  // bodied requests either: the application-services reference client
+  // (sync15 token.rs make_header) signs POSTs with an empty hash field, the
+  // storage server validates hash only when present, and a locally-computed
+  // hash that diverges from the bytes the transport actually sends (e.g. a
+  // Content-Type adjusted in flight) is an unconditional 401 (2026-11-16
+  // on-device POST batch failure).
   const normalized =
     `hawk.1.header\n${serverTimeSeconds}\n${nonceValue}\n` +
     `${request.method.toUpperCase()}\n${request.pathAndQuery}\n` +
-    `${request.host}\n${request.port}\n\n${hash}\n`;
+    `${request.host}\n${request.port}\n\n\n`;
   const mac = hmac(
     sha256,
     utf8(credentials.key),
     utf8(normalized)
   );
-  // Attribute order follows the reference hawk clients: id, ts, nonce,
-  // hash, mac (servers parse attributes by name, mac must sign them all).
+  // Attribute order follows the reference hawk clients: id, ts, nonce, mac.
   return (
     `Hawk id="${credentials.id}", ts="${serverTimeSeconds}", ` +
-    `nonce="${nonceValue}"` +
-    (hash === "" ? "" : `, hash="${hash}"`) +
-    `, mac="${encodeBase64(mac)}"`
+    `nonce="${nonceValue}", mac="${encodeBase64(mac)}"`
   );
 }

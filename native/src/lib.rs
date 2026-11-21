@@ -150,6 +150,9 @@ pub struct BookmarkMoveInput {
 #[serde(rename_all = "camelCase")]
 pub struct BookmarkFolderCreateInput {
     pub title: String,
+    /// "" creates a space-root folder; otherwise nests under an existing
+    /// folder in the active workspace.
+    pub parent_folder_id: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
@@ -179,6 +182,14 @@ pub struct SplitGroupIdInput {
 pub struct BookmarkFolderRenameInput {
     pub folder_id: String,
     pub title: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct BookmarkFolderSetParentInput {
+    pub folder_id: String,
+    /// "" moves the folder to the space root.
+    pub parent_folder_id: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
@@ -384,11 +395,15 @@ pub fn bookmark_move(input: BookmarkMoveInput) -> Result<Snapshot> {
 }
 #[command]
 pub fn bookmark_folder_create(input: BookmarkFolderCreateInput) -> Result<Snapshot> {
-    lock_state()?.create_bookmark_folder(&input.title)
+    lock_state()?.create_bookmark_folder(&input.title, &input.parent_folder_id)
 }
 #[command]
 pub fn bookmark_folder_rename(input: BookmarkFolderRenameInput) -> Result<Snapshot> {
     lock_state()?.rename_bookmark_folder(&input.folder_id, &input.title)
+}
+#[command]
+pub fn bookmark_folder_set_parent(input: BookmarkFolderSetParentInput) -> Result<Snapshot> {
+    lock_state()?.set_bookmark_folder_parent(&input.folder_id, &input.parent_folder_id)
 }
 #[command]
 pub fn bookmark_folder_remove(input: BookmarkFolderIdInput) -> Result<Snapshot> {
@@ -450,6 +465,7 @@ pub fn browser_package() -> Package {
                 bookmark_move,
                 bookmark_folder_create,
                 bookmark_folder_rename,
+                bookmark_folder_set_parent,
                 bookmark_folder_remove,
                 bookmark_set_folder,
                 tab_reset,

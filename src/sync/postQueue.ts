@@ -21,6 +21,7 @@ import {
   StorageLimits,
   StoragePostResult,
   backoffSeconds,
+  quotaRemaining,
   storagePost,
   SyncServerError,
 } from "./sync15";
@@ -117,6 +118,11 @@ export class PostQueue {
   private readonly maxRequestBytes: number;
   private readonly onPost?: (summary: PostQueuePostSummary) => void;
   private readonly postLimits: LimitTracker;
+  /** Set when a POST response reports X-Weave-Quota-Remaining ≤ 0 — the
+   *  account is out of storage and further uploads must stop (the records
+   *  already committed in this batch stay; the caller surfaces the quota
+   *  state and the dirty set survives for a retry after space frees). */
+  private quotaExhaustedFlag = false;
   private readonly batchLimits: LimitTracker;
 
   private batch:
@@ -165,6 +171,12 @@ export class PostQueue {
    *  successful flush(true). */
   get lastModifiedSeconds(): number {
     return this.xius;
+  }
+
+  /** True once a POST response reported the account over quota — the caller
+   *  stops enqueueing and surfaces the quota state. */
+  get quotaExhausted(): boolean {
+    return this.quotaExhaustedFlag;
   }
 
   /** Ids whose upload is durable — non-batch 2xx POSTs and committed
@@ -269,6 +281,10 @@ export class PostQueue {
     }
     if (result.lastModifiedSeconds !== null) {
       this.xius = Math.max(this.xius, result.lastModifiedSeconds);
+    }
+    const remaining = quotaRemaining(result.headers);
+    if (remaining !== null && remaining <= 0) {
+      this.quotaExhaustedFlag = true;
     }
 
     if (wantCommit) {

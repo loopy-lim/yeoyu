@@ -19,7 +19,13 @@ import {
   SyncNode,
   SyncTree,
   UNRESOLVED_PARENT_GUID,
+  WIRE_ROOT_GUIDS,
 } from "./model";
+import {
+  emptySpacesBindings,
+  parseSpacesBindings,
+  type SpacesBindings,
+} from "./spacesApply";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -76,6 +82,21 @@ export interface OutboundState {
   dirty: Record<string, { changedAtMs: number }>;
   pendingDeletes: Record<string, { guid: string; changedAtMs: number }>;
   remoteRaw: Record<string, RemoteRawEntry>;
+  /** Engine identity from meta/global — the bookmarks engine syncID we
+   *  declared/adopted, plus the meta collection modified we observed at the
+   *  last handshake (lets idle syncs skip re-fetching meta). A syncID
+   *  change on a later sync means the server reset the engine and all
+   *  local sync state must be rebuilt. Absent until the first meta/global
+   *  handshake completes. */
+  engine?: { bookmarksSyncId: string; metaModifiedSeconds: number | null };
+  /** This install's device identity for the tabs/clients collections: the
+   *  shared BSO id both records are written under (other clients render
+   *  the device list from "clients" and look tabs up by the same id).
+   *  Absent until the first tab upload; cleared on disconnect so a fresh
+   *  login gets a fresh device. */
+  client?: { id: string; name: string };
+  /** Zen Spaces remote→local id bindings (receive materialization). */
+  spacesBindings?: SpacesBindings;
 }
 
 export function emptyOutboundState(): OutboundState {
@@ -86,6 +107,7 @@ export function emptyOutboundState(): OutboundState {
     dirty: {},
     pendingDeletes: {},
     remoteRaw: {},
+    spacesBindings: emptySpacesBindings(),
   };
 }
 
@@ -147,6 +169,35 @@ export function deserializeOutbound(json: string | null): OutboundState | null {
       }
     }
   }
+  if (raw.engine !== undefined) {
+    const engine = raw.engine as {
+      bookmarksSyncId?: unknown;
+      metaModifiedSeconds?: unknown;
+    } | null;
+    if (
+      typeof engine?.bookmarksSyncId === "string" &&
+      engine.bookmarksSyncId.length > 0
+    ) {
+      state.engine = {
+        bookmarksSyncId: engine.bookmarksSyncId,
+        metaModifiedSeconds:
+          typeof engine.metaModifiedSeconds === "number" &&
+          Number.isFinite(engine.metaModifiedSeconds)
+            ? engine.metaModifiedSeconds
+            : null,
+      };
+    }
+  }
+  if (raw.client !== undefined) {
+    const client = raw.client as { id?: unknown; name?: unknown } | null;
+    if (typeof client?.id === "string" && client.id.length > 0) {
+      state.client = {
+        id: client.id,
+        name: typeof client.name === "string" && client.name.length > 0 ? client.name : "yeoyu",
+      };
+    }
+  }
+  state.spacesBindings = parseSpacesBindings(raw.spacesBindings);
   state.guidByLocalId = guidByLocalId;
   state.localIdByGuid = localIdByGuid;
   return state;
@@ -204,6 +255,27 @@ export class GuidPool {
       if (guid.length === GUID_CHARS && !RESERVED_GUIDS.has(guid)) return guid;
       // Reserved draw — burn it and draw again.
     }
+  }
+
+  async nextBytes(count: number): Promise<Uint8Array> {
+    if (count <= 0) return new Uint8Array(0);
+    const out = new Uint8Array(count);
+    let offset = 0;
+    while (offset < count) {
+      if (this.cursor >= this.bytes.length) {
+        const poolB64 = await this.source.randomB64(POOL_REFILL_BYTES);
+        this.bytes = decodeBase64Url(poolB64);
+        this.cursor = 0;
+        if (this.bytes.length === 0) {
+          throw new Error("sync random source returned 0 bytes");
+        }
+      }
+      const take = Math.min(count - offset, this.bytes.length - this.cursor);
+      out.set(this.bytes.subarray(this.cursor, this.cursor + take), offset);
+      this.cursor += take;
+      offset += take;
+    }
+    return out;
   }
 }
 
@@ -711,6 +783,9 @@ function collectProtectedGuids(tree: SyncTree | null): Set<string> {
   const protectedGuids = new Set<string>();
   if (!tree) return protectedGuids;
   const protectedRoots = new Set<string>([
+    WIRE_ROOT_GUIDS.menu,
+    WIRE_ROOT_GUIDS.toolbar,
+    WIRE_ROOT_GUIDS.unfiled,
     ROOT_GUIDS.menu,
     ROOT_GUIDS.toolbar,
     ROOT_GUIDS.unfiled,

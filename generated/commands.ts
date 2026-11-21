@@ -6,7 +6,7 @@
 // DO NOT EDIT — changes will be overwritten and fail codegen --check.
 // ────────────────────────────────────────────────────────────
 
-import type { BookmarkCreateInput, BookmarkFolderCreateInput, BookmarkFolderIdInput, BookmarkFolderRenameInput, BookmarkIdInput, BookmarkMoveInput, BookmarkOpenInput, BookmarkSetFolderInput, BookmarkUpdateInput, BrowserSnapshotInput, KeymapSetInput, Snapshot, SnapshotRestoreInput, SplitGroupIdInput, SplitGroupSaveInput, TabCreateInput, TabFavoriteInput, TabIdInput, TabMoveInput, TabNavigatedInput, TabOpenExternalInput, TabPinnedInput, TabRenameInput, TabWorkspaceInput, WorkArchiveExportInput, WorkArchiveExportOutput, WorkArchiveImportInput, WorkArchivePrepareInput, WorkArchivePreview, WorkArchivePreviewInput, WorkspaceCreateInput, WorkspaceIdInput, WorkspaceMoveInput, WorkspaceRenameInput } from './types.js';
+import type { BookmarkCreateInput, BookmarkFolderCreateInput, BookmarkFolderIdInput, BookmarkFolderRenameInput, BookmarkFolderSetParentInput, BookmarkIdInput, BookmarkMoveInput, BookmarkOpenInput, BookmarkSetFolderInput, BookmarkUpdateInput, BrowserSnapshotInput, KeymapSetInput, Snapshot, SnapshotRestoreInput, SplitGroupIdInput, SplitGroupSaveInput, TabCreateInput, TabFavoriteInput, TabIdInput, TabMoveInput, TabNavigatedInput, TabOpenExternalInput, TabPinnedInput, TabRenameInput, TabWorkspaceInput, WorkArchiveExportInput, WorkArchiveExportOutput, WorkArchiveImportInput, WorkArchivePrepareInput, WorkArchivePreview, WorkArchivePreviewInput, WorkspaceCreateInput, WorkspaceIdInput, WorkspaceMoveInput, WorkspaceRenameInput } from './types.js';
 import { createGeneratedFields1, createGeneratedFields2, invokeGenerated, invokeGeneratedFields3 } from '@rustra/types';
 import type { InvokeOptions as CoreInvokeOptions } from '@rustra/types';
 
@@ -32,22 +32,24 @@ export function bookmarkCreate(input: BookmarkCreateInput, options?: InvokeOptio
 }
 bookmarkCreate.commandId = 'bookmarkCreate';
 
-export const bookmarkFolderCreate = createGeneratedFields1<BookmarkFolderCreateInput, Snapshot>(27, 'bookmarkFolderCreate', "title", 'bookmarkFolderCreate');
+export const bookmarkFolderCreate = createGeneratedFields2<BookmarkFolderCreateInput, Snapshot>(27, 'bookmarkFolderCreate', "title", "parentFolderId", 'bookmarkFolderCreate');
 
-export const bookmarkFolderRemove = createGeneratedFields1<BookmarkFolderIdInput, Snapshot>(29, 'bookmarkFolderRemove', "folderId", 'bookmarkFolderRemove');
+export const bookmarkFolderRemove = createGeneratedFields1<BookmarkFolderIdInput, Snapshot>(30, 'bookmarkFolderRemove', "folderId", 'bookmarkFolderRemove');
 
 export const bookmarkFolderRename = createGeneratedFields2<BookmarkFolderRenameInput, Snapshot>(28, 'bookmarkFolderRename', "folderId", "title", 'bookmarkFolderRename');
+
+export const bookmarkFolderSetParent = createGeneratedFields2<BookmarkFolderSetParentInput, Snapshot>(29, 'bookmarkFolderSetParent', "folderId", "parentFolderId", 'bookmarkFolderSetParent');
 
 export const bookmarkMove = createGeneratedFields2<BookmarkMoveInput, Snapshot>(26, 'bookmarkMove', "bookmarkId", "index", 'bookmarkMove');
 
 export function bookmarkOpen(input: BookmarkOpenInput, options?: InvokeOptions): Promise<Snapshot> {
-  return invokeGeneratedFields3<Snapshot>(32, 'bookmarkOpen', input, input["bookmarkId"], input["reuseTabId"], input["private"], options);
+  return invokeGeneratedFields3<Snapshot>(33, 'bookmarkOpen', input, input["bookmarkId"], input["reuseTabId"], input["private"], options);
 }
 bookmarkOpen.commandId = 'bookmarkOpen';
 
 export const bookmarkRemove = createGeneratedFields1<BookmarkIdInput, Snapshot>(25, 'bookmarkRemove', "bookmarkId", 'bookmarkRemove');
 
-export const bookmarkSetFolder = createGeneratedFields2<BookmarkSetFolderInput, Snapshot>(30, 'bookmarkSetFolder', "bookmarkId", "folderId", 'bookmarkSetFolder');
+export const bookmarkSetFolder = createGeneratedFields2<BookmarkSetFolderInput, Snapshot>(31, 'bookmarkSetFolder', "bookmarkId", "folderId", 'bookmarkSetFolder');
 
 export function bookmarkUpdate(input: BookmarkUpdateInput, options?: InvokeOptions): Promise<Snapshot> {
   return invokeGeneratedFields3<Snapshot>(24, 'bookmarkUpdate', input, input["bookmarkId"], input["title"], input["url"], options);
@@ -71,10 +73,10 @@ keymapSet.commandId = 'keymapSet';
 
 export const snapshotRestore = createGeneratedFields1<SnapshotRestoreInput, Snapshot>(20, 'snapshotRestore', "json", 'snapshotRestore');
 
-export const splitGroupRemove = createGeneratedFields1<SplitGroupIdInput, Snapshot>(34, 'splitGroupRemove', "splitGroupId", 'splitGroupRemove');
+export const splitGroupRemove = createGeneratedFields1<SplitGroupIdInput, Snapshot>(35, 'splitGroupRemove', "splitGroupId", 'splitGroupRemove');
 
 export function splitGroupSave(input: SplitGroupSaveInput, options?: InvokeOptions): Promise<Snapshot> {
-  return invokeGenerated<Snapshot>(33, 'splitGroupSave', input, options);
+  return invokeGenerated<Snapshot>(34, 'splitGroupSave', input, options);
 }
 splitGroupSave.commandId = 'splitGroupSave';
 
@@ -96,9 +98,9 @@ tabNavigated.commandId = 'tabNavigated';
 
 export const tabOpenExternal = createGeneratedFields2<TabOpenExternalInput, Snapshot>(8, 'tabOpenExternal', "requestId", "url", 'tabOpenExternal');
 
-export const tabRename = createGeneratedFields2<TabRenameInput, Snapshot>(35, 'tabRename', "tabId", "title", 'tabRename');
+export const tabRename = createGeneratedFields2<TabRenameInput, Snapshot>(36, 'tabRename', "tabId", "title", 'tabRename');
 
-export const tabReset = createGeneratedFields1<TabIdInput, Snapshot>(31, 'tabReset', "tabId", 'tabReset');
+export const tabReset = createGeneratedFields1<TabIdInput, Snapshot>(32, 'tabReset', "tabId", 'tabReset');
 
 export const tabSetFavorite = createGeneratedFields2<TabFavoriteInput, Snapshot>(12, 'tabSetFavorite', "tabId", "favorite", 'tabSetFavorite');
 

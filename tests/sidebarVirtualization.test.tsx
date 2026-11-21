@@ -96,8 +96,13 @@ function renderList(rail: boolean, grouped = false) {
     SidebarFolderItem: "SidebarFolderItem",
     FolderDisclosure: "FolderDisclosure",
     SidebarSyncRegion: "SidebarSyncRegion",
-    // The read-only Firefox region renders nothing without a synced tree.
-    syncState: { tree: null, syncing: false, lastResult: null },
+    SidebarSyncedTabsRegion: "SidebarSyncedTabsRegion",
+    syncState: {
+      tree: null,
+      tabs: null,
+      syncing: false,
+      lastResult: null,
+    },
     createTabAndShow: () => {},
     sidebar,
     sidebarMenu: null,
@@ -107,6 +112,8 @@ function renderList(rail: boolean, grouped = false) {
     openPanel: null,
     openSplitCollection: () => {},
     renderRailFolder: (item: { folder: { id: string } }) =>
+      React.createElement("SidebarFolderItem", { key: item.folder.id }),
+    renderSidebarFolderTree: (item: { folder: { id: string } }) =>
       React.createElement("SidebarFolderItem", { key: item.folder.id }),
     tabListRef: null,
     pinnedSectionRef: null,

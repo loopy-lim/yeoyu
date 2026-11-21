@@ -4,7 +4,7 @@
 // are dropped; nodes with unresolvable parents land in a pseudo-folder so no
 // data silently disappears.
 
-import { ROOT_GUIDS, ROOT_ORDER, SyncNode, SyncTree, UNRESOLVED_PARENT_GUID } from "./model";
+import { META_ROOT_GUIDS, ROOT_ORDER, SyncNode, SyncTree, UNRESOLVED_PARENT_GUID } from "./model";
 
 /** Decrypted bookmark payload (only fields Phase 1 consumes). */
 export interface BookmarkRecord {
@@ -60,6 +60,7 @@ export function buildSyncTree(
   const byGuid = new Map<string, BookmarkRecord>();
   for (const { guid, payload } of records) {
     if (payload.deleted === true) continue; // tombstone
+    if (META_ROOT_GUIDS.has(guid)) continue; // wrapper root ("places" / "root________")
     if (isRootGuid(guid) && payload.type !== "folder") continue;
     if (!nodeType(payload) && payload.type !== undefined) continue;
     byGuid.set(guid, payload);

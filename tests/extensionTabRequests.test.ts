@@ -66,6 +66,7 @@ async function fixture(seed = initial()) {
     bookmarkMove: unsupported,
     bookmarkFolderCreate: unsupported,
     bookmarkFolderRename: unsupported,
+    bookmarkFolderSetParent: unsupported,
     bookmarkFolderRemove: unsupported,
     bookmarkSetFolder: unsupported,
     splitGroupSave: unsupported,

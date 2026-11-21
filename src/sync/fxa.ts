@@ -149,7 +149,11 @@ function parseTokenResponse(status: number, body: string): TokenResponse {
     } catch {
       // non-JSON error body
     }
-    throw new FxaHttpError(status, errno, `fxa token endpoint ${status}`);
+    throw new FxaHttpError(
+      status,
+      errno,
+      `fxa token endpoint ${status}${errno != null ? ` errno ${errno}` : ""}`
+    );
   }
   const parsed = JSON.parse(body) as {
     access_token: string;

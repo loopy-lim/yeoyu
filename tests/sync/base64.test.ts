@@ -8,6 +8,7 @@ import {
   decodeBase64Url,
   encodeBase64,
   encodeBase64Url,
+  encodeUtf8,
   fromUtf8,
   utf8,
 } from "../../src/sync/base64";
@@ -34,6 +35,25 @@ describe("utf8", () => {
   test("encodes ascii and multibyte sequences", () => {
     expect(utf8("abc")).toEqual(new Uint8Array([97, 98, 99]));
     expect(Array.from(utf8("한"))).toEqual([0xed, 0x95, 0x9c]);
+  });
+
+  test("pure-JS encodeUtf8 fallback works when TextEncoder is absent", () => {
+    const sample = "aé한🦊여유";
+    expect(encodeUtf8(sample)).toEqual(new TextEncoder().encode(sample));
+    const original = globalThis.TextEncoder;
+    Object.defineProperty(globalThis, "TextEncoder", {
+      value: undefined,
+      configurable: true,
+    });
+    try {
+      expect(fromUtf8(utf8(sample))).toBe(sample);
+      expect(Array.from(utf8("\ud800"))).toEqual([0xef, 0xbf, 0xbd]);
+    } finally {
+      Object.defineProperty(globalThis, "TextEncoder", {
+        value: original,
+        configurable: true,
+      });
+    }
   });
 
   test("fromUtf8 decodes 1–4 byte sequences and roundtrips", () => {
