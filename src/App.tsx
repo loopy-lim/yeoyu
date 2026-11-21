@@ -92,8 +92,12 @@ import {
 import { diffBookmarks } from "@/sync/changeDetector";
 import { platformRandomSource, type LocalApplyOp } from "@/sync/outbound";
 import type { LocalBookmarkSnapshot } from "@/sync/model";
-import { history, type HistoryEntry } from "@/history";
-import { SEARCH_ENGINES, type SearchEngineId } from "@/suggestions";
+import { history } from "@/history";
+import {
+  SEARCH_ENGINES,
+  type SearchEngineId,
+  type SuggestionSources,
+} from "@/suggestions";
 import { CommandRegistry, type ProductCommand } from "@/commandRegistry";
 import { KeyboardSettings } from "@/components/KeyboardSettings";
 import {
@@ -195,6 +199,7 @@ import {
 } from "@/components/SidebarCollections";
 import { sidebarPresentation, type SidebarFolder } from "@/sidebarPresentation";
 import { AddressBox } from "@/components/AddressBox";
+import { NewTabPage } from "@/components/NewTabPage";
 import { SettingsGroup } from "@/components/settings/kit";
 import { AddressTrigger } from "@/components/AddressTrigger";
 import {
@@ -232,12 +237,6 @@ const SafeAreaView = withUniwind(NativeSafeAreaView);
 const Surface = withUniwind(NativeSurface);
 
 type SurfaceRef = React.ElementRef<typeof Surface>;
-type SuggestionSources = {
-  favorites: { id?: string; url: string; title: string }[];
-  bookmarks: { url: string; title: string }[];
-  tabs: { id?: string; url: string; title: string }[];
-  history: HistoryEntry[];
-};
 import {
   Button as UnikitButton,
   Badge as UnikitBadge,
@@ -361,116 +360,6 @@ const imeLiftStyle = (keyboardInset: number) =>
   keyboardInset > 0
     ? { transform: [{ translateY: -keyboardInset }] }
     : undefined;
-const NewTabPage = ({
-  favorites,
-  keyboardInset,
-  visibleHeight,
-  reducedMotion,
-  engine,
-  siteSearches,
-  suggestions,
-  commands,
-  onCommand,
-  onOpenUrl,
-  onOpenFavorite,
-}: {
-  favorites: { id: string; title: string; url: string; customTitle?: string }[];
-  keyboardInset: number;
-  visibleHeight: number;
-  reducedMotion: boolean;
-  engine: SearchEngineId;
-  siteSearches?: SiteSearchEntry[];
-  suggestions: SuggestionSources;
-  commands: ProductCommand[];
-  onCommand: (id: string) => void;
-  onOpenUrl: (url: string) => void;
-  onOpenFavorite: (id: string) => void;
-}) => {
-  const { tr } = useI18n();
-  const host = useRef<React.ComponentRef<typeof View>>(null);
-  const [frame, setFrame] = useState({ y: 0, height: 0 });
-  const measure = useCallback(() => {
-    const measuredHost = host.current;
-    measuredHost?.measureInWindow((_x, y, _width, height) => {
-      if (host.current !== measuredHost) return;
-      setFrame((current) =>
-        current.y === y && current.height === height ? current : { y, height }
-      );
-    });
-  }, []);
-  useLayoutEffect(measure, [measure, keyboardInset, visibleHeight]);
-  // A vertical split may already sit entirely above the IME. Only the overlap
-  // of this pane and its Activity's confirmed keyboard changes input bounds.
-  const newTabKeyboardInset =
-    keyboardInset > 0 && frame.height > 0
-      ? Math.max(
-          0,
-          Math.min(frame.height, frame.y + frame.height - visibleHeight)
-        )
-      : 0;
-  return (
-    <View
-      ref={host}
-      className="absolute inset-0"
-      pointerEvents="box-none"
-      onLayout={measure}
-    >
-      <View
-        className={c.newTabOverlay}
-        style={{ bottom: newTabKeyboardInset }}
-        pointerEvents="box-none"
-      >
-        <View className={cn(c.newTabPanel, "max-h-full min-h-0")}>
-          <AddressBox
-            engine={engine}
-            siteSearches={siteSearches}
-            autoFocus={false}
-            reducedMotion={reducedMotion}
-            suggestions={suggestions}
-            commands={commands}
-            onCommand={onCommand}
-            onOpenTab={onOpenFavorite}
-            onSubmit={onOpenUrl}
-          />
-          {favorites.length > 0 ? (
-            <>
-              <Text className={c.newTabHeading}>{tr("chrome.favorites")}</Text>
-              <View className={c.newTabGrid}>
-                {favorites.slice(0, 12).map((tab) => (
-                  <Pressable
-                    key={tab.id}
-                    accessibilityRole="button"
-                    accessibilityLabel={tr("chrome.favoriteLabel", {
-                      name: tab.customTitle || tab.title || tab.url,
-                    })}
-                    className={cn(c.newTabTile, "active:opacity-pressed")}
-                    onPress={() => onOpenFavorite(tab.id)}
-                  >
-                    <View className={c.newTabTileIcon}>
-                      <Favicon
-                        url={tab.url}
-                        fallback={(tab.customTitle || tab.title || tab.url)
-                          .slice(0, 1)
-                          .toUpperCase()}
-                        size={32}
-                        radius={8}
-                      />
-                    </View>
-                    <Text numberOfLines={1} className={c.newTabTileLabel}>
-                      {tab.customTitle || tab.title || tab.url}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
-            </>
-          ) : (
-            <Text className={c.newTabHint}>{tr("chrome.newTabHint")}</Text>
-          )}
-        </View>
-      </View>
-    </View>
-  );
-};
 export default function App() {
   return (
     <SafeAreaProvider>
@@ -5808,7 +5697,13 @@ function BrowserApp() {
                               {item.url === NEW_TAB_URL &&
                                 !controller.isPopupTab(item.id) && (
                                   <NewTabPage
-                                    favorites={favoriteTabs}
+                                    shortcuts={ui.newTabShortcuts}
+                                    onSetShortcuts={(shortcuts) =>
+                                      updateUi({
+                                        type: "setNewTabShortcuts",
+                                        shortcuts,
+                                      })
+                                    }
                                     keyboardInset={keyboardInset}
                                     visibleHeight={
                                       inputViewport.visibleHeight ||
@@ -5823,12 +5718,6 @@ function BrowserApp() {
                                     onOpenUrl={(url) =>
                                       loadInPane(item.id, url)
                                     }
-                                    onOpenFavorite={(id) => {
-                                      const blank = item.id;
-                                      switchTab(id);
-                                      if (blank !== id)
-                                        run(controller.close(blank));
-                                    }}
                                   />
                                 )}
                             </Overlay>

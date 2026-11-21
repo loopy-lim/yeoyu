@@ -95,14 +95,16 @@ export interface Suggestion {
   tabId?: string;
 }
 
+export type SuggestionSources = {
+  favorites: { id?: string; url: string; title: string }[];
+  bookmarks: { url: string; title: string }[];
+  tabs: { id?: string; url: string; title: string }[];
+  history: HistoryEntry[];
+};
+
 export function suggest(
   query: string,
-  sources: {
-    favorites: { id?: string; url: string; title: string }[];
-    bookmarks: { url: string; title: string }[];
-    tabs: { id?: string; url: string; title: string }[];
-    history: HistoryEntry[];
-  },
+  sources: SuggestionSources,
   limit = 6
 ): Suggestion[] {
   const needle = query.trim().toLowerCase();

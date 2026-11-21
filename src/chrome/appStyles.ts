@@ -149,8 +149,11 @@ export const appClasses = {
   surface: "flex-1",
   paneContent: "flex-1",
   findOverlay: "absolute inset-0 z-[30]",
-  newTabOverlay: "absolute inset-0 items-center justify-center bg-surface",
+  newTabOverlay: "absolute inset-0 items-center justify-center bg-canvas",
   newTabPanel: "w-full max-w-[460px] px-xxl items-center gap-xxxl",
+  newTabClockTime:
+    "text-ink text-[40px] leading-[46px] font-bold tracking-[-0.5px]",
+  newTabClockDate: "text-ink-muted text-body",
   newTabHeading:
     "self-start text-ink-faint text-small font-bold tracking-[0.8px] uppercase",
   newTabGrid: "flex-row flex-wrap gap-xxl",
@@ -158,6 +161,12 @@ export const appClasses = {
   newTabTileIcon:
     "w-[48px] h-[48px] rounded-tile items-center justify-center bg-sunken border border-hairline",
   newTabTileLabel: "text-ink-muted text-small font-semibold",
+  newTabTileBadge:
+    "absolute top-[-6px] right-[-6px] w-[20px] h-[20px] rounded-full items-center justify-center bg-surface-elevated border border-hairline",
+  newTabEditToggle: "px-sm py-xs rounded-control active:opacity-pressed",
+  newTabEditToggleLabel: "text-ink-muted text-small font-semibold",
+  newTabForm: "self-stretch gap-md",
+  newTabFormError: "text-error-ink text-small",
   newTabHint: "text-ink-faint text-body text-center",
   quickOpenDialog: "w-[90%] max-w-[560px] gap-xl",
   quickOpenRow: "flex-row gap-xl py-sm",

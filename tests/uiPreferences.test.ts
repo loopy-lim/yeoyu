@@ -3,6 +3,7 @@ import {
   defaultUiPreferences,
   loadUiPreferences,
   normalizeBoostHost,
+  normalizeShortcutUrl,
   reduceUiPreferences,
   resolvePhoneChromeLayout,
   saveUiPreferences,
@@ -391,6 +392,89 @@ test("site search entries cap at 32 with unique keywords", () => {
   expect(reduced.length).toBe(32);
   const keywords = new Set(reduced.map((entry) => entry.keyword));
   expect(keywords.size).toBe(32);
+});
+
+// --- New-tab dashboard shortcuts (issue #10) --------------------------------
+// Shortcuts are pinned sites on the new-tab dashboard. They persist through
+// the same preference store, so a corrupt row must drop instead of failing
+// the whole restore, and duplicates by id or address must collapse.
+
+test("shortcut addresses normalize to credential-free http(s) with https added", () => {
+  expect(normalizeShortcutUrl("github.com")).toBe("https://github.com/");
+  expect(normalizeShortcutUrl("http://example.com/a b")).toBeNull();
+  expect(normalizeShortcutUrl("ftp://example.com/")).toBeNull();
+  expect(normalizeShortcutUrl("https://user:pass@example.com/")).toBeNull();
+  expect(normalizeShortcutUrl("  ")).toBeNull();
+  expect(normalizeShortcutUrl("https://example.com/x#frag")).toBe(
+    "https://example.com/x"
+  );
+});
+
+test("new-tab shortcuts restore sanitized: malformed rows drop, titles fall back to host", async () => {
+  const loaded = await loadUiPreferences(async () =>
+    JSON.stringify({
+      sidebarCollapsed: false,
+      appearance: "lavender",
+      searchEngine: "google",
+      newTabShortcuts: [
+        { id: "a", title: "", url: "https://github.com/" },
+        { id: "b", title: "News", url: "news.ycombinator.com" },
+        { id: "b", title: "Dupe id", url: "https://example.com/" },
+        { id: "d", title: "Dupe url", url: "https://github.com" },
+        { id: "e", title: "Broken", url: "not a url" },
+        { title: "No id", url: "https://no-id.example/" },
+      ],
+    })
+  );
+  expect(loaded.newTabShortcuts).toEqual([
+    { id: "a", title: "github.com", url: "https://github.com/" },
+    { id: "b", title: "News", url: "https://news.ycombinator.com/" },
+  ]);
+  expect(
+    (
+      await loadUiPreferences(async () =>
+        JSON.stringify({
+          sidebarCollapsed: false,
+          appearance: "lavender",
+          searchEngine: "google",
+        })
+      )
+    ).newTabShortcuts
+  ).toEqual([]);
+});
+
+test("new-tab shortcuts cap at 12 stored rows", async () => {
+  const many = Array.from({ length: 20 }, (_, index) => ({
+    id: `s${index}`,
+    title: `Site ${index}`,
+    url: `https://s${index}.example/`,
+  }));
+  const loaded = await loadUiPreferences(async () =>
+    JSON.stringify({
+      sidebarCollapsed: false,
+      appearance: "lavender",
+      searchEngine: "google",
+      newTabShortcuts: many,
+    })
+  );
+  expect(loaded.newTabShortcuts).toHaveLength(12);
+  expect(loaded.newTabShortcuts[0].id).toBe("s0");
+});
+
+test("setNewTabShortcuts replaces the dashboard grid and round-trips storage", async () => {
+  const replaced = reduceUiPreferences(defaultUiPreferences, {
+    type: "setNewTabShortcuts",
+    shortcuts: [{ id: "only", title: "Docs", url: "https://docs.example/" }],
+  });
+  expect(replaced.newTabShortcuts).toEqual([
+    { id: "only", title: "Docs", url: "https://docs.example/" },
+  ]);
+  let written = "";
+  await saveUiPreferences(async (json) => {
+    written = json;
+  }, replaced);
+  const reread = await loadUiPreferences(async () => written);
+  expect(reread.newTabShortcuts).toEqual(replaced.newTabShortcuts);
 });
 
 // --- Little Arc crash-recovery marker lifecycle -----------------------------

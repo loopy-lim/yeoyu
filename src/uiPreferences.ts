@@ -72,6 +72,55 @@ export interface SiteBoost {
   enabled: boolean;
 }
 
+// New-tab dashboard shortcut (issue #10): a pinned site the blank tab
+// navigates to. Distinct from favorite tabs — those are live tabs surfaced
+// by the sidebar and Quick Open, never duplicated onto the dashboard.
+export interface NewTabShortcut {
+  id: string;
+  title: string;
+  url: string;
+}
+export const NEW_TAB_SHORTCUT_MAX = 12;
+
+/** Canonical shortcut address: http(s) only, no credentials, bare hosts
+ *  gain https. Returns null when the input cannot be a site address. */
+export function normalizeShortcutUrl(value: string): string | null {
+  const trimmed = value.trim();
+  if (!trimmed || /[\u0000- ]/.test(trimmed)) return null;
+  const withScheme = /^[a-z][a-z0-9+.-]*:\/\//i.test(trimmed)
+    ? trimmed
+    : `https://${trimmed}`;
+  try {
+    const url = new URL(withScheme);
+    if (
+      !["http:", "https:"].includes(url.protocol) ||
+      url.username ||
+      url.password ||
+      !url.hostname
+    )
+      return null;
+    url.hash = "";
+    return url.toString();
+  } catch {
+    return null;
+  }
+}
+
+export const shortcutHost = (url: string): string => {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return url;
+  }
+};
+
+export function shortcutId(url: string): string {
+  return `shortcut-${Date.now().toString(36)}-${shortcutHost(url).replace(
+    /[^a-z0-9]+/gi,
+    "-"
+  )}`;
+}
+
 // Site permission kinds the chrome can grant. camera/microphone/geolocation/
 // notifications additionally require the matching Android runtime permission;
 // the chrome requests it before the toggle turns on.
@@ -150,6 +199,7 @@ export interface UiPreferences {
   searchEngine: SearchEngine;
   siteSearches: SiteSearchEntry[];
   boosts: SiteBoost[];
+  newTabShortcuts: NewTabShortcut[];
   framePx: FramePadding;
   // Missing means follow the window tier (compact → bottom bar, issue #19).
   phoneChromeLayout?: PhoneChromeLayout;
@@ -176,6 +226,7 @@ export type UiPreferenceAction =
   | { type: "setSearchEngine"; searchEngine: SearchEngine }
   | { type: "setSiteSearches"; siteSearches: SiteSearchEntry[] }
   | { type: "setBoosts"; boosts: SiteBoost[] }
+  | { type: "setNewTabShortcuts"; shortcuts: NewTabShortcut[] }
   | { type: "setFramePx"; side: FrameSide; value: number }
   | { type: "setPhoneChromeLayout"; layout: PhoneChromeLayout }
   | { type: "setLittleArcActiveTab"; id: string | null }
@@ -192,6 +243,7 @@ export const defaultUiPreferences: UiPreferences = {
   searchEngine: "google",
   siteSearches: [],
   boosts: [],
+  newTabShortcuts: [],
   framePx: { ...defaultFramePadding },
 };
 
@@ -328,6 +380,9 @@ export function reduceUiPreferences(
   if (action.type === "setBoosts") {
     return { ...preferences, boosts: action.boosts };
   }
+  if (action.type === "setNewTabShortcuts") {
+    return { ...preferences, newTabShortcuts: action.shortcuts };
+  }
   if (action.type === "setFramePx") {
     return {
       ...preferences,
@@ -400,6 +455,37 @@ const sanitizeSiteSearches = (value: unknown): SiteSearchEntry[] => {
   return entries;
 };
 
+// Drops malformed shortcuts and collapses duplicates (by id or normalized
+// URL) instead of failing the whole restore; order is preserved.
+const sanitizeNewTabShortcuts = (value: unknown): NewTabShortcut[] => {
+  if (!Array.isArray(value)) return [];
+  const shortcuts: NewTabShortcut[] = [];
+  const ids = new Set<string>();
+  const urls = new Set<string>();
+  for (const raw of value) {
+    if (shortcuts.length >= NEW_TAB_SHORTCUT_MAX) break;
+    if (typeof raw !== "object" || raw === null) continue;
+    const candidate = raw as Partial<NewTabShortcut>;
+    if (typeof candidate.id !== "string" || !candidate.id) continue;
+    const url =
+      typeof candidate.url === "string"
+        ? normalizeShortcutUrl(candidate.url)
+        : null;
+    if (!url || ids.has(candidate.id) || urls.has(url)) continue;
+    ids.add(candidate.id);
+    urls.add(url);
+    shortcuts.push({
+      id: candidate.id,
+      title:
+        typeof candidate.title === "string" && candidate.title.trim()
+          ? candidate.title.trim()
+          : shortcutHost(url),
+      url,
+    });
+  }
+  return shortcuts;
+};
+
 const sanitizeFramePadding = (value: unknown): FramePadding => {
   const frame = { ...defaultFramePadding };
   if (typeof value === "object" && value !== null)
@@ -458,6 +544,7 @@ export async function loadUiPreferences(
           : "google",
         siteSearches: sanitizeSiteSearches(prefs.siteSearches),
         boosts: sanitizeBoosts(prefs.boosts),
+        newTabShortcuts: sanitizeNewTabShortcuts(prefs.newTabShortcuts),
         framePx: sanitizeFramePadding(prefs.framePx),
         sidebarWidth: sanitizeSidebarWidth(prefs.sidebarWidth),
         littleArcActiveTabId:

@@ -57,6 +57,7 @@ test("core settings and browser controls keep UI labels behind translation keys"
     "AddressBox",
     "BrowserContentMenu",
     "ActionMenu",
+    "NewTabPage",
   ];
   for (const surface of surfaces) {
     const path = new URL(
