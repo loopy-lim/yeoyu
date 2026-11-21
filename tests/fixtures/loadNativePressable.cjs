@@ -76,7 +76,7 @@ module.exports.loadAppIconButton = (bindings) => {
   const filename = path.resolve(__dirname, "../../src/App.tsx");
   const app = fs.readFileSync(filename, "utf8");
   const start = app.indexOf("const IconButton =");
-  const end = app.indexOf("const NewTabPage =", start);
+  const end = app.indexOf("export default function App()", start);
   if (start < 0 || end < 0) throw new Error("App IconButton boundary changed");
   const code = transformSync(app.slice(start, end), {
     filename,
