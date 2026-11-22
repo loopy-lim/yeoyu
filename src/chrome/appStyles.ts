@@ -62,6 +62,14 @@ export const appClasses = {
     "w-[18px] h-[18px] items-center justify-center",
   tabFaviconText: "text-ink-muted text-micro",
   tabTitle: "flex-1 text-ink text-body font-normal",
+  // Sidebar web panel view: swaps into the tab list area while the chrome
+  // above (address row) and below (spaces rail) stay put. The web surface
+  // rides the content card treatment at sidebar scale.
+  panelView: "flex-1 gap-xs",
+  panelTitleRow: "flex-row items-center gap-sm pl-sm pr-xs",
+  panelTitle: "flex-1 text-ink text-small font-medium",
+  panelContent:
+    "flex-1 rounded-[10px] overflow-hidden bg-surface border border-hairline",
   newTab: "h-tab-row px-md rounded-[8px] flex-row items-center gap-md",
   newTabText: "text-ink-muted text-body font-medium",
   button: "py-lg px-xl rounded-control bg-sunken",

@@ -363,6 +363,9 @@ impl BrowserState {
                     custom_title: String::new(),
                     favorite: t.favorite,
                     pinned: t.pinned,
+                    // Archives carry no panel role: imported rows restore as
+                    // ordinary tabs the user can re-add as panels.
+                    panel: false,
                     private: false,
                     bookmark_id: t
                         .bookmark_index

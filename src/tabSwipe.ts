@@ -1,8 +1,11 @@
+import { activatableTabs } from "@/sidebarModel";
+
 export interface SwipeableTab {
   id: string;
   title: string;
   url: string;
   favorite?: boolean;
+  panel?: boolean;
   workspaceId: string;
   suspended?: boolean;
 }
@@ -15,16 +18,16 @@ export interface TabSwipePreview {
   ready: boolean;
 }
 
+/**
+ * Toolbar swipe candidates share the activation rule: a sidebar web panel
+ * can never become the active tab, so swiping onto one would only surface
+ * the domain's activation rejection.
+ */
 export function collectSwipeableTabs<T extends SwipeableTab>(
   tabs: readonly T[],
   activeWorkspaceId: string | null | undefined
 ): T[] {
-  return tabs.filter(
-    (tab) =>
-      !tab.suspended &&
-      (tab.favorite ||
-        (activeWorkspaceId != null && tab.workspaceId === activeWorkspaceId))
-  );
+  return activatableTabs(tabs, activeWorkspaceId);
 }
 
 export function resolveSwipeTargetTab<T extends Pick<SwipeableTab, "id">>(

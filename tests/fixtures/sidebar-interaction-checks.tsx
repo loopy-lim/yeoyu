@@ -282,7 +282,7 @@ test("actual App IconButton resets its retained scale as its sidebar becomes ina
   expect(animation.value!.value).toBe(1);
 });
 
-function dropBoundary(active: boolean) {
+function dropBoundary(active: boolean, tabs?: unknown[]) {
   const { loadAppDropHandlers } = require("./loadNativePressable.cjs");
   const callbacks: Array<(...values: number[]) => void> = [];
   const nativeRef = () => ({
@@ -301,12 +301,14 @@ function dropBoundary(active: boolean) {
     tabListRef: nativeRef(),
     pinnedSectionRef: nativeRef(),
     ordinarySectionRef: nativeRef(),
+    panelSectionRef: nativeRef(),
   };
   const bounds = {
     favoritesRowBounds: bound(),
     tabListBounds: bound(),
     pinnedSectionBounds: bound(),
     ordinarySectionBounds: bound(),
+    panelSectionBounds: bound(),
   };
   const sidebarRowRefs = { current: new Map([["a", nativeRef().current]]) };
   const sidebarRowBounds = { current: new Map() };
@@ -314,6 +316,8 @@ function dropBoundary(active: boolean) {
     sidebarDropEpoch = { current: 0 };
   let preview: any = { tabId: "a", zone: null, reorderIndex: null };
   const favorite = mock(() => Promise.resolve());
+  const moveTab = mock(() => Promise.resolve());
+  const moveIndex = mock(() => null as number | null);
   const dragFrames = new FrameCoalescer<{ x: number; y: number }>(() => {}, {
     request: () => 1,
     cancel: () => {},
@@ -343,14 +347,16 @@ function dropBoundary(active: boolean) {
       finish: () => false,
     },
     state: {
-      tabs: [{ id: "a", workspaceId: "w", favorite: false, pinned: false }],
+      tabs: tabs ?? [
+        { id: "a", workspaceId: "w", favorite: false, pinned: false },
+      ],
       activeWorkspaceId: "w",
     },
     sidebarDropChange: () => "favorite",
     haptic() {},
-    controller: { setFavorite: favorite },
+    controller: { setFavorite: favorite, moveTab },
     favoriteMoveIndex: () => null,
-    sidebarTabMoveIndex: () => null,
+    sidebarTabMoveIndex: moveIndex,
     run() {},
     Animated: { parallel: () => ({ start() {} }), timing: () => ({}) },
     ghostOpacity: {},
@@ -368,6 +374,8 @@ function dropBoundary(active: boolean) {
     sidebarDropEpoch,
     callbacks,
     favorite,
+    moveTab,
+    moveIndex,
     box,
     getPreview: () => preview,
     flushDragFrame: () => dragFrames.flush(),
@@ -436,4 +444,33 @@ test("actual App queued drag preview observes sidebar deactivation before its fr
   d.sidebarDropActive.current = false;
   d.flushDragFrame();
   expect(d.getPreview().reorderIndex).toBeNull();
+});
+
+test("actual App keeps drop zones dark while the drag carries a panel", () => {
+  const d = dropBoundary(true, [
+    { id: "a", workspaceId: "w", favorite: false, pinned: false, panel: true },
+  ]);
+  d.favoritesRowBounds.current = d.box;
+  d.moveDrag(20, 20);
+  d.flushDragFrame();
+  expect(d.getPreview().reorderIndex).toBeNull();
+  expect(d.getPreview().zone).toBeNull();
+});
+
+test("actual App reorders a panel only inside its own section", () => {
+  const d = dropBoundary(true, [
+    { id: "tab", workspaceId: "w", favorite: false, pinned: false },
+    { id: "a", workspaceId: "w", favorite: false, pinned: false, panel: true },
+    { id: "b", workspaceId: "w", favorite: false, pinned: false, panel: true },
+  ]);
+  d.favoritesRowBounds.current = d.box;
+  d.panelSectionBounds.current = d.box;
+  d.moveIndex.mockReturnValue(2);
+  d.finishDrag(20, 20);
+  expect(d.moveTab).toHaveBeenCalledWith("a", 2);
+  // A panel never favorites, pins, or splits even over those regions.
+  expect(d.favorite).not.toHaveBeenCalled();
+  d.panelSectionBounds.current = null;
+  d.finishDrag(20, 20);
+  expect(d.moveTab).toHaveBeenCalledTimes(1);
 });

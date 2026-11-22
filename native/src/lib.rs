@@ -24,6 +24,10 @@ pub struct TabCreateInput {
     /// Older clients omit the field; absent means an ordinary tab.
     #[serde(default)]
     pub private: bool,
+    /// Sidebar web panel: a background tab the sidebar renders instead of
+    /// the content area. Absent means an ordinary tab.
+    #[serde(default)]
+    pub panel: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
@@ -295,7 +299,9 @@ pub fn workspace_create(input: WorkspaceCreateInput) -> Result<Snapshot> {
 }
 #[command]
 pub fn tab_create(input: TabCreateInput) -> Result<Snapshot> {
-    if input.private {
+    if input.panel {
+        lock_state()?.create_panel_tab(&input.workspace_id, &input.url, input.private)
+    } else if input.private {
         lock_state()?.create_private_tab(&input.workspace_id, &input.url)
     } else {
         lock_state()?.create_tab(&input.workspace_id, &input.url)

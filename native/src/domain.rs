@@ -57,6 +57,11 @@ pub struct Tab {
     /// Pinned tabs keep their own section under favorites, per space.
     #[serde(default)]
     pub pinned: bool,
+    /// Sidebar web panels render this tab in the sidebar instead of the
+    /// content area; a panel never becomes the active tab. Older snapshots
+    /// restore without the field as ordinary tabs.
+    #[serde(default)]
+    pub panel: bool,
     /// Private tabs run engine-private sessions and never persist: the
     /// controller strips them from saved copies and restore drops them.
     #[serde(default)]
@@ -283,6 +288,7 @@ impl BrowserState {
             custom_title: String::new(),
             favorite: false,
             pinned: false,
+            panel: false,
             private: false,
             bookmark_id: String::new(),
             home_url: String::new(),
@@ -400,7 +406,7 @@ impl BrowserState {
             let fallback = candidate
                 .tabs
                 .iter()
-                .find(|tab| tab.workspace_id == destination_id && !tab.suspended)
+                .find(|tab| tab.workspace_id == destination_id && !tab.suspended && !tab.panel)
                 .map(|tab| tab.id.clone());
             let active_id = match remembered.or(fallback) {
                 Some(id) => id,
@@ -421,6 +427,7 @@ impl BrowserState {
                         custom_title: String::new(),
                         favorite: false,
                         pinned: false,
+                        panel: false,
                         private: false,
                         bookmark_id: String::new(),
                         home_url: String::new(),
@@ -442,13 +449,24 @@ impl BrowserState {
     }
 
     pub fn create_tab(&mut self, workspace_id: &str, url: &str) -> Result<Snapshot> {
-        self.create_tab_with_request(workspace_id, url, None, false)
+        self.create_tab_with_request(workspace_id, url, None, false, false)
     }
 
     /// Private tabs live in the domain like ordinary ones but carry a flag the
     /// controller strips before every save; the engine session is private too.
     pub fn create_private_tab(&mut self, workspace_id: &str, url: &str) -> Result<Snapshot> {
-        self.create_tab_with_request(workspace_id, url, None, true)
+        self.create_tab_with_request(workspace_id, url, None, true, false)
+    }
+
+    /// Sidebar web panels are background tabs: the user's working set (active
+    /// tab and space) stays untouched, exactly like adding a bookmark row.
+    pub fn create_panel_tab(
+        &mut self,
+        workspace_id: &str,
+        url: &str,
+        private: bool,
+    ) -> Result<Snapshot> {
+        self.create_tab_with_request(workspace_id, url, None, private, true)
     }
 
     pub fn open_external(&mut self, request_id: &str, url: &str) -> Result<Snapshot> {
@@ -475,7 +493,7 @@ impl BrowserState {
             return Ok(self.snapshot());
         }
         let workspace_id = self.snapshot.active_workspace_id.clone();
-        self.create_tab_with_request(&workspace_id, url, Some(request_id), false)
+        self.create_tab_with_request(&workspace_id, url, Some(request_id), false, false)
     }
 
     fn create_tab_with_request(
@@ -484,6 +502,7 @@ impl BrowserState {
         url: &str,
         request_id: Option<&str>,
         private: bool,
+        panel: bool,
     ) -> Result<Snapshot> {
         if !self
             .snapshot
@@ -509,6 +528,7 @@ impl BrowserState {
             custom_title: String::new(),
             favorite: false,
             pinned: false,
+            panel,
             private,
             bookmark_id: String::new(),
             home_url: String::new(),
@@ -516,9 +536,11 @@ impl BrowserState {
             suspended: false,
             updated_at: now_ms(),
         });
-        candidate.active_workspace_id = workspace_id.into();
-        candidate.active_tab_id = Some(id.clone());
-        set_last_active(&mut candidate, workspace_id, Some(&id));
+        if !panel {
+            candidate.active_workspace_id = workspace_id.into();
+            candidate.active_tab_id = Some(id.clone());
+            set_last_active(&mut candidate, workspace_id, Some(&id));
+        }
         let next_tab_id = self
             .next_tab_id
             .checked_add(1)
@@ -535,6 +557,9 @@ impl BrowserState {
             .iter()
             .find(|tab| tab.id == tab_id)
             .ok_or_else(|| domain_error("tab does not exist"))?;
+        if tab.panel {
+            return Err(domain_error("a panel tab cannot become the active tab"));
+        }
         let workspace_id = if tab.favorite {
             self.snapshot.active_workspace_id.clone()
         } else {
@@ -588,7 +613,7 @@ impl BrowserState {
             let fallback = candidate
                 .tabs
                 .iter()
-                .find(|tab| tab.workspace_id == workspace_id && !tab.suspended)
+                .find(|tab| tab.workspace_id == workspace_id && !tab.suspended && !tab.panel)
                 .map(|tab| tab.id.clone());
             match remembered.or(fallback) {
                 Some(id) => {
@@ -610,6 +635,9 @@ impl BrowserState {
             .ok_or_else(|| domain_error("tab does not exist"))?;
         if self.snapshot.tabs[index].private {
             return Err(domain_error("a private tab cannot become a favorite"));
+        }
+        if self.snapshot.tabs[index].panel {
+            return Err(domain_error("a panel tab cannot become a favorite"));
         }
         let mut candidate = self.snapshot.clone();
         if favorite {
@@ -637,6 +665,9 @@ impl BrowserState {
             .ok_or_else(|| domain_error("tab does not exist"))?;
         if self.snapshot.tabs[index].private {
             return Err(domain_error("a private tab cannot be pinned"));
+        }
+        if self.snapshot.tabs[index].panel {
+            return Err(domain_error("a panel tab cannot be pinned"));
         }
         let mut candidate = self.snapshot.clone();
         if pinned {
@@ -771,6 +802,7 @@ impl BrowserState {
                     custom_title: String::new(),
                     favorite: false,
                     pinned: false,
+                    panel: false,
                     private: false,
                     bookmark_id: String::new(),
                     home_url: String::new(),
@@ -853,6 +885,7 @@ impl BrowserState {
         migrate_bookmark_spaces(&mut candidate)?;
         migrate_saved_tabs(&mut candidate);
         strip_private_tabs(&mut candidate);
+        repair_panel_pointers(&mut candidate);
         if candidate.keymap_version == 0 {
             migrate_legacy_pin_shortcuts(&mut candidate.key_bindings);
             candidate.keymap_version = 1;
@@ -1003,6 +1036,7 @@ impl BrowserState {
                 // A private tab carries no saved role: persistence strips it,
                 // and the domain forbids saved fields on private tabs.
                 pinned: !private,
+                panel: false,
                 private,
                 bookmark_id: if private {
                     String::new()
@@ -1439,6 +1473,12 @@ pub(crate) fn validate_snapshot(snapshot: &Snapshot) -> Result<()> {
                 "a private tab cannot be saved, pinned, or suspended",
             ));
         }
+        if tab.panel && (tab.favorite || tab.pinned || tab.suspended || !tab.bookmark_id.is_empty())
+        {
+            return Err(domain_error(
+                "a panel tab cannot be saved, pinned, or suspended",
+            ));
+        }
     }
     let mut bookmark_spaces = HashMap::new();
     for bookmark in &snapshot.bookmarks {
@@ -1646,7 +1686,8 @@ fn set_last_active(candidate: &mut Snapshot, workspace_id: &str, tab_id: Option<
 }
 
 fn tab_available_in(tab: &Tab, workspace_id: &str) -> bool {
-    !tab.suspended && (tab.favorite || tab.workspace_id == workspace_id)
+    // Panels live in the sidebar, never in the space's content rotation.
+    !tab.suspended && !tab.panel && (tab.favorite || tab.workspace_id == workspace_id)
 }
 
 /// Private tabs never survive persistence: restoring a snapshot that carried
@@ -1665,6 +1706,30 @@ fn strip_private_tabs(candidate: &mut Snapshot) {
         candidate.active_tab_id = None;
     }
     repair_last_active(candidate);
+}
+
+/// Panels never hold the active pointers; a foreign or hand-edited snapshot
+/// that says otherwise repairs to a fresh activation instead of failing the
+/// whole restore (validation would reject the pointer outright).
+fn repair_panel_pointers(candidate: &mut Snapshot) {
+    if candidate
+        .active_tab_id
+        .as_deref()
+        .and_then(|id| candidate.tabs.iter().find(|tab| tab.id == id))
+        .is_some_and(|tab| tab.panel)
+    {
+        candidate.active_tab_id = None;
+    }
+    for workspace in &mut candidate.workspaces {
+        if workspace
+            .last_active_tab_id
+            .as_deref()
+            .and_then(|id| candidate.tabs.iter().find(|tab| tab.id == id))
+            .is_some_and(|tab| tab.panel)
+        {
+            workspace.last_active_tab_id = None;
+        }
+    }
 }
 
 fn repair_last_active(candidate: &mut Snapshot) {

@@ -23,7 +23,7 @@ using namespace facebook::jsi;
 namespace jsi = facebook::jsi;
 namespace rc = rustra::codec;
 namespace rustra::generated {
-const char* compiled_contract_hash() { return "4b6ce8435a3f8c5711401586072012d8e7eb2ddf9fe1622742d573fc526b3f35"; }
+const char* compiled_contract_hash() { return "99a6a3d112ebe095117ed0927d74ea260a760eec6f6234b1e31faff7cc0b6d14"; }
 }
 
 // Each invocation owns its captured map values until canonical encoding finishes.
@@ -145,42 +145,42 @@ private:
 };
 std::shared_ptr<const BoundCodecContext> make_bound_codec_context(Runtime& rt, uint16_t commandId) {
   switch (commandId) {
-    case 23: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"title", "url", "folderId"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
-    case 27: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"title", "parentFolderId"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
-    case 30: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"folderId"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
-    case 28: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"folderId", "title"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
-    case 29: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"folderId", "parentFolderId"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
-    case 26: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"bookmarkId", "index"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
-    case 33: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"bookmarkId", "reuseTabId", "private"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
-    case 25: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"bookmarkId"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
-    case 31: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"bookmarkId", "folderId"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
-    case 24: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"bookmarkId", "title", "url"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
-    case 1: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 23: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"title", "url", "folderId"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "panel", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 27: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"title", "parentFolderId"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "panel", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 30: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"folderId"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "panel", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 28: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"folderId", "title"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "panel", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 29: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"folderId", "parentFolderId"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "panel", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 26: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"bookmarkId", "index"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "panel", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 33: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"bookmarkId", "reuseTabId", "private"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "panel", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 25: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"bookmarkId"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "panel", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 31: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"bookmarkId", "folderId"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "panel", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 24: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"bookmarkId", "title", "url"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "panel", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 1: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "panel", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
     case 22: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {}, {"bindings", "key", "meta", "ctrl", "alt", "shift", "command"}));
-    case 21: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"bindings", "key", "meta", "ctrl", "alt", "shift", "command"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
-    case 20: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"json"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
-    case 35: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"splitGroupId"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
-    case 34: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"splitGroupId", "name", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
-    case 9: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"tabId"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
-    case 10: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"tabId"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
-    case 7: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"workspaceId", "url", "private"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
-    case 14: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"tabId", "index"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
-    case 11: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"tabId", "url", "title"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
-    case 8: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"requestId", "url"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
-    case 36: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"tabId", "title"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
-    case 32: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"tabId"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
-    case 12: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"tabId", "favorite"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
-    case 13: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"tabId", "pinned"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
-    case 15: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"tabId", "workspaceId"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 21: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"bindings", "key", "meta", "ctrl", "alt", "shift", "command"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "panel", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 20: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"json"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "panel", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 35: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"splitGroupId"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "panel", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 34: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"splitGroupId", "name", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "panel", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 9: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"tabId"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "panel", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 10: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"tabId"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "panel", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 7: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"workspaceId", "url", "private", "panel"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "panel", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 14: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"tabId", "index"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "panel", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 11: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"tabId", "url", "title"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "panel", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 8: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"requestId", "url"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "panel", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 36: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"tabId", "title"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "panel", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 32: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"tabId"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "panel", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 12: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"tabId", "favorite"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "panel", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 13: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"tabId", "pinned"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "panel", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 15: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"tabId", "workspaceId"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "panel", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
     case 2: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"presentation"}, {"json"}));
-    case 5: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"json", "includeFavorites", "restoreKeymap", "expectedRevision"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
-    case 4: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"json", "includeFavorites", "restoreKeymap"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 5: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"json", "includeFavorites", "restoreKeymap", "expectedRevision"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "panel", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 4: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"json", "includeFavorites", "restoreKeymap"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "panel", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
     case 3: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"json"}, {"spaces", "tabs", "bookmarks", "folders", "favorites", "duplicateUrls", "hasKeyBindings", "presentation"}));
-    case 16: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"workspaceId"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
-    case 6: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"name"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
-    case 19: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"workspaceId", "index"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
-    case 18: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"workspaceId"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
-    case 17: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"workspaceId", "name"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 16: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"workspaceId"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "panel", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 6: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"name"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "panel", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 19: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"workspaceId", "index"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "panel", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 18: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"workspaceId"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "panel", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
+    case 17: return std::shared_ptr<const BoundCodecContext>(new BoundCodecContext(rt, commandId, {"workspaceId", "name"}, {"version", "revision", "lastExternalRequestId", "workspaces", "id", "name", "color", "lastActiveTabId", "tabs", "workspaceId", "url", "title", "customTitle", "favorite", "pinned", "panel", "private", "bookmarkId", "homeUrl", "homeTitle", "suspended", "updatedAt", "bookmarks", "folderId", "bookmarkFolders", "parentFolderId", "splitGroups", "orientation", "ratioMilli", "firstTitle", "firstUrl", "secondTitle", "secondUrl", "activeWorkspaceId", "activeTabId", "keyBindings", "key", "meta", "ctrl", "alt", "shift", "command", "keymapVersion"}));
     default: throw JSError(rt, "rustra: no bound codec for cmd_id " + std::to_string(commandId));
   }
 }
@@ -248,32 +248,36 @@ static void complex_encode_ref_Tab(jsi::Runtime& rt, const jsi::Value& value, rc
       if (!_cx7.isBool()) throw jsi::JSError(rt, "complex boolean expected");
       w.push_bool(_cx7.getBool());
     } else { w.push_u8(0); }
-    auto _cx8 = _cx0.getProperty(rt, "private"); if (_cx0.hasProperty(rt, "private") && !_cx8.isUndefined()) { w.push_u8(1);
+    auto _cx8 = _cx0.getProperty(rt, "panel"); if (_cx0.hasProperty(rt, "panel") && !_cx8.isUndefined()) { w.push_u8(1);
       if (!_cx8.isBool()) throw jsi::JSError(rt, "complex boolean expected");
       w.push_bool(_cx8.getBool());
     } else { w.push_u8(0); }
-    auto _cx9 = _cx0.getProperty(rt, "bookmarkId"); if (_cx0.hasProperty(rt, "bookmarkId") && !_cx9.isUndefined()) { w.push_u8(1);
-      if (!_cx9.isString()) throw jsi::JSError(rt, "complex string expected");
-      w.push_string(_cx9.getString(rt).utf8(rt));
+    auto _cx9 = _cx0.getProperty(rt, "private"); if (_cx0.hasProperty(rt, "private") && !_cx9.isUndefined()) { w.push_u8(1);
+      if (!_cx9.isBool()) throw jsi::JSError(rt, "complex boolean expected");
+      w.push_bool(_cx9.getBool());
     } else { w.push_u8(0); }
-    auto _cx10 = _cx0.getProperty(rt, "homeUrl"); if (_cx0.hasProperty(rt, "homeUrl") && !_cx10.isUndefined()) { w.push_u8(1);
+    auto _cx10 = _cx0.getProperty(rt, "bookmarkId"); if (_cx0.hasProperty(rt, "bookmarkId") && !_cx10.isUndefined()) { w.push_u8(1);
       if (!_cx10.isString()) throw jsi::JSError(rt, "complex string expected");
       w.push_string(_cx10.getString(rt).utf8(rt));
     } else { w.push_u8(0); }
-    auto _cx11 = _cx0.getProperty(rt, "homeTitle"); if (_cx0.hasProperty(rt, "homeTitle") && !_cx11.isUndefined()) { w.push_u8(1);
+    auto _cx11 = _cx0.getProperty(rt, "homeUrl"); if (_cx0.hasProperty(rt, "homeUrl") && !_cx11.isUndefined()) { w.push_u8(1);
       if (!_cx11.isString()) throw jsi::JSError(rt, "complex string expected");
       w.push_string(_cx11.getString(rt).utf8(rt));
     } else { w.push_u8(0); }
-    auto _cx12 = _cx0.getProperty(rt, "suspended"); if (_cx0.hasProperty(rt, "suspended") && !_cx12.isUndefined()) { w.push_u8(1);
-      if (!_cx12.isBool()) throw jsi::JSError(rt, "complex boolean expected");
-      w.push_bool(_cx12.getBool());
+    auto _cx12 = _cx0.getProperty(rt, "homeTitle"); if (_cx0.hasProperty(rt, "homeTitle") && !_cx12.isUndefined()) { w.push_u8(1);
+      if (!_cx12.isString()) throw jsi::JSError(rt, "complex string expected");
+      w.push_string(_cx12.getString(rt).utf8(rt));
     } else { w.push_u8(0); }
-    auto _cx13 = _cx0.getProperty(rt, "updatedAt"); if (_cx0.hasProperty(rt, "updatedAt") && !_cx13.isUndefined()) { w.push_u8(1);
-      w.push_uvar(rustra_u64(rt, _cx13, "complex integer"));
+    auto _cx13 = _cx0.getProperty(rt, "suspended"); if (_cx0.hasProperty(rt, "suspended") && !_cx13.isUndefined()) { w.push_u8(1);
+      if (!_cx13.isBool()) throw jsi::JSError(rt, "complex boolean expected");
+      w.push_bool(_cx13.getBool());
+    } else { w.push_u8(0); }
+    auto _cx14 = _cx0.getProperty(rt, "updatedAt"); if (_cx0.hasProperty(rt, "updatedAt") && !_cx14.isUndefined()) { w.push_u8(1);
+      w.push_uvar(rustra_u64(rt, _cx14, "complex integer"));
     } else { w.push_u8(0); }
   }
 }
-static jsi::Value complex_decode_ref_Tab(jsi::Runtime& rt, rc::Reader& r, size_t _depth) { if (_depth > 32) throw std::runtime_error("complex value depth exceeds 32"); return [&]() -> jsi::Value { auto _cx0 = jsi::Object(rt); _cx0.setProperty(rt, "id", [&]() -> jsi::Value { auto _s = r.read_string_view(); return jsi::String::createFromUtf8(rt, _s.data, _s.size); }()); _cx0.setProperty(rt, "workspaceId", [&]() -> jsi::Value { auto _s = r.read_string_view(); return jsi::String::createFromUtf8(rt, _s.data, _s.size); }()); _cx0.setProperty(rt, "url", [&]() -> jsi::Value { auto _s = r.read_string_view(); return jsi::String::createFromUtf8(rt, _s.data, _s.size); }()); _cx0.setProperty(rt, "title", [&]() -> jsi::Value { auto _s = r.read_string_view(); return jsi::String::createFromUtf8(rt, _s.data, _s.size); }()); auto _cx1 = r.read_u8(); if (_cx1 > 1) throw std::runtime_error("complex optional field presence tag"); if (_cx1 == 1) _cx0.setProperty(rt, "customTitle", [&]() -> jsi::Value { auto _s = r.read_string_view(); return jsi::String::createFromUtf8(rt, _s.data, _s.size); }()); auto _cx2 = r.read_u8(); if (_cx2 > 1) throw std::runtime_error("complex optional field presence tag"); if (_cx2 == 1) _cx0.setProperty(rt, "favorite", jsi::Value(r.read_bool())); auto _cx3 = r.read_u8(); if (_cx3 > 1) throw std::runtime_error("complex optional field presence tag"); if (_cx3 == 1) _cx0.setProperty(rt, "pinned", jsi::Value(r.read_bool())); auto _cx4 = r.read_u8(); if (_cx4 > 1) throw std::runtime_error("complex optional field presence tag"); if (_cx4 == 1) _cx0.setProperty(rt, "private", jsi::Value(r.read_bool())); auto _cx5 = r.read_u8(); if (_cx5 > 1) throw std::runtime_error("complex optional field presence tag"); if (_cx5 == 1) _cx0.setProperty(rt, "bookmarkId", [&]() -> jsi::Value { auto _s = r.read_string_view(); return jsi::String::createFromUtf8(rt, _s.data, _s.size); }()); auto _cx6 = r.read_u8(); if (_cx6 > 1) throw std::runtime_error("complex optional field presence tag"); if (_cx6 == 1) _cx0.setProperty(rt, "homeUrl", [&]() -> jsi::Value { auto _s = r.read_string_view(); return jsi::String::createFromUtf8(rt, _s.data, _s.size); }()); auto _cx7 = r.read_u8(); if (_cx7 > 1) throw std::runtime_error("complex optional field presence tag"); if (_cx7 == 1) _cx0.setProperty(rt, "homeTitle", [&]() -> jsi::Value { auto _s = r.read_string_view(); return jsi::String::createFromUtf8(rt, _s.data, _s.size); }()); auto _cx8 = r.read_u8(); if (_cx8 > 1) throw std::runtime_error("complex optional field presence tag"); if (_cx8 == 1) _cx0.setProperty(rt, "suspended", jsi::Value(r.read_bool())); auto _cx9 = r.read_u8(); if (_cx9 > 1) throw std::runtime_error("complex optional field presence tag"); if (_cx9 == 1) _cx0.setProperty(rt, "updatedAt", [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }()); return _cx0; }(); }
+static jsi::Value complex_decode_ref_Tab(jsi::Runtime& rt, rc::Reader& r, size_t _depth) { if (_depth > 32) throw std::runtime_error("complex value depth exceeds 32"); return [&]() -> jsi::Value { auto _cx0 = jsi::Object(rt); _cx0.setProperty(rt, "id", [&]() -> jsi::Value { auto _s = r.read_string_view(); return jsi::String::createFromUtf8(rt, _s.data, _s.size); }()); _cx0.setProperty(rt, "workspaceId", [&]() -> jsi::Value { auto _s = r.read_string_view(); return jsi::String::createFromUtf8(rt, _s.data, _s.size); }()); _cx0.setProperty(rt, "url", [&]() -> jsi::Value { auto _s = r.read_string_view(); return jsi::String::createFromUtf8(rt, _s.data, _s.size); }()); _cx0.setProperty(rt, "title", [&]() -> jsi::Value { auto _s = r.read_string_view(); return jsi::String::createFromUtf8(rt, _s.data, _s.size); }()); auto _cx1 = r.read_u8(); if (_cx1 > 1) throw std::runtime_error("complex optional field presence tag"); if (_cx1 == 1) _cx0.setProperty(rt, "customTitle", [&]() -> jsi::Value { auto _s = r.read_string_view(); return jsi::String::createFromUtf8(rt, _s.data, _s.size); }()); auto _cx2 = r.read_u8(); if (_cx2 > 1) throw std::runtime_error("complex optional field presence tag"); if (_cx2 == 1) _cx0.setProperty(rt, "favorite", jsi::Value(r.read_bool())); auto _cx3 = r.read_u8(); if (_cx3 > 1) throw std::runtime_error("complex optional field presence tag"); if (_cx3 == 1) _cx0.setProperty(rt, "pinned", jsi::Value(r.read_bool())); auto _cx4 = r.read_u8(); if (_cx4 > 1) throw std::runtime_error("complex optional field presence tag"); if (_cx4 == 1) _cx0.setProperty(rt, "panel", jsi::Value(r.read_bool())); auto _cx5 = r.read_u8(); if (_cx5 > 1) throw std::runtime_error("complex optional field presence tag"); if (_cx5 == 1) _cx0.setProperty(rt, "private", jsi::Value(r.read_bool())); auto _cx6 = r.read_u8(); if (_cx6 > 1) throw std::runtime_error("complex optional field presence tag"); if (_cx6 == 1) _cx0.setProperty(rt, "bookmarkId", [&]() -> jsi::Value { auto _s = r.read_string_view(); return jsi::String::createFromUtf8(rt, _s.data, _s.size); }()); auto _cx7 = r.read_u8(); if (_cx7 > 1) throw std::runtime_error("complex optional field presence tag"); if (_cx7 == 1) _cx0.setProperty(rt, "homeUrl", [&]() -> jsi::Value { auto _s = r.read_string_view(); return jsi::String::createFromUtf8(rt, _s.data, _s.size); }()); auto _cx8 = r.read_u8(); if (_cx8 > 1) throw std::runtime_error("complex optional field presence tag"); if (_cx8 == 1) _cx0.setProperty(rt, "homeTitle", [&]() -> jsi::Value { auto _s = r.read_string_view(); return jsi::String::createFromUtf8(rt, _s.data, _s.size); }()); auto _cx9 = r.read_u8(); if (_cx9 > 1) throw std::runtime_error("complex optional field presence tag"); if (_cx9 == 1) _cx0.setProperty(rt, "suspended", jsi::Value(r.read_bool())); auto _cx10 = r.read_u8(); if (_cx10 > 1) throw std::runtime_error("complex optional field presence tag"); if (_cx10 == 1) _cx0.setProperty(rt, "updatedAt", [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }()); return _cx0; }(); }
 static void complex_encode_ref_Bookmark(jsi::Runtime& rt, const jsi::Value& value, rc::Writer& w, size_t _depth) { if (_depth > 32) throw std::runtime_error("complex value depth exceeds 32");
   { if (!value.isObject() || value.asObject(rt).isArray(rt)) throw jsi::JSError(rt, "complex object expected");
     auto _cx0 = value.asObject(rt);
@@ -441,6 +445,7 @@ static jsi::Value decode_body_bookmarkCreate(jsi::Runtime& rt, jsi::Object& resu
   const auto& _prop_39 = _properties[39];
   const auto& _prop_40 = _properties[40];
   const auto& _prop_41 = _properties[41];
+  const auto& _prop_42 = _properties[42];
   resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
   resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
   { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
@@ -462,11 +467,12 @@ static jsi::Value decode_body_bookmarkCreate(jsi::Runtime& rt, jsi::Object& resu
       _obj.setProperty(rt, _prop_13, r.read_bool());
       _obj.setProperty(rt, _prop_14, r.read_bool());
       _obj.setProperty(rt, _prop_15, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_16, r.read_bool());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_18, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_19, r.read_bool());
-      _obj.setProperty(rt, _prop_20, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_19, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_20, r.read_bool());
+      _obj.setProperty(rt, _prop_21, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
     resultObj.setProperty(rt, _prop_8, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
@@ -475,48 +481,48 @@ static jsi::Value decode_body_bookmarkCreate(jsi::Runtime& rt, jsi::Object& resu
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_22, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_23, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_21, _arr); }
+    resultObj.setProperty(rt, _prop_22, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_24, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_25, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_23, _arr); }
+    resultObj.setProperty(rt, _prop_24, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_26, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_27, (double)r.read_uvar());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_28, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_27, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_28, (double)r.read_uvar());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_29, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_30, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_25, _arr); }
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_33, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+    resultObj.setProperty(rt, _prop_26, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_34, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_34, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_35, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_36, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_36, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _obj.setProperty(rt, _prop_37, r.read_bool());
       _obj.setProperty(rt, _prop_38, r.read_bool());
       _obj.setProperty(rt, _prop_39, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_40, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_40, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_41, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_34, _arr); }
-  resultObj.setProperty(rt, _prop_41, (double)r.read_uvar());
+    resultObj.setProperty(rt, _prop_35, _arr); }
+  resultObj.setProperty(rt, _prop_42, (double)r.read_uvar());
   return std::move(resultObj);
 }
 static jsi::Value decode_bookmarkCreate(jsi::Runtime& rt, rc::Reader& r) {
   auto resultObj = jsi::Object(rt);
-  const std::array<jsi::PropNameID, 42> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  const std::array<jsi::PropNameID, 43> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "panel"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
   return decode_body_bookmarkCreate(rt, resultObj, r, _properties.data());
 }
 
@@ -584,6 +590,7 @@ static jsi::Value decode_body_bookmarkFolderCreate(jsi::Runtime& rt, jsi::Object
   const auto& _prop_39 = _properties[39];
   const auto& _prop_40 = _properties[40];
   const auto& _prop_41 = _properties[41];
+  const auto& _prop_42 = _properties[42];
   resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
   resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
   { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
@@ -605,11 +612,12 @@ static jsi::Value decode_body_bookmarkFolderCreate(jsi::Runtime& rt, jsi::Object
       _obj.setProperty(rt, _prop_13, r.read_bool());
       _obj.setProperty(rt, _prop_14, r.read_bool());
       _obj.setProperty(rt, _prop_15, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_16, r.read_bool());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_18, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_19, r.read_bool());
-      _obj.setProperty(rt, _prop_20, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_19, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_20, r.read_bool());
+      _obj.setProperty(rt, _prop_21, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
     resultObj.setProperty(rt, _prop_8, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
@@ -618,48 +626,48 @@ static jsi::Value decode_body_bookmarkFolderCreate(jsi::Runtime& rt, jsi::Object
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_22, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_23, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_21, _arr); }
+    resultObj.setProperty(rt, _prop_22, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_24, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_25, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_23, _arr); }
+    resultObj.setProperty(rt, _prop_24, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_26, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_27, (double)r.read_uvar());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_28, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_27, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_28, (double)r.read_uvar());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_29, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_30, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_25, _arr); }
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_33, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+    resultObj.setProperty(rt, _prop_26, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_34, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_34, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_35, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_36, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_36, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _obj.setProperty(rt, _prop_37, r.read_bool());
       _obj.setProperty(rt, _prop_38, r.read_bool());
       _obj.setProperty(rt, _prop_39, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_40, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_40, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_41, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_34, _arr); }
-  resultObj.setProperty(rt, _prop_41, (double)r.read_uvar());
+    resultObj.setProperty(rt, _prop_35, _arr); }
+  resultObj.setProperty(rt, _prop_42, (double)r.read_uvar());
   return std::move(resultObj);
 }
 static jsi::Value decode_bookmarkFolderCreate(jsi::Runtime& rt, rc::Reader& r) {
   auto resultObj = jsi::Object(rt);
-  const std::array<jsi::PropNameID, 42> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  const std::array<jsi::PropNameID, 43> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "panel"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
   return decode_body_bookmarkFolderCreate(rt, resultObj, r, _properties.data());
 }
 
@@ -724,6 +732,7 @@ static jsi::Value decode_body_bookmarkFolderRemove(jsi::Runtime& rt, jsi::Object
   const auto& _prop_39 = _properties[39];
   const auto& _prop_40 = _properties[40];
   const auto& _prop_41 = _properties[41];
+  const auto& _prop_42 = _properties[42];
   resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
   resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
   { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
@@ -745,11 +754,12 @@ static jsi::Value decode_body_bookmarkFolderRemove(jsi::Runtime& rt, jsi::Object
       _obj.setProperty(rt, _prop_13, r.read_bool());
       _obj.setProperty(rt, _prop_14, r.read_bool());
       _obj.setProperty(rt, _prop_15, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_16, r.read_bool());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_18, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_19, r.read_bool());
-      _obj.setProperty(rt, _prop_20, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_19, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_20, r.read_bool());
+      _obj.setProperty(rt, _prop_21, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
     resultObj.setProperty(rt, _prop_8, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
@@ -758,48 +768,48 @@ static jsi::Value decode_body_bookmarkFolderRemove(jsi::Runtime& rt, jsi::Object
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_22, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_23, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_21, _arr); }
+    resultObj.setProperty(rt, _prop_22, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_24, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_25, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_23, _arr); }
+    resultObj.setProperty(rt, _prop_24, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_26, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_27, (double)r.read_uvar());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_28, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_27, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_28, (double)r.read_uvar());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_29, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_30, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_25, _arr); }
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_33, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+    resultObj.setProperty(rt, _prop_26, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_34, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_34, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_35, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_36, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_36, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _obj.setProperty(rt, _prop_37, r.read_bool());
       _obj.setProperty(rt, _prop_38, r.read_bool());
       _obj.setProperty(rt, _prop_39, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_40, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_40, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_41, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_34, _arr); }
-  resultObj.setProperty(rt, _prop_41, (double)r.read_uvar());
+    resultObj.setProperty(rt, _prop_35, _arr); }
+  resultObj.setProperty(rt, _prop_42, (double)r.read_uvar());
   return std::move(resultObj);
 }
 static jsi::Value decode_bookmarkFolderRemove(jsi::Runtime& rt, rc::Reader& r) {
   auto resultObj = jsi::Object(rt);
-  const std::array<jsi::PropNameID, 42> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  const std::array<jsi::PropNameID, 43> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "panel"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
   return decode_body_bookmarkFolderRemove(rt, resultObj, r, _properties.data());
 }
 
@@ -867,6 +877,7 @@ static jsi::Value decode_body_bookmarkFolderRename(jsi::Runtime& rt, jsi::Object
   const auto& _prop_39 = _properties[39];
   const auto& _prop_40 = _properties[40];
   const auto& _prop_41 = _properties[41];
+  const auto& _prop_42 = _properties[42];
   resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
   resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
   { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
@@ -888,11 +899,12 @@ static jsi::Value decode_body_bookmarkFolderRename(jsi::Runtime& rt, jsi::Object
       _obj.setProperty(rt, _prop_13, r.read_bool());
       _obj.setProperty(rt, _prop_14, r.read_bool());
       _obj.setProperty(rt, _prop_15, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_16, r.read_bool());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_18, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_19, r.read_bool());
-      _obj.setProperty(rt, _prop_20, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_19, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_20, r.read_bool());
+      _obj.setProperty(rt, _prop_21, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
     resultObj.setProperty(rt, _prop_8, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
@@ -901,48 +913,48 @@ static jsi::Value decode_body_bookmarkFolderRename(jsi::Runtime& rt, jsi::Object
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_22, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_23, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_21, _arr); }
+    resultObj.setProperty(rt, _prop_22, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_24, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_25, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_23, _arr); }
+    resultObj.setProperty(rt, _prop_24, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_26, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_27, (double)r.read_uvar());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_28, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_27, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_28, (double)r.read_uvar());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_29, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_30, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_25, _arr); }
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_33, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+    resultObj.setProperty(rt, _prop_26, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_34, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_34, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_35, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_36, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_36, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _obj.setProperty(rt, _prop_37, r.read_bool());
       _obj.setProperty(rt, _prop_38, r.read_bool());
       _obj.setProperty(rt, _prop_39, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_40, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_40, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_41, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_34, _arr); }
-  resultObj.setProperty(rt, _prop_41, (double)r.read_uvar());
+    resultObj.setProperty(rt, _prop_35, _arr); }
+  resultObj.setProperty(rt, _prop_42, (double)r.read_uvar());
   return std::move(resultObj);
 }
 static jsi::Value decode_bookmarkFolderRename(jsi::Runtime& rt, rc::Reader& r) {
   auto resultObj = jsi::Object(rt);
-  const std::array<jsi::PropNameID, 42> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  const std::array<jsi::PropNameID, 43> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "panel"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
   return decode_body_bookmarkFolderRename(rt, resultObj, r, _properties.data());
 }
 
@@ -1010,6 +1022,7 @@ static jsi::Value decode_body_bookmarkFolderSetParent(jsi::Runtime& rt, jsi::Obj
   const auto& _prop_39 = _properties[39];
   const auto& _prop_40 = _properties[40];
   const auto& _prop_41 = _properties[41];
+  const auto& _prop_42 = _properties[42];
   resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
   resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
   { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
@@ -1031,11 +1044,12 @@ static jsi::Value decode_body_bookmarkFolderSetParent(jsi::Runtime& rt, jsi::Obj
       _obj.setProperty(rt, _prop_13, r.read_bool());
       _obj.setProperty(rt, _prop_14, r.read_bool());
       _obj.setProperty(rt, _prop_15, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_16, r.read_bool());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_18, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_19, r.read_bool());
-      _obj.setProperty(rt, _prop_20, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_19, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_20, r.read_bool());
+      _obj.setProperty(rt, _prop_21, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
     resultObj.setProperty(rt, _prop_8, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
@@ -1044,48 +1058,48 @@ static jsi::Value decode_body_bookmarkFolderSetParent(jsi::Runtime& rt, jsi::Obj
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_22, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_23, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_21, _arr); }
+    resultObj.setProperty(rt, _prop_22, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_24, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_25, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_23, _arr); }
+    resultObj.setProperty(rt, _prop_24, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_26, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_27, (double)r.read_uvar());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_28, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_27, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_28, (double)r.read_uvar());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_29, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_30, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_25, _arr); }
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_33, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+    resultObj.setProperty(rt, _prop_26, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_34, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_34, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_35, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_36, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_36, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _obj.setProperty(rt, _prop_37, r.read_bool());
       _obj.setProperty(rt, _prop_38, r.read_bool());
       _obj.setProperty(rt, _prop_39, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_40, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_40, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_41, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_34, _arr); }
-  resultObj.setProperty(rt, _prop_41, (double)r.read_uvar());
+    resultObj.setProperty(rt, _prop_35, _arr); }
+  resultObj.setProperty(rt, _prop_42, (double)r.read_uvar());
   return std::move(resultObj);
 }
 static jsi::Value decode_bookmarkFolderSetParent(jsi::Runtime& rt, rc::Reader& r) {
   auto resultObj = jsi::Object(rt);
-  const std::array<jsi::PropNameID, 42> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  const std::array<jsi::PropNameID, 43> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "panel"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
   return decode_body_bookmarkFolderSetParent(rt, resultObj, r, _properties.data());
 }
 
@@ -1153,6 +1167,7 @@ static jsi::Value decode_body_bookmarkMove(jsi::Runtime& rt, jsi::Object& result
   const auto& _prop_39 = _properties[39];
   const auto& _prop_40 = _properties[40];
   const auto& _prop_41 = _properties[41];
+  const auto& _prop_42 = _properties[42];
   resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
   resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
   { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
@@ -1174,11 +1189,12 @@ static jsi::Value decode_body_bookmarkMove(jsi::Runtime& rt, jsi::Object& result
       _obj.setProperty(rt, _prop_13, r.read_bool());
       _obj.setProperty(rt, _prop_14, r.read_bool());
       _obj.setProperty(rt, _prop_15, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_16, r.read_bool());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_18, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_19, r.read_bool());
-      _obj.setProperty(rt, _prop_20, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_19, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_20, r.read_bool());
+      _obj.setProperty(rt, _prop_21, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
     resultObj.setProperty(rt, _prop_8, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
@@ -1187,48 +1203,48 @@ static jsi::Value decode_body_bookmarkMove(jsi::Runtime& rt, jsi::Object& result
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_22, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_23, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_21, _arr); }
+    resultObj.setProperty(rt, _prop_22, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_24, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_25, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_23, _arr); }
+    resultObj.setProperty(rt, _prop_24, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_26, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_27, (double)r.read_uvar());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_28, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_27, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_28, (double)r.read_uvar());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_29, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_30, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_25, _arr); }
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_33, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+    resultObj.setProperty(rt, _prop_26, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_34, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_34, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_35, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_36, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_36, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _obj.setProperty(rt, _prop_37, r.read_bool());
       _obj.setProperty(rt, _prop_38, r.read_bool());
       _obj.setProperty(rt, _prop_39, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_40, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_40, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_41, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_34, _arr); }
-  resultObj.setProperty(rt, _prop_41, (double)r.read_uvar());
+    resultObj.setProperty(rt, _prop_35, _arr); }
+  resultObj.setProperty(rt, _prop_42, (double)r.read_uvar());
   return std::move(resultObj);
 }
 static jsi::Value decode_bookmarkMove(jsi::Runtime& rt, rc::Reader& r) {
   auto resultObj = jsi::Object(rt);
-  const std::array<jsi::PropNameID, 42> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  const std::array<jsi::PropNameID, 43> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "panel"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
   return decode_body_bookmarkMove(rt, resultObj, r, _properties.data());
 }
 
@@ -1299,6 +1315,7 @@ static jsi::Value decode_body_bookmarkOpen(jsi::Runtime& rt, jsi::Object& result
   const auto& _prop_39 = _properties[39];
   const auto& _prop_40 = _properties[40];
   const auto& _prop_41 = _properties[41];
+  const auto& _prop_42 = _properties[42];
   resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
   resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
   { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
@@ -1320,11 +1337,12 @@ static jsi::Value decode_body_bookmarkOpen(jsi::Runtime& rt, jsi::Object& result
       _obj.setProperty(rt, _prop_13, r.read_bool());
       _obj.setProperty(rt, _prop_14, r.read_bool());
       _obj.setProperty(rt, _prop_15, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_16, r.read_bool());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_18, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_19, r.read_bool());
-      _obj.setProperty(rt, _prop_20, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_19, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_20, r.read_bool());
+      _obj.setProperty(rt, _prop_21, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
     resultObj.setProperty(rt, _prop_8, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
@@ -1333,48 +1351,48 @@ static jsi::Value decode_body_bookmarkOpen(jsi::Runtime& rt, jsi::Object& result
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_22, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_23, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_21, _arr); }
+    resultObj.setProperty(rt, _prop_22, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_24, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_25, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_23, _arr); }
+    resultObj.setProperty(rt, _prop_24, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_26, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_27, (double)r.read_uvar());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_28, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_27, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_28, (double)r.read_uvar());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_29, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_30, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_25, _arr); }
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_33, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+    resultObj.setProperty(rt, _prop_26, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_34, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_34, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_35, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_36, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_36, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _obj.setProperty(rt, _prop_37, r.read_bool());
       _obj.setProperty(rt, _prop_38, r.read_bool());
       _obj.setProperty(rt, _prop_39, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_40, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_40, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_41, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_34, _arr); }
-  resultObj.setProperty(rt, _prop_41, (double)r.read_uvar());
+    resultObj.setProperty(rt, _prop_35, _arr); }
+  resultObj.setProperty(rt, _prop_42, (double)r.read_uvar());
   return std::move(resultObj);
 }
 static jsi::Value decode_bookmarkOpen(jsi::Runtime& rt, rc::Reader& r) {
   auto resultObj = jsi::Object(rt);
-  const std::array<jsi::PropNameID, 42> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  const std::array<jsi::PropNameID, 43> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "panel"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
   return decode_body_bookmarkOpen(rt, resultObj, r, _properties.data());
 }
 
@@ -1439,6 +1457,7 @@ static jsi::Value decode_body_bookmarkRemove(jsi::Runtime& rt, jsi::Object& resu
   const auto& _prop_39 = _properties[39];
   const auto& _prop_40 = _properties[40];
   const auto& _prop_41 = _properties[41];
+  const auto& _prop_42 = _properties[42];
   resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
   resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
   { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
@@ -1460,11 +1479,12 @@ static jsi::Value decode_body_bookmarkRemove(jsi::Runtime& rt, jsi::Object& resu
       _obj.setProperty(rt, _prop_13, r.read_bool());
       _obj.setProperty(rt, _prop_14, r.read_bool());
       _obj.setProperty(rt, _prop_15, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_16, r.read_bool());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_18, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_19, r.read_bool());
-      _obj.setProperty(rt, _prop_20, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_19, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_20, r.read_bool());
+      _obj.setProperty(rt, _prop_21, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
     resultObj.setProperty(rt, _prop_8, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
@@ -1473,48 +1493,48 @@ static jsi::Value decode_body_bookmarkRemove(jsi::Runtime& rt, jsi::Object& resu
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_22, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_23, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_21, _arr); }
+    resultObj.setProperty(rt, _prop_22, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_24, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_25, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_23, _arr); }
+    resultObj.setProperty(rt, _prop_24, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_26, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_27, (double)r.read_uvar());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_28, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_27, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_28, (double)r.read_uvar());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_29, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_30, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_25, _arr); }
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_33, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+    resultObj.setProperty(rt, _prop_26, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_34, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_34, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_35, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_36, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_36, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _obj.setProperty(rt, _prop_37, r.read_bool());
       _obj.setProperty(rt, _prop_38, r.read_bool());
       _obj.setProperty(rt, _prop_39, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_40, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_40, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_41, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_34, _arr); }
-  resultObj.setProperty(rt, _prop_41, (double)r.read_uvar());
+    resultObj.setProperty(rt, _prop_35, _arr); }
+  resultObj.setProperty(rt, _prop_42, (double)r.read_uvar());
   return std::move(resultObj);
 }
 static jsi::Value decode_bookmarkRemove(jsi::Runtime& rt, rc::Reader& r) {
   auto resultObj = jsi::Object(rt);
-  const std::array<jsi::PropNameID, 42> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  const std::array<jsi::PropNameID, 43> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "panel"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
   return decode_body_bookmarkRemove(rt, resultObj, r, _properties.data());
 }
 
@@ -1582,6 +1602,7 @@ static jsi::Value decode_body_bookmarkSetFolder(jsi::Runtime& rt, jsi::Object& r
   const auto& _prop_39 = _properties[39];
   const auto& _prop_40 = _properties[40];
   const auto& _prop_41 = _properties[41];
+  const auto& _prop_42 = _properties[42];
   resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
   resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
   { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
@@ -1603,11 +1624,12 @@ static jsi::Value decode_body_bookmarkSetFolder(jsi::Runtime& rt, jsi::Object& r
       _obj.setProperty(rt, _prop_13, r.read_bool());
       _obj.setProperty(rt, _prop_14, r.read_bool());
       _obj.setProperty(rt, _prop_15, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_16, r.read_bool());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_18, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_19, r.read_bool());
-      _obj.setProperty(rt, _prop_20, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_19, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_20, r.read_bool());
+      _obj.setProperty(rt, _prop_21, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
     resultObj.setProperty(rt, _prop_8, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
@@ -1616,48 +1638,48 @@ static jsi::Value decode_body_bookmarkSetFolder(jsi::Runtime& rt, jsi::Object& r
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_22, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_23, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_21, _arr); }
+    resultObj.setProperty(rt, _prop_22, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_24, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_25, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_23, _arr); }
+    resultObj.setProperty(rt, _prop_24, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_26, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_27, (double)r.read_uvar());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_28, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_27, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_28, (double)r.read_uvar());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_29, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_30, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_25, _arr); }
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_33, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+    resultObj.setProperty(rt, _prop_26, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_34, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_34, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_35, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_36, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_36, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _obj.setProperty(rt, _prop_37, r.read_bool());
       _obj.setProperty(rt, _prop_38, r.read_bool());
       _obj.setProperty(rt, _prop_39, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_40, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_40, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_41, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_34, _arr); }
-  resultObj.setProperty(rt, _prop_41, (double)r.read_uvar());
+    resultObj.setProperty(rt, _prop_35, _arr); }
+  resultObj.setProperty(rt, _prop_42, (double)r.read_uvar());
   return std::move(resultObj);
 }
 static jsi::Value decode_bookmarkSetFolder(jsi::Runtime& rt, rc::Reader& r) {
   auto resultObj = jsi::Object(rt);
-  const std::array<jsi::PropNameID, 42> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  const std::array<jsi::PropNameID, 43> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "panel"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
   return decode_body_bookmarkSetFolder(rt, resultObj, r, _properties.data());
 }
 
@@ -1728,6 +1750,7 @@ static jsi::Value decode_body_bookmarkUpdate(jsi::Runtime& rt, jsi::Object& resu
   const auto& _prop_39 = _properties[39];
   const auto& _prop_40 = _properties[40];
   const auto& _prop_41 = _properties[41];
+  const auto& _prop_42 = _properties[42];
   resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
   resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
   { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
@@ -1749,11 +1772,12 @@ static jsi::Value decode_body_bookmarkUpdate(jsi::Runtime& rt, jsi::Object& resu
       _obj.setProperty(rt, _prop_13, r.read_bool());
       _obj.setProperty(rt, _prop_14, r.read_bool());
       _obj.setProperty(rt, _prop_15, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_16, r.read_bool());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_18, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_19, r.read_bool());
-      _obj.setProperty(rt, _prop_20, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_19, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_20, r.read_bool());
+      _obj.setProperty(rt, _prop_21, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
     resultObj.setProperty(rt, _prop_8, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
@@ -1762,48 +1786,48 @@ static jsi::Value decode_body_bookmarkUpdate(jsi::Runtime& rt, jsi::Object& resu
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_22, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_23, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_21, _arr); }
+    resultObj.setProperty(rt, _prop_22, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_24, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_25, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_23, _arr); }
+    resultObj.setProperty(rt, _prop_24, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_26, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_27, (double)r.read_uvar());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_28, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_27, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_28, (double)r.read_uvar());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_29, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_30, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_25, _arr); }
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_33, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+    resultObj.setProperty(rt, _prop_26, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_34, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_34, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_35, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_36, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_36, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _obj.setProperty(rt, _prop_37, r.read_bool());
       _obj.setProperty(rt, _prop_38, r.read_bool());
       _obj.setProperty(rt, _prop_39, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_40, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_40, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_41, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_34, _arr); }
-  resultObj.setProperty(rt, _prop_41, (double)r.read_uvar());
+    resultObj.setProperty(rt, _prop_35, _arr); }
+  resultObj.setProperty(rt, _prop_42, (double)r.read_uvar());
   return std::move(resultObj);
 }
 static jsi::Value decode_bookmarkUpdate(jsi::Runtime& rt, rc::Reader& r) {
   auto resultObj = jsi::Object(rt);
-  const std::array<jsi::PropNameID, 42> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  const std::array<jsi::PropNameID, 43> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "panel"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
   return decode_body_bookmarkUpdate(rt, resultObj, r, _properties.data());
 }
 
@@ -1859,6 +1883,7 @@ static jsi::Value decode_body_browserSnapshot(jsi::Runtime& rt, jsi::Object& res
   const auto& _prop_39 = _properties[39];
   const auto& _prop_40 = _properties[40];
   const auto& _prop_41 = _properties[41];
+  const auto& _prop_42 = _properties[42];
   resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
   resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
   { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
@@ -1880,11 +1905,12 @@ static jsi::Value decode_body_browserSnapshot(jsi::Runtime& rt, jsi::Object& res
       _obj.setProperty(rt, _prop_13, r.read_bool());
       _obj.setProperty(rt, _prop_14, r.read_bool());
       _obj.setProperty(rt, _prop_15, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_16, r.read_bool());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_18, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_19, r.read_bool());
-      _obj.setProperty(rt, _prop_20, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_19, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_20, r.read_bool());
+      _obj.setProperty(rt, _prop_21, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
     resultObj.setProperty(rt, _prop_8, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
@@ -1893,48 +1919,48 @@ static jsi::Value decode_body_browserSnapshot(jsi::Runtime& rt, jsi::Object& res
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_22, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_23, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_21, _arr); }
+    resultObj.setProperty(rt, _prop_22, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_24, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_25, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_23, _arr); }
+    resultObj.setProperty(rt, _prop_24, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_26, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_27, (double)r.read_uvar());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_28, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_27, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_28, (double)r.read_uvar());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_29, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_30, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_25, _arr); }
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_33, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+    resultObj.setProperty(rt, _prop_26, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_34, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_34, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_35, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_36, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_36, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _obj.setProperty(rt, _prop_37, r.read_bool());
       _obj.setProperty(rt, _prop_38, r.read_bool());
       _obj.setProperty(rt, _prop_39, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_40, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_40, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_41, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_34, _arr); }
-  resultObj.setProperty(rt, _prop_41, (double)r.read_uvar());
+    resultObj.setProperty(rt, _prop_35, _arr); }
+  resultObj.setProperty(rt, _prop_42, (double)r.read_uvar());
   return std::move(resultObj);
 }
 static jsi::Value decode_browserSnapshot(jsi::Runtime& rt, rc::Reader& r) {
   auto resultObj = jsi::Object(rt);
-  const std::array<jsi::PropNameID, 42> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  const std::array<jsi::PropNameID, 43> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "panel"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
   return decode_body_browserSnapshot(rt, resultObj, r, _properties.data());
 }
 
@@ -2041,6 +2067,7 @@ static jsi::Value decode_body_keymapSet(jsi::Runtime& rt, jsi::Object& resultObj
   const auto& _prop_39 = _properties[39];
   const auto& _prop_40 = _properties[40];
   const auto& _prop_41 = _properties[41];
+  const auto& _prop_42 = _properties[42];
   resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
   resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
   { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
@@ -2062,11 +2089,12 @@ static jsi::Value decode_body_keymapSet(jsi::Runtime& rt, jsi::Object& resultObj
       _obj.setProperty(rt, _prop_13, r.read_bool());
       _obj.setProperty(rt, _prop_14, r.read_bool());
       _obj.setProperty(rt, _prop_15, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_16, r.read_bool());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_18, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_19, r.read_bool());
-      _obj.setProperty(rt, _prop_20, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_19, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_20, r.read_bool());
+      _obj.setProperty(rt, _prop_21, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
     resultObj.setProperty(rt, _prop_8, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
@@ -2075,48 +2103,48 @@ static jsi::Value decode_body_keymapSet(jsi::Runtime& rt, jsi::Object& resultObj
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_22, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_23, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_21, _arr); }
+    resultObj.setProperty(rt, _prop_22, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_24, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_25, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_23, _arr); }
+    resultObj.setProperty(rt, _prop_24, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_26, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_27, (double)r.read_uvar());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_28, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_27, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_28, (double)r.read_uvar());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_29, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_30, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_25, _arr); }
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_33, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+    resultObj.setProperty(rt, _prop_26, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_34, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_34, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_35, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_36, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_36, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _obj.setProperty(rt, _prop_37, r.read_bool());
       _obj.setProperty(rt, _prop_38, r.read_bool());
       _obj.setProperty(rt, _prop_39, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_40, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_40, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_41, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_34, _arr); }
-  resultObj.setProperty(rt, _prop_41, (double)r.read_uvar());
+    resultObj.setProperty(rt, _prop_35, _arr); }
+  resultObj.setProperty(rt, _prop_42, (double)r.read_uvar());
   return std::move(resultObj);
 }
 static jsi::Value decode_keymapSet(jsi::Runtime& rt, rc::Reader& r) {
   auto resultObj = jsi::Object(rt);
-  const std::array<jsi::PropNameID, 42> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  const std::array<jsi::PropNameID, 43> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "panel"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
   return decode_body_keymapSet(rt, resultObj, r, _properties.data());
 }
 
@@ -2181,6 +2209,7 @@ static jsi::Value decode_body_snapshotRestore(jsi::Runtime& rt, jsi::Object& res
   const auto& _prop_39 = _properties[39];
   const auto& _prop_40 = _properties[40];
   const auto& _prop_41 = _properties[41];
+  const auto& _prop_42 = _properties[42];
   resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
   resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
   { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
@@ -2202,11 +2231,12 @@ static jsi::Value decode_body_snapshotRestore(jsi::Runtime& rt, jsi::Object& res
       _obj.setProperty(rt, _prop_13, r.read_bool());
       _obj.setProperty(rt, _prop_14, r.read_bool());
       _obj.setProperty(rt, _prop_15, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_16, r.read_bool());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_18, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_19, r.read_bool());
-      _obj.setProperty(rt, _prop_20, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_19, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_20, r.read_bool());
+      _obj.setProperty(rt, _prop_21, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
     resultObj.setProperty(rt, _prop_8, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
@@ -2215,48 +2245,48 @@ static jsi::Value decode_body_snapshotRestore(jsi::Runtime& rt, jsi::Object& res
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_22, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_23, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_21, _arr); }
+    resultObj.setProperty(rt, _prop_22, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_24, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_25, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_23, _arr); }
+    resultObj.setProperty(rt, _prop_24, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_26, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_27, (double)r.read_uvar());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_28, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_27, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_28, (double)r.read_uvar());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_29, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_30, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_25, _arr); }
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_33, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+    resultObj.setProperty(rt, _prop_26, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_34, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_34, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_35, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_36, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_36, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _obj.setProperty(rt, _prop_37, r.read_bool());
       _obj.setProperty(rt, _prop_38, r.read_bool());
       _obj.setProperty(rt, _prop_39, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_40, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_40, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_41, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_34, _arr); }
-  resultObj.setProperty(rt, _prop_41, (double)r.read_uvar());
+    resultObj.setProperty(rt, _prop_35, _arr); }
+  resultObj.setProperty(rt, _prop_42, (double)r.read_uvar());
   return std::move(resultObj);
 }
 static jsi::Value decode_snapshotRestore(jsi::Runtime& rt, rc::Reader& r) {
   auto resultObj = jsi::Object(rt);
-  const std::array<jsi::PropNameID, 42> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  const std::array<jsi::PropNameID, 43> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "panel"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
   return decode_body_snapshotRestore(rt, resultObj, r, _properties.data());
 }
 
@@ -2321,6 +2351,7 @@ static jsi::Value decode_body_splitGroupRemove(jsi::Runtime& rt, jsi::Object& re
   const auto& _prop_39 = _properties[39];
   const auto& _prop_40 = _properties[40];
   const auto& _prop_41 = _properties[41];
+  const auto& _prop_42 = _properties[42];
   resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
   resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
   { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
@@ -2342,11 +2373,12 @@ static jsi::Value decode_body_splitGroupRemove(jsi::Runtime& rt, jsi::Object& re
       _obj.setProperty(rt, _prop_13, r.read_bool());
       _obj.setProperty(rt, _prop_14, r.read_bool());
       _obj.setProperty(rt, _prop_15, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_16, r.read_bool());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_18, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_19, r.read_bool());
-      _obj.setProperty(rt, _prop_20, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_19, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_20, r.read_bool());
+      _obj.setProperty(rt, _prop_21, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
     resultObj.setProperty(rt, _prop_8, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
@@ -2355,48 +2387,48 @@ static jsi::Value decode_body_splitGroupRemove(jsi::Runtime& rt, jsi::Object& re
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_22, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_23, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_21, _arr); }
+    resultObj.setProperty(rt, _prop_22, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_24, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_25, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_23, _arr); }
+    resultObj.setProperty(rt, _prop_24, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_26, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_27, (double)r.read_uvar());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_28, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_27, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_28, (double)r.read_uvar());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_29, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_30, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_25, _arr); }
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_33, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+    resultObj.setProperty(rt, _prop_26, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_34, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_34, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_35, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_36, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_36, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _obj.setProperty(rt, _prop_37, r.read_bool());
       _obj.setProperty(rt, _prop_38, r.read_bool());
       _obj.setProperty(rt, _prop_39, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_40, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_40, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_41, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_34, _arr); }
-  resultObj.setProperty(rt, _prop_41, (double)r.read_uvar());
+    resultObj.setProperty(rt, _prop_35, _arr); }
+  resultObj.setProperty(rt, _prop_42, (double)r.read_uvar());
   return std::move(resultObj);
 }
 static jsi::Value decode_splitGroupRemove(jsi::Runtime& rt, rc::Reader& r) {
   auto resultObj = jsi::Object(rt);
-  const std::array<jsi::PropNameID, 42> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  const std::array<jsi::PropNameID, 43> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "panel"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
   return decode_body_splitGroupRemove(rt, resultObj, r, _properties.data());
 }
 
@@ -2468,6 +2500,7 @@ static jsi::Value decode_body_splitGroupSave(jsi::Runtime& rt, jsi::Object& resu
   const auto& _prop_39 = _properties[39];
   const auto& _prop_40 = _properties[40];
   const auto& _prop_41 = _properties[41];
+  const auto& _prop_42 = _properties[42];
   resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
   resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
   { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
@@ -2489,11 +2522,12 @@ static jsi::Value decode_body_splitGroupSave(jsi::Runtime& rt, jsi::Object& resu
       _obj.setProperty(rt, _prop_13, r.read_bool());
       _obj.setProperty(rt, _prop_14, r.read_bool());
       _obj.setProperty(rt, _prop_15, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_16, r.read_bool());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_18, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_19, r.read_bool());
-      _obj.setProperty(rt, _prop_20, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_19, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_20, r.read_bool());
+      _obj.setProperty(rt, _prop_21, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
     resultObj.setProperty(rt, _prop_8, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
@@ -2502,48 +2536,48 @@ static jsi::Value decode_body_splitGroupSave(jsi::Runtime& rt, jsi::Object& resu
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_22, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_23, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_21, _arr); }
+    resultObj.setProperty(rt, _prop_22, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_24, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_25, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_23, _arr); }
+    resultObj.setProperty(rt, _prop_24, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_26, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_27, (double)r.read_uvar());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_28, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_27, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_28, (double)r.read_uvar());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_29, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_30, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_25, _arr); }
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_33, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+    resultObj.setProperty(rt, _prop_26, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_34, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_34, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_35, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_36, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_36, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _obj.setProperty(rt, _prop_37, r.read_bool());
       _obj.setProperty(rt, _prop_38, r.read_bool());
       _obj.setProperty(rt, _prop_39, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_40, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_40, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_41, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_34, _arr); }
-  resultObj.setProperty(rt, _prop_41, (double)r.read_uvar());
+    resultObj.setProperty(rt, _prop_35, _arr); }
+  resultObj.setProperty(rt, _prop_42, (double)r.read_uvar());
   return std::move(resultObj);
 }
 static jsi::Value decode_splitGroupSave(jsi::Runtime& rt, rc::Reader& r) {
   auto resultObj = jsi::Object(rt);
-  const std::array<jsi::PropNameID, 42> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  const std::array<jsi::PropNameID, 43> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "panel"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
   return decode_body_splitGroupSave(rt, resultObj, r, _properties.data());
 }
 
@@ -2608,6 +2642,7 @@ static jsi::Value decode_body_tabActivate(jsi::Runtime& rt, jsi::Object& resultO
   const auto& _prop_39 = _properties[39];
   const auto& _prop_40 = _properties[40];
   const auto& _prop_41 = _properties[41];
+  const auto& _prop_42 = _properties[42];
   resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
   resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
   { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
@@ -2629,11 +2664,12 @@ static jsi::Value decode_body_tabActivate(jsi::Runtime& rt, jsi::Object& resultO
       _obj.setProperty(rt, _prop_13, r.read_bool());
       _obj.setProperty(rt, _prop_14, r.read_bool());
       _obj.setProperty(rt, _prop_15, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_16, r.read_bool());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_18, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_19, r.read_bool());
-      _obj.setProperty(rt, _prop_20, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_19, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_20, r.read_bool());
+      _obj.setProperty(rt, _prop_21, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
     resultObj.setProperty(rt, _prop_8, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
@@ -2642,48 +2678,48 @@ static jsi::Value decode_body_tabActivate(jsi::Runtime& rt, jsi::Object& resultO
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_22, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_23, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_21, _arr); }
+    resultObj.setProperty(rt, _prop_22, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_24, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_25, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_23, _arr); }
+    resultObj.setProperty(rt, _prop_24, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_26, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_27, (double)r.read_uvar());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_28, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_27, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_28, (double)r.read_uvar());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_29, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_30, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_25, _arr); }
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_33, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+    resultObj.setProperty(rt, _prop_26, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_34, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_34, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_35, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_36, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_36, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _obj.setProperty(rt, _prop_37, r.read_bool());
       _obj.setProperty(rt, _prop_38, r.read_bool());
       _obj.setProperty(rt, _prop_39, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_40, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_40, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_41, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_34, _arr); }
-  resultObj.setProperty(rt, _prop_41, (double)r.read_uvar());
+    resultObj.setProperty(rt, _prop_35, _arr); }
+  resultObj.setProperty(rt, _prop_42, (double)r.read_uvar());
   return std::move(resultObj);
 }
 static jsi::Value decode_tabActivate(jsi::Runtime& rt, rc::Reader& r) {
   auto resultObj = jsi::Object(rt);
-  const std::array<jsi::PropNameID, 42> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  const std::array<jsi::PropNameID, 43> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "panel"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
   return decode_body_tabActivate(rt, resultObj, r, _properties.data());
 }
 
@@ -2748,6 +2784,7 @@ static jsi::Value decode_body_tabClose(jsi::Runtime& rt, jsi::Object& resultObj,
   const auto& _prop_39 = _properties[39];
   const auto& _prop_40 = _properties[40];
   const auto& _prop_41 = _properties[41];
+  const auto& _prop_42 = _properties[42];
   resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
   resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
   { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
@@ -2769,11 +2806,12 @@ static jsi::Value decode_body_tabClose(jsi::Runtime& rt, jsi::Object& resultObj,
       _obj.setProperty(rt, _prop_13, r.read_bool());
       _obj.setProperty(rt, _prop_14, r.read_bool());
       _obj.setProperty(rt, _prop_15, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_16, r.read_bool());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_18, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_19, r.read_bool());
-      _obj.setProperty(rt, _prop_20, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_19, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_20, r.read_bool());
+      _obj.setProperty(rt, _prop_21, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
     resultObj.setProperty(rt, _prop_8, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
@@ -2782,48 +2820,48 @@ static jsi::Value decode_body_tabClose(jsi::Runtime& rt, jsi::Object& resultObj,
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_22, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_23, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_21, _arr); }
+    resultObj.setProperty(rt, _prop_22, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_24, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_25, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_23, _arr); }
+    resultObj.setProperty(rt, _prop_24, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_26, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_27, (double)r.read_uvar());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_28, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_27, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_28, (double)r.read_uvar());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_29, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_30, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_25, _arr); }
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_33, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+    resultObj.setProperty(rt, _prop_26, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_34, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_34, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_35, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_36, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_36, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _obj.setProperty(rt, _prop_37, r.read_bool());
       _obj.setProperty(rt, _prop_38, r.read_bool());
       _obj.setProperty(rt, _prop_39, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_40, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_40, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_41, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_34, _arr); }
-  resultObj.setProperty(rt, _prop_41, (double)r.read_uvar());
+    resultObj.setProperty(rt, _prop_35, _arr); }
+  resultObj.setProperty(rt, _prop_42, (double)r.read_uvar());
   return std::move(resultObj);
 }
 static jsi::Value decode_tabClose(jsi::Runtime& rt, rc::Reader& r) {
   auto resultObj = jsi::Object(rt);
-  const std::array<jsi::PropNameID, 42> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  const std::array<jsi::PropNameID, 43> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "panel"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
   return decode_body_tabClose(rt, resultObj, r, _properties.data());
 }
 
@@ -2831,24 +2869,17 @@ static void encode_body_tabCreate(jsi::Runtime& rt, const jsi::Object& argsObj, 
   const auto& _prop_0 = _properties[0];
   const auto& _prop_1 = _properties[1];
   const auto& _prop_2 = _properties[2];
+  const auto& _prop_3 = _properties[3];
   { auto _v = argsObj.getProperty(rt, _prop_0).getString(rt).utf8(rt); w.push_string(_v); }
   { auto _v = argsObj.getProperty(rt, _prop_1).getString(rt).utf8(rt); w.push_string(_v); }
   { auto _v = argsObj.getProperty(rt, _prop_2).getBool(); w.push_bool(_v); }
+  { auto _v = argsObj.getProperty(rt, _prop_3).getBool(); w.push_bool(_v); }
 }
 static void encode_tabCreate(jsi::Runtime& rt, const jsi::Value& args, rc::Writer& w) {
   w.push_u8(7); w.push_u8(0); // cmd_id = 7 LE
   auto argsObj = args.asObject(rt);
-  const std::array<jsi::PropNameID, 3> _properties{jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "private")};
+  const std::array<jsi::PropNameID, 4> _properties{jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "panel")};
   encode_body_tabCreate(rt, argsObj, w, _properties.data());
-}
-
-// (Tier 1 positional) 개별 인자 → 직접 인코딩. argsObj 경유 대비 JSI 프로퍼티 조회 3회 제거.
-static void encode_pos_tabCreate(jsi::Runtime& rt, const jsi::Value* argv, size_t argc, rc::Writer& w) {
-  if (argc != 3) throw jsi::JSError(rt, "rustra: tabCreate expects 3 positional argument(s), got " + std::to_string(argc));
-  w.push_u8(7); w.push_u8(0); // cmd_id = 7 LE
-  { auto _s = argv[0].asString(rt).utf8(rt); w.push_string(_s); }
-  { auto _s = argv[1].asString(rt).utf8(rt); w.push_string(_s); }
-  w.push_bool(argv[2].asBool());
 }
 
 static jsi::Value decode_body_tabCreate(jsi::Runtime& rt, jsi::Object& resultObj, rc::Reader& r, const jsi::PropNameID* _properties) {
@@ -2894,6 +2925,7 @@ static jsi::Value decode_body_tabCreate(jsi::Runtime& rt, jsi::Object& resultObj
   const auto& _prop_39 = _properties[39];
   const auto& _prop_40 = _properties[40];
   const auto& _prop_41 = _properties[41];
+  const auto& _prop_42 = _properties[42];
   resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
   resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
   { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
@@ -2915,11 +2947,12 @@ static jsi::Value decode_body_tabCreate(jsi::Runtime& rt, jsi::Object& resultObj
       _obj.setProperty(rt, _prop_13, r.read_bool());
       _obj.setProperty(rt, _prop_14, r.read_bool());
       _obj.setProperty(rt, _prop_15, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_16, r.read_bool());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_18, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_19, r.read_bool());
-      _obj.setProperty(rt, _prop_20, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_19, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_20, r.read_bool());
+      _obj.setProperty(rt, _prop_21, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
     resultObj.setProperty(rt, _prop_8, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
@@ -2928,48 +2961,48 @@ static jsi::Value decode_body_tabCreate(jsi::Runtime& rt, jsi::Object& resultObj
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_22, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_23, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_21, _arr); }
+    resultObj.setProperty(rt, _prop_22, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_24, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_25, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_23, _arr); }
+    resultObj.setProperty(rt, _prop_24, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_26, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_27, (double)r.read_uvar());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_28, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_27, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_28, (double)r.read_uvar());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_29, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_30, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_25, _arr); }
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_33, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+    resultObj.setProperty(rt, _prop_26, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_34, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_34, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_35, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_36, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_36, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _obj.setProperty(rt, _prop_37, r.read_bool());
       _obj.setProperty(rt, _prop_38, r.read_bool());
       _obj.setProperty(rt, _prop_39, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_40, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_40, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_41, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_34, _arr); }
-  resultObj.setProperty(rt, _prop_41, (double)r.read_uvar());
+    resultObj.setProperty(rt, _prop_35, _arr); }
+  resultObj.setProperty(rt, _prop_42, (double)r.read_uvar());
   return std::move(resultObj);
 }
 static jsi::Value decode_tabCreate(jsi::Runtime& rt, rc::Reader& r) {
   auto resultObj = jsi::Object(rt);
-  const std::array<jsi::PropNameID, 42> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  const std::array<jsi::PropNameID, 43> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "panel"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
   return decode_body_tabCreate(rt, resultObj, r, _properties.data());
 }
 
@@ -3037,6 +3070,7 @@ static jsi::Value decode_body_tabMove(jsi::Runtime& rt, jsi::Object& resultObj, 
   const auto& _prop_39 = _properties[39];
   const auto& _prop_40 = _properties[40];
   const auto& _prop_41 = _properties[41];
+  const auto& _prop_42 = _properties[42];
   resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
   resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
   { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
@@ -3058,11 +3092,12 @@ static jsi::Value decode_body_tabMove(jsi::Runtime& rt, jsi::Object& resultObj, 
       _obj.setProperty(rt, _prop_13, r.read_bool());
       _obj.setProperty(rt, _prop_14, r.read_bool());
       _obj.setProperty(rt, _prop_15, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_16, r.read_bool());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_18, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_19, r.read_bool());
-      _obj.setProperty(rt, _prop_20, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_19, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_20, r.read_bool());
+      _obj.setProperty(rt, _prop_21, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
     resultObj.setProperty(rt, _prop_8, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
@@ -3071,48 +3106,48 @@ static jsi::Value decode_body_tabMove(jsi::Runtime& rt, jsi::Object& resultObj, 
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_22, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_23, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_21, _arr); }
+    resultObj.setProperty(rt, _prop_22, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_24, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_25, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_23, _arr); }
+    resultObj.setProperty(rt, _prop_24, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_26, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_27, (double)r.read_uvar());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_28, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_27, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_28, (double)r.read_uvar());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_29, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_30, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_25, _arr); }
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_33, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+    resultObj.setProperty(rt, _prop_26, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_34, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_34, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_35, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_36, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_36, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _obj.setProperty(rt, _prop_37, r.read_bool());
       _obj.setProperty(rt, _prop_38, r.read_bool());
       _obj.setProperty(rt, _prop_39, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_40, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_40, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_41, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_34, _arr); }
-  resultObj.setProperty(rt, _prop_41, (double)r.read_uvar());
+    resultObj.setProperty(rt, _prop_35, _arr); }
+  resultObj.setProperty(rt, _prop_42, (double)r.read_uvar());
   return std::move(resultObj);
 }
 static jsi::Value decode_tabMove(jsi::Runtime& rt, rc::Reader& r) {
   auto resultObj = jsi::Object(rt);
-  const std::array<jsi::PropNameID, 42> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  const std::array<jsi::PropNameID, 43> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "panel"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
   return decode_body_tabMove(rt, resultObj, r, _properties.data());
 }
 
@@ -3183,6 +3218,7 @@ static jsi::Value decode_body_tabNavigated(jsi::Runtime& rt, jsi::Object& result
   const auto& _prop_39 = _properties[39];
   const auto& _prop_40 = _properties[40];
   const auto& _prop_41 = _properties[41];
+  const auto& _prop_42 = _properties[42];
   resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
   resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
   { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
@@ -3204,11 +3240,12 @@ static jsi::Value decode_body_tabNavigated(jsi::Runtime& rt, jsi::Object& result
       _obj.setProperty(rt, _prop_13, r.read_bool());
       _obj.setProperty(rt, _prop_14, r.read_bool());
       _obj.setProperty(rt, _prop_15, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_16, r.read_bool());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_18, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_19, r.read_bool());
-      _obj.setProperty(rt, _prop_20, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_19, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_20, r.read_bool());
+      _obj.setProperty(rt, _prop_21, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
     resultObj.setProperty(rt, _prop_8, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
@@ -3217,48 +3254,48 @@ static jsi::Value decode_body_tabNavigated(jsi::Runtime& rt, jsi::Object& result
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_22, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_23, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_21, _arr); }
+    resultObj.setProperty(rt, _prop_22, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_24, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_25, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_23, _arr); }
+    resultObj.setProperty(rt, _prop_24, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_26, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_27, (double)r.read_uvar());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_28, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_27, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_28, (double)r.read_uvar());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_29, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_30, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_25, _arr); }
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_33, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+    resultObj.setProperty(rt, _prop_26, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_34, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_34, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_35, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_36, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_36, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _obj.setProperty(rt, _prop_37, r.read_bool());
       _obj.setProperty(rt, _prop_38, r.read_bool());
       _obj.setProperty(rt, _prop_39, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_40, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_40, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_41, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_34, _arr); }
-  resultObj.setProperty(rt, _prop_41, (double)r.read_uvar());
+    resultObj.setProperty(rt, _prop_35, _arr); }
+  resultObj.setProperty(rt, _prop_42, (double)r.read_uvar());
   return std::move(resultObj);
 }
 static jsi::Value decode_tabNavigated(jsi::Runtime& rt, rc::Reader& r) {
   auto resultObj = jsi::Object(rt);
-  const std::array<jsi::PropNameID, 42> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  const std::array<jsi::PropNameID, 43> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "panel"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
   return decode_body_tabNavigated(rt, resultObj, r, _properties.data());
 }
 
@@ -3326,6 +3363,7 @@ static jsi::Value decode_body_tabOpenExternal(jsi::Runtime& rt, jsi::Object& res
   const auto& _prop_39 = _properties[39];
   const auto& _prop_40 = _properties[40];
   const auto& _prop_41 = _properties[41];
+  const auto& _prop_42 = _properties[42];
   resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
   resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
   { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
@@ -3347,11 +3385,12 @@ static jsi::Value decode_body_tabOpenExternal(jsi::Runtime& rt, jsi::Object& res
       _obj.setProperty(rt, _prop_13, r.read_bool());
       _obj.setProperty(rt, _prop_14, r.read_bool());
       _obj.setProperty(rt, _prop_15, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_16, r.read_bool());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_18, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_19, r.read_bool());
-      _obj.setProperty(rt, _prop_20, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_19, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_20, r.read_bool());
+      _obj.setProperty(rt, _prop_21, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
     resultObj.setProperty(rt, _prop_8, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
@@ -3360,48 +3399,48 @@ static jsi::Value decode_body_tabOpenExternal(jsi::Runtime& rt, jsi::Object& res
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_22, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_23, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_21, _arr); }
+    resultObj.setProperty(rt, _prop_22, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_24, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_25, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_23, _arr); }
+    resultObj.setProperty(rt, _prop_24, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_26, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_27, (double)r.read_uvar());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_28, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_27, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_28, (double)r.read_uvar());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_29, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_30, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_25, _arr); }
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_33, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+    resultObj.setProperty(rt, _prop_26, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_34, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_34, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_35, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_36, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_36, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _obj.setProperty(rt, _prop_37, r.read_bool());
       _obj.setProperty(rt, _prop_38, r.read_bool());
       _obj.setProperty(rt, _prop_39, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_40, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_40, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_41, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_34, _arr); }
-  resultObj.setProperty(rt, _prop_41, (double)r.read_uvar());
+    resultObj.setProperty(rt, _prop_35, _arr); }
+  resultObj.setProperty(rt, _prop_42, (double)r.read_uvar());
   return std::move(resultObj);
 }
 static jsi::Value decode_tabOpenExternal(jsi::Runtime& rt, rc::Reader& r) {
   auto resultObj = jsi::Object(rt);
-  const std::array<jsi::PropNameID, 42> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  const std::array<jsi::PropNameID, 43> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "panel"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
   return decode_body_tabOpenExternal(rt, resultObj, r, _properties.data());
 }
 
@@ -3469,6 +3508,7 @@ static jsi::Value decode_body_tabRename(jsi::Runtime& rt, jsi::Object& resultObj
   const auto& _prop_39 = _properties[39];
   const auto& _prop_40 = _properties[40];
   const auto& _prop_41 = _properties[41];
+  const auto& _prop_42 = _properties[42];
   resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
   resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
   { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
@@ -3490,11 +3530,12 @@ static jsi::Value decode_body_tabRename(jsi::Runtime& rt, jsi::Object& resultObj
       _obj.setProperty(rt, _prop_13, r.read_bool());
       _obj.setProperty(rt, _prop_14, r.read_bool());
       _obj.setProperty(rt, _prop_15, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_16, r.read_bool());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_18, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_19, r.read_bool());
-      _obj.setProperty(rt, _prop_20, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_19, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_20, r.read_bool());
+      _obj.setProperty(rt, _prop_21, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
     resultObj.setProperty(rt, _prop_8, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
@@ -3503,48 +3544,48 @@ static jsi::Value decode_body_tabRename(jsi::Runtime& rt, jsi::Object& resultObj
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_22, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_23, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_21, _arr); }
+    resultObj.setProperty(rt, _prop_22, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_24, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_25, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_23, _arr); }
+    resultObj.setProperty(rt, _prop_24, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_26, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_27, (double)r.read_uvar());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_28, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_27, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_28, (double)r.read_uvar());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_29, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_30, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_25, _arr); }
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_33, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+    resultObj.setProperty(rt, _prop_26, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_34, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_34, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_35, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_36, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_36, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _obj.setProperty(rt, _prop_37, r.read_bool());
       _obj.setProperty(rt, _prop_38, r.read_bool());
       _obj.setProperty(rt, _prop_39, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_40, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_40, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_41, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_34, _arr); }
-  resultObj.setProperty(rt, _prop_41, (double)r.read_uvar());
+    resultObj.setProperty(rt, _prop_35, _arr); }
+  resultObj.setProperty(rt, _prop_42, (double)r.read_uvar());
   return std::move(resultObj);
 }
 static jsi::Value decode_tabRename(jsi::Runtime& rt, rc::Reader& r) {
   auto resultObj = jsi::Object(rt);
-  const std::array<jsi::PropNameID, 42> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  const std::array<jsi::PropNameID, 43> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "panel"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
   return decode_body_tabRename(rt, resultObj, r, _properties.data());
 }
 
@@ -3609,6 +3650,7 @@ static jsi::Value decode_body_tabReset(jsi::Runtime& rt, jsi::Object& resultObj,
   const auto& _prop_39 = _properties[39];
   const auto& _prop_40 = _properties[40];
   const auto& _prop_41 = _properties[41];
+  const auto& _prop_42 = _properties[42];
   resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
   resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
   { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
@@ -3630,11 +3672,12 @@ static jsi::Value decode_body_tabReset(jsi::Runtime& rt, jsi::Object& resultObj,
       _obj.setProperty(rt, _prop_13, r.read_bool());
       _obj.setProperty(rt, _prop_14, r.read_bool());
       _obj.setProperty(rt, _prop_15, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_16, r.read_bool());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_18, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_19, r.read_bool());
-      _obj.setProperty(rt, _prop_20, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_19, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_20, r.read_bool());
+      _obj.setProperty(rt, _prop_21, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
     resultObj.setProperty(rt, _prop_8, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
@@ -3643,48 +3686,48 @@ static jsi::Value decode_body_tabReset(jsi::Runtime& rt, jsi::Object& resultObj,
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_22, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_23, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_21, _arr); }
+    resultObj.setProperty(rt, _prop_22, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_24, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_25, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_23, _arr); }
+    resultObj.setProperty(rt, _prop_24, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_26, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_27, (double)r.read_uvar());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_28, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_27, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_28, (double)r.read_uvar());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_29, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_30, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_25, _arr); }
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_33, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+    resultObj.setProperty(rt, _prop_26, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_34, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_34, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_35, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_36, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_36, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _obj.setProperty(rt, _prop_37, r.read_bool());
       _obj.setProperty(rt, _prop_38, r.read_bool());
       _obj.setProperty(rt, _prop_39, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_40, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_40, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_41, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_34, _arr); }
-  resultObj.setProperty(rt, _prop_41, (double)r.read_uvar());
+    resultObj.setProperty(rt, _prop_35, _arr); }
+  resultObj.setProperty(rt, _prop_42, (double)r.read_uvar());
   return std::move(resultObj);
 }
 static jsi::Value decode_tabReset(jsi::Runtime& rt, rc::Reader& r) {
   auto resultObj = jsi::Object(rt);
-  const std::array<jsi::PropNameID, 42> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  const std::array<jsi::PropNameID, 43> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "panel"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
   return decode_body_tabReset(rt, resultObj, r, _properties.data());
 }
 
@@ -3752,6 +3795,7 @@ static jsi::Value decode_body_tabSetFavorite(jsi::Runtime& rt, jsi::Object& resu
   const auto& _prop_39 = _properties[39];
   const auto& _prop_40 = _properties[40];
   const auto& _prop_41 = _properties[41];
+  const auto& _prop_42 = _properties[42];
   resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
   resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
   { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
@@ -3773,11 +3817,12 @@ static jsi::Value decode_body_tabSetFavorite(jsi::Runtime& rt, jsi::Object& resu
       _obj.setProperty(rt, _prop_13, r.read_bool());
       _obj.setProperty(rt, _prop_14, r.read_bool());
       _obj.setProperty(rt, _prop_15, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_16, r.read_bool());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_18, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_19, r.read_bool());
-      _obj.setProperty(rt, _prop_20, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_19, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_20, r.read_bool());
+      _obj.setProperty(rt, _prop_21, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
     resultObj.setProperty(rt, _prop_8, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
@@ -3786,48 +3831,48 @@ static jsi::Value decode_body_tabSetFavorite(jsi::Runtime& rt, jsi::Object& resu
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_22, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_23, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_21, _arr); }
+    resultObj.setProperty(rt, _prop_22, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_24, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_25, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_23, _arr); }
+    resultObj.setProperty(rt, _prop_24, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_26, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_27, (double)r.read_uvar());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_28, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_27, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_28, (double)r.read_uvar());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_29, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_30, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_25, _arr); }
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_33, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+    resultObj.setProperty(rt, _prop_26, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_34, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_34, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_35, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_36, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_36, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _obj.setProperty(rt, _prop_37, r.read_bool());
       _obj.setProperty(rt, _prop_38, r.read_bool());
       _obj.setProperty(rt, _prop_39, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_40, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_40, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_41, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_34, _arr); }
-  resultObj.setProperty(rt, _prop_41, (double)r.read_uvar());
+    resultObj.setProperty(rt, _prop_35, _arr); }
+  resultObj.setProperty(rt, _prop_42, (double)r.read_uvar());
   return std::move(resultObj);
 }
 static jsi::Value decode_tabSetFavorite(jsi::Runtime& rt, rc::Reader& r) {
   auto resultObj = jsi::Object(rt);
-  const std::array<jsi::PropNameID, 42> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  const std::array<jsi::PropNameID, 43> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "panel"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
   return decode_body_tabSetFavorite(rt, resultObj, r, _properties.data());
 }
 
@@ -3895,6 +3940,7 @@ static jsi::Value decode_body_tabSetPinned(jsi::Runtime& rt, jsi::Object& result
   const auto& _prop_39 = _properties[39];
   const auto& _prop_40 = _properties[40];
   const auto& _prop_41 = _properties[41];
+  const auto& _prop_42 = _properties[42];
   resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
   resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
   { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
@@ -3916,11 +3962,12 @@ static jsi::Value decode_body_tabSetPinned(jsi::Runtime& rt, jsi::Object& result
       _obj.setProperty(rt, _prop_13, r.read_bool());
       _obj.setProperty(rt, _prop_14, r.read_bool());
       _obj.setProperty(rt, _prop_15, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_16, r.read_bool());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_18, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_19, r.read_bool());
-      _obj.setProperty(rt, _prop_20, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_19, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_20, r.read_bool());
+      _obj.setProperty(rt, _prop_21, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
     resultObj.setProperty(rt, _prop_8, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
@@ -3929,48 +3976,48 @@ static jsi::Value decode_body_tabSetPinned(jsi::Runtime& rt, jsi::Object& result
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_22, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_23, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_21, _arr); }
+    resultObj.setProperty(rt, _prop_22, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_24, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_25, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_23, _arr); }
+    resultObj.setProperty(rt, _prop_24, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_26, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_27, (double)r.read_uvar());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_28, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_27, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_28, (double)r.read_uvar());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_29, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_30, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_25, _arr); }
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_33, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+    resultObj.setProperty(rt, _prop_26, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_34, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_34, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_35, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_36, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_36, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _obj.setProperty(rt, _prop_37, r.read_bool());
       _obj.setProperty(rt, _prop_38, r.read_bool());
       _obj.setProperty(rt, _prop_39, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_40, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_40, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_41, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_34, _arr); }
-  resultObj.setProperty(rt, _prop_41, (double)r.read_uvar());
+    resultObj.setProperty(rt, _prop_35, _arr); }
+  resultObj.setProperty(rt, _prop_42, (double)r.read_uvar());
   return std::move(resultObj);
 }
 static jsi::Value decode_tabSetPinned(jsi::Runtime& rt, rc::Reader& r) {
   auto resultObj = jsi::Object(rt);
-  const std::array<jsi::PropNameID, 42> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  const std::array<jsi::PropNameID, 43> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "panel"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
   return decode_body_tabSetPinned(rt, resultObj, r, _properties.data());
 }
 
@@ -4038,6 +4085,7 @@ static jsi::Value decode_body_tabSetWorkspace(jsi::Runtime& rt, jsi::Object& res
   const auto& _prop_39 = _properties[39];
   const auto& _prop_40 = _properties[40];
   const auto& _prop_41 = _properties[41];
+  const auto& _prop_42 = _properties[42];
   resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
   resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
   { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
@@ -4059,11 +4107,12 @@ static jsi::Value decode_body_tabSetWorkspace(jsi::Runtime& rt, jsi::Object& res
       _obj.setProperty(rt, _prop_13, r.read_bool());
       _obj.setProperty(rt, _prop_14, r.read_bool());
       _obj.setProperty(rt, _prop_15, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_16, r.read_bool());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_18, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_19, r.read_bool());
-      _obj.setProperty(rt, _prop_20, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_19, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_20, r.read_bool());
+      _obj.setProperty(rt, _prop_21, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
     resultObj.setProperty(rt, _prop_8, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
@@ -4072,48 +4121,48 @@ static jsi::Value decode_body_tabSetWorkspace(jsi::Runtime& rt, jsi::Object& res
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_22, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_23, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_21, _arr); }
+    resultObj.setProperty(rt, _prop_22, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_24, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_25, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_23, _arr); }
+    resultObj.setProperty(rt, _prop_24, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_26, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_27, (double)r.read_uvar());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_28, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_27, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_28, (double)r.read_uvar());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_29, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_30, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_25, _arr); }
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_33, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+    resultObj.setProperty(rt, _prop_26, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_34, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_34, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_35, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_36, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_36, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _obj.setProperty(rt, _prop_37, r.read_bool());
       _obj.setProperty(rt, _prop_38, r.read_bool());
       _obj.setProperty(rt, _prop_39, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_40, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_40, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_41, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_34, _arr); }
-  resultObj.setProperty(rt, _prop_41, (double)r.read_uvar());
+    resultObj.setProperty(rt, _prop_35, _arr); }
+  resultObj.setProperty(rt, _prop_42, (double)r.read_uvar());
   return std::move(resultObj);
 }
 static jsi::Value decode_tabSetWorkspace(jsi::Runtime& rt, rc::Reader& r) {
   auto resultObj = jsi::Object(rt);
-  const std::array<jsi::PropNameID, 42> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  const std::array<jsi::PropNameID, 43> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "panel"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
   return decode_body_tabSetWorkspace(rt, resultObj, r, _properties.data());
 }
 
@@ -4199,6 +4248,7 @@ static jsi::Value decode_body_workArchiveImport(jsi::Runtime& rt, jsi::Object& r
   const auto& _prop_39 = _properties[39];
   const auto& _prop_40 = _properties[40];
   const auto& _prop_41 = _properties[41];
+  const auto& _prop_42 = _properties[42];
   resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
   resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
   { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
@@ -4220,11 +4270,12 @@ static jsi::Value decode_body_workArchiveImport(jsi::Runtime& rt, jsi::Object& r
       _obj.setProperty(rt, _prop_13, r.read_bool());
       _obj.setProperty(rt, _prop_14, r.read_bool());
       _obj.setProperty(rt, _prop_15, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_16, r.read_bool());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_18, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_19, r.read_bool());
-      _obj.setProperty(rt, _prop_20, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_19, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_20, r.read_bool());
+      _obj.setProperty(rt, _prop_21, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
     resultObj.setProperty(rt, _prop_8, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
@@ -4233,48 +4284,48 @@ static jsi::Value decode_body_workArchiveImport(jsi::Runtime& rt, jsi::Object& r
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_22, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_23, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_21, _arr); }
+    resultObj.setProperty(rt, _prop_22, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_24, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_25, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_23, _arr); }
+    resultObj.setProperty(rt, _prop_24, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_26, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_27, (double)r.read_uvar());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_28, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_27, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_28, (double)r.read_uvar());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_29, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_30, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_25, _arr); }
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_33, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+    resultObj.setProperty(rt, _prop_26, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_34, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_34, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_35, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_36, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_36, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _obj.setProperty(rt, _prop_37, r.read_bool());
       _obj.setProperty(rt, _prop_38, r.read_bool());
       _obj.setProperty(rt, _prop_39, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_40, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_40, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_41, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_34, _arr); }
-  resultObj.setProperty(rt, _prop_41, (double)r.read_uvar());
+    resultObj.setProperty(rt, _prop_35, _arr); }
+  resultObj.setProperty(rt, _prop_42, (double)r.read_uvar());
   return std::move(resultObj);
 }
 static jsi::Value decode_workArchiveImport(jsi::Runtime& rt, rc::Reader& r) {
   auto resultObj = jsi::Object(rt);
-  const std::array<jsi::PropNameID, 42> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  const std::array<jsi::PropNameID, 43> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "panel"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
   return decode_body_workArchiveImport(rt, resultObj, r, _properties.data());
 }
 
@@ -4345,6 +4396,7 @@ static jsi::Value decode_body_workArchivePrepare(jsi::Runtime& rt, jsi::Object& 
   const auto& _prop_39 = _properties[39];
   const auto& _prop_40 = _properties[40];
   const auto& _prop_41 = _properties[41];
+  const auto& _prop_42 = _properties[42];
   resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
   resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
   { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
@@ -4366,11 +4418,12 @@ static jsi::Value decode_body_workArchivePrepare(jsi::Runtime& rt, jsi::Object& 
       _obj.setProperty(rt, _prop_13, r.read_bool());
       _obj.setProperty(rt, _prop_14, r.read_bool());
       _obj.setProperty(rt, _prop_15, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_16, r.read_bool());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_18, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_19, r.read_bool());
-      _obj.setProperty(rt, _prop_20, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_19, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_20, r.read_bool());
+      _obj.setProperty(rt, _prop_21, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
     resultObj.setProperty(rt, _prop_8, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
@@ -4379,48 +4432,48 @@ static jsi::Value decode_body_workArchivePrepare(jsi::Runtime& rt, jsi::Object& 
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_22, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_23, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_21, _arr); }
+    resultObj.setProperty(rt, _prop_22, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_24, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_25, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_23, _arr); }
+    resultObj.setProperty(rt, _prop_24, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_26, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_27, (double)r.read_uvar());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_28, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_27, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_28, (double)r.read_uvar());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_29, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_30, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_25, _arr); }
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_33, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+    resultObj.setProperty(rt, _prop_26, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_34, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_34, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_35, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_36, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_36, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _obj.setProperty(rt, _prop_37, r.read_bool());
       _obj.setProperty(rt, _prop_38, r.read_bool());
       _obj.setProperty(rt, _prop_39, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_40, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_40, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_41, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_34, _arr); }
-  resultObj.setProperty(rt, _prop_41, (double)r.read_uvar());
+    resultObj.setProperty(rt, _prop_35, _arr); }
+  resultObj.setProperty(rt, _prop_42, (double)r.read_uvar());
   return std::move(resultObj);
 }
 static jsi::Value decode_workArchivePrepare(jsi::Runtime& rt, rc::Reader& r) {
   auto resultObj = jsi::Object(rt);
-  const std::array<jsi::PropNameID, 42> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  const std::array<jsi::PropNameID, 43> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "panel"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
   return decode_body_workArchivePrepare(rt, resultObj, r, _properties.data());
 }
 
@@ -4528,6 +4581,7 @@ static jsi::Value decode_body_workspaceActivate(jsi::Runtime& rt, jsi::Object& r
   const auto& _prop_39 = _properties[39];
   const auto& _prop_40 = _properties[40];
   const auto& _prop_41 = _properties[41];
+  const auto& _prop_42 = _properties[42];
   resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
   resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
   { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
@@ -4549,11 +4603,12 @@ static jsi::Value decode_body_workspaceActivate(jsi::Runtime& rt, jsi::Object& r
       _obj.setProperty(rt, _prop_13, r.read_bool());
       _obj.setProperty(rt, _prop_14, r.read_bool());
       _obj.setProperty(rt, _prop_15, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_16, r.read_bool());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_18, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_19, r.read_bool());
-      _obj.setProperty(rt, _prop_20, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_19, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_20, r.read_bool());
+      _obj.setProperty(rt, _prop_21, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
     resultObj.setProperty(rt, _prop_8, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
@@ -4562,48 +4617,48 @@ static jsi::Value decode_body_workspaceActivate(jsi::Runtime& rt, jsi::Object& r
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_22, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_23, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_21, _arr); }
+    resultObj.setProperty(rt, _prop_22, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_24, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_25, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_23, _arr); }
+    resultObj.setProperty(rt, _prop_24, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_26, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_27, (double)r.read_uvar());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_28, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_27, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_28, (double)r.read_uvar());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_29, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_30, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_25, _arr); }
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_33, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+    resultObj.setProperty(rt, _prop_26, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_34, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_34, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_35, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_36, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_36, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _obj.setProperty(rt, _prop_37, r.read_bool());
       _obj.setProperty(rt, _prop_38, r.read_bool());
       _obj.setProperty(rt, _prop_39, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_40, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_40, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_41, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_34, _arr); }
-  resultObj.setProperty(rt, _prop_41, (double)r.read_uvar());
+    resultObj.setProperty(rt, _prop_35, _arr); }
+  resultObj.setProperty(rt, _prop_42, (double)r.read_uvar());
   return std::move(resultObj);
 }
 static jsi::Value decode_workspaceActivate(jsi::Runtime& rt, rc::Reader& r) {
   auto resultObj = jsi::Object(rt);
-  const std::array<jsi::PropNameID, 42> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  const std::array<jsi::PropNameID, 43> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "panel"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
   return decode_body_workspaceActivate(rt, resultObj, r, _properties.data());
 }
 
@@ -4668,6 +4723,7 @@ static jsi::Value decode_body_workspaceCreate(jsi::Runtime& rt, jsi::Object& res
   const auto& _prop_39 = _properties[39];
   const auto& _prop_40 = _properties[40];
   const auto& _prop_41 = _properties[41];
+  const auto& _prop_42 = _properties[42];
   resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
   resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
   { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
@@ -4689,11 +4745,12 @@ static jsi::Value decode_body_workspaceCreate(jsi::Runtime& rt, jsi::Object& res
       _obj.setProperty(rt, _prop_13, r.read_bool());
       _obj.setProperty(rt, _prop_14, r.read_bool());
       _obj.setProperty(rt, _prop_15, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_16, r.read_bool());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_18, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_19, r.read_bool());
-      _obj.setProperty(rt, _prop_20, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_19, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_20, r.read_bool());
+      _obj.setProperty(rt, _prop_21, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
     resultObj.setProperty(rt, _prop_8, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
@@ -4702,48 +4759,48 @@ static jsi::Value decode_body_workspaceCreate(jsi::Runtime& rt, jsi::Object& res
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_22, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_23, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_21, _arr); }
+    resultObj.setProperty(rt, _prop_22, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_24, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_25, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_23, _arr); }
+    resultObj.setProperty(rt, _prop_24, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_26, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_27, (double)r.read_uvar());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_28, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_27, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_28, (double)r.read_uvar());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_29, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_30, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_25, _arr); }
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_33, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+    resultObj.setProperty(rt, _prop_26, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_34, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_34, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_35, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_36, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_36, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _obj.setProperty(rt, _prop_37, r.read_bool());
       _obj.setProperty(rt, _prop_38, r.read_bool());
       _obj.setProperty(rt, _prop_39, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_40, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_40, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_41, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_34, _arr); }
-  resultObj.setProperty(rt, _prop_41, (double)r.read_uvar());
+    resultObj.setProperty(rt, _prop_35, _arr); }
+  resultObj.setProperty(rt, _prop_42, (double)r.read_uvar());
   return std::move(resultObj);
 }
 static jsi::Value decode_workspaceCreate(jsi::Runtime& rt, rc::Reader& r) {
   auto resultObj = jsi::Object(rt);
-  const std::array<jsi::PropNameID, 42> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  const std::array<jsi::PropNameID, 43> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "panel"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
   return decode_body_workspaceCreate(rt, resultObj, r, _properties.data());
 }
 
@@ -4811,6 +4868,7 @@ static jsi::Value decode_body_workspaceMove(jsi::Runtime& rt, jsi::Object& resul
   const auto& _prop_39 = _properties[39];
   const auto& _prop_40 = _properties[40];
   const auto& _prop_41 = _properties[41];
+  const auto& _prop_42 = _properties[42];
   resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
   resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
   { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
@@ -4832,11 +4890,12 @@ static jsi::Value decode_body_workspaceMove(jsi::Runtime& rt, jsi::Object& resul
       _obj.setProperty(rt, _prop_13, r.read_bool());
       _obj.setProperty(rt, _prop_14, r.read_bool());
       _obj.setProperty(rt, _prop_15, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_16, r.read_bool());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_18, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_19, r.read_bool());
-      _obj.setProperty(rt, _prop_20, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_19, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_20, r.read_bool());
+      _obj.setProperty(rt, _prop_21, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
     resultObj.setProperty(rt, _prop_8, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
@@ -4845,48 +4904,48 @@ static jsi::Value decode_body_workspaceMove(jsi::Runtime& rt, jsi::Object& resul
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_22, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_23, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_21, _arr); }
+    resultObj.setProperty(rt, _prop_22, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_24, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_25, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_23, _arr); }
+    resultObj.setProperty(rt, _prop_24, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_26, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_27, (double)r.read_uvar());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_28, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_27, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_28, (double)r.read_uvar());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_29, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_30, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_25, _arr); }
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_33, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+    resultObj.setProperty(rt, _prop_26, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_34, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_34, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_35, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_36, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_36, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _obj.setProperty(rt, _prop_37, r.read_bool());
       _obj.setProperty(rt, _prop_38, r.read_bool());
       _obj.setProperty(rt, _prop_39, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_40, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_40, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_41, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_34, _arr); }
-  resultObj.setProperty(rt, _prop_41, (double)r.read_uvar());
+    resultObj.setProperty(rt, _prop_35, _arr); }
+  resultObj.setProperty(rt, _prop_42, (double)r.read_uvar());
   return std::move(resultObj);
 }
 static jsi::Value decode_workspaceMove(jsi::Runtime& rt, rc::Reader& r) {
   auto resultObj = jsi::Object(rt);
-  const std::array<jsi::PropNameID, 42> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  const std::array<jsi::PropNameID, 43> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "panel"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
   return decode_body_workspaceMove(rt, resultObj, r, _properties.data());
 }
 
@@ -4951,6 +5010,7 @@ static jsi::Value decode_body_workspaceRemove(jsi::Runtime& rt, jsi::Object& res
   const auto& _prop_39 = _properties[39];
   const auto& _prop_40 = _properties[40];
   const auto& _prop_41 = _properties[41];
+  const auto& _prop_42 = _properties[42];
   resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
   resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
   { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
@@ -4972,11 +5032,12 @@ static jsi::Value decode_body_workspaceRemove(jsi::Runtime& rt, jsi::Object& res
       _obj.setProperty(rt, _prop_13, r.read_bool());
       _obj.setProperty(rt, _prop_14, r.read_bool());
       _obj.setProperty(rt, _prop_15, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_16, r.read_bool());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_18, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_19, r.read_bool());
-      _obj.setProperty(rt, _prop_20, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_19, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_20, r.read_bool());
+      _obj.setProperty(rt, _prop_21, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
     resultObj.setProperty(rt, _prop_8, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
@@ -4985,48 +5046,48 @@ static jsi::Value decode_body_workspaceRemove(jsi::Runtime& rt, jsi::Object& res
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_22, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_23, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_21, _arr); }
+    resultObj.setProperty(rt, _prop_22, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_24, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_25, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_23, _arr); }
+    resultObj.setProperty(rt, _prop_24, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_26, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_27, (double)r.read_uvar());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_28, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_27, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_28, (double)r.read_uvar());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_29, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_30, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_25, _arr); }
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_33, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+    resultObj.setProperty(rt, _prop_26, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_34, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_34, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_35, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_36, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_36, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _obj.setProperty(rt, _prop_37, r.read_bool());
       _obj.setProperty(rt, _prop_38, r.read_bool());
       _obj.setProperty(rt, _prop_39, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_40, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_40, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_41, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_34, _arr); }
-  resultObj.setProperty(rt, _prop_41, (double)r.read_uvar());
+    resultObj.setProperty(rt, _prop_35, _arr); }
+  resultObj.setProperty(rt, _prop_42, (double)r.read_uvar());
   return std::move(resultObj);
 }
 static jsi::Value decode_workspaceRemove(jsi::Runtime& rt, rc::Reader& r) {
   auto resultObj = jsi::Object(rt);
-  const std::array<jsi::PropNameID, 42> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  const std::array<jsi::PropNameID, 43> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "panel"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
   return decode_body_workspaceRemove(rt, resultObj, r, _properties.data());
 }
 
@@ -5094,6 +5155,7 @@ static jsi::Value decode_body_workspaceRename(jsi::Runtime& rt, jsi::Object& res
   const auto& _prop_39 = _properties[39];
   const auto& _prop_40 = _properties[40];
   const auto& _prop_41 = _properties[41];
+  const auto& _prop_42 = _properties[42];
   resultObj.setProperty(rt, _prop_0, (double)r.read_uvar());
   resultObj.setProperty(rt, _prop_1, (double)r.read_uvar());
   { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_2, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
@@ -5115,11 +5177,12 @@ static jsi::Value decode_body_workspaceRename(jsi::Runtime& rt, jsi::Object& res
       _obj.setProperty(rt, _prop_13, r.read_bool());
       _obj.setProperty(rt, _prop_14, r.read_bool());
       _obj.setProperty(rt, _prop_15, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_16, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_16, r.read_bool());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_17, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_18, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_19, r.read_bool());
-      _obj.setProperty(rt, _prop_20, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_19, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_20, r.read_bool());
+      _obj.setProperty(rt, _prop_21, [&]() -> jsi::Value { auto _v = r.read_uvar(); if (_v <= 9007199254740991ull) return jsi::Value(static_cast<double>(_v)); return jsi::Value(rt, jsi::BigInt::fromUint64(rt, _v)); }());
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
     resultObj.setProperty(rt, _prop_8, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
@@ -5128,48 +5191,48 @@ static jsi::Value decode_body_workspaceRename(jsi::Runtime& rt, jsi::Object& res
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_10, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_22, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_23, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_21, _arr); }
+    resultObj.setProperty(rt, _prop_22, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_11, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_24, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_25, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_23, _arr); }
+    resultObj.setProperty(rt, _prop_24, _arr); }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_4, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_9, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_5, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_26, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_27, (double)r.read_uvar());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_28, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_27, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_28, (double)r.read_uvar());
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_29, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_30, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_31, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_25, _arr); }
-  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_32, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_33, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
+    resultObj.setProperty(rt, _prop_26, _arr); }
+  { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_33, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+  { auto _tag = r.read_u8(); if (_tag == 0) { resultObj.setProperty(rt, _prop_34, jsi::Value::null()); } else { { auto _s = r.read_string_view(); resultObj.setProperty(rt, _prop_34, jsi::String::createFromUtf8(rt, _s.data, _s.size)); } } }
   { auto _n = r.read_uvar(); auto _arr = jsi::Array(rt, (size_t)_n);
     for (size_t _i = 0; _i < _n; _i++) { auto _obj = jsi::Object(rt);
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_35, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
-      _obj.setProperty(rt, _prop_36, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_36, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _obj.setProperty(rt, _prop_37, r.read_bool());
       _obj.setProperty(rt, _prop_38, r.read_bool());
       _obj.setProperty(rt, _prop_39, r.read_bool());
-      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_40, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
+      _obj.setProperty(rt, _prop_40, r.read_bool());
+      { auto _s = r.read_string_view(); _obj.setProperty(rt, _prop_41, jsi::String::createFromUtf8(rt, _s.data, _s.size)); }
       _arr.setValueAtIndex(rt, _i, std::move(_obj)); }
-    resultObj.setProperty(rt, _prop_34, _arr); }
-  resultObj.setProperty(rt, _prop_41, (double)r.read_uvar());
+    resultObj.setProperty(rt, _prop_35, _arr); }
+  resultObj.setProperty(rt, _prop_42, (double)r.read_uvar());
   return std::move(resultObj);
 }
 static jsi::Value decode_workspaceRename(jsi::Runtime& rt, rc::Reader& r) {
   auto resultObj = jsi::Object(rt);
-  const std::array<jsi::PropNameID, 42> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
+  const std::array<jsi::PropNameID, 43> _properties{jsi::PropNameID::forAscii(rt, "version"), jsi::PropNameID::forAscii(rt, "revision"), jsi::PropNameID::forAscii(rt, "lastExternalRequestId"), jsi::PropNameID::forAscii(rt, "workspaces"), jsi::PropNameID::forAscii(rt, "id"), jsi::PropNameID::forAscii(rt, "name"), jsi::PropNameID::forAscii(rt, "color"), jsi::PropNameID::forAscii(rt, "lastActiveTabId"), jsi::PropNameID::forAscii(rt, "tabs"), jsi::PropNameID::forAscii(rt, "workspaceId"), jsi::PropNameID::forAscii(rt, "url"), jsi::PropNameID::forAscii(rt, "title"), jsi::PropNameID::forAscii(rt, "customTitle"), jsi::PropNameID::forAscii(rt, "favorite"), jsi::PropNameID::forAscii(rt, "pinned"), jsi::PropNameID::forAscii(rt, "panel"), jsi::PropNameID::forAscii(rt, "private"), jsi::PropNameID::forAscii(rt, "bookmarkId"), jsi::PropNameID::forAscii(rt, "homeUrl"), jsi::PropNameID::forAscii(rt, "homeTitle"), jsi::PropNameID::forAscii(rt, "suspended"), jsi::PropNameID::forAscii(rt, "updatedAt"), jsi::PropNameID::forAscii(rt, "bookmarks"), jsi::PropNameID::forAscii(rt, "folderId"), jsi::PropNameID::forAscii(rt, "bookmarkFolders"), jsi::PropNameID::forAscii(rt, "parentFolderId"), jsi::PropNameID::forAscii(rt, "splitGroups"), jsi::PropNameID::forAscii(rt, "orientation"), jsi::PropNameID::forAscii(rt, "ratioMilli"), jsi::PropNameID::forAscii(rt, "firstTitle"), jsi::PropNameID::forAscii(rt, "firstUrl"), jsi::PropNameID::forAscii(rt, "secondTitle"), jsi::PropNameID::forAscii(rt, "secondUrl"), jsi::PropNameID::forAscii(rt, "activeWorkspaceId"), jsi::PropNameID::forAscii(rt, "activeTabId"), jsi::PropNameID::forAscii(rt, "keyBindings"), jsi::PropNameID::forAscii(rt, "key"), jsi::PropNameID::forAscii(rt, "meta"), jsi::PropNameID::forAscii(rt, "ctrl"), jsi::PropNameID::forAscii(rt, "alt"), jsi::PropNameID::forAscii(rt, "shift"), jsi::PropNameID::forAscii(rt, "command"), jsi::PropNameID::forAscii(rt, "keymapVersion")};
   return decode_body_workspaceRename(rt, resultObj, r, _properties.data());
 }
 
@@ -5773,7 +5836,6 @@ bool has_pos_codec(uint16_t cmd_id) {
   if (cmd_id == 35) return true;
   if (cmd_id == 9) return true;
   if (cmd_id == 10) return true;
-  if (cmd_id == 7) return true;
   if (cmd_id == 14) return true;
   if (cmd_id == 11) return true;
   if (cmd_id == 8) return true;
@@ -5809,7 +5871,6 @@ void encode_pos_by_id(jsi::Runtime& rt, uint16_t cmd_id, const jsi::Value* argv,
     case 35: encode_pos_splitGroupRemove(rt, argv, argc, w); return;
     case 9: encode_pos_tabActivate(rt, argv, argc, w); return;
     case 10: encode_pos_tabClose(rt, argv, argc, w); return;
-    case 7: encode_pos_tabCreate(rt, argv, argc, w); return;
     case 14: encode_pos_tabMove(rt, argv, argc, w); return;
     case 11: encode_pos_tabNavigated(rt, argv, argc, w); return;
     case 8: encode_pos_tabOpenExternal(rt, argv, argc, w); return;

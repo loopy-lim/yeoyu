@@ -1,9 +1,11 @@
 import { expect, test } from "bun:test";
 import {
+  activatableTabs,
   bookmarkTabsForSpace,
   libraryItemsForSpace,
   favoriteDropIndex,
   favoriteMoveIndex,
+  isStalePanelPointer,
   sidebarAddressLabel,
   sidebarTabMoveIndex,
   sidebarDropChange,
@@ -200,4 +202,60 @@ test("clear unpinned keeps favorites, pins, private tabs, and other Spaces", () 
     { id: "other", workspaceId: "work" },
   ];
   expect(clearUnpinnedTargets(tabs, "home")).toEqual(["today"]);
+});
+
+test("activation candidates keep sidebar panels out of every selectable list", () => {
+  const tabs = [
+    { id: "page", workspaceId: "home" },
+    { id: "panel", workspaceId: "home", panel: true },
+    { id: "panel-fav", favorite: true, workspaceId: "work", panel: true },
+    { id: "fav", favorite: true, workspaceId: "work" },
+    { id: "asleep", workspaceId: "home", suspended: true },
+    { id: "other-space", workspaceId: "work" },
+  ];
+  // Tab cycling, number keys, and quick-open all draw from this list; a
+  // panel picked from it would hit the domain's activation rejection.
+  expect(activatableTabs(tabs, "home").map((tab) => tab.id)).toEqual([
+    "page",
+    "fav",
+  ]);
+  expect(activatableTabs([], "home")).toEqual([]);
+  expect(activatableTabs(null, "home")).toEqual([]);
+  expect(activatableTabs(undefined, "home")).toEqual([]);
+});
+
+test("split candidates and split panes never take a sidebar panel", () => {
+  const tabs = [
+    { id: "page", workspaceId: "home" },
+    { id: "panel", workspaceId: "home", panel: true },
+    { id: "fav", favorite: true, workspaceId: "work" },
+  ];
+  // The split picker and the splitCandidate probe draw from the activation
+  // list: a panel in a pane would double-own the sidebar panel session.
+  const candidates = activatableTabs(tabs, "home");
+  expect(candidates.map((tab) => tab.id)).toEqual(["page", "fav"]);
+  // A persisted layout that somehow references a panel never validates live.
+  expect(
+    liveSplitLayout({ first: "page", second: "panel" }, candidates)
+  ).toBeNull();
+});
+
+test("panel pointer survives the boot race and only sweeps once both sources land", () => {
+  const tabs = [
+    { id: "page", workspaceId: "home" },
+    { id: "panel", workspaceId: "home", panel: true },
+  ];
+  // The preferences read can beat the snapshot restore: before hydration or
+  // without a tab list, an unresolved pointer means "not loaded yet", not
+  // gone — clearing it then would persist the erasure across restarts.
+  expect(isStalePanelPointer(false, tabs, "panel")).toBe(false);
+  expect(isStalePanelPointer(true, null, "panel")).toBe(false);
+  expect(isStalePanelPointer(true, undefined, "panel")).toBe(false);
+  // Once both sources are in, the sweep behaves like the old guard.
+  expect(isStalePanelPointer(true, tabs, "panel")).toBe(false);
+  expect(isStalePanelPointer(true, tabs, "gone")).toBe(true);
+  // An id that no longer marks a panel tab is just as dead as a removed one.
+  expect(isStalePanelPointer(true, tabs, "page")).toBe(true);
+  expect(isStalePanelPointer(true, tabs, undefined)).toBe(false);
+  expect(isStalePanelPointer(true, tabs, null)).toBe(false);
 });

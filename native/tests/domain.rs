@@ -1978,3 +1978,193 @@ fn tab_rename_persists_through_snapshot_roundtrip() {
         .unwrap();
     assert_eq!(tab.custom_title, "");
 }
+
+#[test]
+fn panel_creation_keeps_the_working_set_and_never_activates() {
+    let mut state = BrowserState::default();
+    let active = state
+        .create_tab("workspace-1", "https://example.com/start")
+        .unwrap()
+        .active_tab_id
+        .unwrap();
+    let before = state.snapshot();
+    let after = state
+        .create_panel_tab("workspace-1", "https://panel.example", false)
+        .unwrap();
+    let panel = after
+        .tabs
+        .iter()
+        .find(|tab| tab.panel)
+        .expect("the panel tab exists");
+    assert_eq!(panel.url, "https://panel.example");
+    assert!(!panel.favorite && !panel.pinned && !panel.suspended);
+    // The user's active tab, space, and remembered tab stay untouched.
+    assert_eq!(after.active_tab_id, Some(active.clone()));
+    assert_eq!(after.active_workspace_id, before.active_workspace_id);
+    assert_eq!(
+        after.workspaces[0].last_active_tab_id,
+        before.workspaces[0].last_active_tab_id
+    );
+    // Panels never enter the content rotation.
+    assert!(state.activate_tab(&panel.id).is_err());
+    assert!(state.set_tab_favorite(&panel.id, true).is_err());
+    assert!(state.set_tab_pinned(&panel.id, true).is_err());
+}
+
+#[test]
+fn panel_close_removes_the_row_and_keeps_the_active_tab() {
+    let mut state = BrowserState::default();
+    let active = state
+        .create_tab("workspace-1", "https://example.com/start")
+        .unwrap()
+        .active_tab_id
+        .unwrap();
+    let panel_id = state
+        .create_panel_tab("workspace-1", "https://panel.example", false)
+        .unwrap()
+        .tabs
+        .iter()
+        .find(|tab| tab.panel)
+        .unwrap()
+        .id
+        .clone();
+    let closed = state.close_tab(&panel_id).unwrap();
+    assert!(closed.tabs.iter().all(|tab| tab.id != panel_id));
+    assert_eq!(closed.active_tab_id, Some(active));
+}
+
+#[test]
+fn panel_survives_restart_while_private_panels_do_not() {
+    let mut state = BrowserState::default();
+    state
+        .create_tab("workspace-1", "https://example.com/start")
+        .unwrap();
+    state
+        .create_panel_tab("workspace-1", "https://panel.example", false)
+        .unwrap();
+    state
+        .create_panel_tab("workspace-1", "https://secret.example", true)
+        .unwrap();
+    let saved = serde_json::to_value(state.snapshot()).unwrap();
+    let mut restored_state = BrowserState::default();
+    restored_state.restore(&saved.to_string()).unwrap();
+    let restored = restored_state.snapshot();
+    let panels: Vec<_> = restored.tabs.iter().filter(|tab| tab.panel).collect();
+    assert_eq!(panels.len(), 1);
+    assert_eq!(panels[0].url, "https://panel.example");
+    assert!(!panels[0].private);
+    // A space whose ordinary tabs are gone never promotes a panel into the
+    // content area: closing the last ordinary tab seeds a fresh active tab.
+    let mut drained = restored_state.clone();
+    let start = drained.snapshot().active_tab_id.unwrap();
+    let seeded = drained.close_tab(&start).unwrap();
+    assert!(
+        seeded
+            .active_tab_id
+            .and_then(|id| seeded.tabs.iter().find(|tab| tab.id == id))
+            .map(|tab| !tab.panel && !tab.private)
+            .unwrap_or(false)
+    );
+    let switched = drained.activate_workspace("workspace-1").unwrap();
+    assert!(
+        switched
+            .active_tab_id
+            .and_then(|id| switched.tabs.iter().find(|tab| tab.id == id))
+            .map(|tab| !tab.panel)
+            .unwrap_or(false)
+    );
+}
+
+#[test]
+fn move_tab_reorders_panels_and_survives_restart() {
+    let mut state = BrowserState::default();
+    let active = state
+        .create_tab("workspace-1", "https://example.com/start")
+        .unwrap()
+        .active_tab_id
+        .unwrap();
+    for url in [
+        "https://a.example",
+        "https://b.example",
+        "https://c.example",
+    ] {
+        state.create_panel_tab("workspace-1", url, false).unwrap();
+    }
+    let first = state
+        .snapshot()
+        .tabs
+        .iter()
+        .find(|tab| tab.panel)
+        .unwrap()
+        .id
+        .clone();
+    // A panel dropped at the end of the section is a post-removal index,
+    // exactly like the ordinary tab drop the sidebar already issues.
+    let moved = state.move_tab(&first, 3).unwrap();
+    let urls: Vec<_> = moved
+        .tabs
+        .iter()
+        .filter(|tab| tab.panel)
+        .map(|tab| tab.url.as_str())
+        .collect();
+    assert_eq!(
+        urls,
+        [
+            "https://b.example",
+            "https://c.example",
+            "https://a.example"
+        ]
+    );
+    // Reordering a panel leaves the working set alone.
+    assert_eq!(moved.active_tab_id, Some(active));
+    // The reordered panel list is what a restart restores.
+    let saved = serde_json::to_value(state.snapshot()).unwrap();
+    let mut restored_state = BrowserState::default();
+    restored_state.restore(&saved.to_string()).unwrap();
+    let restored_snapshot = restored_state.snapshot();
+    let restored: Vec<_> = restored_snapshot
+        .tabs
+        .iter()
+        .filter(|tab| tab.panel)
+        .map(|tab| tab.url.as_str())
+        .collect();
+    assert_eq!(
+        restored,
+        [
+            "https://b.example",
+            "https://c.example",
+            "https://a.example"
+        ]
+    );
+}
+
+#[test]
+fn restore_repairs_active_pointers_that_target_panels() {
+    let mut state = BrowserState::default();
+    let id = state
+        .create_tab("workspace-1", "https://example.com/start")
+        .unwrap()
+        .active_tab_id
+        .unwrap();
+    let mut foreign = serde_json::to_value(state.snapshot()).unwrap();
+    foreign["tabs"]
+        .as_array_mut()
+        .unwrap()
+        .iter_mut()
+        .for_each(|tab| {
+            tab.as_object_mut()
+                .unwrap()
+                .insert("panel".into(), true.into());
+        });
+    let mut foreign_state = BrowserState::default();
+    foreign_state.restore(&foreign.to_string()).unwrap();
+    let restored = foreign_state.snapshot();
+    let tab = restored.tabs.iter().find(|tab| tab.id == id).unwrap();
+    assert!(tab.panel);
+    // Panels never hold the active pointers; the controller seeds fresh
+    // content when the restored active id is absent.
+    assert_eq!(restored.active_tab_id, None);
+    assert_eq!(restored.workspaces[0].last_active_tab_id, None);
+    // Validation would reject the pointer outright without the repair.
+    assert!(foreign_state.restore(&foreign.to_string()).is_ok());
+}

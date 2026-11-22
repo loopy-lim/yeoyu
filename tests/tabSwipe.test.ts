@@ -25,6 +25,34 @@ test("collectSwipeableTabs includes active space tabs and favorites while exclud
   ]);
 });
 
+test("collectSwipeableTabs keeps sidebar panels out of swipe candidates", () => {
+  const withPanels: SwipeableTab[] = [
+    ...sampleTabs,
+    { id: "panel", title: "Panel", url: "https://panel.example", workspaceId: "space-1", panel: true },
+    { id: "panel-fav", title: "Panel Fav", url: "https://pf.example", favorite: true, workspaceId: "space-2", panel: true },
+  ];
+  // Swiping onto a panel would hand switchTab a tab the domain refuses to
+  // activate, so panels never join the candidate ring.
+  expect(collectSwipeableTabs(withPanels, "space-1").map((t) => t.id)).toEqual([
+    "fav",
+    "t1",
+    "t2",
+  ]);
+});
+
+test("toolbar swipe has no target when only a panel remains beside the active tab", () => {
+  const lone: SwipeableTab[] = [
+    { id: "page", title: "Page", url: "https://page.example", workspaceId: "space-1" },
+    { id: "panel", title: "Panel", url: "https://panel.example", workspaceId: "space-1", panel: true },
+  ];
+  const candidates = collectSwipeableTabs(lone, "space-1");
+  expect(candidates.map((t) => t.id)).toEqual(["page"]);
+  // The toolbar gesture enables on candidates.length > 1, and even a forced
+  // resolve finds no next tab once the panel is filtered out.
+  expect(candidates.length > 1).toBe(false);
+  expect(resolveSwipeTargetTab(candidates, "page", 1)).toBeNull();
+});
+
 test("resolveSwipeTargetTab wraps around active tabs and ignores single-tab lists", () => {
   const active = collectSwipeableTabs(sampleTabs, "space-1");
   expect(resolveSwipeTargetTab(active, "t1", 1)?.id).toBe("t2");

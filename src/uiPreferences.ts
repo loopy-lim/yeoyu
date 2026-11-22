@@ -203,6 +203,12 @@ export interface UiPreferences {
   framePx: FramePadding;
   // Missing means follow the window tier (compact → bottom bar, issue #19).
   phoneChromeLayout?: PhoneChromeLayout;
+  // The sidebar web panel currently shown in the sidebar's panel view;
+  // missing means the library (tabs/bookmarks) view. Panel membership lives
+  // on the tabs themselves; this only remembers the open view across
+  // restarts. Stale ids (a removed or private panel) fall back to the
+  // library at render time.
+  sidebarPanelId?: string;
   // Crash-recovery marker for the Little Arc overlay, not a user setting: the
   // external tab id persists while the card is open so a session that died
   // with it open reopens the overlay on boot instead of leaking its temporary
@@ -229,6 +235,7 @@ export type UiPreferenceAction =
   | { type: "setNewTabShortcuts"; shortcuts: NewTabShortcut[] }
   | { type: "setFramePx"; side: FrameSide; value: number }
   | { type: "setPhoneChromeLayout"; layout: PhoneChromeLayout }
+  | { type: "setSidebarPanel"; id: string | null }
   | { type: "setLittleArcActiveTab"; id: string | null }
   | { type: "restore"; preferences: UiPreferences };
 
@@ -319,6 +326,13 @@ export function reduceUiPreferences(
         }
       : action.preferences;
   }
+  if (action.type === "setSidebarPanel") {
+    // Same value → same object so persistence does not rewrite the store.
+    const next = action.id ?? undefined;
+    return preferences.sidebarPanelId === next
+      ? preferences
+      : { ...preferences, sidebarPanelId: next };
+  }
   if (action.type === "setLittleArcActiveTab") {
     // Same value → same object: implicit-dismiss paths clear the marker on
     // every tab activation, and the no-op keeps identity stable so
@@ -345,7 +359,8 @@ export function reduceUiPreferences(
   if (action.type === "resetLayout") {
     // The chrome layout is part of the layout reset: back to following the
     // window tier instead of a stale phone pick.
-    const { phoneChromeLayout: _chrome, ...rest } = preferences;
+    const { phoneChromeLayout: _chrome, ...rest0 } = preferences;
+    const { sidebarPanelId: _panel, ...rest } = rest0;
     return { ...rest, sidebarWidth: defaultUiPreferences.sidebarWidth,
       sidebarCollapsed: defaultUiPreferences.sidebarCollapsed, framePx: { ...defaultFramePadding } };
   }
@@ -547,6 +562,10 @@ export async function loadUiPreferences(
         newTabShortcuts: sanitizeNewTabShortcuts(prefs.newTabShortcuts),
         framePx: sanitizeFramePadding(prefs.framePx),
         sidebarWidth: sanitizeSidebarWidth(prefs.sidebarWidth),
+        sidebarPanelId:
+          typeof prefs.sidebarPanelId === "string" && prefs.sidebarPanelId
+            ? prefs.sidebarPanelId
+            : undefined,
         littleArcActiveTabId:
           typeof prefs.littleArcActiveTabId === "string" &&
           prefs.littleArcActiveTabId

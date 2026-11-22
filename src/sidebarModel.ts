@@ -24,6 +24,46 @@ export function liveSplitLayout<T extends { first: string; second: string }>(
     : null;
 }
 
+/**
+ * Tabs that may become the active tab: a sidebar web panel is a background
+ * surface the domain refuses to activate, so every candidate list fed to
+ * activation (tab cycling, number keys, quick-open) must keep panels out.
+ */
+export function activatableTabs<
+  T extends {
+    favorite?: boolean;
+    panel?: boolean;
+    suspended?: boolean;
+    workspaceId?: string;
+  },
+>(
+  tabs: readonly T[] | null | undefined,
+  workspaceId: string | null | undefined
+): T[] {
+  return (tabs ?? []).filter(
+    (tab) =>
+      !tab.suspended &&
+      !tab.panel &&
+      (tab.favorite || tab.workspaceId === workspaceId)
+  );
+}
+
+/**
+ * May the stale-pointer sweep clear the panel view pointer yet? Boot order
+ * is not fixed: the preferences read can land before the session snapshot
+ * restores, and until both are in a missing panel only means "not loaded
+ * yet" — sweeping then would erase the restored view and the persistence
+ * layer would write that erasure to disk.
+ */
+export function isStalePanelPointer(
+  hydrated: boolean,
+  tabs: readonly { id: string; panel?: boolean }[] | null | undefined,
+  panelId: string | null | undefined
+): boolean {
+  if (!hydrated || !tabs || !panelId) return false;
+  return !tabs.some((tab) => tab.id === panelId && tab.panel);
+}
+
 export function sidebarTabMoveIndex(
   tabs: readonly { id: string }[],
   tabId: string,
@@ -165,6 +205,7 @@ export function clearUnpinnedTargets(
     favorite?: boolean;
     pinned?: boolean;
     private?: boolean;
+    panel?: boolean;
     suspended?: boolean;
   }[],
   workspaceId: string
@@ -175,6 +216,7 @@ export function clearUnpinnedTargets(
         !tab.favorite &&
         !tab.pinned &&
         !tab.private &&
+        !tab.panel &&
         !tab.suspended &&
         tab.workspaceId === workspaceId
     )
