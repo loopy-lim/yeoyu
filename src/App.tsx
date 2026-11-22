@@ -919,10 +919,7 @@ function BrowserApp() {
     splitSpace.current === state?.activeWorkspaceId
       ? liveSplitLayout(
           splitLayout,
-          (state?.tabs ?? []).filter(
-            (tab) =>
-              tab.favorite || tab.workspaceId === state?.activeWorkspaceId
-          )
+          activatableTabs(state?.tabs, state?.activeWorkspaceId)
         )
       : null;
   const validSplit = (() => {
@@ -2192,12 +2189,8 @@ function BrowserApp() {
 
   const splitCandidate =
     active &&
-    state?.tabs.some(
-      (t) =>
-        t.id !== active.id &&
-        !t.suspended &&
-        (t.favorite || t.workspaceId === state.activeWorkspaceId) &&
-        !!t.private === !!active.private
+    activatableTabs(state?.tabs, state?.activeWorkspaceId).some(
+      (t) => t.id !== active.id && !!t.private === !!active.private
     );
   const toggleSplit = () => {
     if (validSplit) {
@@ -6546,7 +6539,10 @@ function BrowserApp() {
                               : menuTab.workspaceId) &&
                           t.id !== menuTab.id &&
                           !t.favorite &&
-                          !t.pinned
+                          !t.pinned &&
+                          // Panels are restored surfaces, not bulk-cleanup
+                          // targets — same rule as clearUnpinnedTargets.
+                          !t.panel
                       )
                       .forEach((t) => closeTab(t.id));
                   }}
@@ -6700,13 +6696,10 @@ function BrowserApp() {
                 <ActionMenu
                   title={tr("chrome.chooseSplitTab")}
                   onClose={() => setSplitPickerTabId(null)}
-                  items={(state?.tabs ?? [])
+                  items={activatableTabs(state?.tabs, state?.activeWorkspaceId)
                     .filter(
                       (tab) =>
                         tab.id !== splitPickerTabId &&
-                        !tab.suspended &&
-                        (tab.favorite ||
-                          tab.workspaceId === state?.activeWorkspaceId) &&
                         // Splits never cross the browsing-mode boundary.
                         !!tab.private ===
                           !!state?.tabs.find(
